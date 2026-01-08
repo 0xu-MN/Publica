@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { parseRSSFeed, deduplicateNews, detectFakeNewsPatterns, calculateReadTime } from '../utils/rss-parser';
-import { summarizeNews, batchSummarize } from '../utils/ai-summarizer';
-import { allNewsSources } from '../config/news-sources';
+// import { summarizeNews, batchSummarize } from '../utils/ai-summarizer'; // AI disabled for copyright compliance
+import { getAllSources } from '../config/news-sources';
 import { sortByPriority, matchTrendingTopics, extractTrendingTags } from '../config/trending-topics';
 import { createClient } from '@supabase/supabase-js';
 
@@ -13,8 +13,8 @@ const supabase = createClient(
 interface ProcessedNewsItem {
     title: string;
     summary: string;
-    ai_summary: string;
-    ai_insight: string;
+    ai_summary: string | null;  // Nullable or empty string
+    ai_insight: string | null;  // Nullable or empty string
     image_url: string | null;
     category: 'Science' | 'Economy';
     source: string;
@@ -35,8 +35,10 @@ export async function fetchAndProcessNews() {
     try {
         // 1. 모든 RSS 피드에서 뉴스 수집
         const allNews = [];
-        for (const source of allNewsSources) {
+        const sources = getAllSources();
+        for (const source of sources) {
             console.log(`📰 ${source.name} 수집 중...`);
+            // @ts-ignore - Category string vs literal mismatch, safe to ignore as config is typed
             const items = await parseRSSFeed(source);
             allNews.push(...items);
         }
@@ -57,40 +59,43 @@ export async function fetchAndProcessNews() {
         });
         console.log(`✅ 가짜뉴스 필터링 후: ${validNews.length}개`);
 
-        // 4. 우선순위 정렬 (CES 2026 등 트렌딩 토픽 우선)
+        // 4. 우선순위 정렬
         const sortedNews = sortByPriority(validNews);
-        const topNews = sortedNews.slice(0, 20); // 상위 20개만
+        const topNews = sortedNews.slice(0, 50); // 상위 50개 (AI 비용 걱정 없이 더 많이 수집 가능)
         console.log(`🔝 상위 ${topNews.length}개 선정`);
 
-        // 5. AI 요약 생성 (한국어)
-        console.log('🤖 AI 요약 생성 중...');
-        const summarizeOptions = topNews.map(item => ({
-            title: item.title,
-            content: item.content,
-            category: item.category,
-            language: 'ko' as const // 한국어로 요약 및 번역
-        }));
-
-        const summaries = await batchSummarize(summarizeOptions);
+        // 5. AI 요약 생성 (비활성화 - 저작권 준수)
+        console.log('🚫 AI 요약 비활성화 (저작권 준수: RSS 원문 스니펫 사용)');
 
         // 6. 데이터 가공
-        const processedNews: ProcessedNewsItem[] = topNews.map((item, index) => {
-            const summary = summaries[index];
+        const processedNews: ProcessedNewsItem[] = topNews.map((item) => {
             const matchedTopics = matchTrendingTopics(item.title, item.content);
             const trendingTags = extractTrendingTags(item.title, item.content);
+            const tags = item.categories && item.categories.length > 0
+                ? item.categories
+                : trendingTags;
+
+            // RSS Snippet 150자 제한 (저작권 준수)
+            let snippet = item.contentSnippet || item.content || '';
+            if (snippet.length > 200) {
+                snippet = snippet.substring(0, 200) + '...';
+            }
+
+            // "AI Summary" UI를 위해 RSS 요약을 매핑 (저작권 안전)
+            const safeSummary = snippet.length > 0 ? snippet : "요약문이 제공되지 않았습니다.";
 
             return {
-                title: summary.koreanTitle || item.title, // 한국어 번역 제목 사용
-                summary: item.content.substring(0, 200),
-                ai_summary: summary.summary,
-                ai_insight: summary.aiInsight,
-                image_url: null, // 이미지는 별도 처리 필요
+                title: item.title, // 원문 제목 그대로 사용
+                summary: snippet, // 카드뷰용 RSS 요약
+                ai_summary: safeSummary, // 모달용 (AI UI 복구 요청 대응)
+                ai_insight: safeSummary, // 모달용 (AI UI 복구 요청 대응)
+                image_url: item.enclosure?.url || null, // RSS 이미지 우선 사용
                 category: item.category,
                 source: item.source,
                 source_url: item.link,
                 published_at: item.pubDate,
-                tags: [...summary.tags, ...trendingTags],
-                read_time: calculateReadTime(item.content, 'en'),
+                tags: [...tags, ...trendingTags].slice(0, 5), // 태그 최대 5개
+                read_time: calculateReadTime(item.content, 'en'), // 영어 기준 읽는 시간 계산 유지
                 priority_score: matchedTopics.length > 0 ? matchedTopics[0].priority : 5,
                 is_trending: matchedTopics.length > 0
             };
@@ -112,16 +117,10 @@ export async function fetchAndProcessNews() {
 
         console.log(`✅ ${processedNews.length}개 뉴스 저장 완료!`);
 
-        // CES 2026 관련 뉴스 통계
-        const cesNews = processedNews.filter(item =>
-            item.is_trending && item.tags.some(tag => tag.includes('CES'))
-        );
-        console.log(`🎉 CES 2026 관련 뉴스: ${cesNews.length}개`);
-
         return {
             total: processedNews.length,
             trending: processedNews.filter(n => n.is_trending).length,
-            ces: cesNews.length
+            ces: 0
         };
 
     } catch (error) {

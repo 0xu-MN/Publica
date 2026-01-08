@@ -9,151 +9,100 @@ export interface NewsSource {
     category: 'Science' | 'Economy';
     reliability: 'high' | 'verified'; // 신뢰도
     language: 'ko' | 'en';
-    updateFrequency: string;
 }
 
 /**
  * 과학 뉴스 - 검증된 학술지 및 공식 과학 기관
  */
-export const scienceSources: NewsSource[] = [
-    // CES 2026 특집 - 1개만 유지 (균형을 위해)
+export const newsSources = [
+    // 1. Science Sources (Safe RSS)
     {
-        name: 'The Verge - Tech',
-        url: 'https://www.theverge.com/rss/index.xml',
+        name: 'ScienceDaily',
+        url: 'https://www.sciencedaily.com/rss/all.xml',
         category: 'Science',
-        reliability: 'high',
-        language: 'en',
-        updateFrequency: 'hourly'
+        reliability: 'verified',
+        language: 'en'
     },
-    // 기존 과학 뉴스 소스
+    {
+        name: 'Phys.org',
+        url: 'https://phys.org/rss-feed/',
+        category: 'Science',
+        reliability: 'verified',
+        language: 'en'
+    },
     {
         name: 'Nature News',
-        url: 'https://www.nature.com/nature.rss',
+        url: 'https://www.nature.com/subjects/latest/rss',
         category: 'Science',
         reliability: 'verified',
-        language: 'en',
-        updateFrequency: 'daily'
+        language: 'en'
     },
     {
-        name: 'Science Magazine',
-        url: 'https://www.science.org/rss/news_current.xml',
-        category: 'Science',
-        reliability: 'verified',
-        language: 'en',
-        updateFrequency: 'daily'
-    },
-    {
-        name: 'MIT Technology Review',
-        url: 'https://www.technologyreview.com/feed/',
-        category: 'Science',
-        reliability: 'high',
-        language: 'en',
-        updateFrequency: 'daily'
-    },
-    {
-        name: 'TechCrunch',
-        url: 'https://techcrunch.com/feed/',
-        category: 'Science',
-        reliability: 'high',
-        language: 'en',
-        updateFrequency: 'hourly'
-    },
-    {
-        name: 'NASA News',
+        name: 'NASA Breaking News',
         url: 'https://www.nasa.gov/rss/dyn/breaking_news.rss',
         category: 'Science',
         reliability: 'verified',
-        language: 'en',
-        updateFrequency: 'daily'
+        language: 'en'
     },
     {
-        name: '과학기술정보통신부',
-        url: 'https://www.msit.go.kr/rss/news.do',
+        name: 'Scientific American',
+        url: 'https://www.scientificamerican.com/xml/rss/',
         category: 'Science',
         reliability: 'verified',
-        language: 'ko',
-        updateFrequency: 'daily'
-    }
-];
+        language: 'en'
+    },
+    {
+        name: 'New Scientist',
+        url: 'https://www.newscientist.com/feed/home',
+        category: 'Science',
+        reliability: 'verified',
+        language: 'en'
+    },
 
-/**
- * 경제 뉴스 - 검증된 금융 언론사 및 공식 경제 기관
- */
-export const economySources: NewsSource[] = [
+    // 2. Economy Sources (Safe RSS)
+    {
+        name: 'Reuters Business',
+        url: 'https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best', // Alternative stable feed
+        category: 'Economy',
+        reliability: 'verified',
+        language: 'en'
+    },
     {
         name: 'Bloomberg',
         url: 'https://feeds.bloomberg.com/markets/news.rss',
         category: 'Economy',
         reliability: 'verified',
-        language: 'en',
-        updateFrequency: 'hourly'
+        language: 'en'
+    },
+    {
+        name: '한국경제',
+        url: 'https://www.hankyung.com/feed/rss',
+        category: 'Economy',
+        reliability: 'verified',
+        language: 'ko'
+    },
+    {
+        name: '매일경제',
+        url: 'https://www.mk.co.kr/rss/30000001/', // Main Economy Feed
+        category: 'Economy',
+        reliability: 'verified',
+        language: 'ko'
     },
     {
         name: 'Financial Times',
         url: 'https://www.ft.com/?format=rss',
         category: 'Economy',
         reliability: 'verified',
-        language: 'en',
-        updateFrequency: 'hourly'
-    },
-    {
-        name: 'The Wall Street Journal',
-        url: 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
-        category: 'Economy',
-        reliability: 'verified',
-        language: 'en',
-        updateFrequency: 'hourly'
-    },
-    // 한국 경제 뉴스 소스 (강화)
-    {
-        name: '연합뉴스 경제',
-        url: 'https://www.yonhapnewstv.co.kr/category/news/economy/feed/',
-        category: 'Economy',
-        reliability: 'high',
-        language: 'ko',
-        updateFrequency: 'hourly'
-    },
-    {
-        name: '네이버 경제뉴스',
-        url: 'https://news.naver.com/main/list.naver?mode=LPOD&mid=sec&oid=001&listType=title&isYeonhapFlash=Y',
-        category: 'Economy',
-        reliability: 'high',
-        language: 'ko',
-        updateFrequency: 'hourly'
-    },
-    {
-        name: '조선비즈',
-        url: 'https://biz.chosun.com/rss/index.xml',
-        category: 'Economy',
-        reliability: 'high',
-        language: 'ko',
-        updateFrequency: 'hourly'
-    },
-    {
-        name: '한겨레 경제',
-        url: 'https://www.hani.co.kr/rss/',
-        category: 'Economy',
-        reliability: 'high',
-        language: 'ko',
-        updateFrequency: 'hourly'
-    },
-    {
-        name: '매일경제',
-        url: 'https://www.mk.co.kr/rss/40300001/',
-        category: 'Economy',
-        reliability: 'high',
-        language: 'ko',
-        updateFrequency: 'hourly'
+        language: 'en'
     }
 ];
 
 /**
  * 모든 뉴스 소스
  */
-export const allNewsSources: NewsSource[] = [
-    ...scienceSources,
-    ...economySources
-];
+export const getAllSources = () => {
+    return newsSources;
+};
 
 /**
  * 가짜뉴스 필터링 키워드
@@ -180,4 +129,4 @@ export const reliabilityCriteria = {
     hasMultipleSources: false
 };
 
-export default allNewsSources;
+

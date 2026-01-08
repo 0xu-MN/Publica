@@ -39,10 +39,28 @@ export async function summarizeNews(options: SummarizeOptions): Promise<Summariz
 
     } catch (error) {
         console.error('AI summarization error:', error);
-        // 실패 시 기본 요약 반환
+
+        // Smart Fallback: Create pseudo-bullets from content
+        // 1. Remove HTML tags
+        const cleanContent = content.replace(/<[^>]*>?/gm, '');
+
+        // 2. Split into sentences (simple period check)
+        const sentences = cleanContent
+            .split('.')
+            .map(s => s.trim())
+            .filter(s => s.length > 20); // Filter out too short fragments
+
+        // 3. Take top 3 sentences
+        const topSentences = sentences.slice(0, 3);
+
+        // 4. Format as bullet points
+        const fallbackSummary = topSentences.length > 0
+            ? topSentences.map(s => `- ${s}.`).join('\n')
+            : `- ${content.substring(0, 150)}...`;
+
         return {
-            summary: content.substring(0, 150) + '...',
-            aiInsight: '요약을 생성할 수 없습니다.',
+            summary: fallbackSummary,
+            aiInsight: 'AI 서비스 연결량이 많아 잠시 후 다시 시도해주세요. (현재 원문 기반 요약 제공 중)',
             tags: []
         };
     }

@@ -97,3 +97,33 @@ INSERT INTO news_items (
   10,
   TRUE
 );
+
+-- 10. Bookmarks 테이블 생성 (유저 관점)
+CREATE TABLE IF NOT EXISTS bookmarks (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  news_id UUID REFERENCES news_items(id) ON DELETE CASCADE NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW(),
+  UNIQUE(user_id, news_id) -- 중복 스크랩 방지
+);
+
+-- 11. Bookmarks RLS
+ALTER TABLE bookmarks ENABLE ROW LEVEL SECURITY;
+
+-- 내 북마크만 보기
+CREATE POLICY "Users can view own bookmarks" 
+  ON bookmarks FOR SELECT 
+  USING (auth.uid() = user_id);
+
+-- 내 북마크 추가
+CREATE POLICY "Users can insert own bookmarks" 
+  ON bookmarks FOR INSERT 
+  WITH CHECK (auth.uid() = user_id);
+
+-- 내 북마크 삭제
+CREATE POLICY "Users can delete own bookmarks" 
+  ON bookmarks FOR DELETE 
+  USING (auth.uid() = user_id);
+
+-- 12. Realtime 활성화 (북마크 변경 감지)
+ALTER PUBLICATION supabase_realtime ADD TABLE bookmarks;

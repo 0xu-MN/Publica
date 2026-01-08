@@ -5,9 +5,12 @@ interface ParsedNewsItem {
     title: string;
     content: string;
     link: string;
+    contentSnippet?: string;
     pubDate: Date;
     source: string;
     category: 'Science' | 'Economy';
+    categories?: string[];
+    enclosure?: { url: string; };
 }
 
 const parser = new Parser({
@@ -25,11 +28,14 @@ export async function parseRSSFeed(source: NewsSource): Promise<ParsedNewsItem[]
 
         const items: ParsedNewsItem[] = feed.items.map(item => ({
             title: item.title || '',
-            content: item.contentSnippet || item.content || '',
+            content: item.content || item.summary || item.contentSnippet || '',
             link: item.link || '',
+            contentSnippet: item.contentSnippet,
             pubDate: item.pubDate ? new Date(item.pubDate) : new Date(),
             source: source.name,
-            category: source.category
+            category: source.category,
+            categories: item.categories,
+            enclosure: item.enclosure ? { url: item.enclosure.url } : undefined
         }));
 
         // 최근 24시간 이내 뉴스만 (신선도 유지)
