@@ -3,13 +3,18 @@ import { View, Text, ScrollView, SafeAreaView, StatusBar, TouchableOpacity, useW
 import { InsightCard } from '../components/InsightCard';
 import { fetchNews, NewsItem } from '../services/newsService';
 import { InsightDetailModal } from '../components/InsightDetailModal';
-import { Sparkles, Search, Bell, User, X as CloseIcon } from 'lucide-react-native';
+import { AuthModal } from '../components/AuthModal';
+import { RotatingText } from '../components/RotatingText';
+import { useAuth } from '../contexts/AuthContext';
+import { Sparkles, Search, Bell, User, X as CloseIcon, LogIn, Home as HomeIcon } from 'lucide-react-native';
 
 // Filter categories
 const CATEGORIES = ['전체', '과학', '국내경제', '해외경제'];
 
 export const FeedScreen = () => {
     const { width } = useWindowDimensions();
+    const { user } = useAuth();
+    const [authModalVisible, setAuthModalVisible] = useState(false);
     const [activeCategory, setActiveCategory] = useState('전체');
     const [searchQuery, setSearchQuery] = useState(''); // Search State
     const [isSearchVisible, setIsSearchVisible] = useState(false); // Search Toggle
@@ -109,8 +114,9 @@ export const FeedScreen = () => {
             <StatusBar barStyle="light-content" />
 
             {/* Top Header */}
-            <View className="flex-row justify-between items-center px-6 py-4">
-                <View className="flex-row items-center">
+            <View className="flex-row justify-between items-center px-6 py-4 relative z-50">
+                {/* Left: Logo */}
+                <View className="flex-row items-center z-10">
                     <View className="w-9 h-9 bg-blue-500 rounded-lg items-center justify-center mr-3">
                         <Text className="text-white font-bold text-[22px]">I</Text>
                     </View>
@@ -119,30 +125,72 @@ export const FeedScreen = () => {
                         <Text className="text-slate-400 text-[11px] mt-0.5">AI 뉴스 큐레이션</Text>
                     </View>
                 </View>
-                <View className="flex-row">
-                    {isSearchVisible ? (
-                        <View className="flex-row items-center bg-slate-800/80 rounded-2xl px-3 py-1.5 ml-2.5 border border-white/10 min-w-[200px]">
-                            <TextInput
-                                className="flex-1 text-white text-sm mr-2 min-w-[150px] p-0"
-                                placeholder="검색어 입력..."
-                                placeholderTextColor="#94A3B8"
-                                value={searchQuery}
-                                onChangeText={setSearchQuery}
-                                autoFocus
-                            />
-                            <TouchableOpacity onPress={() => { setSearchQuery(''); setIsSearchVisible(false); }}>
-                                <CloseIcon color="#94A3B8" size={20} />
+
+                {/* Center: Home Button & Categories (Desktop Only) */}
+                {isDesktop && (
+                    <View className="absolute inset-0 flex-row justify-center items-center pointer-events-none">
+                        <View className="flex-row items-center pointer-events-auto">
+                            <TouchableOpacity className="w-10 h-10 bg-slate-800/50 rounded-full border border-white/5 items-center justify-center mr-4 hover:bg-slate-800">
+                                <HomeIcon size={20} color="#94A3B8" />
                             </TouchableOpacity>
+
+                            <View className="flex-row bg-slate-900/50 p-1 rounded-full border border-white/10">
+                                {CATEGORIES.map((cat) => (
+                                    <TouchableOpacity
+                                        key={cat}
+                                        className={`px-5 py-2 rounded-full ${activeCategory === cat ? 'bg-slate-700 shadow-sm' : 'hover:bg-white/5'}`}
+                                        onPress={() => setActiveCategory(cat)}
+                                    >
+                                        <Text className={`text-sm font-semibold ${activeCategory === cat ? 'text-white' : 'text-slate-400'}`}>
+                                            {cat}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
                         </View>
-                    ) : (
-                        <TouchableOpacity onPress={() => setIsSearchVisible(true)}>
-                            <Search color="#fff" size={24} className="opacity-90 ml-5" />
+                    </View>
+                )}
+
+                {/* Right: Auth & Icons */}
+                <View className="flex-row items-center z-10">
+                    {!user ? (
+                        <TouchableOpacity
+                            onPress={() => setAuthModalVisible(true)}
+                            className="bg-white/10 px-4 py-2 rounded-xl flex-row items-center border border-white/10"
+                        >
+                            <User size={16} color="#fff" style={{ marginRight: 6 }} />
+                            <Text className="text-white font-semibold text-sm">로그인</Text>
                         </TouchableOpacity>
+                    ) : (
+                        <>
+                            {/* Mobile Only: Small Search Icon */}
+                            {!isDesktop && (
+                                isSearchVisible ? (
+                                    <View className="flex-row items-center bg-slate-800/80 rounded-2xl px-3 py-1.5 ml-2.5 border border-white/10 min-w-[200px]">
+                                        <TextInput
+                                            className="flex-1 text-white text-sm mr-2 min-w-[150px] p-0"
+                                            placeholder="검색어 입력..."
+                                            placeholderTextColor="#94A3B8"
+                                            value={searchQuery}
+                                            onChangeText={setSearchQuery}
+                                            autoFocus
+                                        />
+                                        <TouchableOpacity onPress={() => { setSearchQuery(''); setIsSearchVisible(false); }}>
+                                            <CloseIcon color="#94A3B8" size={20} />
+                                        </TouchableOpacity>
+                                    </View>
+                                ) : (
+                                    <TouchableOpacity onPress={() => setIsSearchVisible(true)}>
+                                        <Search color="#fff" size={24} className="opacity-90 ml-5" />
+                                    </TouchableOpacity>
+                                )
+                            )}
+                            <Bell color="#fff" size={24} className="opacity-90 ml-5" />
+                            <User color="#fff" size={24} className="opacity-90 ml-5" />
+                        </>
                     )}
-                    <Bell color="#fff" size={24} className="opacity-90 ml-5" />
-                    <User color="#fff" size={24} className="opacity-90 ml-5" />
                 </View>
-            </View >
+            </View>
 
             <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
 
@@ -158,61 +206,93 @@ export const FeedScreen = () => {
                     <Text className="text-slate-400 text-[15px] mb-5 text-center">
                         AI가 선별한 신뢰할 수 있는 뉴스를 카드로 빠르게 확인하세요
                     </Text>
-                    <View className="flex-row items-center">
-                        <Sparkles size={14} color="#888" />
-                        <Text className="text-slate-500 text-[13px] ml-1.5">마지막 업데이트: 5분 전</Text>
+
+                    {/* Update Time & Stats Row */}
+                    <View className="flex-row items-center bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                        <View className="flex-row items-center">
+                            <Sparkles size={14} color="#888" />
+                            <Text className="text-slate-500 text-[13px] ml-1.5 mr-4">마지막 업데이트: 5분 전</Text>
+                        </View>
+                        <View className="w-[1px] h-3 bg-white/10 mr-4" />
+                        <View className="flex-row items-center gap-4">
+                            <View className="flex-row items-center">
+                                <View className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5" />
+                                <Text className="text-slate-400 text-[13px]">과학 {finalNewsData.filter(i => i.category === 'Science').length}개</Text>
+                            </View>
+                            <View className="flex-row items-center">
+                                <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
+                                <Text className="text-slate-400 text-[13px]">경제 {finalNewsData.filter(i => i.category === 'Economy').length}개</Text>
+                            </View>
+                        </View>
                     </View>
                 </View>
 
-                {/* Filter Tabs */}
-                <View className="items-center mb-6">
-                    <View className="flex-row bg-white/10 p-2 rounded-full border-[1.5px] border-white/20 shadow-lg shadow-black/40">
-                        {CATEGORIES.map((cat) => (
-                            <TouchableOpacity
-                                key={cat}
-                                className={`flex-row items-center px-7 py-3.5 rounded-full ${activeCategory === cat ? 'bg-white/20 border-white/30 border-[1.5px] shadow-lg shadow-blue-500/40' : ''}`}
-                                onPress={() => setActiveCategory(cat)}
-                            >
-                                {cat === '전체' && <Sparkles size={14} color={activeCategory === '전체' ? '#fff' : '#888'} style={{ marginRight: 4 }} />}
-                                <Text className={`text-[15px] font-semibold ${activeCategory === cat ? 'text-white' : 'text-slate-500'}`}>
-                                    {cat}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                {/* Filter Tabs (Mobile Only) and Desktop Large Search */}
+                <View className="items-center mb-2 w-full px-5">
+                    {isDesktop ? (
+                        <View className="w-full max-w-[600px] mb-4">
+                            <View className="flex-row items-center bg-slate-900 border border-slate-700/50 rounded-2xl px-5 py-4 shadow-xl shadow-black/20">
+                                <Search color="#64748B" size={24} style={{ marginRight: 12 }} />
+                                <TextInput
+                                    className="flex-1 text-white text-lg font-medium outline-none" // outline-none for web
+                                    placeholder="검색창"
+                                    placeholderTextColor="#64748B"
+                                    value={searchQuery}
+                                    onChangeText={setSearchQuery}
+                                />
+                            </View>
+                        </View>
+                    ) : (
+                        <View className="flex-row bg-white/10 p-2 rounded-full border-[1.5px] border-white/20 shadow-lg shadow-black/40">
+                            {CATEGORIES.map((cat) => (
+                                <TouchableOpacity
+                                    key={cat}
+                                    className={`flex-row items-center px-7 py-3.5 rounded-full ${activeCategory === cat ? 'bg-white/20 border-white/30 border-[1.5px] shadow-lg shadow-blue-500/40' : ''}`}
+                                    onPress={() => setActiveCategory(cat)}
+                                >
+                                    {cat === '전체' && <Sparkles size={14} color={activeCategory === '전체' ? '#fff' : '#888'} style={{ marginRight: 4 }} />}
+                                    <Text className={`text-[15px] font-semibold ${activeCategory === cat ? 'text-white' : 'text-slate-500'}`}>
+                                        {cat}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    )}
                 </View>
 
                 {/* Hot Keywords */}
                 {hotKeywords.length > 0 && (
-                    <View className="mb-6 items-center">
-                        <Text className="text-slate-500 text-xs font-bold mb-3 uppercase tracking-widest">🔥 Hot Keywords</Text>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 gap-2.5">
-                            {hotKeywords.map((keyword, index) => (
-                                <TouchableOpacity
-                                    key={index}
-                                    className={`px-4 py-2 rounded-3xl border ${activeKeyword === keyword ? 'bg-blue-500/20 border-blue-500' : 'bg-slate-800/50 border-white/10'}`}
-                                    onPress={() => setActiveKeyword(activeKeyword === keyword ? null : keyword)}
-                                >
-                                    <Text className={`text-[13px] font-semibold ${activeKeyword === keyword ? 'text-blue-400' : 'text-slate-400'}`}>
-                                        {keyword}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
+                    <View className="mb-10 items-center w-full">
+                        <View className="flex-row items-center justify-center gap-3">
+                            <Text className="text-slate-500 text-xs font-bold uppercase tracking-widest">🔥 HOT KEYWORDS</Text>
+                            {isDesktop ? (
+                                <RotatingText
+                                    texts={hotKeywords}
+                                    textStyle={{ color: '#60A5FA', fontWeight: '700', fontSize: 13 }}
+                                />
+                            ) : null}
+                        </View>
+
+                        {/* Mobile: Scrollable List (Hidden on Desktop) */}
+                        {!isDesktop && (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 gap-2.5 mt-3">
+                                {hotKeywords.map((keyword, index) => (
+                                    <TouchableOpacity
+                                        key={index}
+                                        className={`px-4 py-2 rounded-3xl border ${activeKeyword === keyword ? 'bg-blue-500/20 border-blue-500' : 'bg-slate-800/50 border-white/10'}`}
+                                        onPress={() => setActiveKeyword(activeKeyword === keyword ? null : keyword)}
+                                    >
+                                        <Text className={`text-[13px] font-semibold ${activeKeyword === keyword ? 'text-blue-400' : 'text-slate-400'}`}>
+                                            {keyword}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        )}
                     </View>
                 )}
 
-                {/* Statistics or Count */}
-                <View className="flex-row justify-center mb-7 gap-5">
-                    <View className="flex-row items-center">
-                        <View className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-2" />
-                        <Text className="text-slate-400 text-[13px]">과학 {finalNewsData.filter(i => i.category === 'Science').length}개</Text>
-                    </View>
-                    <View className="flex-row items-center">
-                        <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-2" />
-                        <Text className="text-slate-400 text-[13px]">경제 {finalNewsData.filter(i => i.category === 'Economy').length}개</Text>
-                    </View>
-                </View>
+
 
                 {/* Masonry Grid */}
                 {loading ? (
@@ -229,6 +309,13 @@ export const FeedScreen = () => {
                                     item={item}
                                     desktopMode={isDesktop}
                                     onPress={() => setSelectedItem(item)}
+                                    onBookmarkPress={() => {
+                                        if (!user) {
+                                            setAuthModalVisible(true);
+                                        } else {
+                                            // Future: Implement quick bookmark toggle here
+                                        }
+                                    }}
                                 />
                             </View>
                         )}
@@ -248,6 +335,10 @@ export const FeedScreen = () => {
                 item={selectedItem}
                 visible={selectedItem !== null}
                 onClose={() => setSelectedItem(null)}
+            />
+            <AuthModal
+                visible={authModalVisible}
+                onClose={() => setAuthModalVisible(false)}
             />
         </SafeAreaView >
     );

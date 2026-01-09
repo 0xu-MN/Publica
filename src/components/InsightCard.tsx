@@ -15,9 +15,10 @@ interface InsightCardProps {
     style?: any;
     desktopMode?: boolean;
     onPress?: () => void;
+    onBookmarkPress?: () => void;
 }
 
-export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMode = false, onPress }) => {
+export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMode = false, onPress, onBookmarkPress }) => {
     const cardHeight = 350;
     const [isHovered, setIsHovered] = useState(false);
 
@@ -91,9 +92,15 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
                         >
                             <Text className="text-[11px] font-bold uppercase" style={{ color: categoryColor }}>{categoryLabel}</Text>
                         </View>
-                        <View className="w-9 h-9 bg-black/30 rounded-full items-center justify-center backdrop-blur-sm border border-white/5">
+                        <Pressable
+                            className="w-9 h-9 bg-black/30 rounded-full items-center justify-center backdrop-blur-sm border border-white/5 active:bg-black/50"
+                            onPress={(e) => {
+                                e.stopPropagation(); // Prevent card click
+                                onBookmarkPress?.();
+                            }}
+                        >
                             <Bookmark size={18} color="white" opacity={0.9} />
-                        </View>
+                        </Pressable>
                     </View>
 
                     {/* Bottom Content */}

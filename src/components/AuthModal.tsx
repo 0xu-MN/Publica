@@ -48,53 +48,55 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
 
                 <Animated.View
                     entering={SlideInDown.springify()}
-                    className={`max-w-[400px] rounded-[40px] p-8 items-center border border-white/10 ${Platform.OS === 'web' ? 'shadow-2xl shadow-black/50' : ''}`}
+                    className={`w-full max-w-[400px] bg-[#0F172A] rounded-2xl border border-slate-700 p-8 items-center ${Platform.OS === 'web' ? 'shadow-2xl shadow-black' : ''}`}
                     style={[
-                        { backgroundColor: '#0F172A', width: 400 },
                         Platform.OS !== 'web' ? { elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 } : {}
                     ]}
                 >
-                    <Pressable className="absolute top-5 right-5 p-2" onPress={onClose}>
-                        <X size={20} color="#94A3B8" />
+                    <Pressable className="absolute top-4 right-4 p-2 z-[50] opacity-70 hover:opacity-100" onPress={onClose}>
+                        <X size={18} color="#94A3B8" />
                     </Pressable>
 
-                    <Text className="text-2xl font-extrabold text-white mb-3 text-center">InsightFlow 시작하기</Text>
-                    <Text className="text-[15px] text-slate-400 text-center leading-[22px] mb-8">
-                        로그인하고 관심 뉴스를 저장하거나{'\n'}나만의 인사이트를 관리하세요.
-                    </Text>
+                    <View className="mb-8 items-center">
+                        <Text className="text-2xl font-bold text-white mb-2 tracking-tight">환영합니다</Text>
+                        <Text className="text-sm text-slate-400 text-center leading-[20px]">
+                            InsightFlow에 로그인하고{'\n'}나만의 인사이트를 발견하세요.
+                        </Text>
+                    </View>
 
                     <View className="w-full gap-3 mb-6">
-                        {/* Google Button */}
+                        {/* Google Button - Shadcn Outline/Secondary Style */}
                         <Pressable
                             style={({ pressed }) => [
-                                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
+                                pressed && { opacity: 0.9, backgroundColor: '#1e293b' }
                             ]}
-                            className="w-full h-[52px] rounded-[14px] flex-row items-center justify-center relative bg-white"
+                            className="w-full h-11 rounded-md flex-row items-center justify-center relative bg-white border border-slate-200"
                             onPress={handleGoogleLogin}
                         >
-                            <View className="absolute left-5 w-6 h-6 items-center justify-center">
-                                <Text style={{ fontSize: 18 }}>G</Text>
+                            <View className="absolute left-4 w-5 h-5 items-center justify-center">
+                                {/* Simple Google G Icon replacement for text */}
+                                <Text className="font-bold text-lg text-slate-900">G</Text>
                             </View>
-                            <Text className="text-slate-800 text-base font-semibold">Google로 계속하기</Text>
+                            <Text className="text-slate-900 text-sm font-medium">Google로 계속하기</Text>
                         </Pressable>
 
-                        {/* Kakao Button */}
+                        {/* Kakao Button - Custom Brand Brand */}
                         <Pressable
                             style={({ pressed }) => [
-                                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
+                                pressed && { opacity: 0.9 }
                             ]}
-                            className="w-full h-[52px] rounded-[14px] flex-row items-center justify-center relative bg-[#FEE500]"
+                            className="w-full h-11 rounded-md flex-row items-center justify-center relative bg-[#FEE500] border border-[#FEE500]"
                             onPress={handleKakaoLogin}
                         >
-                            <View className="absolute left-5 w-6 h-6 items-center justify-center bg-transparent">
-                                <Text style={{ fontSize: 18, color: '#3C1E1E' }}>K</Text>
+                            <View className="absolute left-4 w-5 h-5 items-center justify-center">
+                                <Text className="font-bold text-lg text-[#3C1E1E]">K</Text>
                             </View>
-                            <Text className="text-[#3C1E1E] text-base font-semibold">카카오로 계속하기</Text>
+                            <Text className="text-[#3C1E1E] text-sm font-medium">카카오로 계속하기</Text>
                         </Pressable>
                     </View>
 
-                    <Text className="text-xs text-slate-500 text-center leading-[18px]">
-                        로그인 시 이용약관 및 개인정보처리방침에 동의하게 됩니다.
+                    <Text className="text-[11px] text-slate-600 text-center px-4">
+                        계속 진행하면 InsightFlow의 <Text className="underline">이용약관</Text> 및 <Text className="underline">개인정보처리방침</Text>에 동의하는 것으로 간주됩니다.
                     </Text>
                 </Animated.View>
             </View>
