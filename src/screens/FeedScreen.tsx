@@ -14,6 +14,7 @@ import { PersonalDashboard } from '../components/PersonalDashboard';
 import { Workspace } from '../components/Workspace';
 import { AnimatedPillNav } from '../components/AnimatedPillNav';
 import Footer from '../components/Footer';
+import { Separator } from '../components/Separator';
 
 // Filter categories
 const CATEGORIES = ['전체', '과학', '경제'];
@@ -366,10 +367,33 @@ export const FeedScreen = () => {
                                                 user={user}
                                                 onLoginPress={() => setAuthModalVisible(true)}
                                             />
-                                            <View className="px-6 py-8">
+                                            <Separator className="my-8" />
+                                            <View className="px-6">
                                                 <View className="flex-row items-center justify-between mb-6">
                                                     <Text className="text-white text-xl font-bold">최신 인사이트</Text>
-                                                    <Text className="text-slate-500 text-sm">{finalNewsData.length}개 기사</Text>
+
+                                                    {/* Stats Section moved here */}
+                                                    <View className="flex-row items-center bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                                                        <View className="flex-row items-center">
+                                                            <Sparkles size={14} color="#888" />
+                                                            <Text className="text-slate-500 text-[13px] ml-1.5 mr-4">마지막 업데이트: 5분 전</Text>
+                                                        </View>
+                                                        <View className="w-[1px] h-3 bg-white/10 mr-4" />
+                                                        <View className="flex-row items-center gap-4">
+                                                            <View className="flex-row items-center">
+                                                                <View className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5" />
+                                                                <Text className="text-slate-400 text-[13px]">전체 {finalNewsData.length}개</Text>
+                                                            </View>
+                                                            <View className="flex-row items-center">
+                                                                <View className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5" />
+                                                                <Text className="text-slate-400 text-[13px]">과학 {finalNewsData.filter(i => i.category === 'Science').length}개</Text>
+                                                            </View>
+                                                            <View className="flex-row items-center">
+                                                                <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
+                                                                <Text className="text-slate-400 text-[13px]">경제 {finalNewsData.filter(i => i.category === 'Economy').length}개</Text>
+                                                            </View>
+                                                        </View>
+                                                    </View>
                                                 </View>
                                             </View>
                                         </View>
