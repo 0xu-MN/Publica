@@ -100,3 +100,130 @@ export const mockData: NewsItem[] = [
     tags: ['#크립토', '#금융']
   },
 ];
+
+// --- Community Data & Types ---
+
+export type CommunityCategory = '전체' | '연구·학술' | '투자·경제' | '정부지원·펀딩' | '커리어·네트워킹' | '고민·상담' | '대학·대학원생' | '오프토픽';
+
+export const COMMUNITY_CATEGORIES: CommunityCategory[] = [
+  '전체',
+  '연구·학술',
+  '투자·경제',
+  '정부지원·펀딩',
+  '커리어·네트워킹',
+  '고민·상담',
+  '대학·대학원생',
+  '오프토픽',
+];
+
+export interface CommunityPost {
+  id: string;
+  author: string;
+  role: string; // e.g., '박사과정', '현직 투자자', '익명'
+  isAnonymous: boolean;
+  category: CommunityCategory;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  likes: number;
+  comments: number;
+  timestamp: string;
+  scrapped: boolean;
+}
+
+export const mockCommunityPosts: CommunityPost[] = [
+  {
+    id: 'c1',
+    author: '김연구',
+    role: '박사과정',
+    isAnonymous: false,
+    category: '연구·학술',
+    title: 'Nature 게재 논문, 재현성 문제 관련 토론 요청합니다.',
+    content: '최근 발표된 AlphaFold3 관련 논문에서 특정 단백질 구조 예측 부분의 재현이 잘 안되네요. 혹시 같은 실험 해보신 분 계신가요?',
+    imageUrl: 'https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=2940&auto=format&fit=crop',
+    likes: 42,
+    comments: 15,
+    timestamp: '방금 전',
+    scrapped: true,
+  },
+  {
+    id: 'c2',
+    author: '익명',
+    role: '익명',
+    isAnonymous: true,
+    category: '고민·상담',
+    title: '박사 3년차인데 번아웃이 너무 심하게 왔습니다.',
+    content: '연구 진도는 안 나가고 교수님 압박은 심해지고... 다들 어떻게 버티시나요? 휴학을 진지하게 고민 중입니다.',
+    likes: 128,
+    comments: 45,
+    timestamp: '15분 전',
+    scrapped: false,
+  },
+  {
+    id: 'c3',
+    author: '이투자',
+    role: '퀀트 트레이더',
+    isAnonymous: false,
+    category: '투자·경제',
+    title: '2026 하반기 반도체 섹터 전망 및 포트폴리오 공유',
+    content: '현재 HBM 공급 과잉 우려가 있지만 AI 서버 수요는 여전히 견고합니다. 제 개인적인 롱/숏 전략 공유드립니다.',
+    imageUrl: 'https://images.unsplash.com/photo-1642543477810-72f12f949c8c?q=80&w=2832&auto=format&fit=crop',
+    likes: 89,
+    comments: 32,
+    timestamp: '1시간 전',
+    scrapped: true,
+  },
+  {
+    id: 'c4',
+    author: '최창업',
+    role: '스타트업 CEO',
+    isAnonymous: false,
+    category: '정부지원·펀딩',
+    title: '예비창업패키지 최종 합격 꿀팁 (사업계획서 첨부)',
+    content: '3수 끝에 드디어 합격했습니다! 심사위원이 중요하게 본 포인트 3가지를 정리해봤습니다. 도움 되시길 바랍니다.',
+    imageUrl: 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?q=80&w=2940&auto=format&fit=crop',
+    likes: 245,
+    comments: 67,
+    timestamp: '3시간 전',
+    scrapped: true,
+  },
+  {
+    id: 'c5',
+    author: '익명',
+    role: '익명',
+    isAnonymous: true,
+    category: '커리어·네트워킹',
+    title: '삼성전자 무선사업부 vs 네이버 클라우드 오퍼 비교',
+    content: '연봉은 삼성이 조금 더 높은데 워라밸과 성장성은 네이버가 좋아보여서요. 현직자 분들 조언 부탁드립니다.',
+    likes: 56,
+    comments: 23,
+    timestamp: '5시간 전',
+    scrapped: false,
+  },
+  {
+    id: 'c6',
+    author: '한대학',
+    role: '석사과정',
+    isAnonymous: false,
+    category: '대학·대학원생',
+    title: '랩실 선정할 때 꼭 확인해야 할 체크리스트',
+    content: '인건비, 교수님 인품, 출퇴근 시간... 겉으로만 봐선 모르는 꿀팁들 정리했습니다.',
+    likes: 92,
+    comments: 18,
+    timestamp: '어제',
+    scrapped: false,
+  },
+  {
+    id: 'c7',
+    author: '강코딩',
+    role: '프리랜서',
+    isAnonymous: false,
+    category: '오프토픽',
+    title: '개발자 노트북 추천해주세요 (맥북 vs 씽크패드)',
+    content: '이번에 장비 업그레이드 하려고 하는데 고민이네요. 주로 AI 모델 돌릴 일이 많습니다.',
+    likes: 12,
+    comments: 48,
+    timestamp: '2일 전',
+    scrapped: false,
+  }
+];

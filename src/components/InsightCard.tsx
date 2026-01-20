@@ -64,6 +64,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
                         source={{ uri: item.imageUrl }}
                         className="absolute inset-0 w-full h-full"
                         contentFit="cover"
+                        contentPosition="center"
                         transition={500}
                     />
 

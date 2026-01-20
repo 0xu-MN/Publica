@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, ActivityIndicator } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, ActivityIndicator, Animated } from 'react-native';
 import { Svg, Path, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react-native';
 import { fetchMarketData, MarketData } from '../services/marketService';
@@ -66,17 +66,52 @@ const MarketChartCard = ({ data }: { data: MarketData }) => {
 export const MarketCarouselWidget = () => {
     const [marketData, setMarketData] = useState<MarketData[]>([]);
     const [loading, setLoading] = useState(true);
+    const scrollViewRef = useRef<ScrollView>(null);
+    const scrollX = useRef(new Animated.Value(0)).current;
+    const [contentWidth, setContentWidth] = useState(0);
+    const [scrollViewWidth, setScrollViewWidth] = useState(0);
 
     const loadData = async () => {
         setLoading(true);
         const data = await fetchMarketData();
-        setMarketData(data);
+        // Duplicate data for infinite scroll effect
+        setMarketData([...data, ...data, ...data]);
         setLoading(false);
     };
 
     useEffect(() => {
         loadData();
     }, []);
+
+    // Auto-scroll animation
+    useEffect(() => {
+        if (marketData.length === 0 || scrollViewWidth === 0) return;
+
+        const cardWidth = 336; // 320 + 16 gap
+        const totalWidth = cardWidth * marketData.length;
+
+        let currentPosition = 0;
+        const scrollSpeed = 0.5; // pixels per frame
+
+        const animate = () => {
+            currentPosition += scrollSpeed;
+
+            // Reset to beginning when reaching the end of first set
+            const resetPoint = cardWidth * (marketData.length / 3);
+            if (currentPosition >= resetPoint) {
+                currentPosition = 0;
+                scrollViewRef.current?.scrollTo({ x: 0, animated: false });
+            } else {
+                scrollViewRef.current?.scrollTo({ x: currentPosition, animated: false });
+            }
+
+            requestAnimationFrame(animate);
+        };
+
+        const animationId = requestAnimationFrame(animate);
+
+        return () => cancelAnimationFrame(animationId);
+    }, [marketData, scrollViewWidth]);
 
     if (loading) {
         return (
@@ -93,6 +128,9 @@ export const MarketCarouselWidget = () => {
                 <View className="flex-row items-center">
                     <TrendingUp size={18} color="#F87171" />
                     <Text className="text-slate-200 text-base font-bold ml-2">글로벌 마켓 트렌드</Text>
+                    <View className="bg-red-500/10 px-2 py-0.5 rounded-full ml-2">
+                        <Text className="text-red-400 text-[10px] font-bold">LIVE</Text>
+                    </View>
                 </View>
                 <TouchableOpacity onPress={loadData} className="flex-row items-center bg-slate-800/80 px-3 py-1.5 rounded-full border border-white/5">
                     <RefreshCw size={12} color="#94A3B8" style={{ marginRight: 6 }} />
@@ -101,14 +139,16 @@ export const MarketCarouselWidget = () => {
             </View>
 
             <ScrollView
+                ref={scrollViewRef}
                 horizontal
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={{ paddingRight: 20 }}
-                snapToInterval={336} // 320 card + 16 gap
-                decelerationRate="fast"
+                scrollEnabled={false} // Disable manual scrolling for auto-scroll effect
+                onLayout={(e) => setScrollViewWidth(e.nativeEvent.layout.width)}
+                onContentSizeChange={(width) => setContentWidth(width)}
             >
-                {marketData.map((item) => (
-                    <MarketChartCard key={item.symbol} data={item} />
+                {marketData.map((item, index) => (
+                    <MarketChartCard key={`${item.symbol}-${index}`} data={item} />
                 ))}
             </ScrollView>
         </View>
