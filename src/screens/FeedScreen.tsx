@@ -284,7 +284,7 @@ export const FeedScreen = () => {
                                         className="w-12 h-12 rounded-full flex-row items-center justify-center bg-slate-800/50 border border-white/10 hover:bg-slate-700 transition-all"
                                         onPress={() => {
                                             setViewMode('support');
-                                            setSupportSubMode('support'); // Default to support section when clicked
+                                            setSupportSubMode('overview'); // Default to Connect Hub
                                         }}
                                     >
                                         <HeartHandshake size={20} color="#94A3B8" />

@@ -1,149 +1,120 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { ChevronRight, ArrowRight, Sparkles, TrendingUp, Users } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { VerticalScrollCards } from './VerticalScrollCards';
-import { mockCommunityPosts, CommunityPost } from '../data/mockData';
+import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { ArrowRight, Sparkles, AlertCircle } from 'lucide-react-native';
+import { VerticalStackCarousel } from './VerticalStackCarousel';
+import { GovernmentCard } from './GovernmentCard';
+import { CommunityCard } from './CommunityCard';
 
-interface ConnectHomeViewProps {
-    onNavigateToSupport: () => void;
-    onNavigateToLounge: () => void;
-}
-
+// Mock Data
 const GOVERNMENT_PROGRAMS = [
-    { id: '1', title: '2026년도 AI 바우처 지원사업', subtitle: '과학기술정보통신부', meta: '~ 2026.02.28 | 최대 3억' },
-    { id: '2', title: '청년창업사관학교 16기', subtitle: '중소벤처기업진흥공단', meta: '~ 2026.02.05 | D-3' },
-    { id: '3', title: '데이터바우처 지원사업', subtitle: '한국데이터산업진흥원', meta: '~ 2026.03.15 | 최대 4500만' },
-    { id: '4', title: '글로벌 강소기업 1000+', subtitle: '중소벤처기업부', meta: '~ 2026.02.20 | 수출/마케팅' },
-    { id: '5', title: '스마트상점 기술보급', subtitle: '소상공인시장진흥공단', meta: '~ 2026.04.01 | 최대 1500만' },
+    { title: '데이터바우처 지원사업', agency: '한국데이터산업진흥원', period: '2026.03.15', status: '접수중', dDay: 'D-30', category: '데이터/AI' },
+    { title: '글로벌 강소기업 1000+', agency: '중소벤처기업부', period: '2026.02.20', status: '마감임박', dDay: 'D-15', category: '수출/마케팅' },
+    { title: '스마트상점 기술보급', agency: '소상공인시장진흥공단', period: '2026.04.01', status: '접수예정', dDay: 'D-45', category: '소상공인' },
+    { title: '2026년도 AI 바우처 지원', agency: '과학기술정보통신부', period: '2026.02.28', status: '접수중', dDay: 'D-22', category: '기술개발' },
+    { title: '청년창업사관학교 16기', agency: '중소벤처기업진흥공단', period: '2026.02.05', status: '마감임박', dDay: 'D-3', category: '창업지원' },
 ];
 
+const COMMUNITY_POSTS = [
+    { title: 'Nature 게재 논문, 재현성 문제 관련 토론 요청합니다.', author: '김연구', category: '연구·학술', content: '최근 발표된 AlphaFold3 관련 논문에서 특정 단백질 구조 예측 부분의 재현이 잘 안되네요. 혹시 같은 실험 해보신 분 계신가요?', imageUrl: 'https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&q=80&w=800' },
+    { title: '박사 3년차인데 번아웃이 너무 심하게 왔습니다.', author: '익명', category: '고민·상담', content: '연구 진도는 안 나가고 교수님 압박은 심해지고... 다들 어떻게 버티시나요? 휴학을 진지하게 고민 중입니다.', imageUrl: undefined },
+    { title: '2026 하반기 반도체 섹터 전망 및 포트폴리오 공유', author: '이투자', category: '투자·경제', content: '현재 HBM 공급 과잉 우려가 있지만 AI 서버 수요는 여전히 견고합니다. 제 개인적인 롱/숏 전략 공유드립니다.', imageUrl: 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?auto=format&fit=crop&q=80&w=800' },
+    { title: '예비창업패키지 최종 합격 꿀팁 (사업계획서 첨부)', author: '최창업', category: '정부지원', content: '3수 끝에 드디어 합격했습니다! 심사위원이 중요하게 본 포인트 3가지를 정리해봤습니다. 도움 되시길 바랍니다.', imageUrl: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&q=80&w=800' },
+];
+
+interface ConnectHomeViewProps {
+    onNavigateToSupport?: () => void;
+    onNavigateToLounge?: () => void;
+}
+
 export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({ onNavigateToSupport, onNavigateToLounge }) => {
-    // Get random 4 posts for the grid
-    const recentPosts = mockCommunityPosts.slice(0, 4);
+    const { width } = useWindowDimensions();
+    const isDesktop = width >= 1024;
 
     return (
-        <ScrollView className="flex-1 pb-20" showsVerticalScrollIndicator={false}>
-            <View className="px-8 py-10 gap-12 max-w-[1400px] w-full mx-auto">
-
-                {/* Main Title */}
-                <View className="mb-4">
-                    <Text className="text-white text-4xl font-bold mb-2">Connect Hub</Text>
-                    <Text className="text-slate-400 text-base">정부사업과 커뮤니티를 한 곳에서</Text>
-                </View>
-
-                {/* SECTION 1: Government Support (Moving Card + List) */}
-                <View>
-                    <View className="flex-row items-center justify-between mb-4">
-                        <View className="flex-row items-center gap-2">
-                            <View className="bg-green-500/10 p-1.5 rounded-lg">
-                                <Sparkles size={16} color="#4ADE80" />
-                            </View>
-                            <Text className="text-white text-lg font-bold">정부사업 안내</Text>
-                        </View>
-                        <TouchableOpacity
-                            onPress={onNavigateToSupport}
-                            className="bg-[#1E293B] px-3 py-1.5 rounded-full border border-white/10 flex-row items-center hover:bg-slate-800"
-                        >
-                            <Text className="text-slate-400 text-xs font-bold mr-1">더 보기</Text>
-                            <ChevronRight size={12} color="#94A3B8" />
-                        </TouchableOpacity>
-                    </View>
-
-                    <View className="flex-row gap-6 h-[600px]">
-                        {/* LEFT: Vertical Scroll Cards */}
-                        <View className="flex-1">
-                            <VerticalScrollCards
-                                items={GOVERNMENT_PROGRAMS}
-                                title="맞춤형 정부사업"
-                                subtitle="회원님께 딱 맞는 사업을&#10;실시간으로 분석했습니다."
-                                bgGradientColors={['#2E1065', '#0F172A']}
-                            />
-                        </View>
-
-                        {/* RIGHT: Static List / Placeholder for "Other Business List" */}
-                        <View className="flex-1 bg-[#1E293B] rounded-3xl border border-white/10 p-6 justify-between">
-                            <View>
-                                <Text className="text-slate-400 text-xs font-bold mb-4 uppercase tracking-wider">맞춤형 지원사업</Text>
-                                <View className="gap-4">
-                                    {[1, 2, 3].map((i) => (
-                                        <View key={i} className="flex-row gap-3">
-                                            <View className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 items-center justify-center">
-                                                <Text className="text-slate-500 font-bold text-xs">{i}</Text>
-                                            </View>
-                                            <View className="flex-1 justify-center">
-                                                <View className="h-2.5 w-3/4 bg-slate-700/50 rounded mb-1.5" />
-                                                <View className="h-2 w-1/2 bg-slate-800/50 rounded" />
-                                            </View>
-                                        </View>
-                                    ))}
-                                </View>
-                            </View>
-
-                            <View className="border-t border-white/5 pt-4">
-                                <Text className="text-slate-500 text-center text-xs leading-5">
-                                    기존에 보고 계시던{'\n'}
-                                    관심 사업 리스트를 여기다{'\n'}
-                                    보여주면 될 듯?
-                                </Text>
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-
-                {/* SECTION 2: Community Lounge (Hot Zone + Grid) */}
-                <View>
-                    <View className="flex-row items-center justify-between mb-4">
-                        <View className="flex-row items-center gap-2">
-                            <View className="bg-blue-500/10 p-1.5 rounded-lg">
-                                <Users size={16} color="#60A5FA" />
-                            </View>
-                            <Text className="text-white text-lg font-bold">커뮤니티 라운지</Text>
-                        </View>
-                        <TouchableOpacity
-                            onPress={onNavigateToLounge}
-                            className="bg-[#1E293B] px-3 py-1.5 rounded-full border border-white/10 flex-row items-center hover:bg-slate-800"
-                        >
-                            <Text className="text-slate-400 text-xs font-bold mr-1">라운지 입장</Text>
-                            <ArrowRight size={12} color="#94A3B8" />
-                        </TouchableOpacity>
-                    </View>
-
-                    <View className="flex-row gap-6 h-[600px]">
-                        {/* LEFT: Vertical Scroll Cards (Community) */}
-                        <View className="flex-1">
-                            <VerticalScrollCards
-                                items={recentPosts.map(p => ({
-                                    id: p.id,
-                                    title: p.title,
-                                    subtitle: p.content,
-                                    meta: `${p.category} · ${p.author}`
-                                }))}
-                                title="실시간 인기 구역"
-                                subtitle="지금 가장 뜨거운 논쟁이&#10;일어나고 있는 곳입니다."
-                                bgGradientColors={['#1e1b4b', '#0F172A']}
-                            />
-                        </View>
-
-                        {/* RIGHT: 2x2 Grid Categories Placeholder */}
-                        <View className="flex-1 flex-row flex-wrap gap-3">
-                            {['연구·학술', '투자·경제', '고민·상담', '오프토픽'].map((cat, idx) => (
-                                <View key={cat} className="w-[48%] h-[48%] bg-[#1E293B] rounded-2xl border border-white/5 p-4 justify-between hover:border-blue-500/30 transition-all cursor-pointer">
-                                    <View className="w-8 h-8 rounded-full bg-slate-800 items-center justify-center">
-                                        <Text className="text-white font-bold text-xs">{idx + 1}</Text>
-                                    </View>
-                                    <View>
-                                        <Text className="text-slate-400 text-[10px] mb-1">카테고리별 라운지</Text>
-                                        <Text className="text-white font-bold text-sm">{cat}</Text>
-                                    </View>
-                                </View>
-                            ))}
-                        </View>
-                    </View>
-                </View>
-
+        <View className="flex-1 w-full max-w-[1400px] mx-auto pb-10 pt-4 px-6 md:px-0">
+            {/* Header Area */}
+            <View className="mb-10">
+                <Text className="text-white text-4xl font-bold mb-2">Connect Hub</Text>
+                <Text className="text-slate-400 text-lg">정부사업과 커뮤니티를 한 곳에서</Text>
             </View>
-        </ScrollView>
+
+            <View className="flex-row gap-8 min-h-[500px]">
+                {/* 1. Government Support Section */}
+                <View className="flex-1">
+                    <View className="flex-row items-center justify-between mb-6">
+                        <View className="flex-row items-center gap-2">
+                            <View className="bg-emerald-500/10 p-2 rounded-lg">
+                                <Sparkles size={20} color="#10B981" />
+                            </View>
+                            <Text className="text-white text-xl font-bold">정부사업 안내</Text>
+                        </View>
+                        <TouchableOpacity
+                            className="bg-white/5 py-1.5 px-3 rounded-full border border-white/10 flex-row items-center hover:bg-white/10"
+                            onPress={onNavigateToSupport}
+                        >
+                            <Text className="text-slate-400 text-xs mr-1">더 보기</Text>
+                            <ArrowRight size={10} color="#94A3B8" />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Vertical Stack Carousel */}
+                    <View className="w-full h-[500px] relative mt-4">
+                        <VerticalStackCarousel
+                            data={GOVERNMENT_PROGRAMS}
+                            renderItem={(item, index, progress, totalItems) => (
+                                <GovernmentCard
+                                    item={item}
+                                    index={index}
+                                    progress={progress}
+                                    totalItems={totalItems}
+                                />
+                            )}
+                            itemHeight={340}
+                            containerHeight={500}
+                        />
+                    </View>
+                </View>
+
+                {/* 2. Community Lounge Section */}
+                <View className="flex-1">
+                    <View className="flex-row items-center justify-between mb-6">
+                        <View className="flex-row items-center gap-2">
+                            <View className="bg-blue-500/10 p-2 rounded-lg">
+                                <AlertCircle size={20} color="#3B82F6" />
+                            </View>
+                            <Text className="text-white text-xl font-bold">커뮤니티 라운지</Text>
+                        </View>
+                        <TouchableOpacity
+                            className="bg-white/5 py-1.5 px-3 rounded-full border border-white/10 flex-row items-center hover:bg-white/10"
+                            onPress={onNavigateToLounge}
+                        >
+                            <Text className="text-slate-400 text-xs mr-1">더 보기</Text>
+                            <ArrowRight size={10} color="#94A3B8" />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Vertical Stack Carousel */}
+                    <View className="w-full h-[500px] relative mt-4">
+                        <VerticalStackCarousel
+                            data={COMMUNITY_POSTS}
+                            renderItem={(item, index, progress, totalItems) => (
+                                <CommunityCard
+                                    item={item}
+                                    index={index}
+                                    progress={progress}
+                                    totalItems={totalItems}
+                                />
+                            )}
+                            itemHeight={340} // Card Height
+                            containerHeight={500}
+                        />
+                    </View>
+                </View>
+            </View>
+            {/* 3. Bottom Grid (Other Businesses / Categories) - Placeholder for now or optional */}
+            <View className="mt-10">
+                {/* Can add more content here if needed */}
+            </View>
+        </View>
     );
 };
