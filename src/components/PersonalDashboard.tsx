@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { Settings, Folder, CheckSquare, Sparkles, Plus, Clock, FileText, ChevronRight, LayoutDashboard, Database } from 'lucide-react-native';
+import { Settings, Folder, CheckSquare, Sparkles, Plus, Clock, FileText, ChevronRight, LayoutDashboard, Database, MessageCircle } from 'lucide-react-native';
 import { ProfileCard } from './ProfileCard';
-import { ChatModal } from './ChatModal';
+// import { ChatModal } from './ChatModal'; // Removed
+// import { ChatListModal } from './ChatListModal'; // Removed
+import { ChatRoom } from './ChatRoom';
+import { ChatListView } from './ChatListView';
 import { CalendarModal } from './CalendarModal';
 import { ProjectDetailModal } from './ProjectDetailModal';
 import { SettingsModal } from './SettingsModal';
@@ -31,14 +34,20 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
     const { posts, deletePost, updatePost } = usePosts();
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
+
+    // Chat States
     const [chatVisible, setChatVisible] = useState(false);
+    const [chatListVisible, setChatListVisible] = useState(false);
+    const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; name: string } | undefined>(undefined);
+
     const [calendarVisible, setCalendarVisible] = useState(false);
     const [projectModalVisible, setProjectModalVisible] = useState(false);
     const [settingsVisible, setSettingsVisible] = useState(false);
     const [workspaceVisible, setWorkspaceVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState('');
     const [workspaceFile, setWorkspaceFile] = useState('');
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'files' | 'posts'>('dashboard');
+
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'files' | 'posts' | 'messages'>('dashboard');
 
     const openProjectDetail = (projectName: string) => {
         setSelectedProject(projectName);
@@ -86,6 +95,12 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                 </TouchableOpacity>
                 <View className="flex-1" />
                 <TouchableOpacity
+                    className={`w-10 h-10 rounded-xl items-center justify-center ${activeTab === 'messages' ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'hover:bg-white/5'}`}
+                    onPress={() => setActiveTab('messages')}
+                >
+                    <MessageCircle size={20} color={activeTab === 'messages' ? '#fff' : '#94A3B8'} />
+                </TouchableOpacity> {/* Messages Icon Added */}
+                <TouchableOpacity
                     className="w-10 h-10 hover:bg-white/5 rounded-xl items-center justify-center"
                     onPress={() => setSettingsVisible(true)}
                 >
@@ -106,7 +121,19 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                                     <ProfileCard
                                         readOnly={readOnly}
                                         targetUserId={targetUserId}
-                                        onChatPress={() => setChatVisible(true)}
+                                        onChatPress={(userInfo) => {
+                                            // Public View: Switch to Messages Tab and Open Chat
+                                            setActiveTab('messages');
+                                            if (userInfo) {
+                                                setSelectedChatUser(userInfo);
+                                            } else {
+                                                setSelectedChatUser(targetUserId ? { id: targetUserId, name: 'User' } : undefined);
+                                            }
+                                        }}
+                                        onShowInbox={() => {
+                                            setActiveTab('messages');
+                                            setSelectedChatUser(undefined); // Show list initial state? Or keep last. 
+                                        }}
                                     />
                                 </View>
                             </View>
@@ -170,11 +197,11 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                                         <View className="gap-4">
                                             <View>
                                                 <Text className="text-slate-400 text-xs mb-1">읽은 논문</Text>
-                                                <Text className="text-white text-3xl font-bold">12<Text className="text-slate-500 text-sm">건</Text></Text>
+                                                <Text className="text-white text-3xl font-bold">0<Text className="text-slate-500 text-sm">건</Text></Text>
                                             </View>
                                             <View>
                                                 <Text className="text-slate-400 text-xs mb-1">공유 수</Text>
-                                                <Text className="text-white text-3xl font-bold">45<Text className="text-slate-500 text-sm">회</Text></Text>
+                                                <Text className="text-white text-3xl font-bold">0<Text className="text-slate-500 text-sm">회</Text></Text>
                                             </View>
                                         </View>
                                     </View>
@@ -244,7 +271,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                         )}
                     </View>
                 </View>
-            ) : (
+            ) : activeTab === 'posts' ? (
                 // Posts Tab
                 <View className="flex-1 bg-[#050B14] p-6">
                     <View className="max-w-[1400px] w-full mx-auto bg-[#0F172A] rounded-3xl border border-white/10 p-6 h-full">
@@ -281,9 +308,33 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                         </ScrollView>
                     </View>
                 </View>
+            ) : (
+                // Messages Tab
+                <View className="flex-1 flex-row bg-[#050B14]">
+                    {/* Left Pane: Chat List */}
+                    <View className="w-80 border-r border-white/5 h-full">
+                        <ChatListView
+                            activeChatId={selectedChatUser?.id}
+                            onSelectChat={(user) => setSelectedChatUser(user)}
+                        />
+                    </View>
+
+                    {/* Right Pane: Chat Room */}
+                    <View className="flex-1 h-full p-6">
+                        {selectedChatUser ? (
+                            <ChatRoom targetUser={selectedChatUser} />
+                        ) : (
+                            <View className="flex-1 items-center justify-center bg-[#1E293B] rounded-3xl border border-white/10 m-6">
+                                <MessageCircle size={48} color="#475569" />
+                                <Text className="text-slate-500 text-lg mt-4">채팅을 선택해주세요</Text>
+                            </View>
+                        )}
+                    </View>
+                </View>
             )}
 
-            <ChatModal visible={chatVisible} onClose={() => setChatVisible(false)} />
+
+
             <CalendarModal visible={calendarVisible} onClose={() => setCalendarVisible(false)} />
             <ProjectDetailModal
                 visible={projectModalVisible}

@@ -8,7 +8,7 @@ import { AuthModal } from '../components/AuthModal';
 import { RotatingText } from '../components/RotatingText';
 import { DashboardView } from '../components/DashboardView';
 import { useAuth } from '../contexts/AuthContext';
-import { Home as HomeIcon, Folder, HeartHandshake, Building2, Users, Atom, TrendingUp, Sparkles, Search, Bell, User, X as CloseIcon, LogIn } from 'lucide-react-native';
+import { Home as HomeIcon, Folder, HeartHandshake, Building2, Users, Atom, TrendingUp, Sparkles, Search, Bell, User, X as CloseIcon, LogIn, Heart, MessageCircle, MessageSquare, LogOut, Settings } from 'lucide-react-native';
 import { FloatingLines } from '../components/FloatingLines';
 import { SupportScreen } from './SupportScreen';
 import { PersonalDashboard } from '../components/PersonalDashboard';
@@ -16,14 +16,61 @@ import { Workspace } from '../components/Workspace';
 import { AnimatedPillNav } from '../components/AnimatedPillNav';
 import Footer from '../components/Footer';
 import { Separator } from '../components/Separator';
+import { OnboardingModal } from '../components/OnboardingModal';
 
 // Filter categories
 const CATEGORIES = ['전체', '과학', '경제'];
 
+interface FeedNotification {
+    id: string;
+    type: 'like' | 'comment' | 'chat';
+    content: string;
+    time: string;
+    isRead: boolean;
+    sender: string;
+}
+
+const MOCK_NOTIFICATIONS: FeedNotification[] = [
+    { id: '1', type: 'like', content: '회원님의 "스타트업 초기 자금..." 게시글을 좋아합니다.', time: '방금 전', isRead: false, sender: '김투자' },
+    { id: '2', type: 'comment', content: '좋은 정보 감사합니다! 혹시 자세한...', time: '10분 전', isRead: false, sender: '이창업' },
+    { id: '3', type: 'chat', content: '안녕하세요, 협업 관련 문의드립니다.', time: '1시간 전', isRead: true, sender: '박대표' },
+    { id: '4', type: 'like', content: '회원님의 댓글을 좋아합니다.', time: '3시간 전', isRead: true, sender: '최개발' },
+];
+
 export const FeedScreen = () => {
     const { width } = useWindowDimensions();
-    const { user } = useAuth();
+    const { user, signOut } = useAuth(); // Destructure signOut
     const [authModalVisible, setAuthModalVisible] = useState(false);
+    const [onboardingVisible, setOnboardingVisible] = useState(false);
+
+    // Notification & User Menu Logic
+    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [notifications, setNotifications] = useState<FeedNotification[]>(MOCK_NOTIFICATIONS);
+    const hasNotification = notifications.some(n => !n.isRead);
+    const rotateAnim = useRef(new Animated.Value(0)).current;
+
+    useEffect(() => {
+        if (hasNotification) {
+            const wiggle = Animated.sequence([
+                Animated.timing(rotateAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+                Animated.timing(rotateAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
+                Animated.timing(rotateAnim, { toValue: 1, duration: 100, useNativeDriver: true }),
+                Animated.timing(rotateAnim, { toValue: -1, duration: 100, useNativeDriver: true }),
+                Animated.timing(rotateAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+                Animated.delay(1000)
+            ]);
+            Animated.loop(wiggle).start();
+        } else {
+            rotateAnim.setValue(0);
+        }
+    }, [hasNotification]);
+
+    const rotateInterpolate = rotateAnim.interpolate({
+        inputRange: [-1, 1],
+        outputRange: ['-15deg', '15deg']
+    });
+
     const [activeCategory, setActiveCategory] = useState('전체');
     const [searchQuery, setSearchQuery] = useState(''); // Search State
     const [isSearchVisible, setIsSearchVisible] = useState(false); // Search Toggle
@@ -36,10 +83,27 @@ export const FeedScreen = () => {
     const [supportSubMode, setSupportSubMode] = useState<'overview' | 'support' | 'connect'>('overview');
     const [targetUserId, setTargetUserId] = useState<string | null>(null);
 
-    // Load saved state on mount
+    // Load saved state on mount and handle Auth State changes
     useEffect(() => {
         const loadSavedState = async () => {
             try {
+                // If user logs out, force Feed Mode and clear personal data
+                if (!user) {
+                    setViewMode('feed');
+                    setNotifications([]); // Clear notifications
+                    setActiveCategory('전체'); // Reset category
+                    return;
+                }
+
+                // If logged in, reload notifications (Mock flush)
+                setNotifications(MOCK_NOTIFICATIONS);
+
+                // Check Onboarding Status
+                const storedProfile = await AsyncStorage.getItem('user_profile');
+                if (!storedProfile) {
+                    setOnboardingVisible(true);
+                }
+
                 const savedViewMode = await AsyncStorage.getItem('viewMode');
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
 
@@ -333,7 +397,6 @@ export const FeedScreen = () => {
                             </TouchableOpacity>
                         ) : (
                             <>
-                                {/* Mobile Only: Small Search Icon */}
                                 {!isDesktop && (
                                     isSearchVisible ? (
                                         <View className="flex-row items-center bg-slate-800/80 rounded-2xl px-3 py-1.5 ml-2.5 border border-white/10 min-w-[200px]">
@@ -355,8 +418,101 @@ export const FeedScreen = () => {
                                         </TouchableOpacity>
                                     )
                                 )}
-                                <Bell color="#fff" size={24} className="opacity-90 ml-5" />
-                                <User color="#fff" size={24} className="opacity-90 ml-5" />
+
+                                {/* Notification Bell Area */}
+                                <View className="relative z-50">
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setIsNotificationOpen(!isNotificationOpen);
+                                            setIsUserMenuOpen(false);
+                                        }}
+                                        className="ml-5 relative"
+                                    >
+                                        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+                                            <Bell color={hasNotification ? "#FDBA74" : "#fff"} size={24} className="opacity-90" fill={hasNotification ? "#FDBA74" : "none"} />
+                                        </Animated.View>
+                                        {hasNotification && (
+                                            <View className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#020617]" />
+                                        )}
+                                    </TouchableOpacity>
+
+                                    {/* Notification Dropdown */}
+                                    {isNotificationOpen && (
+                                        <View className="absolute top-10 right-[-50px] w-[320px] bg-[#1E293B] border border-white/10 rounded-xl shadow-xl overflow-hidden z-[100]">
+                                            <View className="p-4 border-b border-white/5 flex-row justify-between items-center bg-[#0F172A]">
+                                                <Text className="text-white font-bold">알림</Text>
+                                                <TouchableOpacity onPress={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}>
+                                                    <Text className="text-xs text-slate-400">모두 읽음</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <ScrollView className="max-h-[300px]">
+                                                {notifications.map((item) => (
+                                                    <TouchableOpacity
+                                                        key={item.id}
+                                                        onPress={() => {
+                                                            setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
+                                                        }}
+                                                        className={`p-4 border-b border-white/5 flex-row gap-3 ${item.isRead ? 'opacity-50' : 'bg-blue-500/5'}`}
+                                                    >
+                                                        <View className={`w-8 h-8 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-500/20' :
+                                                            item.type === 'comment' ? 'bg-blue-500/20' : 'bg-purple-500/20'
+                                                            }`}>
+                                                            {item.type === 'like' && <Heart size={14} color="#EC4899" fill="#EC4899" />}
+                                                            {item.type === 'comment' && <MessageCircle size={14} color="#3B82F6" fill="#3B82F6" />}
+                                                            {item.type === 'chat' && <MessageSquare size={14} color="#A855F7" fill="#A855F7" />}
+                                                        </View>
+                                                        <View className="flex-1">
+                                                            <View className="flex-row justify-between mb-1">
+                                                                <Text className="text-white font-bold text-sm">{item.sender}</Text>
+                                                                <Text className="text-slate-500 text-xs">{item.time}</Text>
+                                                            </View>
+                                                            <Text className="text-slate-300 text-xs leading-4" numberOfLines={2}>{item.content}</Text>
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </ScrollView>
+                                        </View>
+                                    )}
+                                </View>
+
+                                {/* User Menu Area */}
+                                <View className="relative z-50">
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            setIsUserMenuOpen(!isUserMenuOpen);
+                                            setIsNotificationOpen(false);
+                                        }}
+                                        className="ml-5"
+                                    >
+                                        <User color="#fff" size={24} className="opacity-90" />
+                                    </TouchableOpacity>
+
+                                    {/* User Dropdown */}
+                                    {isUserMenuOpen && (
+                                        <View className="absolute top-10 right-0 w-[200px] bg-[#1E293B] border border-white/10 rounded-xl shadow-xl overflow-hidden z-[100]">
+                                            <TouchableOpacity
+                                                className="p-4 border-b border-white/5 flex-row items-center hover:bg-white/5"
+                                                onPress={() => {
+                                                    setViewMode('dashboard');
+                                                    setIsUserMenuOpen(false);
+                                                }}
+                                            >
+                                                <User size={16} color="#94A3B8" className="mr-3" />
+                                                <Text className="text-slate-200">마이페이지</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                className="p-4 flex-row items-center hover:bg-white/5"
+                                                onPress={() => {
+                                                    signOut();
+                                                    setIsUserMenuOpen(false);
+                                                }}
+                                            >
+                                                <LogOut size={16} color="#EF4444" className="mr-3" />
+                                                <Text className="text-red-400">로그아웃</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                </View>
                             </>
                         )}
                     </View>
@@ -373,7 +529,7 @@ export const FeedScreen = () => {
                 ) : null // Render nothing if not dashboard or workspace, as support and feed are handled separately
             }
             {viewMode === 'support' && (
-                <View className="flex-1 mt-[60px]">
+                <View className="flex-1">
                     <SupportScreen
                         subMode={supportSubMode}
                         onSubModeChange={setSupportSubMode}
@@ -599,6 +755,10 @@ export const FeedScreen = () => {
             <AuthModal
                 visible={authModalVisible}
                 onClose={() => setAuthModalVisible(false)}
+            />
+            <OnboardingModal
+                visible={onboardingVisible}
+                onClose={() => setOnboardingVisible(false)}
             />
         </SafeAreaView >
     );

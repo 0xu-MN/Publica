@@ -37,7 +37,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({ onNavigateToSu
             contentContainerStyle={{ paddingBottom: 0 }}
             showsVerticalScrollIndicator={false}
         >
-            <View className="max-w-[1400px] mx-auto w-full pt-14 px-6 md:px-0">
+            <View className="max-w-[1400px] mx-auto w-full p-6 ">
                 {/* Header Area */}
                 <View className="mb-10">
                     <Text className="text-white text-4xl font-bold mb-2">Connect Hub</Text>

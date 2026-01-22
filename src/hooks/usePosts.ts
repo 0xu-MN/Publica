@@ -76,6 +76,21 @@ export const usePosts = () => {
         await savePosts(updatedPosts);
     }, [posts, savePosts]);
 
+    const deleteComment = useCallback(async (postId: string, commentId: string) => {
+        const updatedPosts = posts.map(p => {
+            if (p.id === postId) {
+                const updatedComments = (p.commentsList || []).filter(c => c.id !== commentId);
+                return {
+                    ...p,
+                    comments: Math.max(0, p.comments - 1),
+                    commentsList: updatedComments
+                };
+            }
+            return p;
+        });
+        await savePosts(updatedPosts);
+    }, [posts, savePosts]);
+
     const toggleScrap = useCallback(async (postId: string) => {
         const updatedPosts = posts.map(p =>
             p.id === postId ? { ...p, scrapped: !p.scrapped } : p
@@ -83,5 +98,5 @@ export const usePosts = () => {
         await savePosts(updatedPosts);
     }, [posts, savePosts]);
 
-    return { posts, loading, addPost, deletePost, updatePost, toggleLike, toggleScrap, addComment };
+    return { posts, loading, addPost, deletePost, updatePost, toggleLike, toggleScrap, addComment, deleteComment };
 };

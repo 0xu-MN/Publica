@@ -3,11 +3,13 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { User, MessageCircle, Heart } from 'lucide-react-native';
 import { CommunityPost } from '../data/mockData';
 
+// Interface update
 interface TimelinePostProps {
     post: CommunityPost;
     isLast: boolean;
     onPress: () => void;
     onProfilePress: (userId: string) => void;
+    onLike?: (postId: string) => void;
 }
 
 const getColor = (str: string) => {
@@ -19,7 +21,7 @@ const getColor = (str: string) => {
     return colors[Math.abs(hash) % colors.length];
 };
 
-export const TimelinePost = ({ post, isLast, onPress, onProfilePress }: TimelinePostProps) => {
+export const TimelinePost = ({ post, isLast, onPress, onProfilePress, onLike }: TimelinePostProps) => {
     return (
         <View className="flex-row w-full min-h-[140px]"> {/* Min height for spacing */}
 
@@ -87,10 +89,13 @@ export const TimelinePost = ({ post, isLast, onPress, onProfilePress }: Timeline
 
                             {/* Interactions inside bubble or below? Design usually has them inside or just below. Let's put inside based on "comment too" request */}
                             <View className="flex-row items-center gap-4 mt-3 pt-3 border-t border-white/5">
-                                <View className="flex-row items-center gap-1.5 opacity-80">
+                                <TouchableOpacity
+                                    className="flex-row items-center gap-1.5 opacity-80"
+                                    onPress={() => onLike && onLike(post.id)}
+                                >
                                     <Heart size={14} color={post.likes > 0 ? "#F87171" : "#94A3B8"} fill={post.likes > 0 ? "#F87171" : "none"} />
                                     <Text className={`${post.likes > 0 ? 'text-red-400' : 'text-slate-500'} text-xs`}>{post.likes}</Text>
-                                </View>
+                                </TouchableOpacity>
                                 <View className="flex-row items-center gap-1.5 opacity-80">
                                     <MessageCircle size={14} color={post.comments > 0 ? "#60A5FA" : "#94A3B8"} />
                                     <Text className={`${post.comments > 0 ? 'text-blue-400' : 'text-slate-500'} text-xs`}>{post.comments}</Text>

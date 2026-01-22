@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Image } from 'react-native';
-import { X, Send, User, MoreHorizontal, Heart, MessageCircle, ChevronLeft, ChevronRight, Check } from 'lucide-react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
+import { X, Send, User, MoreHorizontal, Heart, MessageCircle, ChevronLeft, ChevronRight, Check, Trash2 } from 'lucide-react-native';
 import { CommunityPost } from '../data/mockData';
 import { usePosts } from '../hooks/usePosts';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,14 +16,34 @@ interface PostDetailPanelProps {
     hasPrev?: boolean;
     hasNext?: boolean;
     onAddComment: (postId: string, comment: { author: string; content: string; isAnonymous: boolean }) => Promise<void>;
+    onDeleteComment?: (postId: string, commentId: string) => Promise<void>;
+    onLike?: (postId: string) => void;
 }
 
-export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev, onNext, hasPrev, hasNext, onAddComment }: PostDetailPanelProps) => {
+export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev, onNext, hasPrev, hasNext, onAddComment, onDeleteComment, onLike }: PostDetailPanelProps) => {
     const { user } = useAuth();
     // Removed internal usePosts hook to prevent state desync
     // const { addComment } = usePosts(); 
     const [comment, setComment] = useState('');
     const [isAnonymous, setIsAnonymous] = useState(false);
+
+    // Determine current user's display name to allow deletion of own comments
+    const [myProfileName, setMyProfileName] = useState<string | null>(null);
+
+    useEffect(() => {
+        const loadProfile = async () => {
+            if (user) {
+                const storedProfile = await AsyncStorage.getItem('user_profile');
+                if (storedProfile) {
+                    const profile = JSON.parse(storedProfile);
+                    setMyProfileName(profile.nickname);
+                } else {
+                    setMyProfileName(user.email?.split('@')[0] || 'Guest');
+                }
+            }
+        };
+        loadProfile();
+    }, [user]);
 
     if (!visible) return null;
 
@@ -47,6 +67,26 @@ export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev
             isAnonymous
         });
         setComment('');
+    };
+
+    const handleDelete = async (commentId: string) => {
+        if (!onDeleteComment) return;
+
+        if (Platform.OS === 'web') {
+            const ok = window.confirm("댓글을 삭제하시겠습니까?");
+            if (ok) {
+                await onDeleteComment(post.id, commentId);
+            }
+        } else {
+            Alert.alert(
+                "댓글 삭제",
+                "이 댓글을 삭제하시겠습니까?",
+                [
+                    { text: "취소", style: "cancel" },
+                    { text: "삭제", style: "destructive", onPress: () => onDeleteComment(post.id, commentId) }
+                ]
+            );
+        }
     };
 
     // Adjusted to fit "perfectly" in screen, avoiding full-height stretch.
@@ -107,10 +147,13 @@ export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev
                                 )}
 
                                 <View className="flex-row gap-4 py-3 border-t border-white/5 border-b border-white/5">
-                                    <View className="flex-row items-center gap-2">
-                                        <Heart size={18} color={post.likes > 0 ? "#F87171" : "#94A3B8"} />
+                                    <TouchableOpacity
+                                        className="flex-row items-center gap-2"
+                                        onPress={() => onLike && onLike(post.id)}
+                                    >
+                                        <Heart size={18} color={post.likes > 0 ? "#F87171" : "#94A3B8"} fill={post.likes > 0 ? "#F87171" : "none"} />
                                         <Text className="text-slate-400 text-sm">{post.likes}</Text>
-                                    </View>
+                                    </TouchableOpacity>
                                     <View className="flex-row items-center gap-2">
                                         <MessageCircle size={18} color="#60A5FA" />
                                         <Text className="text-slate-400 text-sm">{post.comments}</Text>
@@ -123,17 +166,26 @@ export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev
                                 <Text className="text-white font-bold mb-4">댓글 {post.commentsList?.length || 0}개</Text>
 
                                 {(post.commentsList || []).map((comment, index) => (
-                                    <View key={comment.id || index} className="flex-row mb-5 border-b border-white/5 pb-4 last:border-0">
+                                    <View key={comment.id || index} className="flex-row mb-5 border-b border-white/5 pb-4 last:border-0 relative">
                                         <View className={`w-8 h-8 rounded-full items-center justify-center mr-3 mt-1 ${comment.isAnonymous ? 'bg-slate-700' : 'bg-green-600'}`}>
                                             {comment.isAnonymous ? <User size={14} color="#94A3B8" /> : <Text className="text-white text-xs font-bold">{comment.author[0]}</Text>}
                                         </View>
-                                        <View className="flex-1">
+                                        <View className="flex-1 pr-8">
                                             <View className="flex-row items-center mb-1">
                                                 <Text className="text-slate-300 font-bold text-sm mr-2">{comment.author}</Text>
                                                 <Text className="text-slate-600 text-xs">{comment.timestamp}</Text>
                                             </View>
                                             <Text className="text-slate-400 text-sm leading-5">{comment.content}</Text>
                                         </View>
+                                        {/* Delete Button - Show if it's my comment (simple name match for MVP) or just test mode */}
+                                        {(user && (comment.author === myProfileName || comment.author === (user.email?.split('@')[0]) || comment.author === '나(Me)')) && (
+                                            <TouchableOpacity
+                                                className="absolute right-0 top-1 p-1"
+                                                onPress={() => handleDelete(comment.id)}
+                                            >
+                                                <Trash2 size={14} color="#EF4444" />
+                                            </TouchableOpacity>
+                                        )}
                                     </View>
                                 ))}
                             </View>

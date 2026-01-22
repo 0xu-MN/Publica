@@ -21,6 +21,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
     const [realName, setRealName] = useState(''); // Added Real Name
     const [role, setRole] = useState('');
     const [bio, setBio] = useState('');
+    const [imageUrl, setImageUrl] = useState(''); // Added Image URL
     const [isEditing, setIsEditing] = useState(false);
 
     // Load Profile
@@ -39,6 +40,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                 setRealName(data.realName || ''); // Load Real Name
                 setRole(data.job || '');
                 setBio(data.bio || '');
+                setImageUrl(data.imageUrl || ''); // Load Image URL
             } else if (user?.email) {
                 // Default to email username if no profile
                 setNickname(user.email.split('@')[0]);
@@ -60,7 +62,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                 return;
             }
 
-            const profile = { nickname, realName, role, bio };
+            const profile = { nickname, realName, role, bio, imageUrl };
             await AsyncStorage.setItem('user_profile', JSON.stringify(profile));
             setIsEditing(false);
             // Optionally notify other components to reload profile
@@ -99,6 +101,21 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                         </View>
 
                         <View className="gap-4">
+                            <View>
+                                <Text className="text-slate-400 text-xs mb-1.5 font-semibold uppercase">Profile Image URL</Text>
+                                {isEditing ? (
+                                    <TextInput
+                                        className="bg-slate-800 text-white p-3 rounded-xl border border-white/10 mb-1"
+                                        value={imageUrl}
+                                        onChangeText={setImageUrl}
+                                        placeholder="https://example.com/me.jpg"
+                                        placeholderTextColor="#64748B"
+                                    />
+                                ) : (
+                                    <Text className="text-white font-medium text-base" numberOfLines={1}>{imageUrl || 'No image set'}</Text>
+                                )}
+                            </View>
+
                             <View>
                                 <Text className="text-slate-400 text-xs mb-1.5 font-semibold uppercase">Real Name (Private)</Text>
                                 {isEditing ? (
