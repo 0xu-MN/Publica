@@ -66,7 +66,7 @@ export const CommunityCard: React.FC<CommunityCardProps> = ({ item }) => {
 
                     {/* Row 2: Full Title */}
                     <View className="justify-center items-center flex-1 mb-4">
-                        <Text className="text-white text-xl font-bold text-center leading-8" numberOfLines={2}>
+                        <Text className="text-white text-[22px] font-bold text-center leading-8" numberOfLines={2}>
                             {item.title}
                         </Text>
                     </View>

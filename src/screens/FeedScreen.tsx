@@ -8,7 +8,8 @@ import { AuthModal } from '../components/AuthModal';
 import { RotatingText } from '../components/RotatingText';
 import { DashboardView } from '../components/DashboardView';
 import { useAuth } from '../contexts/AuthContext';
-import { Sparkles, Search, Bell, User, X as CloseIcon, LogIn, Home as HomeIcon, Folder, HeartHandshake, Building2, Users, Atom, TrendingUp } from 'lucide-react-native';
+import { Home as HomeIcon, Folder, HeartHandshake, Building2, Users, Atom, TrendingUp, Sparkles, Search, Bell, User, X as CloseIcon, LogIn } from 'lucide-react-native';
+import { FloatingLines } from '../components/FloatingLines';
 import { SupportScreen } from './SupportScreen';
 import { PersonalDashboard } from '../components/PersonalDashboard';
 import { Workspace } from '../components/Workspace';
@@ -30,9 +31,10 @@ export const FeedScreen = () => {
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
 
-    // View Mode State: 'feed', 'dashboard', 'support', or 'workspace'
-    const [viewMode, setViewMode] = useState<'feed' | 'dashboard' | 'support' | 'workspace'>('feed');
+    // View Mode State: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile'
+    const [viewMode, setViewMode] = useState<'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile'>('feed');
     const [supportSubMode, setSupportSubMode] = useState<'overview' | 'support' | 'connect'>('overview');
+    const [targetUserId, setTargetUserId] = useState<string | null>(null);
 
     // Load saved state on mount
     useEffect(() => {
@@ -42,7 +44,12 @@ export const FeedScreen = () => {
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
 
                 if (savedViewMode) {
-                    setViewMode(savedViewMode as 'feed' | 'dashboard' | 'support' | 'workspace');
+                    // PROTECT DASHBOARD & WORKSPACE: If saved mode is dashboard/workspace but not logged in, default to feed
+                    if ((savedViewMode === 'workspace' || savedViewMode === 'dashboard') && !user) {
+                        setViewMode('feed');
+                    } else {
+                        setViewMode(savedViewMode as 'feed' | 'dashboard' | 'support' | 'workspace');
+                    }
                 }
                 if (savedCategory) {
                     setActiveCategory(savedCategory);
@@ -52,7 +59,7 @@ export const FeedScreen = () => {
             }
         };
         loadSavedState();
-    }, []);
+    }, [user]); // Add user dependency to re-check on logout
 
     // Save viewMode when it changes
     useEffect(() => {
@@ -163,7 +170,7 @@ export const FeedScreen = () => {
     const isDesktop = width >= 768; // Simple breakpoint for desktop, kept for InsightCard prop
 
     return (
-        <SafeAreaView className="flex-1 bg-[#050B14]">
+        <SafeAreaView className="flex-1 bg-[#020617]">
             <StatusBar barStyle="light-content" />
 
             {/* Top Header */}
@@ -190,16 +197,28 @@ export const FeedScreen = () => {
                                     /* Feed Mode: Simple Home Circle */
                                     <TouchableOpacity
                                         className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all"
-                                        onPress={() => setViewMode('dashboard')}
+                                        onPress={() => {
+                                            if (!user) {
+                                                setAuthModalVisible(true);
+                                            } else {
+                                                setViewMode('dashboard');
+                                            }
+                                        }}
                                     >
                                         <HomeIcon size={20} color="#94A3B8" />
                                     </TouchableOpacity>
-                                ) : viewMode === 'dashboard' ? (
-                                    /* Dashboard Mode: Expanded "Home | Workspace" Pill */
+                                ) : (viewMode === 'dashboard' || viewMode === 'workspace') ? (
+                                    /* Dashboard & Workspace Mode: Expanded "Home | Workspace" Pill */
                                     <View className="h-12 px-6 rounded-full bg-blue-600 flex-row items-center shadow-lg shadow-blue-500/20">
                                         <TouchableOpacity
-                                            className="flex-row items-center opacity-90 hover:opacity-100"
-                                            onPress={() => setViewMode('feed')}
+                                            className={`flex-row items-center transition-all ${viewMode === 'dashboard' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                                            onPress={() => {
+                                                if (!user) {
+                                                    setAuthModalVisible(true);
+                                                } else {
+                                                    setViewMode('dashboard');
+                                                }
+                                            }}
                                         >
                                             <HomeIcon size={16} color="#fff" style={{ marginRight: 6 }} />
                                             <Text className="text-white font-bold text-sm">홈</Text>
@@ -208,15 +227,23 @@ export const FeedScreen = () => {
                                         <View className="w-[1px] h-3 bg-white/30 mx-4" />
 
                                         <TouchableOpacity
-                                            className="flex-row items-center opacity-90 hover:opacity-100"
-                                            onPress={() => setViewMode('workspace')}
+                                            className={`flex-row items-center transition-all ${viewMode === 'workspace' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
+                                            onPress={() => {
+                                                if (!user) {
+                                                    setAuthModalVisible(true);
+                                                } else {
+                                                    setViewMode('workspace');
+                                                }
+                                            }}
                                         >
                                             <Sparkles size={16} color="#fff" style={{ marginRight: 6 }} />
                                             <Text className="text-white font-bold text-sm">Workspace</Text>
                                         </TouchableOpacity>
                                     </View>
                                 ) : (
-                                    /* Support/Workspace Mode: Show minimal home button */
+                                    /* Support Mode: Show minimal home button (goes to Feed? Or Dashboard?) */
+                                    /* User only mentioned Workspace/Home toggle issue, so leaving this as fallback to Feed for now OR should it go to Dashboard? 
+                                       Current behavior was Feed. Keeping Feed/Dashboard safe toggle. */
                                     <TouchableOpacity
                                         className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all"
                                         onPress={() => setViewMode('feed')}
@@ -339,89 +366,118 @@ export const FeedScreen = () => {
             {
                 viewMode === 'dashboard' ? (
                     <PersonalDashboard />
+                ) : viewMode === 'public_profile' ? (
+                    <PersonalDashboard readOnly={true} targetUserId={targetUserId || undefined} onClose={() => setViewMode('feed')} />
                 ) : viewMode === 'workspace' ? (
                     <Workspace onClose={() => setViewMode('dashboard')} />
-                ) : viewMode === 'support' ? (
+                ) : null // Render nothing if not dashboard or workspace, as support and feed are handled separately
+            }
+            {viewMode === 'support' && (
+                <View className="flex-1 mt-[60px]">
                     <SupportScreen
                         subMode={supportSubMode}
                         onSubModeChange={setSupportSubMode}
+                        onLoginRequired={() => setAuthModalVisible(true)}
+                        onNavigateToProfile={(userId) => {
+                            setTargetUserId(userId);
+                            setViewMode('public_profile');
+                        }}
                     />
-                ) : (
-                    /* FEED MODE */
-                    <View className="flex-1 w-full bg-[#050B14]">
-                        {activeCategory === '전체' ? (
-                            <FlatList
-                                data={finalNewsData}
-                                keyExtractor={(item) => item.id}
-                                numColumns={numColumns}
-                                key={`all-${numColumns}`}
-                                contentContainerStyle={{ paddingBottom: 60 }}
-                                columnWrapperStyle={{ gap: 20, maxWidth: 1400, width: '100%', alignSelf: 'center', paddingHorizontal: 24 }}
-                                ListHeaderComponent={
-                                    <View className="w-full items-center">
-                                        {/* Header Content constrained to 1400px */}
-                                        <View className="max-w-[1400px] w-full">
-                                            <DashboardView
-                                                newsData={finalNewsData}
-                                                hotKeywords={hotKeywords}
-                                                user={user}
-                                                onLoginPress={() => setAuthModalVisible(true)}
-                                            />
-                                            <Separator className="my-8" />
-                                            <View className="px-6">
-                                                <View className="flex-row items-center justify-between mb-6">
-                                                    <Text className="text-white text-xl font-bold">최신 인사이트</Text>
+                </View>
+            )}
+            {viewMode === 'feed' && (
+                /* FEED MODE */
+                <View className="flex-1 w-full bg-[#050B14]">
+                    {activeCategory === '전체' ? (
+                        <FlatList
+                            data={finalNewsData}
+                            keyExtractor={(item) => item.id}
+                            numColumns={numColumns}
+                            key={`all-${numColumns}`}
+                            contentContainerStyle={{ paddingBottom: 60 }}
+                            columnWrapperStyle={{ gap: 20, maxWidth: 1400, width: '100%', alignSelf: 'center', paddingHorizontal: 24 }}
+                            ListHeaderComponent={
+                                <View className="w-full items-center">
+                                    {/* Header Content constrained to 1400px */}
+                                    <View className="max-w-[1400px] w-full">
+                                        <DashboardView
+                                            newsData={finalNewsData}
+                                            hotKeywords={hotKeywords}
+                                            user={user}
+                                            onLoginPress={() => setAuthModalVisible(true)}
+                                        />
+                                        <Separator className="my-8" />
+                                        <View className="px-6">
+                                            <View className="flex-row items-center justify-between mb-6">
+                                                <Text className="text-white text-xl font-bold">최신 인사이트</Text>
 
-                                                    {/* Stats Section moved here */}
-                                                    <View className="flex-row items-center bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                                                {/* Stats Section moved here */}
+                                                <View className="flex-row items-center bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
+                                                    <View className="flex-row items-center">
+                                                        <Sparkles size={14} color="#888" />
+                                                        <Text className="text-slate-500 text-[13px] ml-1.5 mr-4">마지막 업데이트: 5분 전</Text>
+                                                    </View>
+                                                    <View className="w-[1px] h-3 bg-white/10 mr-4" />
+                                                    <View className="flex-row items-center gap-4">
                                                         <View className="flex-row items-center">
-                                                            <Sparkles size={14} color="#888" />
-                                                            <Text className="text-slate-500 text-[13px] ml-1.5 mr-4">마지막 업데이트: 5분 전</Text>
+                                                            <View className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5" />
+                                                            <Text className="text-slate-400 text-[13px]">전체 {finalNewsData.length}개</Text>
                                                         </View>
-                                                        <View className="w-[1px] h-3 bg-white/10 mr-4" />
-                                                        <View className="flex-row items-center gap-4">
-                                                            <View className="flex-row items-center">
-                                                                <View className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5" />
-                                                                <Text className="text-slate-400 text-[13px]">전체 {finalNewsData.length}개</Text>
-                                                            </View>
-                                                            <View className="flex-row items-center">
-                                                                <View className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5" />
-                                                                <Text className="text-slate-400 text-[13px]">과학 {finalNewsData.filter(i => i.category === 'Science').length}개</Text>
-                                                            </View>
-                                                            <View className="flex-row items-center">
-                                                                <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
-                                                                <Text className="text-slate-400 text-[13px]">경제 {finalNewsData.filter(i => i.category === 'Economy').length}개</Text>
-                                                            </View>
+                                                        <View className="flex-row items-center">
+                                                            <View className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5" />
+                                                            <Text className="text-slate-400 text-[13px]">과학 {finalNewsData.filter(i => i.category === 'Science').length}개</Text>
+                                                        </View>
+                                                        <View className="flex-row items-center">
+                                                            <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
+                                                            <Text className="text-slate-400 text-[13px]">경제 {finalNewsData.filter(i => i.category === 'Economy').length}개</Text>
                                                         </View>
                                                     </View>
                                                 </View>
                                             </View>
                                         </View>
                                     </View>
-                                }
-                                renderItem={({ item }) => (
-                                    <View style={{ width: cardWidth, marginBottom: 20 }}>
-                                        <InsightCard
-                                            item={item}
-                                            onPress={() => setSelectedItem(item)}
-                                            desktopMode={isDesktop}
-                                        />
-                                    </View>
-                                )}
-                                ListFooterComponent={<Footer />}
-                            />
-                        ) : (
-                            /* Category Feed */
-                            <FlatList
-                                data={finalNewsData}
-                                keyExtractor={(item) => item.id}
-                                numColumns={numColumns}
-                                key={`cat-${numColumns}`}
-                                contentContainerStyle={{ paddingBottom: 60 }}
-                                columnWrapperStyle={{ gap: 20, maxWidth: 1400, width: '100%', alignSelf: 'center', paddingHorizontal: 24 }}
-                                ListHeaderComponent={
-                                    <View className="w-full items-center py-10 px-6">
-                                        <View className="max-w-[1400px] w-full items-center">
+                                </View>
+                            }
+                            renderItem={({ item }) => (
+                                <View style={{ width: cardWidth, marginBottom: 20 }}>
+                                    <InsightCard
+                                        item={item}
+                                        onPress={() => setSelectedItem(item)}
+                                        desktopMode={isDesktop}
+                                    />
+                                </View>
+                            )}
+                            ListFooterComponent={<Footer />}
+                        />
+                    ) : (
+                        /* Category Feed */
+                        <FlatList
+                            data={finalNewsData}
+                            keyExtractor={(item) => item.id}
+                            numColumns={numColumns}
+                            key={`cat-${numColumns}`}
+                            contentContainerStyle={{ paddingBottom: 60 }}
+                            columnWrapperStyle={{ gap: 20, maxWidth: 1400, width: '100%', alignSelf: 'center', paddingHorizontal: 24 }}
+                            ListHeaderComponent={
+                                <View className="w-full items-center py-10 px-6">
+                                    <View className="max-w-[1400px] w-full items-center">
+
+                                        {/* Header Hero Section with Floating Lines */}
+                                        <View className="relative w-full items-center py-12 mb-8">
+                                            {/* Background Effect */}
+                                            <View className="absolute inset-0 z-0">
+                                                <FloatingLines
+                                                    height={450}
+                                                    enabledWaves={['top', 'middle', 'bottom']}
+                                                    lineCount={5}
+                                                    lineDistance={5}
+                                                    bendRadius={5}
+                                                    bendStrength={-0.5}
+                                                    interactive={true}
+                                                    parallax={true}
+                                                />
+                                            </View>
+
                                             <View className="flex-row items-center bg-blue-500/15 px-3.5 py-2 rounded-3xl mb-5 border border-blue-500/30">
                                                 <View className="w-1.5 h-1.5 rounded-full bg-blue-500 mr-2 shadow-sm shadow-blue-500" />
                                                 <Text className="text-blue-500 text-[13px] font-semibold">실시간 AI 큐레이션</Text>
@@ -429,108 +485,109 @@ export const FeedScreen = () => {
                                             <Text className="text-3xl font-extrabold text-white text-center leading-[42px] mb-3 max-w-[600px]">
                                                 오늘의 <Text className="text-sky-500">과학</Text>과 <Text className="text-emerald-500">경제</Text> 인사이트
                                             </Text>
-                                            <Text className="text-slate-400 text-[15px] mb-5 text-center">
+                                            <Text className="text-slate-400 text-[15px] mb-6 text-center z-10">
                                                 AI가 선별한 신뢰할 수 있는 뉴스를 카드로 빠르게 확인하세요
                                             </Text>
 
                                             {/* Update Time & Stats */}
-                                            <View className="flex-row items-center bg-white/5 px-4 py-2 rounded-2xl border border-white/5 mb-8">
+                                            <View className="flex-row items-center bg-slate-800/60 px-5 py-2.5 rounded-2xl border border-white/5 backdrop-blur-md">
                                                 <View className="flex-row items-center">
                                                     <Sparkles size={14} color="#888" />
-                                                    <Text className="text-slate-500 text-[13px] ml-1.5 mr-4">마지막 업데이트: 5분 전</Text>
+                                                    <Text className="text-slate-400 text-[13px] ml-1.5 mr-4">마지막 업데이트: 5분 전</Text>
                                                 </View>
                                                 <View className="w-[1px] h-3 bg-white/10 mr-4" />
                                                 <View className="flex-row items-center gap-4">
                                                     <View className="flex-row items-center">
                                                         <View className="w-1.5 h-1.5 rounded-full bg-sky-500 mr-1.5" />
-                                                        <Text className="text-slate-400 text-[13px]">과학 {finalNewsData.filter(i => i.category === 'Science').length}개</Text>
+                                                        <Text className="text-slate-300 text-[13px]">과학 {finalNewsData.filter(i => i.category === 'Science').length}개</Text>
                                                     </View>
                                                     <View className="flex-row items-center">
                                                         <View className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5" />
-                                                        <Text className="text-slate-400 text-[13px]">경제 {finalNewsData.filter(i => i.category === 'Economy').length}개</Text>
+                                                        <Text className="text-slate-300 text-[13px]">경제 {finalNewsData.filter(i => i.category === 'Economy').length}개</Text>
                                                     </View>
                                                 </View>
                                             </View>
+                                        </View>
 
-                                            {/* Filter Tabs (Mobile) & Search (Desktop) */}
-                                            <View className="w-full items-center mb-6">
-                                                {isDesktop ? (
-                                                    <View className="w-full max-w-[600px]">
-                                                        <View className="flex-row items-center bg-slate-900 border border-slate-700/50 rounded-2xl px-5 py-4 shadow-xl shadow-black/20">
-                                                            <Search color="#64748B" size={24} style={{ marginRight: 12 }} />
-                                                            <TextInput
-                                                                className="flex-1 text-white text-lg font-medium outline-none"
-                                                                placeholder="검색창"
-                                                                placeholderTextColor="#64748B"
-                                                                value={searchQuery}
-                                                                onChangeText={setSearchQuery}
-                                                            />
-                                                        </View>
+                                        {/* Filter Tabs (Mobile) & Search (Desktop) */}
+                                        <View className="w-full items-center mb-6">
+                                            {isDesktop ? (
+                                                <View className="w-full max-w-[600px]">
+                                                    <View className="flex-row items-center bg-slate-900 border border-slate-700/50 rounded-2xl px-5 py-4 shadow-xl shadow-black/20">
+                                                        <Search color="#64748B" size={24} style={{ marginRight: 12 }} />
+                                                        <TextInput
+                                                            className="flex-1 text-white text-lg font-medium outline-none"
+                                                            placeholder="검색창"
+                                                            placeholderTextColor="#64748B"
+                                                            value={searchQuery}
+                                                            onChangeText={setSearchQuery}
+                                                        />
                                                     </View>
-                                                ) : (
-                                                    <View className="flex-row bg-white/10 p-2 rounded-full border-[1.5px] border-white/20 shadow-lg shadow-black/40">
-                                                        {CATEGORIES.map((cat) => (
-                                                            <TouchableOpacity
-                                                                key={cat}
-                                                                className={`flex-row items-center px-7 py-3.5 rounded-full ${activeCategory === cat ? 'bg-white/20 border-white/30 border-[1.5px] shadow-lg shadow-blue-500/40' : ''}`}
-                                                                onPress={() => setActiveCategory(cat)}
-                                                            >
-                                                                {cat === '전체' && <Sparkles size={14} color={activeCategory === '전체' ? '#fff' : '#888'} style={{ marginRight: 4 }} />}
-                                                                <Text className={`text-[15px] font-semibold ${activeCategory === cat ? 'text-white' : 'text-slate-500'}`}>
-                                                                    {cat}
-                                                                </Text>
-                                                            </TouchableOpacity>
-                                                        ))}
-                                                    </View>
-                                                )}
-                                            </View>
-
-                                            {/* Hot Keywords */}
-                                            {hotKeywords.length > 0 && (
-                                                <View className="mb-10 items-center w-full">
-                                                    <View className="flex-row items-center justify-center gap-3">
-                                                        <Text className="text-slate-500 text-xs font-bold uppercase tracking-widest">🔥 HOT KEYWORDS</Text>
-                                                        {isDesktop && (
-                                                            <RotatingText
-                                                                texts={hotKeywords}
-                                                                textStyle={{ color: '#60A5FA', fontWeight: '700', fontSize: 13 }}
-                                                            />
-                                                        )}
-                                                    </View>
-                                                    {!isDesktop && (
-                                                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 gap-2.5 mt-3">
-                                                            {hotKeywords.map((keyword, index) => (
-                                                                <TouchableOpacity
-                                                                    key={index}
-                                                                    className={`px-4 py-2 rounded-3xl border ${activeKeyword === keyword ? 'bg-blue-500/20 border-blue-500' : 'bg-slate-800/50 border-white/10'}`}
-                                                                    onPress={() => setActiveKeyword(activeKeyword === keyword ? null : keyword)}
-                                                                >
-                                                                    <Text className={`text-[13px] font-semibold ${activeKeyword === keyword ? 'text-blue-400' : 'text-slate-400'}`}>
-                                                                        {keyword}
-                                                                    </Text>
-                                                                </TouchableOpacity>
-                                                            ))}
-                                                        </ScrollView>
-                                                    )}
+                                                </View>
+                                            ) : (
+                                                <View className="flex-row bg-white/10 p-2 rounded-full border-[1.5px] border-white/20 shadow-lg shadow-black/40">
+                                                    {CATEGORIES.map((cat) => (
+                                                        <TouchableOpacity
+                                                            key={cat}
+                                                            className={`flex-row items-center px-7 py-3.5 rounded-full ${activeCategory === cat ? 'bg-white/20 border-white/30 border-[1.5px] shadow-lg shadow-blue-500/40' : ''}`}
+                                                            onPress={() => setActiveCategory(cat)}
+                                                        >
+                                                            {cat === '전체' && <Sparkles size={14} color={activeCategory === '전체' ? '#fff' : '#888'} style={{ marginRight: 4 }} />}
+                                                            <Text className={`text-[15px] font-semibold ${activeCategory === cat ? 'text-white' : 'text-slate-500'}`}>
+                                                                {cat}
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    ))}
                                                 </View>
                                             )}
                                         </View>
+
+                                        {/* Hot Keywords */}
+                                        {hotKeywords.length > 0 && (
+                                            <View className="mb-10 items-center w-full">
+                                                <View className="flex-row items-center justify-center gap-3">
+                                                    <Text className="text-slate-500 text-xs font-bold uppercase tracking-widest">🔥 HOT KEYWORDS</Text>
+                                                    {isDesktop && (
+                                                        <RotatingText
+                                                            texts={hotKeywords}
+                                                            textStyle={{ color: '#60A5FA', fontWeight: '700', fontSize: 13 }}
+                                                        />
+                                                    )}
+                                                </View>
+                                                {!isDesktop && (
+                                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 gap-2.5 mt-3">
+                                                        {hotKeywords.map((keyword, index) => (
+                                                            <TouchableOpacity
+                                                                key={index}
+                                                                className={`px-4 py-2 rounded-3xl border ${activeKeyword === keyword ? 'bg-blue-500/20 border-blue-500' : 'bg-slate-800/50 border-white/10'}`}
+                                                                onPress={() => setActiveKeyword(activeKeyword === keyword ? null : keyword)}
+                                                            >
+                                                                <Text className={`text-[13px] font-semibold ${activeKeyword === keyword ? 'text-blue-400' : 'text-slate-400'}`}>
+                                                                    {keyword}
+                                                                </Text>
+                                                            </TouchableOpacity>
+                                                        ))}
+                                                    </ScrollView>
+                                                )}
+                                            </View>
+                                        )}
                                     </View>
-                                }
-                                renderItem={({ item }) => (
-                                    <View style={{ width: cardWidth, marginBottom: 20 }}>
-                                        <InsightCard
-                                            item={item}
-                                            desktopMode={isDesktop}
-                                            onPress={() => setSelectedItem(item)}
-                                        />
-                                    </View>
-                                )}
-                                ListFooterComponent={<Footer />}
-                            />
-                        )}
-                    </View>
-                )
+                                </View>
+                            }
+                            renderItem={({ item }) => (
+                                <View style={{ width: cardWidth, marginBottom: 20 }}>
+                                    <InsightCard
+                                        item={item}
+                                        desktopMode={isDesktop}
+                                        onPress={() => setSelectedItem(item)}
+                                    />
+                                </View>
+                            )}
+                            ListFooterComponent={<Footer />}
+                        />
+                    )}
+                </View>
+            )
             }
 
             {/* Detail Modal */}

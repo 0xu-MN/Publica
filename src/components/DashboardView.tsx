@@ -6,7 +6,9 @@ import { Newspaper, TrendingUp, Zap, Calendar, ExternalLink, ArrowRight, BookOpe
 import Footer from './Footer';
 import { NewsItem } from '../services/newsService';
 import { MarketCarouselWidget } from './MarketWidgets';
+
 import { DecryptedText } from './DecryptedText';
+import { FloatingLines } from './FloatingLines';
 
 interface DashboardViewProps {
     newsData: NewsItem[];

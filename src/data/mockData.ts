@@ -116,9 +116,18 @@ export const COMMUNITY_CATEGORIES: CommunityCategory[] = [
   '오프토픽',
 ];
 
+export interface Comment {
+  id: string;
+  author: string;
+  content: string;
+  timestamp: string;
+  isAnonymous: boolean;
+}
+
 export interface CommunityPost {
   id: string;
   author: string;
+  authorId?: string; // Add optional authorId for permissions
   role: string; // e.g., '박사과정', '현직 투자자', '익명'
   isAnonymous: boolean;
   category: CommunityCategory;
@@ -127,6 +136,7 @@ export interface CommunityPost {
   imageUrl?: string;
   likes: number;
   comments: number;
+  commentsList?: Comment[]; // Added for detailed view
   timestamp: string;
   scrapped: boolean;
 }

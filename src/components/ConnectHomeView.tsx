@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { ArrowRight, Sparkles, AlertCircle } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView } from 'react-native';
+import { ArrowRight, Sparkles, AlertCircle, Briefcase } from 'lucide-react-native';
 import { VerticalStackCarousel } from './VerticalStackCarousel';
 import { GovernmentCard } from './GovernmentCard';
 import { CommunityCard } from './CommunityCard';
+import Footer from './Footer';
 
 // Mock Data
 const GOVERNMENT_PROGRAMS = [
@@ -31,90 +32,135 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({ onNavigateToSu
     const isDesktop = width >= 1024;
 
     return (
-        <View className="flex-1 w-full max-w-[1400px] mx-auto pb-10 pt-4 px-6 md:px-0">
-            {/* Header Area */}
-            <View className="mb-10">
-                <Text className="text-white text-4xl font-bold mb-2">Connect Hub</Text>
-                <Text className="text-slate-400 text-lg">정부사업과 커뮤니티를 한 곳에서</Text>
-            </View>
+        <ScrollView
+            className="flex-1 w-full bg-[#020617]"
+            contentContainerStyle={{ paddingBottom: 0 }}
+            showsVerticalScrollIndicator={false}
+        >
+            <View className="max-w-[1400px] mx-auto w-full pt-14 px-6 md:px-0">
+                {/* Header Area */}
+                <View className="mb-10">
+                    <Text className="text-white text-4xl font-bold mb-2">Connect Hub</Text>
+                    <Text className="text-slate-400 text-lg">정부사업과 커뮤니티를 한 곳에서</Text>
+                </View>
 
-            <View className="flex-row gap-8 min-h-[500px]">
-                {/* 1. Government Support Section */}
-                <View className="flex-1">
-                    <View className="flex-row items-center justify-between mb-6">
-                        <View className="flex-row items-center gap-2">
-                            <View className="bg-emerald-500/10 p-2 rounded-lg">
-                                <Sparkles size={20} color="#10B981" />
+                <View className="flex-row gap-8 min-h-[500px]">
+                    {/* 1. Government Support Section */}
+                    <View className="flex-1">
+                        <View className="flex-row items-center justify-between mb-6">
+                            <View className="flex-row items-center gap-2">
+                                <View className="bg-emerald-500/10 p-2 rounded-lg">
+                                    <Sparkles size={20} color="#10B981" />
+                                </View>
+                                <Text className="text-white text-xl font-bold">정부사업 안내</Text>
                             </View>
-                            <Text className="text-white text-xl font-bold">정부사업 안내</Text>
+                            <TouchableOpacity
+                                className="bg-white/5 py-1.5 px-3 rounded-full border border-white/10 flex-row items-center hover:bg-white/10"
+                                onPress={onNavigateToSupport}
+                            >
+                                <Text className="text-slate-400 text-xs mr-1">더 보기</Text>
+                                <ArrowRight size={10} color="#94A3B8" />
+                            </TouchableOpacity>
                         </View>
-                        <TouchableOpacity
-                            className="bg-white/5 py-1.5 px-3 rounded-full border border-white/10 flex-row items-center hover:bg-white/10"
-                            onPress={onNavigateToSupport}
-                        >
-                            <Text className="text-slate-400 text-xs mr-1">더 보기</Text>
-                            <ArrowRight size={10} color="#94A3B8" />
-                        </TouchableOpacity>
+
+                        {/* Vertical Stack Carousel */}
+                        <View className="w-full h-[500px] relative mt-4">
+                            <VerticalStackCarousel
+                                data={GOVERNMENT_PROGRAMS}
+                                renderItem={(item, index, progress, totalItems) => (
+                                    <GovernmentCard
+                                        item={item}
+                                        index={index}
+                                        progress={progress}
+                                        totalItems={totalItems}
+                                    />
+                                )}
+                                itemHeight={340}
+                                containerHeight={500}
+                            />
+                        </View>
                     </View>
 
-                    {/* Vertical Stack Carousel */}
-                    <View className="w-full h-[500px] relative mt-4">
-                        <VerticalStackCarousel
-                            data={GOVERNMENT_PROGRAMS}
-                            renderItem={(item, index, progress, totalItems) => (
-                                <GovernmentCard
-                                    item={item}
-                                    index={index}
-                                    progress={progress}
-                                    totalItems={totalItems}
-                                />
-                            )}
-                            itemHeight={340}
-                            containerHeight={500}
-                        />
+                    {/* 2. Community Lounge Section */}
+                    <View className="flex-1">
+                        <View className="flex-row items-center justify-between mb-6">
+                            <View className="flex-row items-center gap-2">
+                                <View className="bg-blue-500/10 p-2 rounded-lg">
+                                    <AlertCircle size={20} color="#3B82F6" />
+                                </View>
+                                <Text className="text-white text-xl font-bold">커뮤니티 라운지</Text>
+                            </View>
+                            <TouchableOpacity
+                                className="bg-white/5 py-1.5 px-3 rounded-full border border-white/10 flex-row items-center hover:bg-white/10"
+                                onPress={onNavigateToLounge}
+                            >
+                                <Text className="text-slate-400 text-xs mr-1">더 보기</Text>
+                                <ArrowRight size={10} color="#94A3B8" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {/* Vertical Stack Carousel */}
+                        <View className="w-full h-[500px] relative mt-4">
+                            <VerticalStackCarousel
+                                data={COMMUNITY_POSTS}
+                                renderItem={(item, index, progress, totalItems) => (
+                                    <CommunityCard
+                                        item={item}
+                                        index={index}
+                                        progress={progress}
+                                        totalItems={totalItems}
+                                    />
+                                )}
+                                itemHeight={340} // Card Height
+                                containerHeight={500}
+                            />
+                        </View>
                     </View>
                 </View>
 
-                {/* 2. Community Lounge Section */}
-                <View className="flex-1">
+                {/* 3. Headhunting Section (Skeleton Placeholder) */}
+                <View className="mt-12 mb-10">
                     <View className="flex-row items-center justify-between mb-6">
                         <View className="flex-row items-center gap-2">
-                            <View className="bg-blue-500/10 p-2 rounded-lg">
-                                <AlertCircle size={20} color="#3B82F6" />
+                            <View className="bg-purple-500/10 p-2 rounded-lg">
+                                <Briefcase size={20} color="#A855F7" />
                             </View>
-                            <Text className="text-white text-xl font-bold">커뮤니티 라운지</Text>
+                            <Text className="text-white text-xl font-bold">헤드헌팅</Text>
+                            <View className="bg-white/10 px-2 py-0.5 rounded text-center">
+                                <Text className="text-slate-400 text-[10px]">Coming Soon</Text>
+                            </View>
                         </View>
-                        <TouchableOpacity
-                            className="bg-white/5 py-1.5 px-3 rounded-full border border-white/10 flex-row items-center hover:bg-white/10"
-                            onPress={onNavigateToLounge}
-                        >
-                            <Text className="text-slate-400 text-xs mr-1">더 보기</Text>
-                            <ArrowRight size={10} color="#94A3B8" />
-                        </TouchableOpacity>
                     </View>
 
-                    {/* Vertical Stack Carousel */}
-                    <View className="w-full h-[500px] relative mt-4">
-                        <VerticalStackCarousel
-                            data={COMMUNITY_POSTS}
-                            renderItem={(item, index, progress, totalItems) => (
-                                <CommunityCard
-                                    item={item}
-                                    index={index}
-                                    progress={progress}
-                                    totalItems={totalItems}
-                                />
-                            )}
-                            itemHeight={340} // Card Height
-                            containerHeight={500}
-                        />
+                    {/* Skeleton UI simulating VerticalStackCarousel */}
+                    <View className="w-full h-[400px] relative items-center justify-center opacity-50">
+
+                        {/* Top Pill Skeleton */}
+                        <View className="absolute top-[20px] w-full h-[60px] rounded-[30px] bg-white/5 border border-white/5" />
+
+                        {/* Middle Card Skeleton */}
+                        <View className="absolute top-[100px] w-full h-[300px] rounded-[30px] bg-white/5 border border-white/5 p-6 justify-between">
+                            <View className="flex-row justify-between">
+                                <View className="w-1/3 h-4 bg-white/10 rounded" />
+                                <View className="w-10 h-6 bg-white/10 rounded-full" />
+                            </View>
+                            <View className="items-center gap-3">
+                                <View className="w-3/4 h-8 bg-white/10 rounded" />
+                                <View className="w-1/2 h-4 bg-white/10 rounded" />
+                            </View>
+                            <View className="flex-row gap-3 h-[80px]">
+                                <View className="flex-[1.6] bg-white/5 rounded-2xl" />
+                                <View className="flex-1 bg-white/5 rounded-2xl" />
+                            </View>
+                        </View>
+
+                        {/* Bottom Pill Skeleton */}
+                        <View className="absolute top-[420px] w-full h-[60px] rounded-[30px] bg-white/5 border border-white/5" />
+
                     </View>
                 </View>
             </View>
-            {/* 3. Bottom Grid (Other Businesses / Categories) - Placeholder for now or optional */}
-            <View className="mt-10">
-                {/* Can add more content here if needed */}
-            </View>
-        </View>
+            <Footer />
+        </ScrollView>
     );
 };

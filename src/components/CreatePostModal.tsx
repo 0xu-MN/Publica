@@ -7,14 +7,33 @@ interface CreatePostModalProps {
     visible: boolean;
     onClose: () => void;
     onSubmit: (postData: { title: string; content: string; category: CommunityCategory; isAnonymous: boolean }) => void;
+    initialData?: { title: string; content: string; category: CommunityCategory; isAnonymous: boolean };
 }
 
-export const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onClose, onSubmit }) => {
+export const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onClose, onSubmit, initialData }) => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [category, setCategory] = useState<CommunityCategory>('전체'); // Default or first real category
+    const [category, setCategory] = useState<CommunityCategory>('연구·학술'); // Default to first real category
     const [isAnonymous, setIsAnonymous] = useState(false);
     const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+
+    // Load initial data when visible or initialData changes
+    React.useEffect(() => {
+        if (visible) {
+            if (initialData) {
+                setTitle(initialData.title);
+                setContent(initialData.content);
+                setCategory(initialData.category);
+                setIsAnonymous(initialData.isAnonymous);
+            } else {
+                // Reset for new post
+                setTitle('');
+                setContent('');
+                setCategory('연구·학술');
+                setIsAnonymous(false);
+            }
+        }
+    }, [visible, initialData]);
 
     // Filter out 'All' for selection if desired, but user might want 'General'
     // Usually 'All' is not a category for posting, so let's default to a real one for selection if logic dictates.
@@ -23,11 +42,8 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onClo
     const handleSubmit = () => {
         if (!title.trim() || !content.trim()) return;
         onSubmit({ title, content, category, isAnonymous });
-        // Reset form
-        setTitle('');
-        setContent('');
-        setCategory('전체');
-        setIsAnonymous(false);
+        onSubmit({ title, content, category, isAnonymous });
+        // Close modal (state reset happens in useEffect)
         onClose();
     };
 
@@ -54,13 +70,13 @@ export const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onClo
                         <TouchableOpacity onPress={onClose} className="p-1">
                             <X size={24} color="#94A3B8" />
                         </TouchableOpacity>
-                        <Text className="text-white text-lg font-bold">새 글 작성</Text>
+                        <Text className="text-white text-lg font-bold">{initialData ? '게시글 수정' : '새 글 작성'}</Text>
                         <TouchableOpacity
                             onPress={handleSubmit}
                             disabled={!title.trim() || !content.trim()}
                             className={!title.trim() || !content.trim() ? "opacity-50" : "opacity-100"}
                         >
-                            <Text className="text-blue-500 font-bold text-base">등록</Text>
+                            <Text className="text-blue-500 font-bold text-base">{initialData ? '수정' : '등록'}</Text>
                         </TouchableOpacity>
                     </View>
 

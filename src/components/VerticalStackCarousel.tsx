@@ -30,14 +30,19 @@ export function VerticalStackCarousel<T>({
     const [currentIndex, setCurrentIndex] = React.useState(0);
     const progress = useSharedValue(0);
 
+    // Hover State for Pause
+    const [isHovered, setIsHovered] = React.useState(false);
+
     // Auto-play logic
     useEffect(() => {
+        if (isHovered) return; // Pause if hovered
+
         const timer = setInterval(() => {
             setCurrentIndex((prev) => prev + 1);
         }, autoPlayInterval);
 
         return () => clearInterval(timer);
-    }, [autoPlayInterval]);
+    }, [autoPlayInterval, isHovered]);
 
     // Sync shared value with state
     useEffect(() => {
@@ -49,7 +54,14 @@ export function VerticalStackCarousel<T>({
     }, [currentIndex]);
 
     return (
-        <View style={{ height: containerHeight, overflow: 'hidden' }} className="relative bg-transparent">
+        <View
+            style={{ height: containerHeight, overflow: 'hidden' }}
+            className="relative bg-transparent"
+            // @ts-ignore - Web only props
+            onMouseEnter={() => setIsHovered(true)}
+            // @ts-ignore - Web only props
+            onMouseLeave={() => setIsHovered(false)}
+        >
             {data.map((item, index) => {
                 return (
                     <CardItem

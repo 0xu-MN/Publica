@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text, TouchableOpacity, Image, ScrollView } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Image, ScrollView, Pressable } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -7,8 +7,9 @@ import Animated, {
     interpolate,
     Extrapolation
 } from 'react-native-reanimated';
-import { MessageCircle, Heart, User, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { MessageCircle, Heart, User, ChevronLeft, ChevronRight, Share2, MoreHorizontal, Bookmark, RotateCcw, Trash2, Edit2 } from 'lucide-react-native';
 import { CommunityPost } from '../data/mockData';
+import { usePosts } from '../hooks/usePosts';
 
 interface FlippablePostCardProps {
     post: CommunityPost;
@@ -18,17 +19,13 @@ interface FlippablePostCardProps {
     onPrev: () => void;
     hasNext: boolean;
     hasPrev: boolean;
+    currentUserId?: string;
+    onDelete?: (id: string) => void;
+    onEdit?: (id: string) => void;
 }
 
-export const FlippablePostCard: React.FC<FlippablePostCardProps> = ({
-    post,
-    isOpen,
-    onToggle,
-    onNext,
-    onPrev,
-    hasNext,
-    hasPrev
-}) => {
+export const FlippablePostCard = ({ post, isOpen, onToggle, onNext, onPrev, hasNext, hasPrev, currentUserId, onDelete, onEdit }: FlippablePostCardProps) => {
+    const { toggleLike, toggleScrap } = usePosts();
     const flipAnim = useSharedValue(0);
 
     // Sync shared value with prop
@@ -36,11 +33,21 @@ export const FlippablePostCard: React.FC<FlippablePostCardProps> = ({
         flipAnim.value = withTiming(isOpen ? 1 : 0, { duration: 500 });
     }, [isOpen]);
 
+    const handleLike = (e: any) => {
+        e.stopPropagation();
+        toggleLike(post.id);
+    };
+
+    const handleScrap = (e: any) => {
+        e.stopPropagation();
+        toggleScrap(post.id);
+    };
+
     const frontAnimatedStyle = useAnimatedStyle(() => {
         const rotateValue = interpolate(flipAnim.value, [0, 1], [0, 180]);
         return {
             transform: [
-                { rotateY: `${rotateValue}deg` }
+                { rotateY: `${rotateValue} deg` }
             ],
             opacity: interpolate(flipAnim.value, [0, 0.5, 1], [1, 0, 0], Extrapolation.CLAMP),
             zIndex: flipAnim.value < 0.5 ? 1 : 0,
@@ -52,7 +59,7 @@ export const FlippablePostCard: React.FC<FlippablePostCardProps> = ({
         const rotateValue = interpolate(flipAnim.value, [0, 1], [180, 360]);
         return {
             transform: [
-                { rotateY: `${rotateValue}deg` }
+                { rotateY: `${rotateValue} deg` }
             ],
             opacity: interpolate(flipAnim.value, [0, 0.5, 1], [0, 0, 1], Extrapolation.CLAMP),
             zIndex: flipAnim.value > 0.5 ? 1 : 0,
@@ -135,6 +142,17 @@ export const FlippablePostCard: React.FC<FlippablePostCardProps> = ({
                     <View className="flex-1">
                         <View className="flex-row items-center justify-between mb-2 pb-2 border-b border-white/5">
                             <Text className="text-blue-400 text-xs font-bold">상세 내용</Text>
+                            {/* Edit/Delete Buttons for Author */}
+                            {currentUserId && post.authorId === currentUserId && (
+                                <View className="flex-row gap-3">
+                                    <TouchableOpacity onPress={() => onEdit?.(post.id)}>
+                                        <Text className="text-slate-400 text-[10px] hover:text-white">수정</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={() => onDelete?.(post.id)}>
+                                        <Text className="text-red-400 text-[10px] hover:text-red-300">삭제</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
                         </View>
 
                         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

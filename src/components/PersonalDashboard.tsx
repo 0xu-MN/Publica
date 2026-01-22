@@ -7,9 +7,28 @@ import { CalendarModal } from './CalendarModal';
 import { ProjectDetailModal } from './ProjectDetailModal';
 import { SettingsModal } from './SettingsModal';
 import Footer from './Footer';
+import { useAuth } from '../contexts/AuthContext';
+import { usePosts } from '../hooks/usePosts';
 import { Workspace } from './Workspace';
+import AsyncStorage from '@react-native-async-storage/async-storage'; // Ensure async storage is imported
 
-export const PersonalDashboard = () => {
+interface PersonalDashboardProps {
+    readOnly?: boolean;
+    targetUserId?: string;
+    onClose?: () => void; // For closing if presented structurally different, or just use nav
+}
+
+export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalDashboardProps) => {
+    const { user } = useAuth();
+    // In a real app, we would fetch the target user's data using targetUserId here.
+    // For now, we'll Mock it or reuse local storage if it's the "Simulated Public View" of myself
+    // OR we just show a "Public View" placeholder if it's another user.
+
+    // For this specific demo request: "click profile -> enter relative profile".
+    // I will simulate "Another User" by just showing a hardcoded or random profile if targetUserId != user.id
+    // But since I don't have a backend to fetch "User X", I'll just show the ProfileCard in read-only mode for now.
+
+    const { posts, deletePost, updatePost } = usePosts();
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
     const [chatVisible, setChatVisible] = useState(false);
@@ -19,7 +38,7 @@ export const PersonalDashboard = () => {
     const [workspaceVisible, setWorkspaceVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState('');
     const [workspaceFile, setWorkspaceFile] = useState('');
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'files'>('dashboard');
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'files' | 'posts'>('dashboard');
 
     const openProjectDetail = (projectName: string) => {
         setSelectedProject(projectName);
@@ -59,8 +78,11 @@ export const PersonalDashboard = () => {
                 >
                     <Folder size={20} color={activeTab === 'files' ? '#fff' : '#94A3B8'} />
                 </TouchableOpacity>
-                <TouchableOpacity className="w-10 h-10 hover:bg-white/5 rounded-xl items-center justify-center">
-                    <Database size={20} color="#94A3B8" />
+                <TouchableOpacity
+                    className={`w-10 h-10 rounded-xl items-center justify-center ${activeTab === 'posts' ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'hover:bg-white/5'}`}
+                    onPress={() => setActiveTab('posts')}
+                >
+                    <Database size={20} color={activeTab === 'posts' ? '#fff' : '#94A3B8'} />
                 </TouchableOpacity>
                 <View className="flex-1" />
                 <TouchableOpacity
@@ -73,13 +95,20 @@ export const PersonalDashboard = () => {
 
             {/* Main Content */}
             {activeTab === 'dashboard' ? (
-                <ScrollView className="flex-1" contentContainerStyle={{ padding: 24 }}>
+                <ScrollView className="flex-1" contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 24, paddingTop: 60 }}>
                     <View className="max-w-[1400px] w-full mx-auto">
                         <View className={isDesktop ? "flex-row gap-6 min-h-[600px]" : "gap-6"}>
 
                             {/* LEFT COLUMN: Tall Profile Card */}
                             <View className={isDesktop ? "w-[340px]" : "h-[520px]"}>
-                                <ProfileCard onChatPress={() => setChatVisible(true)} />
+                                {/* Profile Card Area - Ensuring Full Height */}
+                                <View className="h-full">
+                                    <ProfileCard
+                                        readOnly={readOnly}
+                                        targetUserId={targetUserId}
+                                        onChatPress={() => setChatVisible(true)}
+                                    />
+                                </View>
                             </View>
 
                             {/* RIGHT COLUMN: Content Blocks Stacked */}
@@ -192,7 +221,7 @@ export const PersonalDashboard = () => {
                     </View>
                     <Footer />
                 </ScrollView>
-            ) : (
+            ) : activeTab === 'files' ? (
                 // Files Tab - Show Project Detail Inline
                 <View className="flex-1">
                     <View className="max-w-[1400px] w-full mx-auto flex-1">
@@ -213,6 +242,43 @@ export const PersonalDashboard = () => {
                                 <Text className="text-slate-600 text-sm mt-2">왼쪽의 대시보드에서 프로젝트를 클릭하세요</Text>
                             </View>
                         )}
+                    </View>
+                </View>
+            ) : (
+                // Posts Tab
+                <View className="flex-1 bg-[#050B14] p-6">
+                    <View className="max-w-[1400px] w-full mx-auto bg-[#0F172A] rounded-3xl border border-white/10 p-6 h-full">
+                        <ScrollView>
+                            {/* Filter persistent posts by author ID or fallback to email match */}
+                            {posts.filter(p => p.authorId === user?.id || (user?.email && p.author.includes(user.email.split('@')[0]))).length > 0 ? (
+                                posts
+                                    .filter(p => p.authorId === user?.id || (user?.email && p.author.includes(user.email.split('@')[0])))
+                                    .map(post => (
+                                        <View key={post.id} className="mb-4 bg-slate-900/50 p-4 rounded-xl border border-white/5 flex-row items-center justify-between">
+                                            <View className="flex-1">
+                                                <Text className="text-white font-bold text-sm mb-1">{post.title}</Text>
+                                                <Text className="text-slate-400 text-xs" numberOfLines={1}>{post.content}</Text>
+                                            </View>
+                                            <View className="flex-row gap-2 ml-4">
+                                                <TouchableOpacity className="bg-blue-600 px-3 py-1.5 rounded-lg">
+                                                    <Text className="text-white text-xs font-bold">수정</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    className="bg-red-500/20 px-3 py-1.5 rounded-lg border border-red-500/30"
+                                                    onPress={() => deletePost(post.id)}
+                                                >
+                                                    <Text className="text-red-400 text-xs font-bold">삭제</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    ))
+                            ) : (
+                                <View className="items-center py-20">
+                                    <Database size={48} color="#475569" />
+                                    <Text className="text-slate-500 text-lg mt-4">작성한 게시글이 없습니다.</Text>
+                                </View>
+                            )}
+                        </ScrollView>
                     </View>
                 </View>
             )}

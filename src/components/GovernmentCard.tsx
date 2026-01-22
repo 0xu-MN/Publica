@@ -74,7 +74,7 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
 
                     {/* Row 2: Full Title Display */}
                     <View className="justify-center items-center flex-1 mb-4">
-                        <Text className="text-white text-xl font-bold text-center leading-8">
+                        <Text className="text-white text-[22px] font-bold text-center leading-8">
                             {item.title}
                         </Text>
                     </View>
