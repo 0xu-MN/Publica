@@ -12,6 +12,7 @@ import { Home as HomeIcon, Folder, HeartHandshake, Building2, Users, Atom, Trend
 import { FloatingLines } from '../components/FloatingLines';
 import { SupportScreen } from './SupportScreen';
 import { PersonalDashboard } from '../components/PersonalDashboard';
+import { SettingsScreen } from './SettingsScreen';
 import { Workspace } from '../components/Workspace';
 import { AnimatedPillNav } from '../components/AnimatedPillNav';
 import Footer from '../components/Footer';
@@ -78,8 +79,8 @@ export const FeedScreen = () => {
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
 
-    // View Mode State: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile'
-    const [viewMode, setViewMode] = useState<'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile'>('feed');
+    // View Mode State: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings'
+    const [viewMode, setViewMode] = useState<'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings'>('feed');
     const [supportSubMode, setSupportSubMode] = useState<'overview' | 'support' | 'connect'>('overview');
     const [targetUserId, setTargetUserId] = useState<string | null>(null);
 
@@ -501,6 +502,16 @@ export const FeedScreen = () => {
                                                 <Text className="text-slate-200">마이페이지</Text>
                                             </TouchableOpacity>
                                             <TouchableOpacity
+                                                className="p-4 border-b border-white/5 flex-row items-center hover:bg-white/5"
+                                                onPress={() => {
+                                                    setViewMode('settings');
+                                                    setIsUserMenuOpen(false);
+                                                }}
+                                            >
+                                                <Settings size={16} color="#94A3B8" className="mr-3" />
+                                                <Text className="text-slate-200">계정 설정</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
                                                 className="p-4 flex-row items-center hover:bg-white/5"
                                                 onPress={() => {
                                                     signOut();
@@ -521,11 +532,13 @@ export const FeedScreen = () => {
 
             {
                 viewMode === 'dashboard' ? (
-                    <PersonalDashboard />
+                    <PersonalDashboard onNavigateToSettings={() => setViewMode('settings')} />
                 ) : viewMode === 'public_profile' ? (
                     <PersonalDashboard readOnly={true} targetUserId={targetUserId || undefined} onClose={() => setViewMode('feed')} />
                 ) : viewMode === 'workspace' ? (
                     <Workspace onClose={() => setViewMode('dashboard')} />
+                ) : viewMode === 'settings' ? (
+                    <SettingsScreen onBack={() => setViewMode('dashboard')} />
                 ) : null // Render nothing if not dashboard or workspace, as support and feed are handled separately
             }
             {viewMode === 'support' && (

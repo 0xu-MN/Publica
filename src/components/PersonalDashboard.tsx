@@ -18,10 +18,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage'; // Ensure 
 interface PersonalDashboardProps {
     readOnly?: boolean;
     targetUserId?: string;
-    onClose?: () => void; // For closing if presented structurally different, or just use nav
+    onClose?: () => void;
+    onNavigateToSettings?: () => void;
 }
 
-export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalDashboardProps) => {
+export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateToSettings }: PersonalDashboardProps) => {
     const { user } = useAuth();
     // In a real app, we would fetch the target user's data using targetUserId here.
     // For now, we'll Mock it or reuse local storage if it's the "Simulated Public View" of myself
@@ -42,7 +43,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
 
     const [calendarVisible, setCalendarVisible] = useState(false);
     const [projectModalVisible, setProjectModalVisible] = useState(false);
-    const [settingsVisible, setSettingsVisible] = useState(false);
+    // const [settingsVisible, setSettingsVisible] = useState(false); // Removed internal state
     const [workspaceVisible, setWorkspaceVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState('');
     const [workspaceFile, setWorkspaceFile] = useState('');
@@ -102,7 +103,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                 </TouchableOpacity> {/* Messages Icon Added */}
                 <TouchableOpacity
                     className="w-10 h-10 hover:bg-white/5 rounded-xl items-center justify-center"
-                    onPress={() => setSettingsVisible(true)}
+                    onPress={() => onNavigateToSettings?.()}
                 >
                     <Settings size={20} color="#94A3B8" />
                 </TouchableOpacity>
@@ -319,16 +320,18 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                         />
                     </View>
 
-                    {/* Right Pane: Chat Room */}
-                    <View className="flex-1 h-full p-6">
-                        {selectedChatUser ? (
-                            <ChatRoom targetUser={selectedChatUser} />
-                        ) : (
-                            <View className="flex-1 items-center justify-center bg-[#1E293B] rounded-3xl border border-white/10 m-6">
-                                <MessageCircle size={48} color="#475569" />
-                                <Text className="text-slate-500 text-lg mt-4">채팅을 선택해주세요</Text>
-                            </View>
-                        )}
+                    {/* Right Pane: Chat Room - WIDTH CONSTRAINED */}
+                    <View className="flex-1 h-full p-6 items-center bg-[#050B14]">
+                        <View className="w-full max-w-[800px] h-full">
+                            {selectedChatUser ? (
+                                <ChatRoom targetUser={selectedChatUser} />
+                            ) : (
+                                <View className="flex-1 items-center justify-center bg-[#1E293B] rounded-3xl border border-white/10 m-6">
+                                    <MessageCircle size={48} color="#475569" />
+                                    <Text className="text-slate-500 text-lg mt-4">채팅을 선택해주세요</Text>
+                                </View>
+                            )}
+                        </View>
                     </View>
                 </View>
             )}
@@ -341,7 +344,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose }: PersonalD
                 onClose={() => setProjectModalVisible(false)}
                 projectName={selectedProject}
             />
-            <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
+            {/* <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} /> */}
         </View>
     );
 };
