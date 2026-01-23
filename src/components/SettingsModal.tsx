@@ -117,7 +117,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                             </View>
 
                             <View>
-                                <Text className="text-slate-400 text-xs mb-1.5 font-semibold uppercase">Real Name (Private)</Text>
+                                <Text className="text-slate-400 text-xs mb-1.5 font-semibold uppercase">Real Name (Public)</Text>
                                 {isEditing ? (
                                     <>
                                         <TextInput
@@ -128,7 +128,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                                             placeholderTextColor="#64748B"
                                         />
                                         <Text className="text-slate-500 text-[10px]">
-                                            Required for identity verification. Not shown publicly without permission.
+                                            Displayed on your public profile.
                                         </Text>
                                     </>
                                 ) : (
@@ -137,7 +137,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                             </View>
 
                             <View>
-                                <Text className="text-slate-400 text-xs mb-1.5 font-semibold uppercase">Nickname (Public)</Text>
+                                <Text className="text-slate-400 text-xs mb-1.5 font-semibold uppercase">Nickname (Anonymous)</Text>
                                 {isEditing ? (
                                     <>
                                         <TextInput
@@ -148,7 +148,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                                             placeholderTextColor="#64748B"
                                         />
                                         <Text className="text-slate-500 text-[10px] mt-1">
-                                            This will be your display name in the community.
+                                            Used for anonymous activities.
                                         </Text>
                                     </>
                                 ) : (

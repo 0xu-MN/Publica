@@ -66,6 +66,7 @@ export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, 
                         const parsedProfile = JSON.parse(stored);
                         setProfile(parsedProfile);
                         setNickname(parsedProfile.nickname || user?.email?.split('@')[0] || 'Guest');
+                        setRealName(parsedProfile.realName || ''); // Load Real Name
                         setRole(parsedProfile.job || 'AI Service Planner & Developer');
                         setBio(parsedProfile.bio || '사용자 경험을 혁신하는 AI 서비스를 기획하고 개발합니다.');
                         setImageUrl(parsedProfile.imageUrl || '');
@@ -139,7 +140,7 @@ export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, 
                     {/* Name & Verification */}
                     <View className="flex-row items-center mb-1">
                         <Text className="text-white text-2xl font-bold mr-2">
-                            {nickname}
+                            {realName || nickname}
                         </Text>
                         <CheckCircle2 size={20} color="#10B981" fill="#10B981" />
                     </View>

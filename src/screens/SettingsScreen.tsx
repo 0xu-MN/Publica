@@ -127,14 +127,17 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                                 {/* Text Fields */}
                                 <View className="flex-1 min-w-[300px] gap-5">
                                     <View>
-                                        <Text className="text-slate-400 text-sm font-bold mb-2">닉네임 (표시 이름)</Text>
+                                        <Text className="text-slate-400 text-sm font-bold mb-2">이름 (공개 프로필)</Text>
                                         <TextInput
                                             className="bg-[#1E293B] text-white p-4 rounded-xl border border-white/10 text-base"
-                                            value={nickname}
-                                            onChangeText={setNickname}
-                                            placeholder="홍길동"
+                                            value={realName}
+                                            onChangeText={setRealName}
+                                            placeholder="실명을 입력하세요"
                                             placeholderTextColor="#475569"
                                         />
+                                        <Text className="text-slate-500 text-xs mt-2">
+                                            다른 사용자에게 표시되는 이름입니다. 신뢰성을 위해 실명 사용을 권장합니다.
+                                        </Text>
                                     </View>
                                     <View>
                                         <Text className="text-slate-400 text-sm font-bold mb-2">직책 / 역할</Text>
@@ -168,19 +171,19 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                         <Text className="text-white text-2xl font-bold mb-6">개인 정보</Text>
                         <View className="bg-[#0F172A] rounded-3xl border border-white/5 p-8 gap-6">
                             <View>
-                                <Text className="text-slate-400 text-sm font-bold mb-2">실명 (비공개/인증용)</Text>
+                                <Text className="text-slate-400 text-sm font-bold mb-2">익명 닉네임</Text>
                                 <View className="flex-row items-center bg-[#1E293B] rounded-xl border border-white/10 px-4">
                                     <Lock size={18} color="#64748B" className="mr-3" />
                                     <TextInput
                                         className="flex-1 text-white py-4 text-base"
-                                        value={realName}
-                                        onChangeText={setRealName}
-                                        placeholder="실명을 입력하세요"
+                                        value={nickname}
+                                        onChangeText={setNickname}
+                                        placeholder="익명 닉네임 입력"
                                         placeholderTextColor="#475569"
                                     />
                                 </View>
                                 <Text className="text-slate-500 text-xs mt-2">
-                                    * 실명은 프로필에 공개되지 않으며, 신원 인증 및 계약 시에만 사용됩니다.
+                                    * 익명으로 게시글을 작성하거나 활동할 때만 사용됩니다. 프로필에는 공개되지 않습니다.
                                 </Text>
                             </View>
 

@@ -42,7 +42,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
     const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; name: string } | undefined>(undefined);
 
     const [calendarVisible, setCalendarVisible] = useState(false);
-    const [calendarVisible, setCalendarVisible] = useState(false);
+
     const [projectModalVisible, setProjectModalVisible] = useState(false);
     const [settingsVisible, setSettingsVisible] = useState(false); // Restored
     const [workspaceVisible, setWorkspaceVisible] = useState(false);
