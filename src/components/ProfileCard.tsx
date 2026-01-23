@@ -11,11 +11,12 @@ interface ProfileCardProps {
     onShowInbox?: () => void;
     readOnly?: boolean;
     targetUserId?: string;
+    onEditProfile?: () => void;
 }
 
 const EXPERTISE_BADGES = ['AI/ML', 'Quantum', 'FinTech', 'Biotech'];
 
-export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId }: ProfileCardProps) => {
+export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, onEditProfile }: ProfileCardProps) => {
     const { user } = useAuth();
     // In real app, fetch targetUserId if present.
     // For now, if readOnly is true and targetUserId is different, we simulate "Another User".
@@ -199,7 +200,7 @@ export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId }
                         <View className="flex-row gap-3 w-full">
                             <TouchableOpacity
                                 className="flex-1 bg-blue-600 py-3 rounded-xl items-center justify-center shadow-lg shadow-blue-500/30"
-                                onPress={() => setIsEditModalVisible(true)}
+                                onPress={() => onEditProfile?.()}
                             >
                                 <Text className="text-white font-bold text-sm">프로필 수정</Text>
                             </TouchableOpacity>
@@ -214,11 +215,10 @@ export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId }
                 </View>
             </View>
 
-            {/* EDIT MODAL */}
-            <SettingsModal
+            {/* <SettingsModal
                 visible={isEditModalVisible}
                 onClose={() => setIsEditModalVisible(false)}
-            />
+            /> */}
         </View>
     );
 };

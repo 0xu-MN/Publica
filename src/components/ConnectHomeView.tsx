@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView } from 'react-native';
-import { ArrowRight, Sparkles, AlertCircle, Briefcase } from 'lucide-react-native';
+import { ArrowRight, Sparkles, AlertCircle, Briefcase, Home } from 'lucide-react-native';
 import { VerticalStackCarousel } from './VerticalStackCarousel';
 import { GovernmentCard } from './GovernmentCard';
 import { CommunityCard } from './CommunityCard';
@@ -39,9 +39,12 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({ onNavigateToSu
         >
             <View className="max-w-[1400px] mx-auto w-full p-6 ">
                 {/* Header Area */}
-                <View className="mb-10">
-                    <Text className="text-white text-4xl font-bold mb-2">Connect Hub</Text>
-                    <Text className="text-slate-400 text-lg">정부사업과 커뮤니티를 한 곳에서</Text>
+                <View className="mb-10 pt-4">
+                    <View className="flex-row items-center mb-2">
+                        <Home size={28} color="#3B82F6" />
+                        <Text className="text-white text-3xl font-bold ml-3">Connect Hub</Text>
+                    </View>
+                    <Text className="text-slate-400 text-base">정부사업과 커뮤니티를 한 곳에서</Text>
                 </View>
 
                 <View className="flex-row gap-8 min-h-[500px]">

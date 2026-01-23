@@ -42,8 +42,9 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
     const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; name: string } | undefined>(undefined);
 
     const [calendarVisible, setCalendarVisible] = useState(false);
+    const [calendarVisible, setCalendarVisible] = useState(false);
     const [projectModalVisible, setProjectModalVisible] = useState(false);
-    // const [settingsVisible, setSettingsVisible] = useState(false); // Removed internal state
+    const [settingsVisible, setSettingsVisible] = useState(false); // Restored
     const [workspaceVisible, setWorkspaceVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState('');
     const [workspaceFile, setWorkspaceFile] = useState('');
@@ -103,7 +104,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                 </TouchableOpacity> {/* Messages Icon Added */}
                 <TouchableOpacity
                     className="w-10 h-10 hover:bg-white/5 rounded-xl items-center justify-center"
-                    onPress={() => onNavigateToSettings?.()}
+                    onPress={() => setSettingsVisible(true)}
                 >
                     <Settings size={20} color="#94A3B8" />
                 </TouchableOpacity>
@@ -133,8 +134,9 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                                         }}
                                         onShowInbox={() => {
                                             setActiveTab('messages');
-                                            setSelectedChatUser(undefined); // Show list initial state? Or keep last. 
+                                            setSelectedChatUser(undefined);
                                         }}
+                                        onEditProfile={() => onNavigateToSettings?.()}
                                     />
                                 </View>
                             </View>
@@ -344,7 +346,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                 onClose={() => setProjectModalVisible(false)}
                 projectName={selectedProject}
             />
-            {/* <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} /> */}
+            <SettingsModal visible={settingsVisible} onClose={() => setSettingsVisible(false)} />
         </View>
     );
 };
