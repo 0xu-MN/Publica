@@ -9,6 +9,7 @@ import { SettingsModal } from './SettingsModal';
 interface ProfileCardProps {
     onChatPress?: (user?: { id: string; name: string }) => void;
     onShowInbox?: () => void;
+    onScrapPress?: () => void; // New prop for accessing scraps from profile
     readOnly?: boolean;
     targetUserId?: string;
     onEditProfile?: () => void;
@@ -23,7 +24,7 @@ interface ProfileCardProps {
 
 const EXPERTISE_BADGES = ['AI/ML', 'Quantum', 'FinTech', 'Biotech'];
 
-export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, onEditProfile, previewData }: ProfileCardProps) => {
+export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, targetUserId, onEditProfile, previewData }: ProfileCardProps) => {
     const { user } = useAuth();
     // In real app, fetch targetUserId if present.
     // For now, if readOnly is true and targetUserId is different, we simulate "Another User".

@@ -245,10 +245,24 @@ async function loop() {
     console.log('⏱️  Entering Maintenance Mode (1 item every 30 mins)...');
 
     const runMaintenance = async () => {
-        await generateAndInsert(); // Random pick
-        const delay = 30 * 60 * 1000;
-        console.log(`💤 Sleeping for 30 mins...`);
-        setTimeout(runMaintenance, delay);
+        try {
+            // Generate 1 or 2 items randomly
+            const count = Math.random() > 0.5 ? 2 : 1;
+            console.log(`[${new Date().toLocaleTimeString()}] ⚡ Maintenance: Generating ${count} item(s)...`);
+
+            for (let i = 0; i < count; i++) {
+                await generateAndInsert();
+                // Small delay between multiple items
+                if (i < count - 1) await new Promise(r => setTimeout(r, 2000));
+            }
+        } catch (err) {
+            console.error('[Maintenance Error]', err);
+        } finally {
+            // ALWAYS schedule next run
+            const delay = 30 * 60 * 1000; // 30 minutes
+            console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 30 mins...`);
+            setTimeout(runMaintenance, delay);
+        }
     };
 
     runMaintenance();

@@ -137,6 +137,13 @@ export const FeedScreen = () => {
 
     // Load saved state on mount and handle Auth State changes
     useEffect(() => {
+        // Sync scraps when returning to feed
+        if (viewMode === 'feed' && user) {
+            loadScraps();
+        }
+    }, [viewMode, user]);
+
+    useEffect(() => {
         const loadSavedState = async () => {
             try {
                 // If user logs out, force Feed Mode and clear personal data

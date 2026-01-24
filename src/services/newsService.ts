@@ -49,6 +49,7 @@ export interface NewsItem {
     tags: string[];
     readTime: string; // db: read_time
     color: string; // Derived from category
+    related_materials?: { title: string; url: string }[]; // Added for scraps
 }
 
 
@@ -268,6 +269,7 @@ export const toggleScrap = async (userId: string, item: AICardNews | any): Promi
                 body: item.body || item.summary,
                 ai_insight: item.aiInsight || (item.aiSummary ? `💡 결론\n${item.aiSummary}` : null),
                 bullets: item.bullets || item.tags || [],
+                related_materials: item.related_materials || item.relatedLinks || [], // Validated persistence
                 image_url: item.imageUrl,
                 category: item.category,
                 created_at: new Date().toISOString()
@@ -302,6 +304,7 @@ export const fetchScraps = async (userId: string): Promise<any[]> => {
             source: 'Saved Insight',
             timestamp: new Date(item.created_at).toLocaleDateString(),
             tags: item.bullets || [],
+            related_materials: item.related_materials || [],
             readTime: '3 min',
             isScrapped: true
         }));
