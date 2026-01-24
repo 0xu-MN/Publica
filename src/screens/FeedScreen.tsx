@@ -129,6 +129,7 @@ export const FeedScreen = () => {
     const [newsData, setNewsData] = useState<any[]>([]); // Use flexible type or define new interface
     const [loading, setLoading] = useState(true);
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
     // View Mode State: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings'
     const [viewMode, setViewMode] = useState<'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings'>('feed');
@@ -261,6 +262,25 @@ export const FeedScreen = () => {
     useEffect(() => {
         loadNews();
     }, [activeCategory]);
+
+    // Auto-refresh feed every 2 minutes
+    useEffect(() => {
+        const interval = setInterval(() => {
+            if (viewMode === 'feed' && !loading) {
+                loadNews();
+            }
+        }, 2 * 60 * 1000); // 2 minutes
+        return () => clearInterval(interval);
+    }, [viewMode, loading]);
+
+    // Force re-render every minute to update "X minutes ago" display
+    const [, forceUpdate] = useState({});
+    useEffect(() => {
+        const timer = setInterval(() => {
+            forceUpdate({});
+        }, 60 * 1000); // 1 minute
+        return () => clearInterval(timer);
+    }, []);
 
     const loadNews = async () => {
         setLoading(true);
@@ -397,6 +417,7 @@ export const FeedScreen = () => {
             setNewsData(mappedData);
         }
 
+        setLastUpdateTime(new Date());
         setLoading(false);
     };
 
@@ -763,7 +784,9 @@ export const FeedScreen = () => {
                                                 <View className="flex-row items-center bg-white/5 px-4 py-2 rounded-2xl border border-white/5">
                                                     <View className="flex-row items-center">
                                                         <Sparkles size={14} color="#888" />
-                                                        <Text className="text-slate-500 text-[13px] ml-1.5 mr-4">마지막 업데이트: 5분 전</Text>
+                                                        <Text className="text-slate-500 text-[13px] ml-1.5 mr-4">
+                                                            마지막 업데이트: {Math.floor((Date.now() - lastUpdateTime.getTime()) / 60000) === 0 ? '방금 전' : `${Math.floor((Date.now() - lastUpdateTime.getTime()) / 60000)}분 전`}
+                                                        </Text>
                                                     </View>
                                                     <View className="w-[1px] h-3 bg-white/10 mr-4" />
                                                     <View className="flex-row items-center gap-4">

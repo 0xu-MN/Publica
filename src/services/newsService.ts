@@ -116,7 +116,7 @@ export const fetchAICards = async (): Promise<AICardNews[]> => {
             .from('cards')
             .select('*')
             .order('created_at', { ascending: false })
-            .limit(10);
+            .limit(50); // Increased from 10 to show all recent items
 
         if (error) throw error;
         if (!data) return [];

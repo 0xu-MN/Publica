@@ -242,7 +242,7 @@ async function loop() {
     // Repeating good insights is better than infinite garbage.
 
     console.log('✅ Initial Batch Complete.');
-    console.log('⏱️  Entering Maintenance Mode (1 item every 30 mins)...');
+    console.log('⏱️  Entering Maintenance Mode (1-2 items every 5 mins)...');
 
     const runMaintenance = async () => {
         try {
@@ -259,8 +259,8 @@ async function loop() {
             console.error('[Maintenance Error]', err);
         } finally {
             // ALWAYS schedule next run
-            const delay = 30 * 60 * 1000; // 30 minutes
-            console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 30 mins...`);
+            const delay = 5 * 60 * 1000; // 5 minutes for frequent updates
+            console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 5 mins...`);
             setTimeout(runMaintenance, delay);
         }
     };
