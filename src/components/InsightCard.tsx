@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View, Pressable, Platform } from 'react-native';
+import { Text, View, Pressable, Platform, TouchableOpacity } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -16,9 +16,10 @@ interface InsightCardProps {
     desktopMode?: boolean;
     onPress?: () => void;
     onBookmarkPress?: () => void;
+    isScrapped?: boolean;
 }
 
-export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMode = false, onPress, onBookmarkPress }) => {
+export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMode = false, onPress, onBookmarkPress, isScrapped = false }) => {
     const cardHeight = 350;
     const [isHovered, setIsHovered] = useState(false);
 
@@ -93,15 +94,22 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
                         >
                             <Text className="text-[11px] font-bold uppercase" style={{ color: categoryColor }}>{categoryLabel}</Text>
                         </View>
-                        <Pressable
-                            className="w-9 h-9 bg-black/30 rounded-full items-center justify-center backdrop-blur-sm border border-white/5 active:bg-black/50"
+                        <TouchableOpacity
+                            className={`w-9 h-9 rounded-full items-center justify-center backdrop-blur-sm border border-white/5 active:bg-black/50 ${isScrapped ? 'bg-blue-500/20 shadow-lg shadow-blue-500/30' : 'bg-black/30'}`}
+                            style={{ zIndex: 50 }}
                             onPress={(e) => {
-                                e.stopPropagation(); // Prevent card click
+                                e.stopPropagation();
                                 onBookmarkPress?.();
                             }}
+                            activeOpacity={0.7}
                         >
-                            <Bookmark size={18} color="white" opacity={0.9} />
-                        </Pressable>
+                            <Bookmark
+                                size={18}
+                                color={isScrapped ? "#3B82F6" : "white"}
+                                fill={isScrapped ? "#3B82F6" : "none"}
+                                opacity={isScrapped ? 1 : 0.9}
+                            />
+                        </TouchableOpacity>
                     </View>
 
                     {/* Bottom Content */}

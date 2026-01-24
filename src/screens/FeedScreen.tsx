@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, SafeAreaView, StatusBar, TouchableOpacity, useWindowDimensions, FlatList, TextInput, Animated, Easing } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, StatusBar, TouchableOpacity, useWindowDimensions, FlatList, TextInput, Animated, Easing, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { InsightCard } from '../components/InsightCard';
-import { fetchAICards, AICardNews } from '../services/newsService';
+import { fetchAICards, AICardNews, getScrappedIds, toggleScrap } from '../services/newsService';
 import { InsightDetailModal } from '../components/InsightDetailModal';
 import { AuthModal } from '../components/AuthModal';
 import { RotatingText } from '../components/RotatingText';
@@ -40,7 +40,58 @@ const MOCK_NOTIFICATIONS: FeedNotification[] = [
 
 export const FeedScreen = () => {
     const { width } = useWindowDimensions();
+    // Scrap State
+    const [scrappedIds, setScrappedIds] = useState<Set<string>>(new Set());
     const { user, signOut } = useAuth(); // Destructure signOut
+
+    useEffect(() => {
+        if (user) {
+            loadScraps();
+        } else {
+            setScrappedIds(new Set());
+        }
+    }, [user]);
+
+    const loadScraps = async () => {
+        if (!user) return;
+        const ids = await getScrappedIds(user.id);
+        setScrappedIds(ids);
+    }
+    // 1. Action: User clicks scrap button in Feed List
+    const handleScrap = async (item: any) => {
+        console.log('handleScrap triggered for:', item.title);
+
+        if (!user) {
+            Alert.alert('로그인 필요', '스크랩 하려면 로그인이 필요합니다.');
+            setAuthModalVisible(true);
+            return;
+        }
+
+        // Optimistic Update for UI responsiveness
+        const isScrapped = scrappedIds.has(item.title);
+        const newSet = new Set(scrappedIds);
+        if (isScrapped) newSet.delete(item.title);
+        else newSet.add(item.title);
+        setScrappedIds(newSet);
+
+        try {
+            // Actual API Call
+            await toggleScrap(user.id, item);
+        } catch (e) {
+            // Revert on error
+            setScrappedIds(scrappedIds);
+            console.error('Failed to toggle scrap', e);
+        }
+    };
+
+    // 2. State Sync: Modal or other child component updated the scrap status
+    const syncScrapState = (item: any, isScrapped: boolean) => {
+        const newSet = new Set(scrappedIds);
+        if (isScrapped) newSet.add(item.title);
+        else newSet.delete(item.title);
+        setScrappedIds(newSet);
+    };
+
     const [authModalVisible, setAuthModalVisible] = useState(false);
     const [onboardingVisible, setOnboardingVisible] = useState(false);
 
@@ -208,12 +259,19 @@ export const FeedScreen = () => {
         setLoading(true);
         setActiveKeyword(null);
 
-        // Always fetch AI cards now
-        const aiCards = await fetchAICards();
+        let aiCards: AICardNews[] = [];
 
-        // If no AI cards (e.g. DB empty), fallback to some mock logic or empty
-        // MAPPING AICardNews -> InsightCard Props
-        // InsightCard expects: title, summary, imageUrl, category, source, timestamp, readTime, tags
+        try {
+            // Fetch Data and Sync Scraps in Parallel
+            await Promise.all([
+                (async () => {
+                    aiCards = await fetchAICards();
+                })(),
+                user ? loadScraps() : Promise.resolve()
+            ]);
+        } catch (e) {
+            console.error("Error loading news/scraps", e);
+        }
 
         const mappedData = aiCards.map((card, index) => ({
             id: card.id,
@@ -727,10 +785,14 @@ export const FeedScreen = () => {
                                         item={item}
                                         onPress={() => setSelectedItem(item)}
                                         desktopMode={isDesktop}
+                                        isScrapped={scrappedIds.has(item.title)}
+                                        onBookmarkPress={() => handleScrap(item)}
                                     />
                                 </View>
                             )}
                             ListFooterComponent={<Footer />}
+                            refreshing={loading}
+                            onRefresh={loadNews}
                         />
                     ) : (
                         /* Category Feed */
@@ -863,10 +925,14 @@ export const FeedScreen = () => {
                                         item={item}
                                         desktopMode={isDesktop}
                                         onPress={() => setSelectedItem(item)}
+                                        isScrapped={scrappedIds.has(item.title)}
+                                        onBookmarkPress={() => handleScrap(item)}
                                     />
                                 </View>
                             )}
                             ListFooterComponent={<Footer />}
+                            refreshing={loading}
+                            onRefresh={loadNews}
                         />
                     )}
                 </View>
@@ -875,9 +941,11 @@ export const FeedScreen = () => {
 
             {/* Detail Modal */}
             <InsightDetailModal
-                item={selectedItem}
                 visible={selectedItem !== null}
+                item={selectedItem}
                 onClose={() => setSelectedItem(null)}
+                isScrapped={selectedItem ? scrappedIds.has(selectedItem.title) : false}
+                onToggleScrap={(item, isScrapped) => syncScrapState(item, isScrapped)}
             />
             <AuthModal
                 visible={authModalVisible}

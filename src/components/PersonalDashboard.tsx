@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { Settings, Folder, CheckSquare, Sparkles, Plus, Clock, FileText, ChevronRight, LayoutDashboard, Database, MessageCircle } from 'lucide-react-native';
+
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Dimensions, Linking } from 'react-native';
+import { Calendar } from 'react-native-calendars';
+import { Sparkles, Clock, MoreHorizontal, MessageSquare, Briefcase, Settings, LogOut, ChevronRight, CheckCircle2, Circle, X, Plus, LayoutDashboard, FolderOpen, Bookmark, Database, Folder, CheckSquare, FileText, MessageCircle } from 'lucide-react-native';
 import { ProfileCard } from './ProfileCard';
-// import { ChatModal } from './ChatModal'; // Removed
-// import { ChatListModal } from './ChatListModal'; // Removed
+import { InsightCard } from './InsightCard';
 import { ChatRoom } from './ChatRoom';
 import { ChatListView } from './ChatListView';
 import { CalendarModal } from './CalendarModal';
@@ -12,44 +13,87 @@ import { SettingsModal } from './SettingsModal';
 import Footer from './Footer';
 import { useAuth } from '../contexts/AuthContext';
 import { usePosts } from '../hooks/usePosts';
+import { fetchScraps, toggleScrap } from '../services/newsService';
 import { Workspace } from './Workspace';
-import AsyncStorage from '@react-native-async-storage/async-storage'; // Ensure async storage is imported
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../lib/supabase';
+import { InsightDetailPane } from './InsightDetailPane';
+import { InsightDetailModal } from './InsightDetailModal';
 
 interface PersonalDashboardProps {
     readOnly?: boolean;
-    targetUserId?: string;
+    targetUserId?: string | null;
     onClose?: () => void;
     onNavigateToSettings?: () => void;
+    activeTab?: 'dashboard' | 'scraps' | 'messages' | 'files'; // Added for initialTab
 }
 
-export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateToSettings }: PersonalDashboardProps) => {
+export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
+    activeTab: initialTab = 'dashboard',
+    readOnly = false,
+    targetUserId,
+    onNavigateToSettings
+}) => {
     const { user } = useAuth();
-    // In a real app, we would fetch the target user's data using targetUserId here.
-    // For now, we'll Mock it or reuse local storage if it's the "Simulated Public View" of myself
-    // OR we just show a "Public View" placeholder if it's another user.
-
-    // For this specific demo request: "click profile -> enter relative profile".
-    // I will simulate "Another User" by just showing a hardcoded or random profile if targetUserId != user.id
-    // But since I don't have a backend to fetch "User X", I'll just show the ProfileCard in read-only mode for now.
-
     const { posts, deletePost, updatePost } = usePosts();
-    const { width } = useWindowDimensions();
-    const isDesktop = width >= 1024;
+    const windowWidth = Dimensions.get('window').width;
+    const isDesktop = windowWidth >= 1024;
 
-    // Chat States
+    // -- STATE DEFINITIONS --
+
+    // Split View & Filter State
+    const [selectedScrap, setSelectedScrap] = useState<any | null>(null);
+    const [selectedCategory, setSelectedCategory] = useState<string>('전체');
+    const [scraps, setScraps] = useState<any[]>([]);
+
+    // Navigation & View State
+    const [activeTab, setActiveTab] = useState<'dashboard' | 'files' | 'posts' | 'messages' | 'scraps'>(initialTab as any);
+    const [settingsVisible, setSettingsVisible] = useState(false);
+
+    // Chat State
     const [chatVisible, setChatVisible] = useState(false);
     const [chatListVisible, setChatListVisible] = useState(false);
     const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; name: string } | undefined>(undefined);
 
+    // Productivity State
     const [calendarVisible, setCalendarVisible] = useState(false);
-
     const [projectModalVisible, setProjectModalVisible] = useState(false);
-    const [settingsVisible, setSettingsVisible] = useState(false); // Restored
+
+    // Workspace State
     const [workspaceVisible, setWorkspaceVisible] = useState(false);
     const [selectedProject, setSelectedProject] = useState('');
     const [workspaceFile, setWorkspaceFile] = useState('');
 
-    const [activeTab, setActiveTab] = useState<'dashboard' | 'files' | 'posts' | 'messages'>('dashboard');
+    // -- COMPUTED VALUES --
+    const uniqueCategories = ['전체', ...Array.from(new Set(scraps.map(s => s.category || '기타')))];
+    const filteredScraps = selectedCategory === '전체'
+        ? scraps
+        : scraps.filter(s => (s.category || '기타') === selectedCategory);
+
+    // -- EFFECTS --
+    useEffect(() => {
+        if (activeTab === 'scraps' && user) {
+            loadScraps();
+        }
+    }, [activeTab, user]);
+
+    // -- HANDLERS --
+    const loadScraps = async () => {
+        if (!user) {
+            console.log('[DEBUG-PD] No user in dashboard, skipping load');
+            return;
+        }
+        console.log('[DEBUG-PD] Loading scraps for user:', user.id);
+        const data = await fetchScraps(user.id);
+        console.log('[DEBUG-PD] Scraps loaded:', data.length);
+        setScraps(data);
+    };
+
+    const handleUnscrap = async (item: any) => {
+        if (!user) return;
+        await toggleScrap(user.id, item);
+        loadScraps(); // Refresh list
+    };
 
     const openProjectDetail = (projectName: string) => {
         setSelectedProject(projectName);
@@ -63,6 +107,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
         setWorkspaceVisible(true);
     };
 
+    // -- RENDER INTERCEPTS --
     if (workspaceVisible) {
         return (
             <Workspace
@@ -101,7 +146,15 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                     onPress={() => setActiveTab('messages')}
                 >
                     <MessageCircle size={20} color={activeTab === 'messages' ? '#fff' : '#94A3B8'} />
-                </TouchableOpacity> {/* Messages Icon Added */}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                    className={`w-10 h-10 rounded-xl items-center justify-center ${activeTab === 'scraps' ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'hover:bg-white/5'}`}
+                    onPress={() => setActiveTab('scraps')}
+                >
+                    <Bookmark size={20} color={activeTab === 'scraps' ? '#fff' : '#94A3B8'} />
+                </TouchableOpacity>
+
                 <TouchableOpacity
                     className="w-10 h-10 hover:bg-white/5 rounded-xl items-center justify-center"
                     onPress={() => setSettingsVisible(true)}
@@ -122,7 +175,7 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                                 <View className="h-full">
                                     <ProfileCard
                                         readOnly={readOnly}
-                                        targetUserId={targetUserId}
+                                        targetUserId={targetUserId || undefined}
                                         onChatPress={(userInfo) => {
                                             // Public View: Switch to Messages Tab and Open Chat
                                             setActiveTab('messages');
@@ -132,33 +185,29 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                                                 setSelectedChatUser(targetUserId ? { id: targetUserId, name: 'User' } : undefined);
                                             }
                                         }}
-                                        onShowInbox={() => {
-                                            setActiveTab('messages');
-                                            setSelectedChatUser(undefined);
-                                        }}
-                                        onEditProfile={() => onNavigateToSettings?.()}
+                                        onScrapPress={() => setActiveTab('scraps')}
                                     />
                                 </View>
                             </View>
 
-                            {/* RIGHT COLUMN: Content Blocks Stacked */}
+                            {/* RIGHT COLUMN: Dashboard Widgets */}
                             <View className="flex-1 gap-6">
-
-                                {/* Top Row: AI & Schedule Side by Side */}
+                                {/* Top Row: Schedule & Today's Brief */}
                                 <View className={isDesktop ? "flex-row gap-6 h-[280px]" : "gap-6"}>
-                                    {/* AI Curation Block */}
-                                    <View className={`bg-[#0F172A] rounded-3xl p-6 border border-white/5 flex-1 ${isDesktop ? '' : 'h-[300px]'}`}>
-                                        <View className="flex-row items-center justify-between mb-3">
-                                            <View className="flex-row items-center gap-2">
-                                                <Sparkles size={18} color="#10B981" />
-                                                <Text className="text-white font-bold text-lg">AI 큐레이션</Text>
-                                            </View>
-                                            <View className="bg-emerald-500/10 px-3 py-1 rounded-full">
-                                                <Text className="text-emerald-400 text-xs font-semibold">#퀀트 #반도체</Text>
-                                            </View>
+                                    {/* Recent Documents - CLICKABLE */}
+                                    <View className="bg-[#0F172A] rounded-3xl p-6 border border-white/5 flex-1 relative overflow-hidden">
+                                        <View className="absolute top-0 right-0 p-4 opacity-5">
+                                            <FolderOpen size={120} color="white" />
                                         </View>
-                                        <View className="gap-2 flex-1">
-                                            <PaperItem title="Quantum Error Correction Trends 2026" />
+                                        <View className="flex-row items-center justify-between mb-4 relative z-10">
+                                            <TouchableOpacity onPress={() => setActiveTab('files')}>
+                                                <Text className="text-white font-bold text-lg">최근 문서</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity onPress={() => setActiveTab('files')}>
+                                                <Text className="text-blue-500 text-sm font-semibold">더보기</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <View className="gap-3 relative z-10">
                                             <PaperItem title="Impact of AI on Kospi Volatility" />
                                             <PaperItem title="Next-Gen Lithography: EUV+" />
                                         </View>
@@ -251,6 +300,100 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                     </View>
                     <Footer />
                 </ScrollView>
+            ) : activeTab === 'scraps' ? (
+                <View className="flex-1 bg-[#050B14] flex-row">
+                    {/* Left Pane / Full List */}
+                    <View className={`flex-1 p-6 ${selectedScrap && isDesktop ? 'max-w-[400px] border-r border-white/5' : ''}`}>
+                        <View className="mb-6">
+                            <View className="flex-row items-center justify-between mb-4">
+                                <View>
+                                    <Text className="text-white font-bold text-2xl mb-1">스크랩 보관함</Text>
+                                    <Text className="text-slate-400 text-sm">저장한 인사이트 {scraps.length}개</Text>
+                                </View>
+                                <TouchableOpacity
+                                    className="px-4 py-2 bg-slate-800 rounded-lg border border-white/10"
+                                    onPress={loadScraps}
+                                >
+                                    <Text className="text-white text-sm font-semibold">새로고침</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Category Filter Pills */}
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
+                                {uniqueCategories.map((cat) => (
+                                    <TouchableOpacity
+                                        key={cat}
+                                        onPress={() => setSelectedCategory(cat)}
+                                        className={`px-4 py-2 rounded-full border ${selectedCategory === cat
+                                            ? 'bg-blue-600 border-blue-500'
+                                            : 'bg-slate-800 border-white/10'
+                                            }`}
+                                    >
+                                        <Text className={`text-sm font-medium ${selectedCategory === cat ? 'text-white' : 'text-slate-400'
+                                            }`}>
+                                            {cat === 'Science' ? '과학' : cat === 'Economy' ? '경제' : cat}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+
+                        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                            {filteredScraps.length > 0 ? (
+                                <View className={!selectedScrap ? "flex-row flex-wrap gap-4" : ""}>
+                                    {filteredScraps.map((scrap) => (
+                                        <View key={scrap.id} className={!selectedScrap ? "w-full md:w-[32%] mb-0" : "mb-4"}>
+                                            <InsightCard
+                                                item={scrap}
+                                                isScrapped={true}
+                                                onBookmarkPress={() => handleUnscrap(scrap)}
+                                                desktopMode={!selectedScrap} // Detailed cards in Grid
+                                                onPress={() => {
+                                                    if (isDesktop) {
+                                                        setSelectedScrap(scrap);
+                                                    } else {
+                                                        setSelectedScrap(scrap);
+                                                    }
+                                                }}
+                                            />
+                                        </View>
+                                    ))}
+                                </View>
+                            ) : (
+                                <View className="items-center py-20 bg-[#0F172A] rounded-3xl border border-white/5">
+                                    <Bookmark size={48} color="#475569" />
+                                    <Text className="text-slate-500 text-lg mt-4">해당하는 스크랩이 없습니다.</Text>
+                                    <Text className="text-slate-600 text-sm mt-2">다른 카테고리를 선택해보세요.</Text>
+                                </View>
+                            )}
+                        </ScrollView>
+                    </View>
+
+                    {/* Right Pane (Desktop Only) */}
+                    {isDesktop && selectedScrap && (
+                        <View className="flex-1 bg-[#050B14] p-6 justify-center items-center">
+                            <View className="w-full h-full max-w-[600px] relative">
+                                <InsightDetailPane
+                                    item={selectedScrap}
+                                    onClose={() => setSelectedScrap(null)}
+                                    isBookmarked={true}
+                                    onToggleBookmark={() => handleUnscrap(selectedScrap)}
+                                />
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Mobile Modal */}
+                    {!isDesktop && (
+                        <InsightDetailModal
+                            visible={!!selectedScrap}
+                            item={selectedScrap}
+                            onClose={() => setSelectedScrap(null)}
+                            isScrapped={true}
+                            onToggleScrap={(item) => handleUnscrap(item)}
+                        />
+                    )}
+                </View>
             ) : activeTab === 'files' ? (
                 // Files Tab - Show Project Detail Inline
                 <View className="flex-1">
@@ -337,8 +480,6 @@ export const PersonalDashboard = ({ readOnly, targetUserId, onClose, onNavigateT
                     </View>
                 </View>
             )}
-
-
 
             <CalendarModal visible={calendarVisible} onClose={() => setCalendarVisible(false)} />
             <ProjectDetailModal

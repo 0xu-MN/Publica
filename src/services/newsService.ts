@@ -185,3 +185,137 @@ export const fetchGovernmentPrograms = async (): Promise<any[]> => {
         ];
     }
 };
+// Scraps (Bookmarks) Implementation - Local Mock (AsyncStorage) Fallback
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Alert } from 'react-native';
+
+// Memory Cache as primary source of truth for the session
+let _memoryScraps: any[] | null = null;
+
+import { Platform } from 'react-native';
+
+const SCRAP_STORAGE_KEY = 'user_scraps_v1';
+
+// Cross-platform Alert
+const safeAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+        window.alert(`${title}\n\n${message}`);
+    } else {
+        Alert.alert(title, message);
+    }
+};
+
+const syncToStorage = async (scraps: any[]) => {
+    try {
+        if (Platform.OS === 'web') {
+            localStorage.setItem(SCRAP_STORAGE_KEY, JSON.stringify(scraps));
+        } else {
+            await AsyncStorage.setItem(SCRAP_STORAGE_KEY, JSON.stringify(scraps));
+        }
+        console.log('[DEBUG] Synced to storage. Count:', scraps.length);
+    } catch (e) {
+        console.error('[DEBUG] Storage sync failed:', e);
+    }
+};
+
+const getFromStorage = async (): Promise<any[]> => {
+    if (_memoryScraps !== null) return _memoryScraps;
+    try {
+        let stored: string | null = null;
+        if (Platform.OS === 'web') {
+            stored = localStorage.getItem(SCRAP_STORAGE_KEY);
+        } else {
+            stored = await AsyncStorage.getItem(SCRAP_STORAGE_KEY);
+        }
+
+        _memoryScraps = stored ? JSON.parse(stored) : [];
+        return _memoryScraps || [];
+    } catch (e) {
+        console.error('[DEBUG] Storage read failed:', e);
+        return [];
+    }
+};
+
+export const toggleScrap = async (userId: string, item: AICardNews | any): Promise<boolean> => {
+    console.log('[DEBUG] toggleScrap called', { userId, itemHeadline: item.headline || item.title });
+    try {
+        const currentScraps = await getFromStorage();
+        const itemHeadline = item.headline || item.title;
+
+        if (!itemHeadline) {
+            safeAlert('오류', '제목이 없는 기사는 저장할 수 없습니다.');
+            return false;
+        }
+
+        const existingIndex = currentScraps.findIndex((s: any) =>
+            (s.headline === itemHeadline) // Relaxing user_id check for now to ensure visibility
+        );
+
+        if (existingIndex > -1) {
+            // Unscrap
+            currentScraps.splice(existingIndex, 1);
+            _memoryScraps = [...currentScraps]; // Update memory
+            await syncToStorage(_memoryScraps);
+
+            // safeAlert('스크랩 취소', `보관함에서 삭제되었습니다. (남은 개수: ${_memoryScraps.length})`);
+            return false;
+        } else {
+            // Scrap
+            const payload = {
+                id: Math.random().toString(36).substr(2, 9),
+                user_id: userId,
+                headline: itemHeadline,
+                body: item.body || item.summary,
+                ai_insight: item.aiInsight || (item.aiSummary ? `💡 결론\n${item.aiSummary}` : null),
+                bullets: item.bullets || item.tags || [],
+                image_url: item.imageUrl,
+                category: item.category,
+                created_at: new Date().toISOString()
+            };
+            currentScraps.unshift(payload);
+            _memoryScraps = [...currentScraps]; // Update memory
+            await syncToStorage(_memoryScraps);
+
+            // safeAlert('스크랩 완료', `저장되었습니다. (총 ${_memoryScraps.length}개)`);
+            return true;
+        }
+    } catch (error) {
+        console.error('Error toggling scrap (local):', error);
+        safeAlert('저장 실패', '기기 저장소 오류가 발생했습니다.');
+        throw error;
+    }
+};
+
+export const fetchScraps = async (userId: string): Promise<any[]> => {
+    try {
+        const currentScraps = await getFromStorage();
+        console.log('[DEBUG] Returning scraps from memory/storage:', currentScraps.length);
+
+        // Map back to NewsItem
+        return currentScraps.map((item: any) => ({
+            id: item.id,
+            title: item.headline,
+            summary: item.body,
+            aiInsight: item.ai_insight,
+            imageUrl: item.image_url,
+            category: item.category,
+            source: 'Saved Insight',
+            timestamp: new Date(item.created_at).toLocaleDateString(),
+            tags: item.bullets || [],
+            readTime: '3 min',
+            isScrapped: true
+        }));
+    } catch (error) {
+        console.error('Error fetching scraps (local):', error);
+        return [];
+    }
+};
+
+export const getScrappedIds = async (userId: string): Promise<Set<string>> => {
+    try {
+        const currentScraps = await getFromStorage();
+        return new Set(currentScraps.map((d: any) => d.headline));
+    } catch (e) {
+        return new Set();
+    }
+};
