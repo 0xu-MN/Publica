@@ -151,7 +151,11 @@ export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev
                                         className="flex-row items-center gap-2"
                                         onPress={() => onLike && onLike(post.id)}
                                     >
-                                        <Heart size={18} color={post.likes > 0 ? "#F87171" : "#94A3B8"} fill={post.likes > 0 ? "#F87171" : "none"} />
+                                        <Heart
+                                            size={18}
+                                            color={post.likedBy?.includes(user?.id || '') ? "#F87171" : "#94A3B8"}
+                                            fill={post.likedBy?.includes(user?.id || '') ? "#F87171" : "none"}
+                                        />
                                         <Text className="text-slate-400 text-sm">{post.likes}</Text>
                                     </TouchableOpacity>
                                     <View className="flex-row items-center gap-2">

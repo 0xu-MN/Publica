@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { User, MessageCircle, Heart } from 'lucide-react-native';
 import { CommunityPost } from '../data/mockData';
+import { useAuth } from '../contexts/AuthContext';
 
 // Interface update
 interface TimelinePostProps {
@@ -22,6 +23,9 @@ const getColor = (str: string) => {
 };
 
 export const TimelinePost = ({ post, isLast, onPress, onProfilePress, onLike }: TimelinePostProps) => {
+    const { user } = useAuth();
+    const isLiked = post.likedBy?.includes(user?.id || '');
+
     return (
         <View className="flex-row w-full min-h-[140px]"> {/* Min height for spacing */}
 
@@ -93,8 +97,12 @@ export const TimelinePost = ({ post, isLast, onPress, onProfilePress, onLike }: 
                                     className="flex-row items-center gap-1.5 opacity-80"
                                     onPress={() => onLike && onLike(post.id)}
                                 >
-                                    <Heart size={14} color={post.likes > 0 ? "#F87171" : "#94A3B8"} fill={post.likes > 0 ? "#F87171" : "none"} />
-                                    <Text className={`${post.likes > 0 ? 'text-red-400' : 'text-slate-500'} text-xs`}>{post.likes}</Text>
+                                    <Heart
+                                        size={14}
+                                        color={isLiked ? "#F87171" : "#94A3B8"}
+                                        fill={isLiked ? "#F87171" : "none"}
+                                    />
+                                    <Text className={`${isLiked ? 'text-red-400' : 'text-slate-500'} text-xs`}>{post.likes}</Text>
                                 </TouchableOpacity>
                                 <View className="flex-row items-center gap-1.5 opacity-80">
                                     <MessageCircle size={14} color={post.comments > 0 ? "#60A5FA" : "#94A3B8"} />

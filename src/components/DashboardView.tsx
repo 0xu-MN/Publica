@@ -15,9 +15,10 @@ interface DashboardViewProps {
     hotKeywords: string[];
     user?: any;
     onLoginPress: () => void;
+    onInsightClick: (item: any) => void;
 }
 
-export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywords, user, onLoginPress }) => {
+export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywords, user, onLoginPress, onInsightClick }) => {
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
 
@@ -69,7 +70,10 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                     {/* 1. Split Top Cards (Science & Economy) */}
                     <View className="flex-row gap-4 h-[320px]">
                         {/* Science Card */}
-                        <TouchableOpacity className="flex-1 relative overflow-hidden rounded-[32px] shadow-lg shadow-black/20 group">
+                        <TouchableOpacity
+                            className="flex-1 relative overflow-hidden rounded-[32px] shadow-lg shadow-black/20 group cursor-pointer"
+                            onPress={() => scienceTop && onInsightClick(scienceTop)}
+                        >
                             {/* Background Image with Dark Overlay */}
                             <Image source={{ uri: scienceTop?.imageUrl || 'https://via.placeholder.com/400' }} className="absolute inset-0 w-full h-full opacity-60" resizeMode="cover" />
                             <LinearGradient colors={['rgba(15, 23, 42, 0.3)', 'rgba(15, 23, 42, 0.95)']} className="absolute inset-0" />
@@ -94,8 +98,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                             </View>
                         </TouchableOpacity>
 
+
                         {/* Economy Card */}
-                        <TouchableOpacity className="flex-1 relative overflow-hidden rounded-[32px] shadow-lg shadow-black/20 group">
+                        <TouchableOpacity
+                            className="flex-1 relative overflow-hidden rounded-[32px] shadow-lg shadow-black/20 group cursor-pointer"
+                            onPress={() => economyTop && onInsightClick(economyTop)}
+                        >
                             {/* Background Image with Dark Overlay */}
                             <Image source={{ uri: economyTop?.imageUrl || 'https://via.placeholder.com/400' }} className="absolute inset-0 w-full h-full opacity-60" resizeMode="cover" />
                             <LinearGradient colors={['rgba(15, 23, 42, 0.3)', 'rgba(15, 23, 42, 0.95)']} className="absolute inset-0" />

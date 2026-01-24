@@ -12,11 +12,18 @@ interface ProfileCardProps {
     readOnly?: boolean;
     targetUserId?: string;
     onEditProfile?: () => void;
+    previewData?: {
+        nickname: string;
+        realName: string;
+        role: string;
+        bio: string;
+        imageUrl: string;
+    };
 }
 
 const EXPERTISE_BADGES = ['AI/ML', 'Quantum', 'FinTech', 'Biotech'];
 
-export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, onEditProfile }: ProfileCardProps) => {
+export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, onEditProfile, previewData }: ProfileCardProps) => {
     const { user } = useAuth();
     // In real app, fetch targetUserId if present.
     // For now, if readOnly is true and targetUserId is different, we simulate "Another User".
@@ -39,6 +46,16 @@ export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, 
     const [isFollowing, setIsFollowing] = useState(false);
 
     useEffect(() => {
+        if (previewData) {
+            setNickname(previewData.nickname);
+            setRealName(previewData.realName);
+            setRole(previewData.role);
+            setBio(previewData.bio);
+            setImageUrl(previewData.imageUrl);
+            setProfile(previewData);
+            return;
+        }
+
         const loadProfile = async () => {
             if (readOnly && targetUserId && targetUserId !== user?.id) {
                 // Simulate loading another user's profile which has stats
@@ -90,7 +107,8 @@ export const ProfileCard = ({ onChatPress, onShowInbox, readOnly, targetUserId, 
 
         const interval = setInterval(loadProfile, 2000);
         return () => clearInterval(interval);
-    }, [readOnly, targetUserId, user]);
+        return () => clearInterval(interval);
+    }, [readOnly, targetUserId, user, previewData]);
 
     const handleFollowToggle = async () => {
         if (!targetUserId) return;

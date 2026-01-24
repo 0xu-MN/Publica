@@ -7,7 +7,8 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "generate-feed": "npx tsx scripts/auto_feed_generator.ts"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
@@ -34,6 +35,7 @@
     "react-native-svg": "15.12.1",
     "react-native-url-polyfill": "^3.0.0",
     "react-native-web": "^0.21.0",
+    "rss-parser": "^3.13.0",
     "tailwindcss": "^3.4.19",
     "three": "^0.182.0"
   },

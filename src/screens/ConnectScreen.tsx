@@ -223,7 +223,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                                             isLast={index === filteredPosts.length - 1}
                                             onPress={() => setSelectedPostId(item.id)}
                                             onProfilePress={handleProfilePress}
-                                            onLike={toggleLike}
+                                            onLike={(id) => toggleLike(id, user?.id)}
                                         />
                                     </TimestampWrapper>
                                 ))}
@@ -260,7 +260,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                     }}
                     onAddComment={handleCommentWithNotification}
                     onDeleteComment={deleteComment}
-                    onLike={toggleLike}
+                    onLike={(id) => toggleLike(id, user?.id)}
                 />
             )}
 

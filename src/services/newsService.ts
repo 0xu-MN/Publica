@@ -22,9 +22,21 @@ const getFallbackImage = (category: string, id: string): string => {
     return images[index];
 };
 
+export interface AICardNews {
+    id: string;
+    headline: string;
+    body: string;
+    bullets: string[];
+    related_materials: { title: string; url: string }[];
+    created_at: string;
+    imageUrl?: string;
+    category?: string;
+}
+
 // Frontend compatible NewsItem interface
 export interface NewsItem {
     id: string;
+    // ... (existing NewsItem fields)
     title: string;
     summary: string;
     aiSummary: string; // db: ai_summary
@@ -95,4 +107,81 @@ export const subscribeToNews = (callback: (payload: any) => void) => {
             callback
         )
         .subscribe();
+};
+// AI 뉴스 카드 가져오기
+export const fetchAICards = async (): Promise<AICardNews[]> => {
+    try {
+        const { data, error } = await supabase
+            .from('cards')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+        if (!data) return [];
+
+        return data.map((item: any) => {
+            try {
+                const content = typeof item.content === 'string' ? JSON.parse(item.content) : item.content;
+                return {
+                    id: item.id,
+                    headline: content.headline || "제목 없음",
+                    body: content.body || "",
+                    bullets: content.bullets || [],
+                    related_materials: content.related_materials || [],
+                    created_at: item.created_at,
+                    imageUrl: content.imageUrl,
+                    category: content.category
+                };
+            } catch (e) {
+                console.error("JSON parsing error for card:", item.id, e);
+                return null;
+            }
+        }).filter((i: any): i is AICardNews => i !== null);
+    } catch (error) {
+        console.error('Error fetching AI cards:', error);
+        return [];
+    }
+};
+
+// 정부지원사업 가져오기
+export const fetchGovernmentPrograms = async (): Promise<any[]> => {
+    try {
+        const { data, error } = await supabase
+            .from('government_programs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10);
+
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            // Fallback to local mock if no data in DB
+            return [
+                { title: '데이터바우처 지원사업', agency: '한국데이터산업진흥원', period: '2026.03.15', status: '접수중', dDay: 'D-30', category: '데이터/AI' },
+                { title: '글로벌 강소기업 1000+', agency: '중소벤처기업부', period: '2026.02.20', status: '마감임박', dDay: 'D-15', category: '수출/마케팅' },
+                { title: '스마트상점 기술보급', agency: '소상공인시장진흥공단', period: '2026.04.01', status: '접수예정', dDay: 'D-45', category: '소상공인' },
+            ];
+        }
+
+        return data.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            agency: item.agency,
+            period: item.period,
+            status: item.status,
+            dDay: item.d_day,
+            category: item.category,
+            link: item.link
+        }));
+    } catch (error) {
+        console.error('Error fetching gov programs (using fallback):', error);
+        // Fallback to local mock on error (e.g. table missing)
+        return [
+            { title: '데이터바우처 지원사업', agency: '한국데이터산업진흥원', period: '2026.03.15', status: '접수중', dDay: 'D-30', category: '데이터/AI' },
+            { title: '글로벌 강소기업 1000+', agency: '중소벤처기업부', period: '2026.02.20', status: '마감임박', dDay: 'D-15', category: '수출/마케팅' },
+            { title: '스마트상점 기술보급', agency: '소상공인시장진흥공단', period: '2026.04.01', status: '접수예정', dDay: 'D-45', category: '소상공인' },
+            { title: '2026년도 AI 바우처 지원', agency: '과학기술정보통신부', period: '2026.02.28', status: '접수중', dDay: 'D-22', category: '기술개발' },
+            { title: '청년창업사관학교 16기', agency: '중소벤처기업진흥공단', period: '2026.02.05', status: '마감임박', dDay: 'D-3', category: '창업지원' },
+        ];
+    }
 };

@@ -126,4 +126,49 @@ CREATE POLICY "Users can delete own bookmarks"
   USING (auth.uid() = user_id);
 
 -- 12. Realtime 활성화 (북마크 변경 감지)
+-- 12. Realtime 활성화 (북마크 변경 감지)
 ALTER PUBLICATION supabase_realtime ADD TABLE bookmarks;
+
+-- 13. AI Cards 테이블 생성 (AI 뉴스 카드)
+CREATE TABLE IF NOT EXISTS cards (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  content TEXT NOT NULL, -- JSON string or raw text depending on parsing strategy, storing raw LLM output for now or parsed JSON
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 14. Cards RLS
+ALTER TABLE cards ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read access cards" 
+  ON cards FOR SELECT 
+  USING (true);
+
+CREATE POLICY "Service role write access cards" 
+  ON cards 
+  FOR ALL 
+  USING (auth.role() = 'service_role');
+
+-- 15. Government Programs 테이블 (정부지원사업)
+CREATE TABLE IF NOT EXISTS government_programs (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  title TEXT NOT NULL,
+  agency TEXT,
+  period TEXT,
+  status TEXT,
+  d_day TEXT,
+  category TEXT,
+  link TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- 16. Government Programs RLS
+ALTER TABLE government_programs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Public read access programs" 
+  ON government_programs FOR SELECT 
+  USING (true);
+
+CREATE POLICY "Service role write access programs" 
+  ON government_programs 
+  FOR ALL 
+  USING (auth.role() = 'service_role');

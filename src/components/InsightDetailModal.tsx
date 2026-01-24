@@ -4,13 +4,13 @@ import Animated, { SlideInUp } from 'react-native-reanimated';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { NewsItem } from '../services/newsService';
-import { X, ExternalLink, Sparkles, Share2, Bookmark, Clock } from 'lucide-react-native';
+import { X, ExternalLink, Sparkles, Share2, Bookmark, Clock, ArrowRight } from 'lucide-react-native';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthModal } from './AuthModal';
 
 interface InsightDetailModalProps {
-    item: NewsItem | null;
+    item: any | null; // Changed to any to accept extended properties like related_materials
     visible: boolean;
     onClose: () => void;
 }
@@ -216,23 +216,55 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({ item, vi
                                     </Text>
                                 </View>
 
-                                {/* Action Button */}
-                                <Pressable
-                                    style={({ pressed }) => [
-                                        pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
-                                    ]}
-                                    className="bg-sky-500 py-4 rounded-[20px] flex-row items-center justify-center"
-                                    onPress={() => {
-                                        if (item.sourceUrl) {
-                                            Linking.openURL(item.sourceUrl).catch(err => console.error("Couldn't load page", err));
-                                        } else {
-                                            console.warn("No source URL available");
-                                        }
-                                    }}
-                                >
-                                    <ExternalLink size={18} color="#fff" style={{ marginRight: 8 }} />
-                                    <Text className="text-white text-base font-bold">원문 기사 전체 보기</Text>
-                                </Pressable>
+                                {/* Related Materials / Action Buttons */}
+                                <View className="mt-4">
+                                    <View className="flex-row items-center mb-3">
+                                        <ExternalLink size={16} color="#94A3B8" />
+                                        <Text className="text-slate-400 font-bold text-sm ml-2">관련자료</Text>
+                                    </View>
+
+                                    {item.related_materials && item.related_materials.length > 0 ? (
+                                        <View className="gap-2">
+                                            {item.related_materials.map((material: any, idx: number) => (
+                                                <Pressable
+                                                    key={idx}
+                                                    style={({ pressed }) => [
+                                                        pressed && { opacity: 0.8 }
+                                                    ]}
+                                                    className="bg-slate-800/80 p-3.5 rounded-xl border border-white/5 flex-row items-center justify-between"
+                                                    onPress={() => {
+                                                        if (material.url) {
+                                                            Linking.openURL(material.url).catch(err => console.error("Couldn't load page", err));
+                                                        }
+                                                    }}
+                                                >
+                                                    <View className="flex-1 mr-3">
+                                                        <Text className="text-slate-200 text-[13px] font-medium" numberOfLines={1}>{material.title}</Text>
+                                                        <Text className="text-slate-500 text-[11px] mt-0.5">{material.url ? new URL(material.url).hostname.replace('www.', '') : 'External Link'}</Text>
+                                                    </View>
+                                                    <ArrowRight size={14} color="#64748B" />
+                                                </Pressable>
+                                            ))}
+                                        </View>
+                                    ) : (
+                                        <Pressable
+                                            style={({ pressed }) => [
+                                                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
+                                            ]}
+                                            className="bg-sky-500 py-4 rounded-[20px] flex-row items-center justify-center"
+                                            onPress={() => {
+                                                if (item.sourceUrl) {
+                                                    Linking.openURL(item.sourceUrl).catch(err => console.error("Couldn't load page", err));
+                                                } else {
+                                                    console.warn("No source URL available");
+                                                }
+                                            }}
+                                        >
+                                            <ExternalLink size={18} color="#fff" style={{ marginRight: 8 }} />
+                                            <Text className="text-white text-base font-bold">원문 기사 전체 보기</Text>
+                                        </Pressable>
+                                    )}
+                                </View>
                             </View>
                         </ScrollView>
                     </View>

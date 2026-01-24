@@ -52,10 +52,30 @@ export const usePosts = () => {
         await savePosts(updatedPosts);
     }, [posts, savePosts]);
 
-    const toggleLike = useCallback(async (postId: string) => {
-        const updatedPosts = posts.map(p =>
-            p.id === postId ? { ...p, likes: p.likes + 1 } : p // Simplified: just increment for now
-        );
+    const toggleLike = useCallback(async (postId: string, userId?: string) => {
+        if (!userId) return; // Cannot like without user ID
+
+        const updatedPosts = posts.map(p => {
+            if (p.id === postId) {
+                const likedBy = p.likedBy || [];
+                const isLiked = likedBy.includes(userId);
+
+                if (isLiked) {
+                    return {
+                        ...p,
+                        likes: Math.max(0, p.likes - 1),
+                        likedBy: likedBy.filter(id => id !== userId)
+                    };
+                } else {
+                    return {
+                        ...p,
+                        likes: p.likes + 1,
+                        likedBy: [...likedBy, userId]
+                    };
+                }
+            }
+            return p;
+        });
         await savePosts(updatedPosts);
     }, [posts, savePosts]);
 

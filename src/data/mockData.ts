@@ -135,6 +135,7 @@ export interface CommunityPost {
   content: string;
   imageUrl?: string;
   likes: number;
+  likedBy?: string[]; // Tracks users who liked the post to allow toggling
   comments: number;
   commentsList?: Comment[]; // Added for detailed view
   timestamp: string;

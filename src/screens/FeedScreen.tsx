@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, ScrollView, SafeAreaView, StatusBar, TouchableOpacity, useWindowDimensions, FlatList, TextInput, Animated, Easing } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { InsightCard } from '../components/InsightCard';
-import { fetchNews, NewsItem } from '../services/newsService';
+import { fetchAICards, AICardNews } from '../services/newsService';
 import { InsightDetailModal } from '../components/InsightDetailModal';
 import { AuthModal } from '../components/AuthModal';
 import { RotatingText } from '../components/RotatingText';
@@ -75,9 +75,9 @@ export const FeedScreen = () => {
     const [activeCategory, setActiveCategory] = useState('전체');
     const [searchQuery, setSearchQuery] = useState(''); // Search State
     const [isSearchVisible, setIsSearchVisible] = useState(false); // Search Toggle
-    const [newsData, setNewsData] = useState<NewsItem[]>([]);
+    const [newsData, setNewsData] = useState<any[]>([]); // Use flexible type or define new interface
     const [loading, setLoading] = useState(true);
-    const [selectedItem, setSelectedItem] = useState<NewsItem | null>(null);
+    const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
     // View Mode State: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings'
     const [viewMode, setViewMode] = useState<'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings'>('feed');
@@ -160,10 +160,10 @@ export const FeedScreen = () => {
         if (newsData.length > 0) {
             const tagCounts: Record<string, number> = {};
             newsData.forEach(item => {
-                item.tags.forEach(tag => {
-                    // Normalize tag: remove # if present
-                    const cleanTag = tag.startsWith('#') ? tag : `#${tag}`;
-                    tagCounts[cleanTag] = (tagCounts[cleanTag] || 0) + 1;
+                // Adjust for new mock data structure if needed or ensure AICardNews has tags logic
+                // For now, assume we might generate tags or just skip if tags missing
+                (item.related_materials || []).forEach((mat: any) => {
+                    // Mock logic for tags from AI cards if they don't have explicit tags
                 });
             });
 
@@ -206,25 +206,132 @@ export const FeedScreen = () => {
 
     const loadNews = async () => {
         setLoading(true);
-        setActiveKeyword(null); // Reset keyword filter when category changes
+        setActiveKeyword(null);
 
-        // Base category for fetching (Backend only knows Science/Economy)
-        const fetchCategory = activeCategory === '전체' ? '전체'
-            : activeCategory === '과학' ? '과학'
-                : '경제'; // Both domestic and global fetch 'Economy'
+        // Always fetch AI cards now
+        const aiCards = await fetchAICards();
 
-        let data = await fetchNews(fetchCategory);
+        // If no AI cards (e.g. DB empty), fallback to some mock logic or empty
+        // MAPPING AICardNews -> InsightCard Props
+        // InsightCard expects: title, summary, imageUrl, category, source, timestamp, readTime, tags
 
-        // Client-side filtering for Domestic/Global
-        if (activeCategory === '국내경제') {
-            const koreanSources = ['연합뉴스', '한국은행', '네이버', '조선비즈', '한겨레', '매일경제'];
-            data = data.filter(item => koreanSources.some(k => item.source.includes(k)));
-        } else if (activeCategory === '해외경제') {
-            const koreanSources = ['연합뉴스', '한국은행', '네이버', '조선비즈', '한겨레', '매일경제'];
-            data = data.filter(item => !koreanSources.some(k => item.source.includes(k)));
+        const mappedData = aiCards.map((card, index) => ({
+            id: card.id,
+            title: card.headline,
+            // Use body as summary, maybe truncate
+            summary: card.body,
+            aiSummary: card.body,
+            imageUrl: card.imageUrl || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop', // Default or random
+            category: card.category || (index % 2 === 0 ? 'Science' : 'Economy'), // Use provided category or fallback
+            source: 'AI Insight',
+            sourceUrl: '',
+            timestamp: new Date(card.created_at).toLocaleDateString(),
+            readTime: '3 min',
+            tags: card.bullets ? card.bullets.slice(0, 2) : [], // Use bullets as tags for now
+            related_materials: card.related_materials || [] // Pass related materials for detail modal
+        }));
+
+        // If DB is empty, use sample data from user request context or previous mock
+        if (mappedData.length === 0) {
+            const sampleCards = [
+                {
+                    id: 'sample-1',
+                    title: 'AI 반도체의 미래: HBM4가 가져올 패러다임 변화',
+                    summary: `AI 학습 데이터의 폭발적 증가로 메모리 대역폭이 연산 속도의 병목이 되고 있습니다. HBM4는 이를 해결할 '게임 체인저'로 평가받습니다.
+
+✅ 핵심 이슈
+삼성전자와 SK하이닉스, 그리고 TSMC의 3각 협력이 본격화되고 있습니다.
+- 16단 적층 기술의 수율 안정화가 최대 관건입니다.
+- 하이브리드 본딩 기술 도입으로 패키징 두께를 획기적으로 줄였습니다.
+- 엔비디아 루빈(Rubin) 칩셋에 전량 탑재될 예정으로, 초기 물량 확보 전쟁이 치열합니다.`,
+                    aiInsight: '💡 결론\nHBM4는 단순한 메모리를 넘어 로직 다이와 결합된 "시스템 메모리"로 진화하고 있습니다. 2026년 하반기, 이 기술을 선점하는 기업이 향후 AI 인프라 시장의 70%를 독식할 것으로 전망됩니다.',
+                    imageUrl: 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=800',
+                    category: 'Science',
+                    source: 'AI Analysis',
+                    timestamp: '방금 전',
+                    readTime: '5분',
+                    tags: ['#HBM4', '#반도체', '#AI인프라'],
+                    related_materials: [
+                        { title: 'SK하이닉스 HBM4 로드맵 공식 발표', url: 'https://news.skhynix.co.kr' },
+                        { title: 'TrendForce: 2026 메모리 시장 전망', url: 'https://www.trendforce.com' },
+                        { title: 'TSMC CoWoS 기술 백서', url: 'https://www.tsmc.com' }
+                    ]
+                },
+                {
+                    id: 'sample-2',
+                    title: '미국 연준(Fed), 2026년 금리 정책 대전환 예고',
+                    summary: `미국 노동시장이 완전 고용 상태에 근접하면서, 연준이 마침내 비둘기파적 기조로 돌아섰습니다. 이는 글로벌 자산 배분의 거대한 이동을 예고합니다.
+
+✅ 핵심 이슈
+제롬 파월 의장은 "인플레이션과의 전쟁은 끝났다"고 선언했습니다.
+1. "실질 금리 중립화": 현재 3.5% 수준인 기준 금리를 2.5%까지 단계적으로 인하할 로드맵을 제시했습니다.
+2. "유동성 공급 확대": 양적 긴축(QT)을 종료하고 시장에 다시 유동성을 공급하기 시작했습니다.
+3. "이머징 마켓의 반격": 달러 약세 기조 속에서 한국을 포함한 신흥국 증시로의 자금 유입이 가속화될 것입니다.`,
+                    aiInsight: '💡 결론\n"공포를 사고 환희에 팔아라"는 격언이 다시 유효해지는 시점입니다. 고금리 시대에 소외되었던 바이오, 신재생에너지, 그리고 AI 소프트웨어 섹터가 금리 인하의 최대 수혜를 입을 ‘주도주’로 부상할 것입니다.',
+                    imageUrl: 'https://images.unsplash.com/photo-1611974765270-ca12586343bb?auto=format&fit=crop&q=80&w=800',
+                    category: 'Economy',
+                    source: 'Global Economy',
+                    timestamp: '30분 전',
+                    readTime: '4분',
+                    tags: ['#금리인하', '#거시경제', '#투자전략'],
+                    related_materials: [
+                        { title: 'FOMC 의사록 전문 (2026.01)', url: 'https://www.federalreserve.gov' },
+                        { title: 'WSJ: 월가의 금리 인하 기대감 분석', url: 'https://www.wsj.com' },
+                        { title: 'IMF 세계 경제 전망 보고서', url: 'https://www.imf.org' }
+                    ]
+                },
+                {
+                    id: 'sample-3',
+                    title: '양자 컴퓨터 상용화: 보안의 새로운 시대',
+                    summary: `구글과 IBM이 100만 큐비트급 양자 프로세서 안정화에 성공했습니다. 이는 기존 RSA 암호 체계의 종말을 의미합니다.
+
+✅ 핵심 이슈
+양자 내성 암호(PQC)로의 전환은 선택이 아닌 생존의 문제입니다.
+- "Show's Algorithm"의 현실화: 기존 슈퍼컴퓨터로 1만 년 걸릴 암호 해독이 단 몇 시간 만에 가능해졌습니다.
+- 금융권의 비상: 전 세계 은행들이 레거시 시스템을 PQC 기반으로 전면 교체하는 '보안 대이동'을 시작했습니다.
+- 국가 안보 위협: 군사 기밀 및 정부 통신망의 보안 체계가 근본적인 도전에 직면했습니다.`,
+                    aiInsight: '💡 결론\n양자 보안은 단순한 기술 트렌드가 아닙니다. 다가오는 "Y2Q(Year to Quantum)" 위기에 대비하지 못한 기업과 국가는 디지털 주권을 잃게 될 것입니다. 보안 솔루션 기업들의 주가 재평가가 시급합니다.',
+                    imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=800',
+                    category: 'Science',
+                    source: 'AI Analysis',
+                    timestamp: '1시간 전',
+                    readTime: '6분',
+                    tags: ['#양자컴퓨팅', '#PQC', '#사이버보안'],
+                    related_materials: [
+                        { title: 'NIST PQC 표준 가이드라인', url: 'https://www.nist.gov' },
+                        { title: 'Nature: 양자 오류 수정 기술의 진보', url: 'https://www.nature.com' },
+                        { title: 'IBM Quantum Roadmap 2026', url: 'https://www.ibm.com/quantum' }
+                    ]
+                },
+                {
+                    id: 'sample-4',
+                    title: '2026년 글로벌 에너지 시장: 수소 경제의 부상',
+                    summary: `탄소 중립 실현을 위한 마지막 퍼즐 조각, '그린 수소'의 생산 단가가 티핑 포인트(kg당 2달러) 이하로 하락했습니다.
+
+✅ 핵심 이슈
+중동의 오일머니가 수소 인프라로 대거 이동하고 있습니다.
+1. "네옴시티 프로젝트": 사우디아가 세계 최대 규모의 그린 수소 플랜트 가동을 시작했습니다.
+2. "수소 운송 혁명": 액화 수소 운반선 발주량이 LNG 선박을 추월했습니다. 한국 조선업계의 새로운 먹거리입니다.
+3. 에너지 안보: 화석 연료 의존도를 낮추려는 유럽의 공격적인 보조금 정책이 시장 확대를 견인하고 있습니다.`,
+                    aiInsight: '💡 결론\n수소는 더 이상 미래의 에너지가 아닙니다. 생산-운송-활용 전 밸류체인에서 실제 수익이 창출되는 구간에 진입했습니다. 인프라 구축 관련 기업들이 초기 시장을 장악하며 제2의 테슬라가 될 가능성이 큽니다.',
+                    imageUrl: 'https://images.unsplash.com/photo-1521579772986-463283623c21?auto=format&fit=crop&q=80&w=800',
+                    category: 'Economy',
+                    source: 'Energy Insight',
+                    timestamp: '2시간 전',
+                    readTime: '5분',
+                    tags: ['#수소경제', '#친환경', '#조선업'],
+                    related_materials: [
+                        { title: 'IEA 2026 Energy Outlook', url: 'https://www.iea.org' },
+                        { title: 'BloombergNEF: Hydrogen Market Report', url: 'https://about.bnef.com' },
+                        { title: 'EU 수소 전략 백서', url: 'https://ec.europa.eu' }
+                    ]
+                }
+            ];
+            setNewsData(sampleCards);
+        } else {
+            setNewsData(mappedData);
         }
 
-        setNewsData(data);
         setLoading(false);
     };
 
@@ -311,7 +418,13 @@ export const FeedScreen = () => {
                                        Current behavior was Feed. Keeping Feed/Dashboard safe toggle. */
                                     <TouchableOpacity
                                         className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all"
-                                        onPress={() => setViewMode('feed')}
+                                        onPress={() => {
+                                            if (!user) {
+                                                setAuthModalVisible(true);
+                                            } else {
+                                                setViewMode('dashboard');
+                                            }
+                                        }}
                                     >
                                         <HomeIcon size={20} color="#94A3B8" />
                                     </TouchableOpacity>
@@ -574,6 +687,7 @@ export const FeedScreen = () => {
                                             hotKeywords={hotKeywords}
                                             user={user}
                                             onLoginPress={() => setAuthModalVisible(true)}
+                                            onInsightClick={setSelectedItem}
                                         />
                                         <Separator className="my-8" />
                                         <View className="px-6">
