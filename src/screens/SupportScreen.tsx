@@ -37,7 +37,6 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ subMode, onSubMode
                         </View>
                         <GovernmentProgramList />
                     </View>
-                    <Footer />
                 </ScrollView>
             )}
 

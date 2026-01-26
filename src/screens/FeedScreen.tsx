@@ -524,7 +524,6 @@ export const FeedScreen = () => {
                                                 <View className="flex-row items-center justify-center gap-3">
                                                     <Text className="text-slate-500 text-xs font-bold uppercase tracking-widest">🔥 HOT KEYWORDS</Text>
                                                     {isDesktop && (
-                                                        <RotatingText
                                                             texts={hotKeywords}
                                                             textStyle={{ color: '#60A5FA', fontWeight: '700', fontSize: 13 }}
                                                         />

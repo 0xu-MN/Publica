@@ -76,6 +76,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <View className="flex-1">
                 {children}
             </View>
+            <Footer />
         </SafeAreaView>
     );
 };
