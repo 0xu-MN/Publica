@@ -114,19 +114,19 @@ function sleep(ms: number): Promise<void> {
 }
 
 /**
- * 스케줄러 (30분마다 실행)
+ * 스케줄러 (1분마다 실행 - 테스트용)
  */
 function startScheduler() {
-    console.log('⏰ Scheduler started (runs every 30 minutes)');
+    console.log('⏰ Scheduler started (runs every 1 minute for testing)');
 
     // 즉시 한번 실행
     runPipeline().catch(console.error);
 
-    // 30분마다 반복
+    // 1분마다 반복 (테스트용)
     setInterval(() => {
         console.log(`\n⏰ [${new Date().toLocaleTimeString()}] Scheduled run starting...`);
         runPipeline().catch(console.error);
-    }, 30 * 60 * 1000);
+    }, 1 * 60 * 1000); // 1분
 }
 
 /**
