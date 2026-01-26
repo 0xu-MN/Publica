@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Dimensions, Linking } from 'react-native';
 import { Calendar } from 'react-native-calendars';
@@ -11,6 +12,7 @@ import { CalendarModal } from './CalendarModal';
 import { ProjectDetailModal } from './ProjectDetailModal';
 import { SettingsModal } from './SettingsModal';
 import Footer from './Footer';
+import { DashboardSidebar } from './DashboardSidebar';
 import { useAuth } from '../contexts/AuthContext';
 import { usePosts } from '../hooks/usePosts';
 import { fetchScraps, toggleScrap } from '../services/newsService';
@@ -121,47 +123,11 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
     return (
         <View className="flex-1 flex-row bg-[#050B14]">
             {/* Left Sidebar Navigation */}
-            <View className="w-20 bg-[#0A1628] border-r border-white/5 items-center py-8 gap-8">
-                <TouchableOpacity
-                    className={`w-10 h-10 rounded-xl items-center justify-center shadow-lg ${activeTab === 'dashboard' ? 'bg-blue-600 shadow-blue-500/30' : 'hover:bg-white/5'}`}
-                    onPress={() => setActiveTab('dashboard')}
-                >
-                    <LayoutDashboard size={20} color={activeTab === 'dashboard' ? '#fff' : '#94A3B8'} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    className={`w-10 h-10 rounded-xl items-center justify-center ${activeTab === 'files' ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'hover:bg-white/5'}`}
-                    onPress={() => setActiveTab('files')}
-                >
-                    <Folder size={20} color={activeTab === 'files' ? '#fff' : '#94A3B8'} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                    className={`w-10 h-10 rounded-xl items-center justify-center ${activeTab === 'posts' ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'hover:bg-white/5'}`}
-                    onPress={() => setActiveTab('posts')}
-                >
-                    <Database size={20} color={activeTab === 'posts' ? '#fff' : '#94A3B8'} />
-                </TouchableOpacity>
-                <View className="flex-1" />
-                <TouchableOpacity
-                    className={`w-10 h-10 rounded-xl items-center justify-center ${activeTab === 'messages' ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'hover:bg-white/5'}`}
-                    onPress={() => setActiveTab('messages')}
-                >
-                    <MessageCircle size={20} color={activeTab === 'messages' ? '#fff' : '#94A3B8'} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    className={`w-10 h-10 rounded-xl items-center justify-center ${activeTab === 'scraps' ? 'bg-blue-600 shadow-lg shadow-blue-500/30' : 'hover:bg-white/5'}`}
-                    onPress={() => setActiveTab('scraps')}
-                >
-                    <Bookmark size={20} color={activeTab === 'scraps' ? '#fff' : '#94A3B8'} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                    className="w-10 h-10 hover:bg-white/5 rounded-xl items-center justify-center"
-                    onPress={() => setSettingsVisible(true)}
-                >
-                    <Settings size={20} color="#94A3B8" />
-                </TouchableOpacity>
-            </View>
+            <DashboardSidebar
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                onSettingsPress={() => setSettingsVisible(true)}
+            />
 
             {/* Main Content */}
             {activeTab === 'dashboard' ? (
@@ -393,6 +359,8 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                             onToggleScrap={(item) => handleUnscrap(item)}
                         />
                     )}
+
+                    <Footer />
                 </View>
             ) : activeTab === 'files' ? (
                 // Files Tab - Show Project Detail Inline
@@ -416,6 +384,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                             </View>
                         )}
                     </View>
+                    <Footer />
                 </View>
             ) : activeTab === 'posts' ? (
                 // Posts Tab
@@ -453,6 +422,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                             )}
                         </ScrollView>
                     </View>
+                    <Footer />
                 </View>
             ) : (
                 // Messages Tab
@@ -473,11 +443,11 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                             ) : (
                                 <View className="flex-1 items-center justify-center bg-[#1E293B] rounded-3xl border border-white/10 m-6">
                                     <MessageCircle size={48} color="#475569" />
-                                    <Text className="text-slate-500 text-lg mt-4">채팅을 선택해주세요</Text>
                                 </View>
                             )}
                         </View>
                     </View>
+                    <Footer />
                 </View>
             )}
 

@@ -24,7 +24,10 @@ import {
     Youtube,
     Twitter,
     Instagram,
-    Send
+    Send,
+    LayoutDashboard,
+    Database,
+    Bookmark
 } from 'lucide-react-native';
 
 export const Icons = {
@@ -49,6 +52,9 @@ export const Icons = {
     Youtube,
     Twitter,
     Instagram,
-    Send
+    Send,
+    LayoutDashboard,
+    Database,
+    Bookmark
 } as const;
 
