@@ -74,38 +74,37 @@ function createPrompt(article: NewsArticle): string {
 원본: "반도체 업계, AI 칩 수요 증가"
 → headline: "AI 칩 슈퍼사이클, 한국의 기회"
 → body: "생성형 AI 확산으로 HBM과 AI 가속기 수요가 폭발적으로 증가하고 있습니다. 삼성과 SK하이닉스는 HBM 시장에서 90% 이상 점유율을 보유하며, 이번 슈퍼사이클의 최대 수혜가 예상됩니다. 연구자들은 차세대 메모리 기술에 주목해야 하며, 투자자들은 밸류체인 전반을 검토할 시점입니다."
-→ bullets: ["HBM 시장 90% 점유", "차세대 기술 연구 가속", "밸류체인 전체 수혜", "2026년까지 성장 지속"]
-
-이제 위 원본 기사를 완전히 새롭게 각색해주세요. JSON만 출력하세요.`;
+    "핵심 포인트 1 (구체적 숫자 포함)",
+    "핵심 포인트 2 (비판적 시각)",
+    "핵심 포인트 3 (투자 시사점)"
+  ],
+  "teaser": "60자 이내의 후킹 문구 (body 첫 문장을 각색)",
+  "category": "${article.category === 'science' ? 'Science' : 'Economy'}"
 }
 
-/**
- * 원본 기사를 AI로 각색
- */
-export async function generateCard(article: NewsArticle): Promise<GeneratedCard> {
+**중요:** 반드시 위 JSON 형식만 출력하세요. 다른 설명은 절대 포함하지 마세요.`;
+
     try {
-        const prompt = createPrompt(article);
         const result = await model.generateContent(prompt);
         const response = result.response;
         const text = response.text();
 
-        // JSON 추출 (마크다운 코드블록 제거)
+        // JSON 추출
         const jsonMatch = text.match(/\{[\s\S]*\}/);
         if (!jsonMatch) {
-            throw new Error('Failed to extract JSON from response');
+            throw new Error('No valid JSON found in response');
         }
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        const card = JSON.parse(jsonMatch[0]);
 
         // 검증
-        if (!validateCard(parsed)) {
-            throw new Error('Generated card failed validation');
+        if (!card.headline || !card.body || !card.bullets || !Array.isArray(card.bullets)) {
+            throw new Error('Invalid card structure');
         }
 
-        return parsed;
-
+        return card as GeneratedCard;
     } catch (error: any) {
-        console.error('❌ AI Generation Error:', error.message);
+        console.error('AI Generation Error:', error.message);
         throw error;
     }
 }
