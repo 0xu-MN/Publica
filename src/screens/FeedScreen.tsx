@@ -19,7 +19,6 @@ import { AnimatedPillNav } from '../components/AnimatedPillNav';
 import Footer from '../components/Footer';
 import { Separator } from '../components/Separator';
 import { OnboardingModal } from '../components/OnboardingModal';
-import { TextTicker } from '../components/TextTicker';
 
 // Filter categories
 const CATEGORIES = ['전체', '과학', '경제'];
@@ -525,10 +524,9 @@ export const FeedScreen = () => {
                                                 <View className="flex-row items-center justify-center gap-3">
                                                     <Text className="text-slate-500 text-xs font-bold uppercase tracking-widest">🔥 HOT KEYWORDS</Text>
                                                     {isDesktop && (
-                                                        <TextTicker
-                                                            texts={hotKeywords}
-                                                            textStyle={{ color: '#60A5FA', fontWeight: '700', fontSize: 13 }}
-                                                        />
+                                                        <Text className="text-blue-400 text-sm font-bold">
+                                                            {hotKeywords.join(' • ')}
+                                                        </Text>
                                                     )}
                                                 </View>
                                                 {!isDesktop && (
