@@ -302,23 +302,43 @@ export const FeedScreen = () => {
         }
 
         const mappedData = aiCards.map((card, index) => ({
-            id: card.id,
-            title: card.headline,
-            // Use body as summary, maybe truncate
-            summary: card.body,
-            aiSummary: card.body,
-            imageUrl: card.imageUrl || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop', // Default or random
-            category: card.category || (index % 2 === 0 ? 'Science' : 'Economy'), // Use provided category or fallback
-            source: 'AI Insight',
-            sourceUrl: '',
-            timestamp: new Date(card.created_at).toLocaleDateString(),
-            readTime: '3 min',
-            tags: card.bullets ? card.bullets.slice(0, 2) : [], // Use bullets as tags for now
-            related_materials: card.related_materials || [] // Pass related materials for detail modal
-        }));
+            const mappedData = aiCards.map((card, index) => {
+                const cardData = JSON.parse(card.content);
 
-        // Set news data from database
-        setNewsData(mappedData);
+                // 상대 시간 계산 (몇 분 전, 몇 시간 전)
+                const getRelativeTime = (dateString: string) => {
+                    const now = new Date();
+                    const past = new Date(dateString);
+                    const diffMs = now.getTime() - past.getTime();
+                    const diffMins = Math.floor(diffMs / (1000 * 60));
+                    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+                    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+                    if (diffMins < 1) return '방금 전';
+                    if (diffMins < 60) return `${diffMins}분 전`;
+                    if (diffHours < 24) return `${diffHours}시간 전`;
+                    if (diffDays < 7) return `${diffDays}일 전`;
+                    return past.toLocaleDateString('ko-KR');
+                };
+
+                return {
+                    id: card.id,
+                    title: cardData.headline || cardData.title,
+                    summary: cardData.body, // Use body as summary
+                    aiSummary: cardData.body, // Use body as aiSummary
+                    imageUrl: cardData.imageUrl || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop', // Default or random
+                    category: cardData.category === 'Science' ? 'Science' : 'Economy', // Use provided category or fallback
+                    source: 'AI Insight',
+                    sourceUrl: '',
+                    timestamp: getRelativeTime(card.created_at),
+                    readTime: '3 min 읽기',
+                    tags: cardData.bullets || [], // Use bullets as tags for now
+                    related_materials: cardData.related_materials || [] // Pass related materials for detail modal
+                };
+            });
+
+            // Set news data from database
+            setNewsData(mappedData);
 
         setLastUpdateTime(new Date());
         setLoading(false);

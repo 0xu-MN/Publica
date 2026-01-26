@@ -25,7 +25,7 @@ const NEWS_SOURCES = {
     },
     // 추가 소스
     chosun: {
-        science: 'https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml',
+        science: 'https://www.chosun.com/arc/outboundfeeds/rss/category/tech/?outputType=xml',
         economy: 'https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml'
     }
 } as const;
