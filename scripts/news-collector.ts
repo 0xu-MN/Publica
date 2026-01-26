@@ -16,12 +16,17 @@ const parser = new Parser({
 // 뉴스 소스 정의
 const NEWS_SOURCES = {
     naver: {
-        science: 'https://news.naver.com/main/rss/section.nhn?sid1=105',
+        science: 'https://news.naver.com/breakingnews/section/105/283', // IT/과학
         economy: 'https://news.naver.com/main/rss/section.nhn?sid1=101'
     },
     mk: {
-        science: 'https://www.mk.co.kr/rss/30200041/',
+        science: 'https://www.mk.co.kr/rss/50400001/', // IT/과학
         economy: 'https://www.mk.co.kr/rss/50200011/'
+    },
+    // 추가 소스
+    chosun: {
+        science: 'https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml',
+        economy: 'https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml'
     }
 } as const;
 
@@ -81,7 +86,11 @@ export async function collectAllNews(): Promise<NewsArticle[]> {
 
         // 매일경제
         fetchRSS(NEWS_SOURCES.mk.science, 'mk', 'science'),
-        fetchRSS(NEWS_SOURCES.mk.economy, 'mk', 'economy')
+        fetchRSS(NEWS_SOURCES.mk.economy, 'mk', 'economy'),
+
+        // 조선일보
+        fetchRSS(NEWS_SOURCES.chosun.science, 'chosun', 'science'),
+        fetchRSS(NEWS_SOURCES.chosun.economy, 'chosun', 'economy')
     ]);
 
     const allArticles = results.flat();
