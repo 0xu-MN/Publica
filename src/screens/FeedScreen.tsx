@@ -10,7 +10,7 @@ import { DashboardView } from '../components/DashboardView';
 import { useAuth } from '../contexts/AuthContext';
 import { Icons } from '../utils/icons';
 import { FloatingLines } from '../components/FloatingLines';
-import { AppHeader } from '../components/AppHeader';
+import { MainLayout } from '../components/MainLayout';
 import { SupportScreen } from './SupportScreen';
 import { PersonalDashboard } from '../components/PersonalDashboard';
 import { SettingsScreen } from './SettingsScreen';
@@ -331,26 +331,23 @@ export const FeedScreen = () => {
     const isDesktop = width >= 768; // Simple breakpoint for desktop, kept for InsightCard prop
 
     return (
-        <SafeAreaView className="flex-1 bg-[#020617]">
-            <StatusBar barStyle="light-content" />
-
-            <AppHeader
-                viewMode={viewMode}
-                setViewMode={setViewMode}
-                activeCategory={activeCategory}
-                setActiveCategory={setActiveCategory}
-                supportSubMode={supportSubMode}
-                setSupportSubMode={setSupportSubMode}
-                user={user}
-                onAuthModalOpen={() => setAuthModalVisible(true)}
-                onSignOut={signOut}
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                isSearchVisible={isSearchVisible}
-                setIsSearchVisible={setIsSearchVisible}
-                notifications={notifications}
-                setNotifications={setNotifications}
-            />
+        <MainLayout
+            viewMode={viewMode}
+            setViewMode={setViewMode}
+            activeCategory={activeCategory}
+            setActiveCategory={setActiveCategory}
+            supportSubMode={supportSubMode}
+            setSupportSubMode={setSupportSubMode}
+            user={user}
+            onAuthModalOpen={() => setAuthModalVisible(true)}
+            onSignOut={signOut}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            isSearchVisible={isSearchVisible}
+            setIsSearchVisible={setIsSearchVisible}
+            notifications={notifications}
+            setNotifications={setNotifications}
+        >
 
             {
                 viewMode === 'dashboard' ? (
@@ -589,6 +586,6 @@ export const FeedScreen = () => {
                 visible={onboardingVisible}
                 onClose={() => setOnboardingVisible(false)}
             />
-        </SafeAreaView >
+        </MainLayout>
     );
 }
