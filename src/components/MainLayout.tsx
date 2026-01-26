@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, SafeAreaView, StatusBar, ScrollView } from 'react-native';
 import { AppHeader } from './AppHeader';
-import Footer from './Footer';
 
 interface FeedNotification {
     id: string;
@@ -76,7 +75,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
             <View className="flex-1">
                 {children}
             </View>
-            <Footer />
         </SafeAreaView>
     );
 };
