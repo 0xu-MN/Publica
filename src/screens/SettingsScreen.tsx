@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Alert, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
-import { ChevronLeft, Camera, User, Mail as MailIcon, Briefcase, FileText, Lock, Bell, Moon, LogOut, Upload } from 'lucide-react-native';
+import { Icons } from '../utils/icons';
 import Footer from '../components/Footer';
 import { ProfileCard } from '../components/ProfileCard';
 import { useWindowDimensions, Platform } from 'react-native';
@@ -136,7 +136,7 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                                             onPress={handleImageUpload}
                                             className="bg-blue-600 px-6 rounded-xl items-center justify-center border border-white/10 hover:bg-blue-500 active:bg-blue-700"
                                         >
-                                            <Upload size={20} color="#fff" />
+                                            <Icons.Upload size={20} color="#fff" />
                                         </TouchableOpacity>
                                     </View>
                                     <Text className="text-slate-500 text-xs mt-2">
@@ -192,7 +192,7 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                                 <View>
                                     <Text className="text-slate-400 text-sm font-bold mb-2">익명 닉네임</Text>
                                     <View className="flex-row items-center bg-[#1E293B] rounded-xl border border-white/10 px-4">
-                                        <Lock size={18} color="#64748B" className="mr-3" />
+                                        <Icons.Lock size={18} color="#64748B" className="mr-3" />
                                         <TextInput
                                             className="flex-1 text-white py-4 text-base"
                                             value={nickname}
@@ -209,7 +209,7 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                                 <View>
                                     <Text className="text-slate-400 text-sm font-bold mb-2">이메일 주소</Text>
                                     <View className="flex-row items-center bg-[#1E293B]/50 rounded-xl border border-white/5 px-4">
-                                        <MailIcon size={18} color="#64748B" className="mr-3" />
+                                        <Icons.MailIcon size={18} color="#64748B" className="mr-3" />
                                         <View className="flex-1 py-4">
                                             <Text className="text-slate-400 text-base">{user?.email}</Text>
                                         </View>
@@ -225,7 +225,7 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                                 <View className="flex-row items-center justify-between p-6 border-b border-white/5">
                                     <View className="flex-row items-center gap-4">
                                         <View className="w-10 h-10 rounded-full bg-blue-500/10 items-center justify-center">
-                                            <Bell size={20} color="#3B82F6" />
+                                            <Icons.Bell size={20} color="#3B82F6" />
                                         </View>
                                         <View>
                                             <Text className="text-white font-bold text-base">알림 설정</Text>
@@ -242,7 +242,7 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
                                 <View className="flex-row items-center justify-between p-6">
                                     <View className="flex-row items-center gap-4">
                                         <View className="w-10 h-10 rounded-full bg-purple-500/10 items-center justify-center">
-                                            <Moon size={20} color="#A855F7" />
+                                            <Icons.Moon size={20} color="#A855F7" />
                                         </View>
                                         <View>
                                             <Text className="text-white font-bold text-base">다크 모드</Text>

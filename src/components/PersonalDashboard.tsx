@@ -1,9 +1,10 @@
 
 
+
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Dimensions, Linking } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { Sparkles, Clock, MoreHorizontal, MessageSquare, Briefcase, Settings, LogOut, ChevronRight, CheckCircle2, Circle, X, Plus, LayoutDashboard, FolderOpen, Bookmark, Database, Folder, CheckSquare, FileText, MessageCircle } from 'lucide-react-native';
+import { Icons } from '../utils/icons';
 import { ProfileCard } from './ProfileCard';
 import { InsightCard } from './InsightCard';
 import { ChatRoom } from './ChatRoom';
@@ -163,7 +164,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                                     {/* Recent Documents - CLICKABLE */}
                                     <View className="bg-[#0F172A] rounded-3xl p-6 border border-white/5 flex-1 relative overflow-hidden">
                                         <View className="absolute top-0 right-0 p-4 opacity-5">
-                                            <FolderOpen size={120} color="white" />
+                                            <Icons.FolderOpen size={120} color="white" />
                                         </View>
                                         <View className="flex-row items-center justify-between mb-4 relative z-10">
                                             <TouchableOpacity onPress={() => setActiveTab('files')}>
@@ -186,7 +187,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                                                 className="flex-row items-center gap-2"
                                                 onPress={() => setCalendarVisible(true)}
                                             >
-                                                <Clock size={18} color="#F59E0B" />
+                                                <Icons.Clock size={18} color="#F59E0B" />
                                                 <Text className="text-white font-bold text-lg">오늘의 일정</Text>
                                             </TouchableOpacity>
                                             <View className="flex-row items-center gap-2">
@@ -195,7 +196,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                                                     className="w-8 h-8 bg-blue-600 rounded-lg items-center justify-center shadow-lg shadow-blue-500/20"
                                                     onPress={() => setCalendarVisible(true)}
                                                 >
-                                                    <Plus size={16} color="#fff" />
+                                                    <Icons.Plus size={16} color="#fff" />
                                                 </TouchableOpacity>
                                             </View>
                                         </View>
@@ -327,7 +328,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                                 </View>
                             ) : (
                                 <View className="items-center py-20 bg-[#0F172A] rounded-3xl border border-white/5">
-                                    <Bookmark size={48} color="#475569" />
+                                    <Icons.Bookmark size={48} color="#475569" />
                                     <Text className="text-slate-500 text-lg mt-4">해당하는 스크랩이 없습니다.</Text>
                                     <Text className="text-slate-600 text-sm mt-2">다른 카테고리를 선택해보세요.</Text>
                                 </View>
@@ -378,7 +379,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                             </View>
                         ) : (
                             <View className="flex-1 items-center justify-center">
-                                <Folder size={48} color="#475569" />
+                                <Icons.Folder size={48} color="#475569" />
                                 <Text className="text-slate-500 text-lg mt-4">프로젝트를 선택해주세요</Text>
                                 <Text className="text-slate-600 text-sm mt-2">왼쪽의 대시보드에서 프로젝트를 클릭하세요</Text>
                             </View>
@@ -416,7 +417,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                                     ))
                             ) : (
                                 <View className="items-center py-20">
-                                    <Database size={48} color="#475569" />
+                                    <Icons.Database size={48} color="#475569" />
                                     <Text className="text-slate-500 text-lg mt-4">작성한 게시글이 없습니다.</Text>
                                 </View>
                             )}
@@ -442,7 +443,7 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
                                 <ChatRoom targetUser={selectedChatUser} />
                             ) : (
                                 <View className="flex-1 items-center justify-center bg-[#1E293B] rounded-3xl border border-white/10 m-6">
-                                    <MessageCircle size={48} color="#475569" />
+                                    <Icons.MessageCircle size={48} color="#475569" />
                                 </View>
                             )}
                         </View>
@@ -465,16 +466,16 @@ export const PersonalDashboard: React.FC<PersonalDashboardProps> = ({
 // Helper Components
 const PaperItem = ({ title }: { title: string }) => (
     <TouchableOpacity className="bg-slate-900/50 p-3 rounded-xl border border-white/5 flex-row items-center hover:bg-slate-800">
-        <FileText size={16} color="#94A3B8" />
+        <Icons.FileText size={16} color="#94A3B8" />
         <Text className="text-slate-300 text-sm ml-3 flex-1" numberOfLines={1}>{title}</Text>
-        <ChevronRight size={14} color="#475569" />
+        <Icons.ChevronRight size={14} color="#475569" />
     </TouchableOpacity>
 );
 
 const TaskItem = ({ text, checked }: { text: string, checked: boolean }) => (
     <View className="flex-row items-center p-2">
         <View className={`w-5 h-5 rounded border-2 mr-3 flex items-center justify-center ${checked ? 'bg-blue-600 border-blue-600' : 'border-slate-600'}`}>
-            {checked && <CheckSquare size={12} color="#fff" />}
+            {checked && <Icons.CheckSquare size={12} color="#fff" />}
         </View>
         <Text className={`text-sm ${checked ? 'text-slate-600 line-through' : 'text-slate-300'}`}>{text}</Text>
     </View>
@@ -494,7 +495,7 @@ const ProjectItem = ({ name, desc, progress, color, onPress, onWorkspace }: {
             onPress={onPress}
         >
             <View className={`w-10 h-10 rounded-lg items-center justify-center`} style={{ backgroundColor: `${color}20` }}>
-                <Folder size={20} color={color} />
+                <Icons.Folder size={20} color={color} />
             </View>
             <View className="ml-4 flex-1">
                 <Text className="text-slate-200 font-bold text-sm">{name}</Text>
@@ -512,14 +513,14 @@ const ProjectItem = ({ name, desc, progress, color, onPress, onWorkspace }: {
                 className="flex-1 bg-blue-600 py-2 rounded-lg flex-row items-center justify-center gap-2"
                 onPress={onWorkspace}
             >
-                <Sparkles size={12} color="#fff" />
+                <Icons.Sparkles size={12} color="#fff" />
                 <Text className="text-white font-semibold text-xs">이어서 작업</Text>
             </TouchableOpacity>
             <TouchableOpacity
                 className="flex-1 bg-white/5 py-2 rounded-lg flex-row items-center justify-center gap-2 border border-white/10"
                 onPress={onPress}
             >
-                <Folder size={12} color="#94A3B8" />
+                <Icons.Folder size={12} color="#94A3B8" />
                 <Text className="text-slate-300 font-semibold text-xs">파일 보기</Text>
             </TouchableOpacity>
         </View>
