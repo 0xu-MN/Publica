@@ -36,7 +36,7 @@ export interface NewsArticle {
     link: string;
     pubDate: string;
     description: string;
-    source: 'naver' | 'mk';
+    source: 'naver' | 'mk' | 'chosun';
     category: 'science' | 'economy';
 }
 
@@ -52,7 +52,7 @@ function generateArticleId(url: string): string {
  */
 async function fetchRSS(
     url: string,
-    source: 'naver' | 'mk',
+    source: 'naver' | 'mk' | 'chosun',
     category: 'science' | 'economy'
 ): Promise<NewsArticle[]> {
     try {
