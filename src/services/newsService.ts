@@ -22,15 +22,18 @@ const getFallbackImage = (category: string, id: string): string => {
     return images[index];
 };
 
+type RelatedMaterial = { title: string; url: string };
+
 export interface AICardNews {
     id: string;
+    content: string; // JSON string 형식의 카드 데이터
     headline: string;
     body: string;
-    bullets: string[];
-    related_materials: { title: string; url: string }[];
+    category: string;
     created_at: string;
-    imageUrl?: string;
-    category?: string;
+    imageUrl: string;
+    bullets?: string[];
+    related_materials?: RelatedMaterial[];
 }
 
 // Frontend compatible NewsItem interface
