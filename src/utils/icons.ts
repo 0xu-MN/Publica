@@ -20,7 +20,11 @@ import {
     MessageCircle,
     MessageSquare,
     LogOut,
-    Settings
+    Settings,
+    Youtube,
+    Twitter,
+    Instagram,
+    Send
 } from 'lucide-react-native';
 
 export const Icons = {
@@ -41,5 +45,10 @@ export const Icons = {
     MessageCircle,
     MessageSquare,
     LogOut,
-    Settings
+    Settings,
+    Youtube,
+    Twitter,
+    Instagram,
+    Send
 } as const;
+

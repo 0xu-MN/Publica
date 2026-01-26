@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, Linking } from 'react-native';
-import { Youtube, Twitter, Instagram, Send } from 'lucide-react-native';
+import { Icons } from '../utils/icons';
 
 const Footer = () => {
     return (
@@ -30,16 +30,16 @@ const Footer = () => {
                     <View className="gap-6">
                         <View className="flex-row items-center gap-4">
                             <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Youtube size={20} color="#94A3B8" />
+                                <Icons.Youtube size={20} color="#94A3B8" />
                             </TouchableOpacity>
                             <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Twitter size={20} color="#94A3B8" />
+                                <Icons.Twitter size={20} color="#94A3B8" />
                             </TouchableOpacity>
                             <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Instagram size={20} color="#94A3B8" />
+                                <Icons.Instagram size={20} color="#94A3B8" />
                             </TouchableOpacity>
                             <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Send size={20} color="#94A3B8" />
+                                <Icons.Send size={20} color="#94A3B8" />
                             </TouchableOpacity>
                         </View>
 
