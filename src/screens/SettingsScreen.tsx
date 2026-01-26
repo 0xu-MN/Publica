@@ -282,7 +282,5 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
 
             </View>
         </ScrollView>
-        </View >
     );
 };
-</ScrollView>
