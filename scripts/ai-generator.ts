@@ -3,6 +3,7 @@
  * 원본 기사 → 완전히 새로운 InsightFlow 카드 생성
  */
 
+import 'dotenv/config';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { NewsArticle } from './news-collector';
 

@@ -3,6 +3,7 @@
  * 중복 방지, 카드 저장 등 DB 관련 유틸리티
  */
 
+import 'dotenv/config';
 import { createClient } from '@supabase/supabase-js';
 import { NewsArticle } from './news-collector';
 
