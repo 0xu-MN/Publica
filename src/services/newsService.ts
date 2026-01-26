@@ -110,18 +110,29 @@ export const subscribeToNews = (callback: (payload: any) => void) => {
         .subscribe();
 };
 // AI 뉴스 카드 가져오기
-export const fetchAICards = async (): Promise<AICardNews[]> => {
+export const fetchAICards = async (category: string = '전체'): Promise<AICardNews[]> => {
     try {
-        const { data, error } = await supabase
+        let query = supabase
             .from('cards')
             .select('*')
             .order('created_at', { ascending: false })
-            .limit(50); // Increased from 10 to show all recent items
+            .limit(50);
+
+        // 카테고리 필터 적용
+        if (category !== '전체') {
+            // JSON 컬럼에서 카테고리 필터링
+            // content->>'category' 문법 사용
+            const dbCategory = category === '과학' ? 'Science' : 'Economy';
+            // Supabase에서 JSON 필드 검색은 textSearch나 다른 방법 필요
+            // 모든 데이터를 가져온 후 클라이언트에서 필터링하는 것이 더 안전함
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         if (!data) return [];
 
-        return data.map((item: any) => {
+        let cards = data.map((item: any) => {
             try {
                 const content = typeof item.content === 'string' ? JSON.parse(item.content) : item.content;
                 return {
@@ -139,6 +150,14 @@ export const fetchAICards = async (): Promise<AICardNews[]> => {
                 return null;
             }
         }).filter((i: any): i is AICardNews => i !== null);
+
+        // 카테고리 필터 적용 (클라이언트에서 필터링)
+        if (category !== '전체') {
+            const dbCategory = category === '과학' ? 'Science' : 'Economy';
+            cards = cards.filter(card => card.category === dbCategory);
+        }
+
+        return cards;
     } catch (error) {
         console.error('Error fetching AI cards:', error);
         return [];

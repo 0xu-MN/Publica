@@ -292,7 +292,7 @@ export const FeedScreen = () => {
             // Fetch Data and Sync Scraps in Parallel
             await Promise.all([
                 (async () => {
-                    aiCards = await fetchAICards();
+                    aiCards = await fetchAICards(activeCategory);
                 })(),
                 user ? loadScraps() : Promise.resolve()
             ]);

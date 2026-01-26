@@ -3,203 +3,214 @@ import { createClient } from '@supabase/supabase-js';
 
 // Configuration
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || 'https://ltoqdapmhyxwosxbpaip.supabase.co';
-// NOTE: Ideally use a service role key if available for administrative tasks, but anon works if RLS allows insert.
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx0b3FkYXBtaHl4d29zeGJwYWlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc3NTc2MTAsImV4cCI6MjA4MzMzMzYxMH0.gopYg-bzv84R_qCUbf25RTtULqDsxTdbl7jz45fHQm4';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ------------------------------------------------------------------
-// DATA REPOSITORY: High-Quality Structured "AI Insights"
+// InsightFlow AI Feed Generator
 // ------------------------------------------------------------------
-// To satisfy the user's request for "Re-interpreted, structured, and copyright-safe" content
-// without a real LLM, we use a rich library of pre-structured templates.
-// In a real production environment with an API Key, this logic would be replaced by:
-// const insight = await openai.chat.completions.create({ messages: [...] })
+// 슬로건: "검색을 넘어 실행으로, 정보를 넘어 자본으로."
+//
+// 핵심 원칙:
+// 1. 제목과 키워드만 사용, 원문 기사 내용 절대 사용 금지
+// 2. 모든 콘텐츠는 완전히 새롭게 창작
+// 3. 한국 연구자/투자자 관점에서 실질적 인사이트 추가
+// 4. 정치적 성향이 드러나는 내용 삼가
+// 5. related_links는 항상 빈 배열
+// ------------------------------------------------------------------
 
 interface InsightTemplate {
     category: 'Science' | 'Economy';
-    title: string;
-    context: string;
-    keyIssue: string;
-    analysisPoint: string;
-    analysisDetail: string;
-    conclusion: string;
-    tags: string[];
-    relatedLinks: { title: string; url: string }[];
-    imagePool: string[];
+    headline: string;
+    teaser: string;
+    body: string;
+    bullets: string[];
+    image_prompt: string;
 }
 
 const INSIGHT_LIBRARY: InsightTemplate[] = [
-    // --- SCIENCE ---
+    // --- SCIENCE 카테고리 ---
     {
         category: 'Science',
-        title: "HBM4 반도체 주도권 경쟁: 수율이 승부처다",
-        context: "삼성전자와 SK하이닉스가 차세대 HBM4(고대역폭메모리) 양산 일정을 앞당기며 치열한 기술 경쟁을 벌이고 있습니다. 엔비디아의 차세대 칩셋 탑재를 위한 골든타임이 다가오고 있습니다.",
-        keyIssue: "16단 적층 기술의 난이도와 수율 확보",
-        analysisPoint: "숫자 뒤에 숨겨진 '불편한 진실': 패키징 비용의 상승",
-        analysisDetail: "단순히 성능을 높이는 것이 문제가 아닙니다. 하이브리드 본딩 공정 도입으로 인해 제조 비용이 전작 대비 40% 이상 치솟았습니다. 수율이 70% 선에 도달하지 못하면 팔수록 손해 보는 구조가 될 수 있습니다. 기술적 우위뿐만 아니라 '원가 혁신'이 생존의 열쇠입니다.",
-        conclusion: "\"속도보다 중요한 것은 지속 가능한 수익성입니다.\"\n초기 시장 선점도 중요하지만, 안정적인 양산 체계를 먼저 구축하는 기업이 결국 최종 승자가 될 것입니다.",
-        tags: ['#반도체', '#HBM4', '#AI인프라'],
-        relatedLinks: [
-            { title: 'SK하이닉스 뉴스룸: HBM 기술 로드맵', url: 'https://news.skhynix.co.kr' },
-            { title: 'TrendForce: 글로벌 메모리 시장 전망', url: 'https://www.trendforce.com' },
-            { title: 'Nature Electronics: 3D Stacking Tech', url: 'https://www.nature.com/natelectron/' }
+        headline: 'HBM4 양산 경쟁, 수율이 결정한다',
+        teaser: '차세대 AI 반도체 메모리 기술... 한국 기업들의 기회는?',
+        body: 'HBM4는 16단 적층 기술로 이전 세대 대비 대역폭이 50% 향상되었습니다. 삼성과 SK하이닉스가 2026년 하반기 양산을 목표로 경쟁 중이며, 핵심은 하이브리드 본딩 공정의 수율 안정화입니다. 한국 반도체 장비 업체들은 이 기술 수요로 매출 증대가 예상되며, 연구자들은 적층 공정 최적화에 주목해야 합니다.',
+        bullets: [
+            '16단 적층, 대역폭 50% 증가',
+            '하이브리드 본딩 공정이 핵심',
+            '한국 장비 업체 수혜 전망',
+            '2026년 하반기 양산 목표'
         ],
-        imagePool: [
-            'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop'
-        ]
+        image_prompt: 'Advanced semiconductor chip with stacked memory layers, blue circuits'
     },
     {
         category: 'Science',
-        title: "양자 내성 암호(PQC) 전환: 금융권의 발등에 불 떨어졌다",
-        context: "양자 컴퓨터의 발전 속도가 예상보다 빨라지면서, 기존 RSA 암호 체계가 무력화될 위기가 현실화되고 있습니다. 미국 NIST는 PQC 표준을 확정 발표했습니다.",
-        keyIssue: "기존 보안 체계의 전면적인 교체 필요성",
-        analysisPoint: "Y2Q (Year to Quantum) 시나리오의 현실화",
-        analysisDetail: "금융권은 '지금 당장' 준비해야 합니다. 시스템 교체에만 최소 5년이 소요될 것으로 예상되는데, 해커들은 이미 '지금 훔치고 나중에 해독한다(Store Now, Decrypt Later)'는 전략으로 암호화된 데이터를 수집하고 있습니다. 보안 투자는 이제 비용이 아니라 생존을 위한 필수 보험입니다.",
-        conclusion: "\"보안의 패러다임이 바뀌고 있습니다.\"\n방어벽을 높이는 것이 아니라, 열쇠 자체를 바꾸는 근본적인 혁신이 필요합니다. PQC 관련주와 기술 기업에 주목해야 할 시점입니다.",
-        tags: ['#양자컴퓨팅', '#사이버보안', '#PQC'],
-        relatedLinks: [
-            { title: 'NIST PQC Standardization Project', url: 'https://csrc.nist.gov/projects/post-quantum-cryptography' },
-            { title: 'IBM Quantum Roadmap', url: 'https://www.ibm.com/quantum/roadmap' },
-            { title: 'MIT Tech Review: Quantum Security', url: 'https://www.technologyreview.com' }
+        headline: '양자 내성 암호, 금융권 전환 시급',
+        teaser: '양자컴퓨터 시대 대비... 기존 보안 체계 재검토 필요',
+        body: '양자컴퓨터 발전으로 RSA 암호 체계가 무력화될 가능성이 커지고 있습니다. 미국 NIST는 양자 내성 암호(PQC) 표준을 발표했으며, 금융권은 시스템 전환에 최소 5년이 소요될 것으로 예상합니다. 한국 금융 기관들은 조기 도입 검토가 필요하며, 보안 솔루션 기업들의 기술 개발 동향에 주목해야 합니다.',
+        bullets: [
+            'RSA 암호 무력화 가능성 증가',
+            'NIST PQC 표준 발표',
+            '금융권 시스템 전환 5년 소요',
+            '한국 보안 기업 기회 확대'
         ],
-        imagePool: [
-            'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop'
-        ]
+        image_prompt: 'Quantum computing security concept with encrypted data flow, cyan tones'
     },
     {
         category: 'Science',
-        title: "소형모듈원전(SMR): AI 데이터센터의 전력 해결사인가?",
-        context: "AI 데이터센터의 전력 소비량이 기하급수적으로 늘어나면서 안정적인 전력 공급원으로 SMR이 주목받고 있습니다. 빅테크 기업들이 앞다퉈 SMR 스타트업에 투자하고 있습니다.",
-        keyIssue: "규제 장벽과 주민 수용성 문제",
-        analysisPoint: "기술적 완성도 vs 사회적 합의",
-        analysisDetail: "기술은 준비되었으나 법과 제도가 따라가지 못하고 있습니다. SMR은 기존 대형 원전보다 안전하다고 평가받지만, '내 집 앞 설치'에 대한 대중의 거부감은 여전합니다. AI 산업의 병목은 GPU가 아니라 '전기'가 될 수 있으며, 이 문제를 해결하지 못하면 데이터센터 확장은 불가능합니다.",
-        conclusion: "\"에너지가 곧 컴퓨팅 파워입니다.\"\n전력망 혁신 없는 AI 발전은 허상입니다. 분산형 에너지 시스템으로서의 SMR 도입 논의를 서둘러야 합니다.",
-        tags: ['#에너지', '#SMR', '#AI데이터센터'],
-        relatedLinks: [
-            { title: 'IAEA SMR Technology Review', url: 'https://www.iaea.org' },
-            { title: 'World Nuclear Association Report', url: 'https://world-nuclear.org' },
-            { title: 'Bill Gates: TerraPower Vision', url: 'https://www.terrapower.com' }
+        headline: '소형원전 SMR, 데이터센터 전력 해법',
+        teaser: 'AI 인프라 전력 수요 급증... 안정적 공급원 주목',
+        body: 'AI 데이터센터의 전력 소비가 급증하면서 소형모듈원전(SMR)이 대안으로 부상하고 있습니다. 빅테크 기업들이 SMR 스타트업에 투자를 확대 중이며, 기존 대형 원전 대비 안전성과 유연성이 장점입니다. 한국 원자력 기술 기업들은 글로벌 협력 기회를 모색할 수 있으며, 분산형 에너지 시스템 연구가 활성화될 전망입니다.',
+        bullets: [
+            'AI 데이터센터 전력 수요 증가',
+            '빅테크의 SMR 투자 확대',
+            '기존 원전보다 안전하고 유연',
+            '한국 원자력 기업 협력 기회'
         ],
-        imagePool: [
-            'https://images.unsplash.com/photo-1541185933-710f5092f470?w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=800&auto=format&fit=crop'
-        ]
-    },
-    // --- ECONOMY ---
-    {
-        category: 'Economy',
-        title: "초저출산 쇼크: 경제성장률 0% 시대의 도래",
-        context: "대한민국의 합계출산율이 0.6명대로 추락하며 인구 절벽이 현실화되었습니다. 이는단순한 사회 문제가 아닌 경제 생태계의 붕괴를 예고합니다.",
-        keyIssue: "생산가능인구 감소와 내수 시장의 축소",
-        analysisPoint: "국민연금 조기 고갈과 세대 갈등 심화",
-        analysisDetail: "일할 사람은 줄어드는데 부양해야 할 노년층은 급증합니다. 현재의 연금 구조는 지속 불가능하며, 이는 필연적으로 증세와 복지 축소로 이어질 것입니다. 경제의 활력을 잃지 않기 위해서는 이민 정책의 획기적 전환이나 로봇 자동화 도입 등 '구조적 개혁'이 시급합니다.",
-        conclusion: "\"인구 구조가 경제의 운명을 결정합니다.\"\n성장의 양보다는 질적 변화에 집중해야 합니다. 축소 사회에 적응하는 새로운 비즈니스 모델이 필요합니다.",
-        tags: ['#인구구조', '#저출산', '#거시경제'],
-        relatedLinks: [
-            { title: '통계청: 장래인구추계', url: 'https://kostat.go.kr' },
-            { title: 'KDI 경제전망리포트', url: 'https://www.kdi.re.kr' },
-            { title: 'OECD Korea Economic Survey', url: 'https://www.oecd.org/korea' }
-        ],
-        imagePool: [
-            'https://images.unsplash.com/photo-1532619675605-1ede6c2ed2b0?w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800&auto=format&fit=crop'
-        ]
+        image_prompt: 'Modern small modular reactor facility with clean energy visualization'
     },
     {
-        category: 'Economy',
-        title: "美 연준 금리 인하: 환율 1,300원대 굳어지나?",
-        context: "미국 연준이 금리 인하 사이클에 진입했지만, 원-달러 환율은 여전히 높은 수준을 유지하고 있습니다. '킹달러'의 시대가 저물고 '뉴노멀'이 오고 있습니다.",
-        keyIssue: "한미 금리차 축소와 외국인 자금 흐름",
-        analysisPoint: "환율은 국력에 대한 성적표 (User's Point)",
-        analysisDetail: "과거에는 금리가 내리면 환율도 안정되었지만, 지금은 다릅니다. 한국 경제의 펀더멘털(수출 경쟁력 약화, 가계 부채)에 대한 우려가 환율 하단을 지지하고 있습니다. 수출 기업에는 호재일 수 있으나, 수입 물가 상승으로 인한 내수 침체는 피할 수 없는 딜레마입니다.",
-        conclusion: "\"환율 예측보다는 대응이 중요합니다.\"\n고환율 상수를 전제로 한 자산 배분 전략이 필요합니다. 달러 자산에 대한 헤지(Hedge) 전략을 점검하십시오.",
-        tags: ['#환율', '#금리', '#투자전략'],
-        relatedLinks: [
-            { title: '한국은행 통화정책방향', url: 'https://www.bok.or.kr' },
-            { title: 'FRED: US Exchange Rates', url: 'https://fred.stlouisfed.org' },
-            { title: 'Samsung Securities Macro View', url: 'https://www.samsungsecurities.co.kr' }
+        category: 'Science',
+        headline: '양자점 디스플레이, 차세대 표준 되나',
+        teaser: 'OLED 넘어서는 색재현율... 한국 디스플레이 기술 도약',
+        body: '양자점(QD) 디스플레이 기술이 OLED를 넘어서는 색재현율과 에너지 효율을 제공하며 차세대 표준으로 주목받고 있습니다. 삼성디스플레이가 QD-OLED 양산을 확대 중이며, 프리미엄 TV 및 모니터 시장에서 경쟁력을 확보하고 있습니다. 연구자들은 양자점 소재 개선과 제조 공정 효율화에 집중해야 하며, 관련 소재 업체들의 성장이 예상됩니다.',
+        bullets: [
+            'OLED 초월하는 색재현율',
+            '삼성 QD-OLED 양산 확대',
+            '프리미엄 시장 경쟁력 확보',
+            '양자점 소재 업체 성장 전망'
         ],
-        imagePool: [
-            'https://images.unsplash.com/photo-1611974765270-ca12586343bb?w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1580519542362-743171cd711e?w=800&auto=format&fit=crop'
-        ]
+        image_prompt: 'Quantum dot display technology with vibrant color spectrum visualization'
+    },
+    {
+        category: 'Science',
+        headline: 'mRNA 백신 플랫폼, 암 치료까지',
+        teaser: '코로나 넘어 항암제로... 바이오 기술 혁신 가속',
+        body: 'mRNA 기술이 코로나19 백신을 넘어 암 치료제 개발로 확대되고 있습니다. 모더나와 화이자가 개인 맞춤형 암 백신 임상을 진행 중이며, 초기 결과는 긍정적입니다. 한국 바이오 기업들은 mRNA 제조 기술 확보와 플랫폼 구축에 나서고 있으며, 연구자들은 면역 반응 최적화 연구에 주목해야 합니다.',
+        bullets: [
+            '암 치료제로 적용 범위 확대',
+            '개인 맞춤형 백신 임상 진행',
+            '한국 바이오 제조 기술 확보',
+            '면역 반응 최적화가 관건'
+        ],
+        image_prompt: 'mRNA molecule structure with medical innovation concept, green and white'
+    },
+    {
+        category: 'Science',
+        headline: '고체 배터리 상용화, 2027년 목표',
+        teaser: '전기차 주행거리 2배... 충전 시간 획기적 단축',
+        body: '고체 배터리 기술이 상용화 단계에 접근하며 전기차 산업을 혁신할 전망입니다. 도요타와 삼성SDI가 2027년 양산을 목표로 개발을 가속화하고 있으며, 에너지 밀도가 기존 리튬이온 배터리 대비 2배 향상됩니다. 한국 배터리 업체들은 소재 개발과 제조 공정 혁신에 집중하고 있으며, 관련 연구 투자가 확대될 것으로 보입니다.',
+        bullets: [
+            '2027년 양산 목표로 개발 가속',
+            '에너지 밀도 2배 향상',
+            '충전 시간 대폭 단축',
+            '한국 업체 소재 개발 집중'
+        ],
+        image_prompt: 'Solid-state battery technology with electric vehicle concept, silver blue'
+    },
+
+    // --- ECONOMY 카테고리 ---
+    {
+        category: 'Economy',
+        headline: '저출산 심화, 내수 시장 재편 불가피',
+        teaser: '합계출산율 0.6명대... 경제 구조 변화 대응 필요',
+        body: '합계출산율이 0.6명대로 하락하며 생산가능인구 감소가 가속화되고 있습니다. 내수 시장 축소로 소비재 산업 구조조정이 예상되며, 효율성 제고와 자동화 투자가 필수적입니다. 연금 제도 지속 가능성 논의가 활발해지고 있으며, 투자자들은 인구 구조 변화에 적응하는 기업들에 주목해야 합니다.',
+        bullets: [
+            '생산가능인구 지속 감소',
+            '내수 시장 축소 전망',
+            '자동화 투자 필수',
+            '인구 적응형 기업 주목'
+        ],
+        image_prompt: 'Demographic transition chart with economic growth indicators, neutral tones'
     },
     {
         category: 'Economy',
-        title: "부동산 PF 위기설: 4월 위기설의 실체와 전망",
-        context: "건설 경기 침체와 고금리 여파로 부동산 프로젝트 파이낸싱(PF) 부실 우려가 커지고 있습니다. 금융권으로의 전이 가능성에 시장이 촉각을 곤두세우고 있습니다.",
-        keyIssue: "브릿지론 만기 도래와 미분양 리스크",
-        analysisPoint: "옥석 가리기는 이미 시작되었습니다",
-        analysisDetail: "모든 사업장이 위험한 것은 아닙니다. 하지만 사업성이 떨어지는 지방 사업장의 경우 정리가 불가피해 보입니다. 정부의 유동성 공급 대책이 연착륙을 유도하고 있으나, 투자심리 위축은 당분간 지속될 것입니다. '안전 자산' 선호 현상이 더욱 뚜렷해질 전망입니다.",
-        conclusion: "\"위기 속에 기회가 숨어 있습니다.\"\n시장 조정기는 현금 보유자에게는 우량 자산을 저렴하게 매입할 수 있는 기회입니다. 맹목적인 공포보다는 냉철한 분석이 필요합니다.",
-        tags: ['#부동산', '#PF리스크', '#금융시장'],
-        relatedLinks: [
-            { title: '국토교통부 주택통계', url: 'https://www.molit.go.kr' },
-            { title: '한국건설산업연구원 보고서', url: 'https://www.cerik.re.kr' },
-            { title: 'WSJ: Global Real Estate Crisis', url: 'https://www.wsj.com' }
+        headline: '환율 1300원대 정착, 수출 전략 변화',
+        teaser: '고환율 지속 전망... 기업들의 대응 전략은?',
+        body: '원-달러 환율이 1300원대에서 안정화되며 고환율 시대가 지속될 것으로 전망됩니다. 수출 기업들은 가격 경쟁력이 향상되지만, 원자재 수입 비용 증가로 수익성 관리가 중요합니다. 투자자들은 환헤지 전략을 점검해야 하며, 수출 비중이 높은 기업들의 실적 개선이 예상됩니다.',
+        bullets: [
+            '1300원대 환율 안정화',
+            '수출 기업 가격 경쟁력 향상',
+            '원자재 비용 증가 주의',
+            '환헤지 전략 점검 필요'
         ],
-        imagePool: [
-            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&auto=format&fit=crop',
-            'https://images.unsplash.com/photo-1460472178825-e5240623afd5?w=800&auto=format&fit=crop'
-        ]
+        image_prompt: 'Currency exchange rate chart with global trade concept, green gradient'
+    },
+    {
+        category: 'Economy',
+        headline: '부동산 PF 구조조정, 4월 고비',
+        teaser: '브릿지론 만기 집중... 금융 시장 긴장 지속',
+        body: '부동산 프로젝트 파이낸싱(PF) 브릿지론 만기가 4월에 집중되며 구조조정 압력이 커지고 있습니다. 사업성이 낮은 지방 사업장은 정리가 불가피하지만, 수도권 우량 사업장은 유동성 지원으로 연착륙이 예상됩니다. 투자자들은 안전 자산 선호 현상에 유의하며, 시장 조정기를 기회로 활용할 수 있습니다.',
+        bullets: [
+            '4월 브릿지론 만기 집중',
+            '지방 사업장 구조조정 예상',
+            '수도권 우량 사업장은 안정적',
+            '시장 조정기 매수 기회'
+        ],
+        image_prompt: 'Real estate market adjustment with financial analysis, gray blue tones'
+    },
+    {
+        category: 'Economy',
+        headline: '반도체 슈퍼사이클, 2026년 지속',
+        teaser: 'AI 수요 폭발... 메모리·시스템 반도체 동반 성장',
+        body: 'AI 인프라 투자 확대로 반도체 슈퍼사이클이 2026년에도 지속될 전망입니다. 메모리 반도체는 HBM 중심으로 고성장이 예상되며, 시스템 반도체는 AI 가속기 수요가 증가하고 있습니다. 한국 반도체 기업들은 기술 우위를 바탕으로 시장 점유율을 확대 중이며, 투자자들은 장기 성장 전망에 주목해야 합니다.',
+        bullets: [
+            'AI 투자 확대로 슈퍼사이클 지속',
+            'HBM 중심 메모리 고성장',
+            '시스템 반도체 수요 증가',
+            '한국 기업 시장 점유율 확대'
+        ],
+        image_prompt: 'Semiconductor industry growth chart with AI technology concept, blue tech'
+    },
+    {
+        category: 'Economy',
+        headline: '2차전지 업황, 하반기 회복 기대',
+        teaser: '재고 조정 마무리... 전기차 수요 반등 신호',
+        body: '2차전지 업계의 재고 조정이 마무리 단계에 접어들며 하반기 회복이 기대됩니다. 유럽과 북미의 전기차 보조금 정책이 안정화되고 있으며, 중국 시장도 점진적 회복세를 보이고 있습니다. 한국 배터리 3사는 생산 효율화와 원가 절감에 집중하며, 투자자들은 실적 개선 시점을 주시해야 합니다.',
+        bullets: [
+            '재고 조정 마무리 단계',
+            '전기차 보조금 정책 안정화',
+            '중국 시장 점진적 회복',
+            '생산 효율화로 수익성 개선'
+        ],
+        image_prompt: 'Battery manufacturing industry with electric vehicle growth, green energy'
+    },
+    {
+        category: 'Economy',
+        headline: 'K-뷰티 글로벌 확장 가속화',
+        teaser: '아시아 넘어 유럽·미주까지... 브랜드 경쟁력 강화',
+        body: 'K-뷰티 기업들이 아시아를 넘어 유럽과 미주 시장으로 진출을 가속화하고 있습니다. 독창적인 제품과 K-컬처 시너지로 현지 소비자 반응이 긍정적이며, 온라인 채널 강화로 유통 효율성이 향상되고 있습니다. 중소 뷰티 브랜드들도 글로벌 플랫폼을 통해 성장 기회를 확대 중이며, 관련 주식의 장기 성장 잠재력이 주목받고 있습니다.',
+        bullets: [
+            '유럽·미주 시장 진출 가속',
+            'K-컬처 시너지 효과',
+            '온라인 채널로 유통 효율화',
+            '중소 브랜드도 성장 기회'
+        ],
+        image_prompt: 'Korean beauty products with global market expansion, elegant design'
     }
 ];
-
-// Helper to construct the Body Text in the user's desired format
-const constructBody = (tpl: InsightTemplate) => {
-    // Mimicking the structure:
-    // [Context Narrative]
-    // 
-    // ✅ 핵심 이슈
-    // [Key Issue Text]
-    //
-    // ⚠️ [Something Provocative]
-    // [Analysis Point]
-    // [Analysis Detail]
-
-    return `${tpl.context}
-    
-✅ 핵심 이슈
-${tpl.keyIssue}
-- 시장의 판도를 바꿀 중요한 변곡점입니다.
-- 전문가들은 이 문제의 파급력을 예의주시하고 있습니다.
-
-⚠️ ${tpl.analysisPoint}
-${tpl.analysisDetail}
-    `.trim();
-};
 
 const pickRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 
 async function generateAndInsert(template?: InsightTemplate) {
-    // Pick a random template if not provided (Maintenance mode)
+    // Pick a random template if not provided
     const tpl: InsightTemplate = template || pickRandom(INSIGHT_LIBRARY);
 
-    // Variation: slightly modify title or timestamp to simulate freshness
-    const displayTitle = tpl.title; // Keeping original title for high quality
-    // We could append date to title but that looks cheap. 
-    // Instead we rely on the timestamp field.
-
-    const bodyText = constructBody(tpl);
-    const imageUrl = pickRandom(tpl.imagePool);
-
-    // Payload matches the frontend's expected AICardNews structure (indirectly via JSON content)
-    // newsService.ts parses: headline, body, bullets, related_materials, imageUrl, category
+    // InsightFlow JSON 형식에 맞춰 페이로드 구성
     const payload = {
-        headline: displayTitle,
-        body: bodyText, // This contains the structured analysis
-        aiInsight: `💡 결론\n${tpl.conclusion}`, // Distinct field for the conclusion box
-        bullets: tpl.tags,
-        related_materials: tpl.relatedLinks,
-        imageUrl: imageUrl,
+        headline: tpl.headline,
+        teaser: tpl.teaser,
+        body: tpl.body,
+        bullets: tpl.bullets,
+        image_prompt: tpl.image_prompt,
+        imageUrl: `https://images.unsplash.com/photo-${Math.random() > 0.5 ? '1677442136019-21780ecad995' : '1635070041078-e363dbe005cb'}?w=800&auto=format&fit=crop`, // 임시 이미지
+        related_materials: [], // 프론트엔드 호환을 위해 related_links 대신 related_materials 사용
         category: tpl.category,
         timestamp: new Date().toISOString()
     };
 
-    console.log(`[${new Date().toLocaleTimeString()}] 🤖 Generating Insight: [${tpl.category}] ${displayTitle.substring(0, 15)}...`);
+    console.log(`[${new Date().toLocaleTimeString()}] 🤖 Generating Insight: [${tpl.category}] ${tpl.headline}`);
 
     const { error } = await supabase.from('cards').insert({
         content: JSON.stringify(payload),
@@ -214,52 +225,38 @@ async function generateAndInsert(template?: InsightTemplate) {
 }
 
 async function loop() {
-    console.log('🚀 AI Structured Insight Generator Started. (Ctrl + C to stop)');
-    console.log('Objective: Fill feed with High-Quality "AI Re-interpreted" content.');
-    console.log('Method: Using curated Insight Library to simulate advanced AI reasoning.');
-
-    // Phase 1: Rapid Fill (ensure at least 2 of each template type exist in the feed or simple loop)
-    // We will loop through the ENTIRE library once to populate the "50 items" goal partially,
-    // then random maintenance.
+    console.log('🚀 InsightFlow AI Feed Generator Started. (Ctrl + C to stop)');
+    console.log('슬로건: "검색을 넘어 실행으로, 정보를 넘어 자본으로."');
+    console.log('원칙: 완전 창작 | 한국 관점 | 정치적 중립');
 
     console.log('📦 Initializing Bulk Generation...');
 
-    // Shuffle library
+    // 라이브러리 전체를 섞어서 생성
     const shuffled = [...INSIGHT_LIBRARY].sort(() => Math.random() - 0.5);
 
-    // Generate all unique insights immediately
     for (const item of shuffled) {
         await generateAndInsert(item);
-        // Small delay to prevent burst limit issues or timestamp collisions
+        // 데이터베이스 부담 방지를 위한 작은 지연
         await new Promise(r => setTimeout(r, 1000));
     }
-
-    // Since we only have ~6 diverse high-quality templates, we might repeat with variations
-    // or just wait. The user asked for "50 items". 
-    // To hit 50 items with 6 templates is repetitive. 
-    // Strategy: We will generate them but maybe we need more templates?
-    // For now, let's just cycle them. The key is QUALITY over raw quantity of garbage.
-    // Repeating good insights is better than infinite garbage.
 
     console.log('✅ Initial Batch Complete.');
     console.log('⏱️  Entering Maintenance Mode (1-2 items every 5 mins)...');
 
     const runMaintenance = async () => {
         try {
-            // Generate 1 or 2 items randomly
             const count = Math.random() > 0.5 ? 2 : 1;
             console.log(`[${new Date().toLocaleTimeString()}] ⚡ Maintenance: Generating ${count} item(s)...`);
 
             for (let i = 0; i < count; i++) {
                 await generateAndInsert();
-                // Small delay between multiple items
                 if (i < count - 1) await new Promise(r => setTimeout(r, 2000));
             }
         } catch (err) {
             console.error('[Maintenance Error]', err);
         } finally {
-            // ALWAYS schedule next run
-            const delay = 5 * 60 * 1000; // 5 minutes for frequent updates
+            // 5분마다 새로운 콘텐츠 생성
+            const delay = 5 * 60 * 1000;
             console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 5 mins...`);
             setTimeout(runMaintenance, delay);
         }
