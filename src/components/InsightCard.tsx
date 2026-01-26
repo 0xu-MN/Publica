@@ -134,11 +134,6 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
                                 <Text className="text-slate-400 mx-2 text-[10px]">•</Text>
                                 <Text className="text-slate-300 text-xs">{item.timestamp}</Text>
                             </View>
-                            <View className="flex-1" />
-                            <View className="flex-row items-center bg-black/20 px-2 py-1 rounded-lg backdrop-blur-sm">
-                                <Clock size={12} color="#94A3B8" style={{ marginRight: 4 }} />
-                                <Text className="text-slate-300 text-xs">{item.readTime}</Text>
-                            </View>
                         </View>
                     </View>
                 </View>
