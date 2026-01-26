@@ -140,6 +140,7 @@ export const fetchAICards = async (category: string = '전체'): Promise<AICardN
                 const content = typeof item.content === 'string' ? JSON.parse(item.content) : item.content;
                 return {
                     id: item.id,
+                    content: item.content, // 원본 content 필드 추가
                     headline: content.headline || "제목 없음",
                     body: content.body || "",
                     bullets: content.bullets || [],
