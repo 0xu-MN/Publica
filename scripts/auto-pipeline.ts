@@ -59,7 +59,8 @@ async function runPipeline() {
                 // 이미지
                 const imageUrl = generateImageUrl(card.category);
 
-                // 카드 데이터 구성
+                // 카드 데이터 구성 (고유 timestamp)
+                const now = new Date();
                 const cardData = {
                     headline: card.headline,
                     body: card.body,
@@ -68,7 +69,8 @@ async function runPipeline() {
                     category: card.category,
                     imageUrl,
                     related_materials: relatedMaterials,
-                    timestamp: new Date().toISOString()
+                    timestamp: now.toISOString(),
+                    created_at: now.toISOString() // 명시적 시간 설정
                 };
 
                 // 발행

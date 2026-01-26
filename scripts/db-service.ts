@@ -82,7 +82,7 @@ export async function publishCard(cardData: any): Promise<void> {
         .from('cards')
         .insert({
             content: JSON.stringify(cardData),
-            created_at: new Date().toISOString()
+            created_at: cardData.created_at || new Date().toISOString() // 명시적 시간 사용
         });
 
     if (error) {
