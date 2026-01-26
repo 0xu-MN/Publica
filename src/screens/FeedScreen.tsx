@@ -318,7 +318,18 @@ export const FeedScreen = () => {
         };
 
         const mappedData = aiCards.map((card, index) => {
-            const cardData = JSON.parse(card.content);
+            // 안전한 content 파싱
+            let cardData;
+            try {
+                if (!card.content || card.content === 'undefined') {
+                    console.warn('Invalid card content:', card.id);
+                    return null; // 잘못된 카드는 스킵
+                }
+                cardData = JSON.parse(card.content);
+            } catch (e) {
+                console.error('Failed to parse card content:', card.id, e);
+                return null; // 파싱 실패한 카드는 스킵
+            }
 
             return {
                 id: card.id,
@@ -334,7 +345,7 @@ export const FeedScreen = () => {
                 tags: cardData.bullets || [],
                 related_materials: cardData.related_materials || []
             };
-        });
+        }).filter(Boolean); // null 제거
 
         // Set news data from database
         setNewsData(mappedData);
