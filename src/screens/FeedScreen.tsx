@@ -510,7 +510,7 @@ export const FeedScreen = () => {
                                             <Text className="text-3xl font-extrabold text-white text-center leading-[42px] mb-3 max-w-[600px]">
                                                 오늘의 <Text className="text-sky-500">과학</Text>과 <Text className="text-emerald-500">경제</Text> 인사이트
                                             </Text>
-                                            <Text className="text-slate-400 text-[15px] mb-6 text-center z-10">
+                                            <Text className="text-slate-400 text-[15px] mb-3 text-center z-10">
                                                 AI가 선별한 신뢰할 수 있는 뉴스를 카드로 빠르게 확인하세요
                                             </Text>
                                         </View>

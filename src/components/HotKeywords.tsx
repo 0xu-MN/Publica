@@ -46,15 +46,16 @@ export const HotKeywords: React.FC<HotKeywordsProps> = ({ category = 'All' }) =>
         try {
             const { supabase } = await import('../lib/supabase');
 
-            // 최근 7일간의 카드에서 tags 추출
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            // 최근 30일간의 카드에서 tags 추출 (더 많은 데이터)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
             const query = supabase
                 .from('cards')
                 .select('content, created_at')
-                .gte('created_at', sevenDaysAgo.toISOString())
-                .order('created_at', { ascending: false });
+                .gte('created_at', thirtyDaysAgo.toISOString())
+                .order('created_at', { ascending: false })
+                .limit(100);
 
             const { data, error } = await query;
 
@@ -71,12 +72,14 @@ export const HotKeywords: React.FC<HotKeywordsProps> = ({ category = 'All' }) =>
                     const content = JSON.parse(card.content);
 
                     // 카테고리 필터링
-                    if (category !== 'All' && content.category !== category) {
-                        return;
-                    }
+                    if (category === 'Science' && content.category !== 'Science') return;
+                    if (category === 'Economy' && content.category !== 'Economy') return;
+                    // category === 'All'이면 모든 카테고리 포함
 
                     content.tags?.forEach((tag: string) => {
-                        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                        if (tag && tag.trim()) {
+                            tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+                        }
                     });
                 } catch (e) {
                     // Skip invalid cards
@@ -89,6 +92,7 @@ export const HotKeywords: React.FC<HotKeywordsProps> = ({ category = 'All' }) =>
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 10);
 
+            console.log(`🔥 Hot Keywords (${category}):`, sortedKeywords.map(k => k.keyword));
             setKeywords(sortedKeywords);
         } catch (error) {
             console.error('Error in fetchHotKeywords:', error);
@@ -150,14 +154,14 @@ export const HotKeywords: React.FC<HotKeywordsProps> = ({ category = 'All' }) =>
                                 key={idx}
                                 onPress={() => setCurrentIndex(idx)}
                                 className={`px-3 py-1.5 rounded-full ${idx === currentIndex
-                                        ? 'bg-amber-500/30 border border-amber-500/50'
-                                        : 'bg-slate-700/50 border border-slate-600/30'
+                                    ? 'bg-amber-500/30 border border-amber-500/50'
+                                    : 'bg-slate-700/50 border border-slate-600/30'
                                     }`}
                             >
                                 <Text
                                     className={`text-xs font-semibold ${idx === currentIndex
-                                            ? 'text-amber-300'
-                                            : 'text-slate-400'
+                                        ? 'text-amber-300'
+                                        : 'text-slate-400'
                                         }`}
                                 >
                                     #{idx + 1} {kw.keyword}
