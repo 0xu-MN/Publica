@@ -5,7 +5,7 @@
 
 import { collectAllNews, extractKeywords } from './news-collector';
 import { filterUnusedArticles, markArticleAsUsed, publishCard, getUsedArticlesCount } from './db-service';
-import { generateCard, generateImageUrl } from './ai-generator';
+import { generateCard } from './ai-generator';
 import { findRelatedArticles } from './link-finder';
 
 /**
