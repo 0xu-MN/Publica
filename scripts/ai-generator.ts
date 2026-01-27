@@ -52,6 +52,7 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
 ❌ 정치인/기업에 대한 긍정적/부정적 평가
 ❌ "~~해야 한다", "~~이 옳다" 같은 주장
 ❌ 한쪽 편을 드는 표현
+❌ body에 **핵심 이슈**, **시장 반응**, **투자 시사점** 같은 섹션 제목 사용
 ✅ 대신: "~~라고 밝혔다", "~~로 나타났다", "~~가 관찰된다"
 
 [출력 형식 - JSON만 출력]
@@ -65,15 +66,16 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
     "핵심 이슈 3 (구체적 팩트, 40자 이내)"
   ],
   
-  "body": "3-4가지 부가 설명 (250-350자)
+  "body": "3-4가지 부가 설명만 (250-350자)
 
 • (배경/맥락) ~~의 배경은 ~~이다
 • (시장 반응) 관련 업종은 ~~% 변동을 보였다
 • (전문가 분석) 전문가들은 ~~로 분석했다
 • (투자 시사점) ~~를 모니터링할 필요가 있다
 
-※ '핵심 이슈' 섹션은 bullets에 포함되므로 body에서 제외
-※ 불릿 포인트로 3-4가지만 간결하게 정리
+※ 절대 금지: 섹션 제목 (예: **핵심 이슈**, **시장 반응** 등)
+※ bullets에 핵심 이슈가 있으므로 body에서 완전 제외
+※ 불릿 포인트로 3-4가지만 간결하게
 ※ 완전 중립적 표현만 사용",
   
   "category": "${article.category === 'science' ? 'Science' : 'Economy'}"
@@ -81,7 +83,7 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
 
 **구조 설명:**
 - bullets (AI 핵심 내용): 무슨 일이 일어났는지 핵심 팩트
-- body (본문): 왜 중요한지, 어떤 영향이 있는지 부가 설명
+- body (본문): 왜 중요한지, 어떤 영향이 있는지 부가 설명 (섹션 제목 없이!)
 
 **예시:**
 ✅ 올바른 구조:
@@ -99,9 +101,18 @@ body: "
 • 관련 업종 투자자들은 무역 협상 진행 상황을 주시할 필요가 있다
 "
 
+❌ 잘못된 구조 (이렇게 하지 마세요!):
+body: "
+**핵심 이슈**
+• 트럼프가 관세 인상...
+**시장 반응**
+• 주가가...
+"
+→ 섹션 제목 사용 금지! 그냥 불릿 포인트만!
+
 **중요:** 
 - bullets에 핵심 이슈 배치 (WHAT happened)
-- body에 부가 설명만 (WHY important, HOW it affects)
+- body에 부가 설명만, 섹션 제목 절대 금지 (WHY important, HOW it affects)
 - bullets와 body 내용이 겹치면 안 됨!`;
 
     try {
