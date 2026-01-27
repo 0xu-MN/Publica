@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, ScrollView, Text } from 'react-native';
 import { GovernmentProgramList } from '../components/GovernmentProgramList';
+import { AdvancedSearchFilter } from '../components/AdvancedSearchFilter';
 import { ConnectScreen } from './ConnectScreen';
 import { ConnectHomeView } from '../components/ConnectHomeView';
 import Footer from '../components/Footer';
@@ -35,6 +36,10 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ subMode, onSubMode
                             </View>
                             <Text className="text-slate-400 text-base">내 기업에 맞는 최적의 지원사업을 검색해보세요.</Text>
                         </View>
+
+                        {/* Advanced Search Filter */}
+                        <AdvancedSearchFilter />
+
                         <GovernmentProgramList />
                     </View>
                 </ScrollView>
