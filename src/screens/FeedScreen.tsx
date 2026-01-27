@@ -19,6 +19,7 @@ import { AnimatedPillNav } from '../components/AnimatedPillNav';
 import Footer from '../components/Footer';
 import { Separator } from '../components/Separator';
 import { OnboardingModal } from '../components/OnboardingModal';
+import { HotKeywords } from '../components/HotKeywords';
 
 // Filter categories
 const CATEGORIES = ['전체', '과학', '경제'];
@@ -547,34 +548,16 @@ export const FeedScreen = () => {
                                             )}
                                         </View>
 
-                                        {/* Hot Keywords */}
-                                        {hotKeywords.length > 0 && (
-                                            <View className="mb-10 items-center w-full">
-                                                <View className="flex-row items-center justify-center gap-3">
-                                                    <Text className="text-slate-500 text-xs font-bold uppercase tracking-widest">🔥 HOT KEYWORDS</Text>
-                                                    {isDesktop && (
-                                                        <Text className="text-blue-400 text-sm font-bold">
-                                                            {hotKeywords.join(' • ')}
-                                                        </Text>
-                                                    )}
-                                                </View>
-                                                {!isDesktop && (
-                                                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="px-5 gap-2.5 mt-3">
-                                                        {hotKeywords.map((keyword, index) => (
-                                                            <TouchableOpacity
-                                                                key={index}
-                                                                className={`px-4 py-2 rounded-3xl border ${activeKeyword === keyword ? 'bg-blue-500/20 border-blue-500' : 'bg-slate-800/50 border-white/10'}`}
-                                                                onPress={() => setActiveKeyword(activeKeyword === keyword ? null : keyword)}
-                                                            >
-                                                                <Text className={`text-[13px] font-semibold ${activeKeyword === keyword ? 'text-blue-400' : 'text-slate-400'}`}>
-                                                                    {keyword}
-                                                                </Text>
-                                                            </TouchableOpacity>
-                                                        ))}
-                                                    </ScrollView>
-                                                )}
-                                            </View>
-                                        )}
+                                        {/* Hot Keywords - New Component with Auto-rotation */}
+                                        <View className="w-full max-w-[600px] px-5">
+                                            <HotKeywords
+                                                category={
+                                                    activeCategory === '과학' ? 'Science' :
+                                                        activeCategory === '경제' ? 'Economy' :
+                                                            'All'
+                                                }
+                                            />
+                                        </View>
                                     </View>
                                 </View>
                             }
