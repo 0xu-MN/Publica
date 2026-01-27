@@ -56,7 +56,7 @@ function generateArticleId(url: string): string {
  */
 async function fetchRSS(
     url: string,
-    source: 'naver' | 'mk' | 'chosun',
+    source: 'itchosun' | 'zdnet' | 'mk' | 'hankyung' | 'chosunbiz',
     category: 'science' | 'economy'
 ): Promise<NewsArticle[]> {
     try {
