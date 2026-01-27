@@ -77,7 +77,11 @@ async function runPipeline() {
                 const relatedMaterials = findRelatedArticles(article, allArticles, 4);
 
                 // 이미지
-                const imageUrl = generateImageUrl(card.category);
+                // 이미지 URL (Placeholder 또는 기사의 이미지)
+                const imageUrl = article.image_url ||
+                    (card.category === 'Science'
+                        ? 'https://picsum.photos/seed/science/800/600'
+                        : 'https://picsum.photos/seed/economy/800/600');
 
                 // 카드 데이터 구성 (고유 timestamp)
                 const now = new Date();
