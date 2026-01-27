@@ -148,6 +148,12 @@ CREATE POLICY "Service role write access cards"
   FOR ALL 
   USING (auth.role() = 'service_role');
 
+-- TEMPORARY: Public delete access for cleanup (부적절한 카드 삭제용)
+CREATE POLICY "Public delete access cards" 
+  ON cards 
+  FOR DELETE 
+  USING (true);
+
 -- 15. Government Programs 테이블 (정부지원사업) - Enhanced Schema
 CREATE TABLE IF NOT EXISTS government_programs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
