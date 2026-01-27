@@ -114,6 +114,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
 
                     {/* Bottom Content */}
                     <View className="flex-1 justify-end p-5 pb-6">
+                        {/* 키워드 태그 */}
                         <View className="flex-row flex-wrap mb-3 gap-1.5">
                             {item.tags?.slice(0, 3).map((tag, i) => (
                                 <Text key={i} className="text-slate-300 text-[11px] bg-white/10 px-2.5 py-1 rounded-[8px] overflow-hidden font-medium backdrop-blur-md">{tag}</Text>

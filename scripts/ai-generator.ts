@@ -28,6 +28,7 @@ export interface GeneratedCard {
     headline: string;
     body: string;
     teaser: string;
+    tags: string[];
     category: 'Science' | 'Economy';
 }
 
@@ -58,6 +59,12 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
   "headline": "중립적이고 명확한 제목 (15자 이내)",
   "teaser": "한 줄 요약 (40자 이내)",
   
+  "tags": [
+    "키워드1",
+    "키워드2", 
+    "키워드3"
+  ],
+  
   "body": "📌 핵심 정리
 
 • (핵심 팩트 1) ~~가 발표되었다
@@ -73,21 +80,20 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
   "category": "${article.category === 'science' ? 'Science' : 'Economy'}"
 }
 
-**예시:**
-✅ 올바른 구조:
+**중요:**
+- tags: 3-4개의 간략한 키워드 (1-2단어)
+  예: "시가총액", "SKT", "AI 투자", "반도체"
+  ❌ 나쁜 예: "SK텔레콤의 시가총액이 증가했다"
+  ✅ 좋은 예: "SKT", "시가총액", "AI"
 
+**예시:**
 {
   "headline": "SK텔레콤 AI 투자 주목",
   "teaser": "앤트로픽 투자로 시총 15조 육박",
+  "tags": ["SKT", "AI 투자", "시가총액", "앤트로픽"],
   "body": "📌 핵심 정리\\n\\n• SK텔레콤이 AI 국가대표 선정 기대감으로 하루 만에 12% 급등했다\\n• 2000년 이후 최고가를 경신하며 시가총액 15조 원에 육박했다\\n• 앤트로픽 투자 성공이 주가 상승에 긍정적 영향을 미친 것으로 분석된다\\n• 통신 업계 전반에 걸쳐 AI 기술 경쟁 심화가 예상된다\\n• 투자자들은 SK텔레콤의 AI 기술 개발 및 투자 동향을 주시할 필요가 있다",
   "category": "Economy"
-}
-
-**중요:** 
-- "📌 핵심 정리" 제목 반드시 포함
-- 그 다음 빈 줄 하나, 그 다음부터 불릿 포인트만
-- 4-6개 항목으로 모든 핵심 내용 압축
-- 간결하고 명확하게!`;
+}`;
 
     try {
         const result = await model.generateContent(prompt);

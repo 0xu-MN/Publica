@@ -85,6 +85,7 @@ async function runPipeline() {
                     headline: card.headline,
                     body: card.body,
                     teaser: card.teaser,
+                    tags: card.tags,
                     category: card.category,
                     imageUrl,
                     related_materials: relatedMaterials,
