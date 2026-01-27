@@ -70,7 +70,7 @@ export const fetchNews = async (category: string = '전체'): Promise<NewsItem[]
             query = query.eq('category', dbCategory);
         }
 
-        const { data, error } = await query.limit(50);
+        const { data, error } = await query;  // NO LIMIT!
 
         if (error) {
             console.error('Error fetching news:', error);
@@ -118,8 +118,7 @@ export const fetchAICards = async (category: string = '전체'): Promise<AICardN
         let query = supabase
             .from('cards')
             .select('*')
-            .order('created_at', { ascending: false })
-            .limit(50);
+            .order('created_at', { ascending: false });  // NO LIMIT!
 
         // 카테고리 필터 적용
         if (category !== '전체') {
