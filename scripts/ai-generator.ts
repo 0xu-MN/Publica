@@ -108,6 +108,11 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
 
         const card = JSON.parse(jsonMatch[0]);
 
+        // 카테고리 강제 지정 (AI가 무시하는 경우 대비)
+        const correctCategory = article.category === 'science' ? 'Science' : 'Economy';
+        card.category = correctCategory;
+        console.log(`  ✓ Category forced to: ${correctCategory}`);
+
         // 기본 검증
         if (!card.headline || !card.body) {
             throw new Error('Invalid card structure');
