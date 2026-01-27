@@ -148,18 +148,34 @@ CREATE POLICY "Service role write access cards"
   FOR ALL 
   USING (auth.role() = 'service_role');
 
--- 15. Government Programs 테이블 (정부지원사업)
+-- 15. Government Programs 테이블 (정부지원사업) - Enhanced Schema
 CREATE TABLE IF NOT EXISTS government_programs (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  program_id TEXT UNIQUE NOT NULL,  -- Original ID from API
   title TEXT NOT NULL,
-  agency TEXT,
-  period TEXT,
-  status TEXT,
-  d_day TEXT,
-  category TEXT,
+  agency TEXT NOT NULL,
+  department TEXT,
+  deadline TIMESTAMP,
+  start_date TIMESTAMP,
+  end_date TIMESTAMP,
+  status TEXT,  -- '접수중', '마감임박', '예정', '마감'
+  d_day TEXT,   -- Calculated field: 'D-3', 'D-30', etc.
+  category TEXT[] DEFAULT '{}',  -- Array of categories/tags
+  tags TEXT[] DEFAULT '{}',
+  budget TEXT,  -- Support amount
+  description TEXT,
   link TEXT,
-  created_at TIMESTAMP DEFAULT NOW()
+  requirements TEXT[] DEFAULT '{}',  -- Eligibility requirements
+  api_source TEXT NOT NULL,  -- Which API this came from
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Indexes for government_programs
+CREATE INDEX IF NOT EXISTS idx_programs_deadline ON government_programs(deadline);
+CREATE INDEX IF NOT EXISTS idx_programs_status ON government_programs(status);
+CREATE INDEX IF NOT EXISTS idx_programs_agency ON government_programs(agency);
+CREATE INDEX IF NOT EXISTS idx_programs_category ON government_programs USING GIN(category);
 
 -- 16. Government Programs RLS
 ALTER TABLE government_programs ENABLE ROW LEVEL SECURITY;
@@ -172,3 +188,10 @@ CREATE POLICY "Service role write access programs"
   ON government_programs 
   FOR ALL 
   USING (auth.role() = 'service_role');
+
+-- Auto update trigger for government_programs
+CREATE TRIGGER update_government_programs_updated_at
+  BEFORE UPDATE ON government_programs
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+

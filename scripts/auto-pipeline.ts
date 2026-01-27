@@ -84,7 +84,6 @@ async function runPipeline() {
                 const cardData = {
                     headline: card.headline,
                     body: card.body,
-                    bullets: card.bullets,
                     teaser: card.teaser,
                     category: card.category,
                     imageUrl,

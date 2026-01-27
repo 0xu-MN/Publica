@@ -16,12 +16,12 @@ const parser = new Parser({
 // 뉴스 소스 정의
 const NEWS_SOURCES = {
     naver: {
-        science: 'https://news.naver.com/breakingnews/section/105/283', // IT/과학
-        economy: 'https://news.naver.com/main/rss/section.nhn?sid1=101'
+        science: 'https://news.naver.com/rss/section/105/283.xml', // IT/과학 (수정)
+        economy: 'https://news.naver.com/rss/section/101.xml' // 경제 (수정)
     },
     mk: {
-        science: 'https://www.mk.co.kr/rss/50400001/', // IT/과학
-        economy: 'https://www.mk.co.kr/rss/50200011/'
+        science: 'https://www.mk.co.kr/rss/40300001/', // IT (수정)
+        economy: 'https://www.mk.co.kr/rss/30100041/' // 경제일반 (수정)
     },
     // 추가 소스
     chosun: {
