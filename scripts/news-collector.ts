@@ -84,17 +84,14 @@ export async function collectAllNews(): Promise<NewsArticle[]> {
     console.log('📰 Starting news collection...');
 
     const results = await Promise.all([
-        // 네이버 뉴스
-        fetchRSS(NEWS_SOURCES.naver.science, 'naver', 'science'),
-        fetchRSS(NEWS_SOURCES.naver.economy, 'naver', 'economy'),
+        // IT/과학 전문
+        fetchRSS(NEWS_SOURCES.itchosun.science, 'itchosun', 'science'),
+        fetchRSS(NEWS_SOURCES.zdnet.science, 'zdnet', 'science'),
 
-        // 매일경제
-        fetchRSS(NEWS_SOURCES.mk.science, 'mk', 'science'),
+        // 경제 전문
         fetchRSS(NEWS_SOURCES.mk.economy, 'mk', 'economy'),
-
-        // 조선일보
-        fetchRSS(NEWS_SOURCES.chosun.science, 'chosun', 'science'),
-        fetchRSS(NEWS_SOURCES.chosun.economy, 'chosun', 'economy')
+        fetchRSS(NEWS_SOURCES.hankyung.economy, 'hankyung', 'economy'),
+        fetchRSS(NEWS_SOURCES.chosunbiz.economy, 'chosunbiz', 'economy'),
     ]);
 
     const allArticles = results.flat();
