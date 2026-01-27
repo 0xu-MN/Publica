@@ -59,12 +59,32 @@ export function findRelatedArticles(
         score: calculateRelevanceScore(article, keywords)
     }));
 
-    // 점수순 정렬 후 상위 N개
-    const topArticles = scored
-        .filter(s => s.score > 0) // 점수 0 제외
-        .sort((a, b) => b.score - a.score)
+    // 점수순 정렬
+    const sorted = scored.sort((a, b) => b.score - a.score);
+
+    // 상위 N개 선택 (점수 0인 것도 포함)
+    let topArticles = sorted
+        .filter(s => s.score > 0)
         .slice(0, count)
         .map(s => s.article);
+
+    // Fallback: 관련 기사가 부족하면 같은 카테고리 최신 기사 추가
+    if (topArticles.length < count) {
+        const fallbackArticles = sorted
+            .filter(s => s.score === 0) // 점수 0인 것 중에서
+            .slice(0, count - topArticles.length)
+            .map(s => s.article);
+
+        topArticles = [...topArticles, ...fallbackArticles];
+    }
+
+    // 여전히 부족하면 전체 후보 중에서 추가
+    if (topArticles.length < count && candidates.length >= count) {
+        const remaining = candidates
+            .filter(a => !topArticles.includes(a))
+            .slice(0, count - topArticles.length);
+        topArticles = [...topArticles, ...remaining];
+    }
 
     // RelatedMaterial 형식으로 변환
     return topArticles.map(article => ({

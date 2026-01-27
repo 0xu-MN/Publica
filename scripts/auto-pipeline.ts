@@ -34,9 +34,29 @@ async function runPipeline() {
             return;
         }
 
-        // 3. 카드 생성 (최대 5개)
-        const toProcess = unused.slice(0, 5);
-        console.log(`\n✨ Step 3: Generating ${toProcess.length} cards...\n`);
+        // 3. 카테고리 균형 보장 (과학 vs 경제)
+        console.log('\n⚖️  Step 3: Balancing categories...');
+        const scienceArticles = unused.filter(a => a.category === 'science');
+        const economyArticles = unused.filter(a => a.category === 'economy');
+
+        console.log(`  🔬 Science articles available: ${scienceArticles.length}`);
+        console.log(`  💼 Economy articles available: ${economyArticles.length}`);
+
+        // 2:3 비율로 선택 (과학 2개, 경제 3개)
+        const toProcess = [
+            ...scienceArticles.slice(0, 2),
+            ...economyArticles.slice(0, 3)
+        ].slice(0, 5); // 최대 5개
+
+        console.log(`  ✅ Selected: ${toProcess.filter(a => a.category === 'science').length} science + ${toProcess.filter(a => a.category === 'economy').length} economy\n`);
+
+        if (toProcess.length === 0) {
+            console.log('❌ No articles to process. Exiting.');
+            return;
+        }
+
+        // 4. 카드 생성
+        console.log(`\n✨ Step 4: Generating ${toProcess.length} cards...\n`);
 
         let successCount = 0;
         let failCount = 0;
