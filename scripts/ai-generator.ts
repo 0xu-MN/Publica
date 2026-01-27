@@ -41,18 +41,25 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
 [원본 기사]
 제목: ${article.title}
 내용: ${article.description}
+카테고리: ${article.category === 'science' ? '과학/기술' : '경제'}
+
+[절대 금지 - 다음 주제는 거부하세요]
+❌ 정치 (정치인, 정부 정책, 선거)
+❌ 사회/사건 (범죄, 사고, 재난)
+❌ 부동산 (아파트, 주택, 이주비)
+❌ 연예/스포츠 (연예인, 유튜버, 스포츠)
+
+위 주제에 해당하면 "REJECT"만 출력하세요.
+
+[허용되는 주제만 처리]
+✅ 과학: AI, 반도체, 바이오, 우주, 기술혁신
+✅ 경제: 기업 실적, 주가, 투자, 금융, 산업 동향
 
 [핵심 원칙]
 1. **완전한 정치적 중립** - 어떤 성향도 드러내지 말 것
 2. **팩트만 전달** - "~~라고 발언했다" 수준, 우리의 판단/의견 절대 금지
 3. **간결하고 명확** - 핵심만 압축
 4. **투자 인사이트** - 경제적 시사점 중심
-
-[절대 금지사항]
-❌ 정치인/기업에 대한 긍정적/부정적 평가
-❌ "~~해야 한다", "~~이 옳다" 같은 주장
-❌ 한쪽 편을 드는 표현
-✅ 대신: "~~라고 밝혔다", "~~로 나타났다", "~~가 관찰된다"
 
 [출력 형식 - JSON만 출력]
 {
@@ -99,6 +106,11 @@ export async function generateCard(article: NewsArticle): Promise<GeneratedCard>
         const result = await model.generateContent(prompt);
         const response = result.response;
         const text = response.text();
+
+        // REJECT 체크 (부적절한 주제)
+        if (text.trim().toUpperCase() === 'REJECT' || text.includes('REJECT')) {
+            throw new Error('Article rejected: inappropriate topic (politics/crime/real-estate/celebrity)');
+        }
 
         // JSON 추출
         const jsonMatch = text.match(/\{[\s\S]*\}/);
