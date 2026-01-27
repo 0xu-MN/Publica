@@ -306,19 +306,28 @@ async function loop() {
 
     const runMaintenance = async () => {
         try {
-            const count = Math.random() > 0.5 ? 2 : 1;
-            console.log(`[${new Date().toLocaleTimeString()}] ⚡ Maintenance: Generating ${count} item(s)...`);
+            console.log(`[${new Date().toLocaleTimeString()}] ⚡ Maintenance: Generating hourly batch (Science: 3, Economy: 3)...`);
 
-            for (let i = 0; i < count; i++) {
-                await generateAndInsert();
-                if (i < count - 1) await new Promise(r => setTimeout(r, 2000));
+            // Science 3개 생성
+            for (let i = 0; i < 3; i++) {
+                const template = INSIGHT_LIBRARY.filter(t => t.category === 'Science')[Math.floor(Math.random() * 6)]; // Science 템플릿 중 랜덤
+                await generateAndInsert(template);
             }
+
+            // Economy 3개 생성
+            for (let i = 0; i < 3; i++) {
+                const template = INSIGHT_LIBRARY.filter(t => t.category === 'Economy')[Math.floor(Math.random() * 6)]; // Economy 템플릿 중 랜덤
+                await generateAndInsert(template);
+            }
+
+            console.log(`✅ Hourly batch complete. Waiting for next hour...`);
+
         } catch (err) {
             console.error('[Maintenance Error]', err);
         } finally {
-            // 5분마다 새로운 콘텐츠 생성
-            const delay = 5 * 60 * 1000;
-            console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 5 mins...`);
+            // 1시간마다 실행 (60분 * 60초 * 1000밀리초)
+            const delay = 60 * 60 * 1000;
+            console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 1 hour...`);
             setTimeout(runMaintenance, delay);
         }
     };

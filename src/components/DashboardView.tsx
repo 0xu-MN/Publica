@@ -40,11 +40,47 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
     };
 
     // Derived Data & Logic
-    // Mock: Sort by "importance" (simulated by string length or random for now)
-    const sortedByImportance = useMemo(() => [...newsData].sort((a, b) => b.title.length - a.title.length), [newsData]);
 
-    const scienceTop = useMemo(() => sortedByImportance.find(i => i.category === 'Science') || newsData[0], [sortedByImportance, newsData]);
-    const economyTop = useMemo(() => sortedByImportance.find(i => i.category === 'Economy') || newsData[1], [sortedByImportance, newsData]);
+    // Seeded random generator for repeatable "daily views" simulation
+    // Allows the "Top 1" to remain constant for a specifc day, but change on the next day.
+    const getDailyScore = (id: string, dateStr: string) => {
+        let hash = 0;
+        const str = id + dateStr;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash);
+    };
+
+    const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
+    // Sort by "daily score" (simulated popularity)
+    const sortedByDailyPopularity = useMemo(() => {
+        return [...newsData].sort((a, b) => {
+            const scoreA = getDailyScore(a.id, todayStr);
+            const scoreB = getDailyScore(b.id, todayStr);
+            return scoreB - scoreA;
+        });
+    }, [newsData, todayStr]);
+
+    const sortedByImportance = useMemo(() => sortedByDailyPopularity, [sortedByDailyPopularity]);
+
+    // Daily Top selection for Science and Economy feeds
+    const scienceTop = useMemo(() => {
+        // Filter Science news from the daily sorted list
+        const scienceFeeds = sortedByDailyPopularity.filter(i => i.category === 'Science');
+        // The first item is deterministically the "Top 1" for today
+        return scienceFeeds.length > 0 ? scienceFeeds[0] : newsData[0];
+    }, [sortedByDailyPopularity, newsData]);
+
+    const economyTop = useMemo(() => {
+        // Filter Economy news from the daily sorted list
+        const economyFeeds = sortedByDailyPopularity.filter(i => i.category === 'Economy');
+        // The first item is deterministically the "Top 1" for today
+        return economyFeeds.length > 0 ? economyFeeds[0] : newsData[1];
+    }, [sortedByDailyPopularity, newsData]);
 
     const trendingTopics = useMemo(() => sortedByImportance.slice(0, 5), [sortedByImportance]);
 
@@ -81,7 +117,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                             <View className="flex-1 p-6 justify-between">
                                 <View className="flex-row items-center gap-2">
                                     <View className="w-2 h-2 rounded-full bg-sky-500 shadow-sm shadow-sky-500" />
-                                    <Text className="text-sky-400 text-xs font-bold uppercase tracking-wider">Science Top 1</Text>
+                                    <Text className="text-sky-400 text-xs font-bold uppercase tracking-wider">Today's Science</Text>
                                 </View>
 
                                 <View>
@@ -111,7 +147,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                             <View className="flex-1 p-6 justify-between">
                                 <View className="flex-row items-center gap-2">
                                     <View className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500" />
-                                    <Text className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Economy Top 1</Text>
+                                    <Text className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Today's Economy</Text>
                                 </View>
 
                                 <View>
