@@ -16,11 +16,8 @@ const parser = new Parser({
 // 뉴스 소스 정의 - 과학/기술 및 경제 전문
 const NEWS_SOURCES = {
     // IT/과학 전문
-    itchosun: {
-        science: 'https://www.itchosun.com/rss/S1N2.xml'  // IT조선 - 과학
-    },
-    zdnet: {
-        science: 'https://www.zdnet.co.kr/rss/S1N1.xml'  // ZDNet - 과학/기술
+    sciencetimes: {
+        science: 'https://www.sciencetimes.co.kr/feed/'  // 사이언스타임즈
     },
     // 경제 전문  
     mk: {
@@ -29,8 +26,8 @@ const NEWS_SOURCES = {
     hankyung: {
         economy: 'https://www.hankyung.com/feed/economy'  // 한경 - 경제
     },
-    chosunbiz: {
-        economy: 'https://biz.chosun.com/rss/economy.xml'  // 조선비즈 - 경제
+    mk_tech: {
+        science: 'https://www.mk.co.kr/rss/40300001/'  // 매경 - IT/과학
     }
 } as const;
 
@@ -40,7 +37,7 @@ export interface NewsArticle {
     link: string;
     pubDate: string;
     description: string;
-    source: 'itchosun' | 'zdnet' | 'mk' | 'hankyung' | 'chosunbiz';
+    source: 'sciencetimes' | 'mk_tech' | 'mk' | 'hankyung';
     category: 'science' | 'economy';
 }
 
@@ -56,7 +53,7 @@ function generateArticleId(url: string): string {
  */
 async function fetchRSS(
     url: string,
-    source: 'itchosun' | 'zdnet' | 'mk' | 'hankyung' | 'chosunbiz',
+    source: 'sciencetimes' | 'mk_tech' | 'mk' | 'hankyung',
     category: 'science' | 'economy'
 ): Promise<NewsArticle[]> {
     try {
@@ -85,13 +82,12 @@ export async function collectAllNews(): Promise<NewsArticle[]> {
 
     const results = await Promise.all([
         // IT/과학 전문
-        fetchRSS(NEWS_SOURCES.itchosun.science, 'itchosun', 'science'),
-        fetchRSS(NEWS_SOURCES.zdnet.science, 'zdnet', 'science'),
+        fetchRSS(NEWS_SOURCES.sciencetimes.science, 'sciencetimes', 'science'),
+        fetchRSS(NEWS_SOURCES.mk_tech.science, 'mk_tech', 'science'),
 
         // 경제 전문
         fetchRSS(NEWS_SOURCES.mk.economy, 'mk', 'economy'),
         fetchRSS(NEWS_SOURCES.hankyung.economy, 'hankyung', 'economy'),
-        fetchRSS(NEWS_SOURCES.chosunbiz.economy, 'chosunbiz', 'economy'),
     ]);
 
     const allArticles = results.flat();
