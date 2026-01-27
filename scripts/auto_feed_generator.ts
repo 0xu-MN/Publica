@@ -255,79 +255,100 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
 const pickRandom = (arr: any[]) => arr[Math.floor(Math.random() * arr.length)];
 
 async function generateAndInsert(template?: InsightTemplate) {
-    // Pick a random template if not provided
+    // Pick a random template if not provided (fallback)
     const tpl: InsightTemplate = template || pickRandom(INSIGHT_LIBRARY);
 
-    // InsightFlow JSON 형식에 맞춰 페이로드 구성
-    const payload = {
-        headline: tpl.headline,
-        teaser: tpl.teaser,
-        body: tpl.body,
-        bullets: tpl.bullets,
-        image_prompt: tpl.image_prompt,
-        imageUrl: `https://images.unsplash.com/photo-${Math.random() > 0.5 ? '1677442136019-21780ecad995' : '1635070041078-e363dbe005cb'}?w=800&auto=format&fit=crop`, // 임시 이미지
-        related_materials: tpl.related_materials, // 템플릿에서 가져오기
-        category: tpl.category,
-        timestamp: new Date().toISOString()
-    };
+    console.log(`[${new Date().toLocaleTimeString()}] 🤖 Requesting AI Generation for: [${tpl.category}] ${tpl.headline}`);
 
-    console.log(`[${new Date().toLocaleTimeString()}] 🤖 Generating Insight: [${tpl.category}] ${tpl.headline}`);
+    try {
+        // Edge Function 호출 (AI 생성 및 DB 저장 위임)
+        const response = await fetch(`${SUPABASE_URL}/functions/v1/generate-cards`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+            },
+            body: JSON.stringify({
+                title: tpl.headline,
+                keywords: `${tpl.teaser}, ${tpl.bullets.join(', ')}`
+            })
+        });
 
-    const { error } = await supabase.from('cards').insert({
-        content: JSON.stringify(payload),
-        created_at: new Date().toISOString()
-    });
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Edge Function Error: ${response.status} - ${errorText}`);
+        }
 
-    if (error) {
-        console.error('❌ Insert Error:', error.message);
-    } else {
-        console.log('✅ Published successfully.');
+        const result = await response.json();
+        console.log('✅ Generated & Published successfully via Edge Function.');
+        return result;
+
+    } catch (error) {
+        console.error('❌ Generation Error:', error);
+        // Fallback: 정적 데이터 직접 삽입 (AI 실패 시에만)
+        console.log('⚠️ Falling back to static template insert...');
+
+        const payload = {
+            headline: tpl.headline,
+            teaser: tpl.teaser,
+            body: tpl.body,
+            bullets: tpl.bullets,
+            image_prompt: tpl.image_prompt,
+            imageUrl: `https://images.unsplash.com/photo-${Math.random() > 0.5 ? '1677442136019-21780ecad995' : '1635070041078-e363dbe005cb'}?w=800&auto=format&fit=crop`,
+            related_materials: tpl.related_materials,
+            category: tpl.category,
+            timestamp: new Date().toISOString()
+        };
+
+        const { error: dbError } = await supabase.from('cards').insert({
+            content: JSON.stringify(payload),
+            created_at: new Date().toISOString()
+        });
+
+        if (dbError) console.error('❌ Fallback Insert Error:', dbError.message);
+        else console.log('✅ Fallback Insert Static Template success.');
     }
 }
 
 async function loop() {
     console.log('🚀 InsightFlow AI Feed Generator Started. (Ctrl + C to stop)');
-    console.log('슬로건: "검색을 넘어 실행으로, 정보를 넘어 자본으로."');
-    console.log('원칙: 완전 창작 | 한국 관점 | 정치적 중립');
+    console.log('Using Edge Function for dynamic AI content generation.');
 
-    console.log('📦 Initializing Bulk Generation...');
+    const scienceTemplates = INSIGHT_LIBRARY.filter(t => t.category === 'Science');
+    const economyTemplates = INSIGHT_LIBRARY.filter(t => t.category === 'Economy');
 
-    // 라이브러리 전체를 섞어서 생성
-    const shuffled = [...INSIGHT_LIBRARY].sort(() => Math.random() - 0.5);
-
-    for (const item of shuffled) {
-        await generateAndInsert(item);
-        // 데이터베이스 부담 방지를 위한 작은 지연
-        await new Promise(r => setTimeout(r, 1000));
-    }
-
-    console.log('✅ Initial Batch Complete.');
-    console.log('⏱️  Entering Maintenance Mode (1-2 items every 5 mins)...');
+    // Round Robin Indices
+    let scienceIdx = 0;
+    let economyIdx = 0;
 
     const runMaintenance = async () => {
         try {
-            console.log(`[${new Date().toLocaleTimeString()}] ⚡ Maintenance: Generating hourly batch (Science: 3, Economy: 3)...`);
+            console.log(`[${new Date().toLocaleTimeString()}] ⚡ Maintenance: Generating 3-hourly batch (Science: 5, Economy: 5)...`);
 
-            // Science 3개 생성
-            for (let i = 0; i < 3; i++) {
-                const template = INSIGHT_LIBRARY.filter(t => t.category === 'Science')[Math.floor(Math.random() * 6)]; // Science 템플릿 중 랜덤
+            // Science 5개 생성 (Round Robin)
+            for (let i = 0; i < 5; i++) {
+                const template = scienceTemplates[scienceIdx];
                 await generateAndInsert(template);
+                scienceIdx = (scienceIdx + 1) % scienceTemplates.length; // Next index
+                await new Promise(r => setTimeout(r, 2000)); // 2초 대기
             }
 
-            // Economy 3개 생성
-            for (let i = 0; i < 3; i++) {
-                const template = INSIGHT_LIBRARY.filter(t => t.category === 'Economy')[Math.floor(Math.random() * 6)]; // Economy 템플릿 중 랜덤
+            // Economy 5개 생성 (Round Robin)
+            for (let i = 0; i < 5; i++) {
+                const template = economyTemplates[economyIdx];
                 await generateAndInsert(template);
+                economyIdx = (economyIdx + 1) % economyTemplates.length; // Next index
+                await new Promise(r => setTimeout(r, 2000)); // 2초 대기
             }
 
-            console.log(`✅ Hourly batch complete. Waiting for next hour...`);
+            console.log(`✅ 3-Hourly batch complete. Waiting for next cycle...`);
 
         } catch (err) {
             console.error('[Maintenance Error]', err);
         } finally {
-            // 1시간마다 실행 (60분 * 60초 * 1000밀리초)
-            const delay = 60 * 60 * 1000;
-            console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 1 hour...`);
+            // 3시간마다 실행
+            const delay = 3 * 60 * 60 * 1000;
+            console.log(`[${new Date().toLocaleTimeString()}] 💤 Sleeping for 3 hours...`);
             setTimeout(runMaintenance, delay);
         }
     };

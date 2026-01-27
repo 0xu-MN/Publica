@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, ActivityIndicator, Animated } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, ActivityIndicator, Animated, Pressable } from 'react-native';
 import { Svg, Path, Defs, LinearGradient, Stop, Line } from 'react-native-svg';
 import { TrendingUp, TrendingDown, RefreshCw } from 'lucide-react-native';
 import { fetchMarketData, MarketData } from '../services/marketService';
@@ -67,7 +67,8 @@ export const MarketCarouselWidget = () => {
     const [marketData, setMarketData] = useState<MarketData[]>([]);
     const [loading, setLoading] = useState(true);
     const scrollViewRef = useRef<ScrollView>(null);
-    const scrollX = useRef(new Animated.Value(0)).current;
+    const currentPositionRef = useRef(0); // Ref for persistence
+    const [isPaused, setIsPaused] = useState(false); // Pause state
     const [contentWidth, setContentWidth] = useState(0);
     const [scrollViewWidth, setScrollViewWidth] = useState(0);
 
@@ -84,34 +85,37 @@ export const MarketCarouselWidget = () => {
     }, []);
 
     // Auto-scroll animation
+    // Auto-scroll animation
     useEffect(() => {
         if (marketData.length === 0 || scrollViewWidth === 0) return;
 
         const cardWidth = 336; // 320 + 16 gap
-        const totalWidth = cardWidth * marketData.length;
+        // Using ref for current position to survive re-renders (like isPaused change)
 
-        let currentPosition = 0;
         const scrollSpeed = 0.5; // pixels per frame
 
+        let animationId: number;
+
         const animate = () => {
-            currentPosition += scrollSpeed;
+            if (!isPaused) {
+                currentPositionRef.current += scrollSpeed;
 
-            // Reset to beginning when reaching the end of first set
-            const resetPoint = cardWidth * (marketData.length / 3);
-            if (currentPosition >= resetPoint) {
-                currentPosition = 0;
-                scrollViewRef.current?.scrollTo({ x: 0, animated: false });
-            } else {
-                scrollViewRef.current?.scrollTo({ x: currentPosition, animated: false });
+                // Reset to beginning when reaching the end of first set
+                const resetPoint = cardWidth * (marketData.length / 3);
+                if (currentPositionRef.current >= resetPoint) {
+                    currentPositionRef.current = 0;
+                    scrollViewRef.current?.scrollTo({ x: 0, animated: false });
+                } else {
+                    scrollViewRef.current?.scrollTo({ x: currentPositionRef.current, animated: false });
+                }
             }
-
-            requestAnimationFrame(animate);
+            animationId = requestAnimationFrame(animate);
         };
 
-        const animationId = requestAnimationFrame(animate);
+        animationId = requestAnimationFrame(animate);
 
         return () => cancelAnimationFrame(animationId);
-    }, [marketData, scrollViewWidth]);
+    }, [marketData, scrollViewWidth, isPaused]);
 
     if (loading) {
         return (
@@ -123,7 +127,11 @@ export const MarketCarouselWidget = () => {
     }
 
     return (
-        <View className="mt-2">
+        <Pressable
+            className="mt-2"
+            onHoverIn={() => setIsPaused(true)}
+            onHoverOut={() => setIsPaused(false)}
+        >
             <View className="flex-row items-center justify-between mb-4 px-2">
                 <View className="flex-row items-center">
                     <TrendingUp size={18} color="#F87171" />
@@ -151,6 +159,6 @@ export const MarketCarouselWidget = () => {
                     <MarketChartCard key={`${item.symbol}-${index}`} data={item} />
                 ))}
             </ScrollView>
-        </View>
+        </Pressable>
     );
 };

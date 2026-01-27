@@ -61,6 +61,33 @@ const MOCK_DATA: MarketData[] = [
         changePercent: -0.67,
         history: generateHistory(83, 1.5, 30),
         lastUpdated: Date.now(),
+    },
+    {
+        symbol: 'KOSDAQ',
+        name: '코스닥',
+        value: 865.20,
+        change: 4.3,
+        changePercent: 0.50,
+        history: generateHistory(860, 5, 30),
+        lastUpdated: Date.now(),
+    },
+    {
+        symbol: 'S&P 500',
+        name: 'S&P 500',
+        value: 5230.50,
+        change: 25.4,
+        changePercent: 0.49,
+        history: generateHistory(5210, 30, 30),
+        lastUpdated: Date.now(),
+    },
+    {
+        symbol: 'NASDAQ',
+        name: '나스닥',
+        value: 16400.10,
+        change: 120.3,
+        changePercent: 0.74,
+        history: generateHistory(16300, 150, 30),
+        lastUpdated: Date.now(),
     }
 ];
 
