@@ -13,20 +13,24 @@ const parser = new Parser({
     }
 });
 
-// 뉴스 소스 정의
+// 뉴스 소스 정의 - 과학/기술 및 경제 전문
 const NEWS_SOURCES = {
-    naver: {
-        science: 'https://news.naver.com/rss/section/105/283.xml', // IT/과학 (수정)
-        economy: 'https://news.naver.com/rss/section/101.xml' // 경제 (수정)
+    // IT/과학 전문
+    itchosun: {
+        science: 'https://www.itchosun.com/rss/S1N2.xml'  // IT조선 - 과학
     },
+    zdnet: {
+        science: 'https://www.zdnet.co.kr/rss/S1N1.xml'  // ZDNet - 과학/기술
+    },
+    // 경제 전문  
     mk: {
-        science: 'https://www.mk.co.kr/rss/40300001/', // IT (수정)
-        economy: 'https://www.mk.co.kr/rss/30100041/' // 경제일반 (수정)
+        economy: 'https://www.mk.co.kr/rss/30100041/'  // 매경 - 경제일반
     },
-    // 추가 소스
-    chosun: {
-        science: 'https://www.chosun.com/arc/outboundfeeds/rss/category/tech/?outputType=xml',
-        economy: 'https://www.chosun.com/arc/outboundfeeds/rss/category/economy/?outputType=xml'
+    hankyung: {
+        economy: 'https://www.hankyung.com/feed/economy'  // 한경 - 경제
+    },
+    chosunbiz: {
+        economy: 'https://biz.chosun.com/rss/economy.xml'  // 조선비즈 - 경제
     }
 } as const;
 
@@ -36,7 +40,7 @@ export interface NewsArticle {
     link: string;
     pubDate: string;
     description: string;
-    source: 'naver' | 'mk' | 'chosun';
+    source: 'itchosun' | 'zdnet' | 'mk' | 'hankyung' | 'chosunbiz';
     category: 'science' | 'economy';
 }
 
