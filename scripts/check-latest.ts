@@ -35,6 +35,15 @@ async function checkLatestCards() {
                 console.log(`   ${line}`);
             });
 
+            console.log(`\n   [관련자료 - related_materials]`);
+            if (content.related_materials && content.related_materials.length > 0) {
+                content.related_materials.forEach((mat: any, idx: number) => {
+                    console.log(`   ${idx + 1}. ${mat.title} - ${mat.url}`);
+                });
+            } else {
+                console.log(`   # (none)`);
+            }
+
             console.log('\n   ' + '─'.repeat(75));
 
         } catch (e) {

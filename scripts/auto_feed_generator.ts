@@ -17,7 +17,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // 2. 모든 콘텐츠는 완전히 새롭게 창작
 // 3. 한국 연구자/투자자 관점에서 실질적 인사이트 추가
 // 4. 정치적 성향이 드러나는 내용 삼가
-// 5. related_links는 항상 빈 배열
+// 5. related_materials는 실제 유용한 참고자료 제공
 // ------------------------------------------------------------------
 
 interface InsightTemplate {
@@ -27,10 +27,11 @@ interface InsightTemplate {
     body: string;
     bullets: string[];
     image_prompt: string;
+    related_materials: { title: string; url: string }[];
 }
 
 const INSIGHT_LIBRARY: InsightTemplate[] = [
-    // --- SCIENCE 카테고리 ---
+    // --- SCIENCE 카테고리는 이미 완료됨 (related_materials 포함) ---
     {
         category: 'Science',
         headline: 'HBM4 양산 경쟁, 수율이 결정한다',
@@ -42,7 +43,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '한국 장비 업체 수혜 전망',
             '2026년 하반기 양산 목표'
         ],
-        image_prompt: 'Advanced semiconductor chip with stacked memory layers, blue circuits'
+        image_prompt: 'Advanced semiconductor chip with stacked memory layers, blue circuits',
+        related_materials: [
+            { title: 'SK하이닉스 HBM 기술 로드맵', url: 'https://www.skhynix.com' },
+            { title: '삼성전자 반도체 뉴스룸', url: 'https://semiconductor.samsung.com/kr/' },
+            { title: 'AI 반도체 시장 동향 분석', url: 'https://www.sedaily.com' }
+        ]
     },
     {
         category: 'Science',
@@ -55,7 +61,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '금융권 시스템 전환 5년 소요',
             '한국 보안 기업 기회 확대'
         ],
-        image_prompt: 'Quantum computing security concept with encrypted data flow, cyan tones'
+        image_prompt: 'Quantum computing security concept with encrypted data flow, cyan tones',
+        related_materials: [
+            { title: 'NIST 양자 내성 암호 표준', url: 'https://csrc.nist.gov/Projects/post-quantum-cryptography' },
+            { title: '금융보안원 보안 가이드', url: 'https://www.fsec.or.kr' },
+            { title: '양자컴퓨팅 연구 동향', url: 'https://www.kisti.re.kr' }
+        ]
     },
     {
         category: 'Science',
@@ -68,7 +79,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '기존 원전보다 안전하고 유연',
             '한국 원자력 기업 협력 기회'
         ],
-        image_prompt: 'Modern small modular reactor facility with clean energy visualization'
+        image_prompt: 'Modern small modular reactor facility with clean energy visualization',
+        related_materials: [
+            { title: '한국원자력연구원 SMR 연구', url: 'https://www.kaeri.re.kr' },
+            { title: '에너지경제신문 SMR 특집', url: 'https://www.ekn.kr' },
+            { title: '산업통상자원부 원전 정책', url: 'https://www.motie.go.kr' }
+        ]
     },
     {
         category: 'Science',
@@ -81,7 +97,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '프리미엄 시장 경쟁력 확보',
             '양자점 소재 업체 성장 전망'
         ],
-        image_prompt: 'Quantum dot display technology with vibrant color spectrum visualization'
+        image_prompt: 'Quantum dot display technology with vibrant color spectrum visualization',
+        related_materials: [
+            { title: '삼성디스플레이 기술 블로그', url: 'https://www.samsungdisplay.com' },
+            { title: 'QD 디스플레이 기술 동향', url: 'https://www.thelec.kr' },
+            { title: '디스플레이 산업 분석', url: 'https://www.displaybank.com' }
+        ]
     },
     {
         category: 'Science',
@@ -94,7 +115,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '한국 바이오 제조 기술 확보',
             '면역 반응 최적화가 관건'
         ],
-        image_prompt: 'mRNA molecule structure with medical innovation concept, green and white'
+        image_prompt: 'mRNA molecule structure with medical innovation concept, green and white',
+        related_materials: [
+            { title: '모더나 mRNA 플랫폼 소개', url: 'https://www.modernatx.com' },
+            { title: '한국바이오협회 기술 동향', url: 'https://www.koreabio.org' },
+            { title: '바이오스펙테이터 암 백신 분석', url: 'https://www.biospectator.com' }
+        ]
     },
     {
         category: 'Science',
@@ -107,10 +133,15 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '충전 시간 대폭 단축',
             '한국 업체 소재 개발 집중'
         ],
-        image_prompt: 'Solid-state battery technology with electric vehicle concept, silver blue'
+        image_prompt: 'Solid-state battery technology with electric vehicle concept, silver blue',
+        related_materials: [
+            { title: '삼성SDI 배터리 기술 동향', url: 'https://www.samsungsdi.co.kr' },
+            { title: 'LG에너지솔루션 R&D', url: 'https://www.lgensol.com' },
+            { title: '전기차 배터리 시장 분석', url: 'https://www.businesskorea.co.kr' }
+        ]
     },
 
-    // --- ECONOMY 카테고리 ---
+    // --- ECONOMY 카테고리 (related_materials 추가 완료) ---
     {
         category: 'Economy',
         headline: '저출산 심화, 내수 시장 재편 불가피',
@@ -122,7 +153,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '자동화 투자 필수',
             '인구 적응형 기업 주목'
         ],
-        image_prompt: 'Demographic transition chart with economic growth indicators, neutral tones'
+        image_prompt: 'Demographic transition chart with economic growth indicators, neutral tones',
+        related_materials: [
+            { title: '통계청 인구 동향', url: 'https://kostat.go.kr' },
+            { title: '한국경제연구원 저출산 분석', url: 'https://www.keri.org' },
+            { title: '연금제도 개편 논의', url: 'https://www.nps.or.kr' }
+        ]
     },
     {
         category: 'Economy',
@@ -135,7 +171,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '원자재 비용 증가 주의',
             '환헤지 전략 점검 필요'
         ],
-        image_prompt: 'Currency exchange rate chart with global trade concept, green gradient'
+        image_prompt: 'Currency exchange rate chart with global trade concept, green gradient',
+        related_materials: [
+            { title: '한국은행 환율 동향', url: 'https://www.bok.or.kr' },
+            { title: '무역협회 수출 전략', url: 'https://www.kita.net' },
+            { title: '수출입은행 환헤지 가이드', url: 'https://www.koreaexim.go.kr' }
+        ]
     },
     {
         category: 'Economy',
@@ -148,7 +189,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '수도권 우량 사업장은 안정적',
             '시장 조정기 매수 기회'
         ],
-        image_prompt: 'Real estate market adjustment with financial analysis, gray blue tones'
+        image_prompt: 'Real estate market adjustment with financial analysis, gray blue tones',
+        related_materials: [
+            { title: '금융감독원 PF 리스크 모니터링', url: 'https://www.fss.or.kr' },
+            { title: '국토부 부동산 정책', url: 'https://www.molit.go.kr' },
+            { title: '한국부동산원 시장 분석', url: 'https://www.reb.or.kr' }
+        ]
     },
     {
         category: 'Economy',
@@ -161,7 +207,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '시스템 반도체 수요 증가',
             '한국 기업 시장 점유율 확대'
         ],
-        image_prompt: 'Semiconductor industry growth chart with AI technology concept, blue tech'
+        image_prompt: 'Semiconductor industry growth chart with AI technology concept, blue tech',
+        related_materials: [
+            { title: '삼성전자 반도체 전망', url: 'https://semiconductor.samsung.com/kr/' },
+            { title: 'SK하이닉스 시장 동향', url: 'https://www.skhynix.com' },
+            { title: '반도체산업협회 업계 보고서', url: 'https://www.ksia.or.kr' }
+        ]
     },
     {
         category: 'Economy',
@@ -174,7 +225,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '중국 시장 점진적 회복',
             '생산 효율화로 수익성 개선'
         ],
-        image_prompt: 'Battery manufacturing industry with electric vehicle growth, green energy'
+        image_prompt: 'Battery manufacturing industry with electric vehicle growth, green energy',
+        related_materials: [
+            { title: 'LG에너지솔루션 실적 분석', url: 'https://www.lgensol.com' },
+            { title: '삼성SDI 시장 전망', url: 'https://www.samsungsdi.co.kr' },
+            { title: '전기차 산업 동향', url: 'https://www.autoelectronics.co.kr' }
+        ]
     },
     {
         category: 'Economy',
@@ -187,7 +243,12 @@ const INSIGHT_LIBRARY: InsightTemplate[] = [
             '온라인 채널로 유통 효율화',
             '중소 브랜드도 성장 기회'
         ],
-        image_prompt: 'Korean beauty products with global market expansion, elegant design'
+        image_prompt: 'Korean beauty products with global market expansion, elegant design',
+        related_materials: [
+            { title: '대한화장품협회 수출 동향', url: 'https://www.kcia.or.kr' },
+            { title: 'K-뷰티 글로벌 전략', url: 'https://www.kotra.or.kr' },
+            { title: '화장품 시장 분석', url: 'https://www.cosmorning.com' }
+        ]
     }
 ];
 
@@ -205,7 +266,7 @@ async function generateAndInsert(template?: InsightTemplate) {
         bullets: tpl.bullets,
         image_prompt: tpl.image_prompt,
         imageUrl: `https://images.unsplash.com/photo-${Math.random() > 0.5 ? '1677442136019-21780ecad995' : '1635070041078-e363dbe005cb'}?w=800&auto=format&fit=crop`, // 임시 이미지
-        related_materials: [], // 프론트엔드 호환을 위해 related_links 대신 related_materials 사용
+        related_materials: tpl.related_materials, // 템플릿에서 가져오기
         category: tpl.category,
         timestamp: new Date().toISOString()
     };
