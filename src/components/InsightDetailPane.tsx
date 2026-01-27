@@ -100,38 +100,13 @@ export const InsightDetailPane: React.FC<InsightDetailPaneProps> = ({ item, onCl
                         <Text className="text-slate-400 text-[13px]">{item.readTime || '3 min'} 읽기</Text>
                     </View>
 
-                    <View className="flex-row flex-wrap gap-2 mb-5">
-                        {item.tags?.map((tag: string, i: number) => (
-                            <Text key={i} className="text-blue-500 text-[13px] bg-blue-500/15 px-3 py-1.5 rounded-[10px] overflow-hidden font-semibold">{tag}</Text>
-                        ))}
-                    </View>
-
-                    {/* Summary Text */}
-                    <View className="mb-6">
-                        {cleanSummary.includes('- ') ? (
-                            cleanSummary.split('- ').map((point: string, index: number) => {
-                                const cleanPoint = point.trim();
-                                if (!cleanPoint) return null;
-
-                                return (
-                                    <View key={index} className="flex-row items-start mb-2">
-                                        <View className="w-1 h-1 rounded-full bg-slate-400 mt-2.5 mr-2.5" />
-                                        <Text className="flex-1 text-slate-200 text-base leading-[26px] font-normal">{cleanPoint}</Text>
-                                    </View>
-                                );
-                            })
-                        ) : (
-                            <Text className="text-slate-200 text-base leading-[26px] font-normal">{cleanSummary}</Text>
-                        )}
-                    </View>
-
-                    {/* AI Insight Box */}
-                    <View className="bg-slate-800/60 rounded-[24px] p-[18px] border border-amber-500/30 mb-5">
-                        <View className="flex-row items-center mb-3">
-                            <Sparkles size={16} color="#F59E0B" />
-                            <Text className="text-amber-500 font-extrabold text-sm ml-1.5">AI 핵심 요약</Text>
+                    {/* AI 핵심 요약만 표시 (골드박스) */}
+                    <View className="bg-gradient-to-br from-amber-500/20 to-orange-600/20 rounded-[24px] p-5 border-2 border-amber-500/40 mb-5 shadow-lg">
+                        <View className="flex-row items-center mb-4">
+                            <Sparkles size={18} color="#F59E0B" />
+                            <Text className="text-amber-400 font-extrabold text-base ml-2">📌 핵심 정리</Text>
                         </View>
-                        <Text className="text-slate-200 text-sm leading-[22px]">
+                        <Text className="text-slate-100 text-[15px] leading-[24px] font-medium">
                             {item.aiInsight || cleanSummary || "본문 요약을 불러오는 중입니다..."}
                         </Text>
                     </View>
