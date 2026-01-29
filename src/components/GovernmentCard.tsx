@@ -90,7 +90,7 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
                         {/* Status Box */}
                         <View className="flex-1 bg-slate-900/50 rounded-2xl p-4 justify-center items-center border border-white/5">
                             <Text className="text-slate-400 text-[11px] mb-1">마감일</Text>
-                            <Text className="text-emerald-400 text-lg font-bold">{item.period.split('~')[1]?.trim() || '2026.12.31'}</Text>
+                            <Text className="text-emerald-400 text-lg font-bold">{(item.period || '').split('~')[1]?.trim() || '2026.12.31'}</Text>
                         </View>
                     </View>
                 </View>

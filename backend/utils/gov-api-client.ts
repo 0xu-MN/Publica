@@ -166,46 +166,66 @@ const parseDate = (dateStr: string | undefined | null): Date | null => {
 /**
  * Fetch K-Startup business announcements
  */
+/**
+ * Fetch K-Startup business announcements
+ */
 export const fetchKStartupPrograms = async (): Promise<GovernmentProgram[]> => {
     try {
         const config = API_CONFIGS.K_STARTUP;
+        // Use the verified endpoint directly
+        const endpoint = '/getAnnouncementInformation01';
+
         const api = createAPIInstance(config.baseUrl);
 
-        const response = await api.get<GovAPIResponse>(config.endpoints.announcements, {
+        console.log(`📡 Fetching K-Startup data from ${endpoint}...`);
+
+        const response = await api.get<any>(endpoint, {
             params: {
-                serviceKey: API_KEY,
-                pageNo: 1,
-                numOfRows: 100,
-                _type: 'json'
+                serviceKey: API_KEY, // Use the key as provided (Hex or Base64)
+                page: 1,
+                perPage: 100,
+                returnType: 'json'
             }
         });
 
-        const items = response.data.response?.body?.items?.item || [];
+        // Debug response structure
+        // console.log('Response data:', JSON.stringify(response.data).substring(0, 200));
+
+        const items = response.data?.data || [];
         if (!Array.isArray(items)) {
-            return items ? [items] : [];
+            console.warn('Expected array in response.data.data but got:', typeof items);
+            return [];
         }
 
         return items.map((item: any) => {
-            const deadline = parseDate(item.rcptEndDt || item.endDate || item.deadline);
-            const startDate = parseDate(item.rcptStaDt || item.startDate);
+            const deadline = parseDate(item.pbanc_rcpt_end_dt); // YYYYMMDD
+            const startDate = parseDate(item.pbanc_rcpt_bgng_dt);
+
+            // Construct categories and tags
+            const categories = item.supt_biz_clsfc ? [item.supt_biz_clsfc] : ['창업지원'];
+            const tags = [
+                item.aply_trgt, // 대학,일반기업
+                item.biz_trgt_age, // 만 20세 미만...
+                item.supt_regin // 전국
+            ].filter(Boolean).join(',').split(',').map(t => t.trim()).filter(Boolean);
 
             return {
-                id: `kstartup-${item.bizId || item.id || Math.random().toString(36).substr(2, 9)}`,
-                program_id: item.bizId || item.id || '',
-                title: item.bizNm || item.title || '제목 없음',
-                agency: '창업진흥원',
-                department: item.deptNm || undefined,
+                id: `kstartup-${item.pbanc_sn || Math.random().toString(36).substr(2, 9)}`,
+                program_id: String(item.pbanc_sn || ''),
+                title: item.biz_pbanc_nm || '제목 없음',
+                agency: item.sprv_inst || '창업진흥원',
+                department: item.biz_prch_dprt_nm || undefined,
                 deadline: deadline,
                 start_date: startDate,
                 end_date: deadline,
                 status: determineStatus(deadline),
                 d_day: deadline ? calculateDDay(deadline) : undefined,
-                category: item.bizType ? [item.bizType] : ['창업지원'],
-                tags: [item.targetInfo, item.bizType].filter(Boolean),
-                budget: item.supportAmt || item.budget || undefined,
-                description: item.bizSummary || item.description || '',
-                link: item.linkUrl || item.url || undefined,
-                requirements: item.targetInfo ? [item.targetInfo] : [],
+                category: categories,
+                tags: [...new Set(tags)], // Remove duplicates
+                budget: undefined, // Not typically in announcement list, maybe in detailed info
+                description: item.pbanc_ctnt || '',
+                link: item.detl_pg_url || undefined,
+                requirements: item.aply_trgt_ctnt ? [item.aply_trgt_ctnt] : [],
                 api_source: 'K-Startup'
             };
         });

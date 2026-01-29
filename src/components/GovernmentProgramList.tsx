@@ -14,7 +14,11 @@ interface Program {
     tags?: string[];
 }
 
-export const GovernmentProgramList = () => {
+interface GovernmentProgramListProps {
+    onProgramClick?: (program: Program) => void;
+}
+
+export const GovernmentProgramList: React.FC<GovernmentProgramListProps> = ({ onProgramClick }) => {
     const [programs, setPrograms] = useState<Program[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -90,6 +94,7 @@ export const GovernmentProgramList = () => {
                 <TouchableOpacity
                     key={program.id}
                     className="bg-[#1E293B] p-5 rounded-2xl border border-white/5 active:bg-slate-800"
+                    onPress={() => onProgramClick?.(program)}
                 >
                     <View className="flex-row items-start justify-between mb-3">
                         <View className="flex-row items-center gap-2">

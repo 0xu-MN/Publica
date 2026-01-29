@@ -186,16 +186,40 @@ export const fetchGovernmentPrograms = async (): Promise<any[]> => {
             ];
         }
 
-        return data.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            agency: item.agency,
-            period: item.period,
-            status: item.status,
-            dDay: item.d_day,
-            category: item.category,
-            link: item.link
-        }));
+        return data.map((item: any) => {
+            const formatDate = (dateStr: string) => {
+                if (!dateStr) return '';
+                const d = new Date(dateStr);
+                return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`;
+            };
+
+            const start = formatDate(item.start_date);
+            const end = formatDate(item.end_date || item.deadline);
+            const period = start && end ? `${start} ~ ${end}` : (end ? `~ ${end}` : '상시모집');
+
+            return {
+                id: item.id,
+                title: item.title,
+                agency: `${item.agency} | ${item.api_source}`, // Combine for clearer attribution
+                original_agency: item.agency, // Keep original for filtering if needed
+                department: item.department,
+                period: period,
+                status: item.status,
+                dDay: item.d_day,
+                category: Array.isArray(item.category) ? item.category[0] : (item.category || '기타'),
+                link: item.link,
+                // Detailed fields
+                description: item.description,
+                requirements: item.requirements,
+                budget: item.budget,
+                target: item.tags ? item.tags.join(', ') : '',
+                // New fields for detail view
+                submitDocs: item.requirements && item.requirements.length > 0 ? item.requirements[0] : '공고문 참조', // aply_trgt_ctnt often contains doc info
+                contact: item.department ? `${item.department} / ${item.agency}` : undefined,
+                detailUrl: item.link, // For attachments
+                views: Math.floor(Math.random() * 1000)
+            };
+        });
     } catch (error) {
         console.error('Error fetching gov programs (using fallback):', error);
         // Fallback to local mock on error (e.g. table missing)

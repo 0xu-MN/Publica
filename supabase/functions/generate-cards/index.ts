@@ -1,6 +1,5 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { GoogleGenerativeAI } from "https://esm.sh/@google/generative-ai@0.12.0";
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -32,13 +31,6 @@ Deno.serve(async (req) => {
         }
 
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const genAI = new GoogleGenerativeAI(geminiKey);
-        const model = genAI.getGenerativeModel({
-            model: "gemini-1.5-flash",
-            generationConfig: {
-                responseMimeType: "application/json",
-            }
-        });
 
         // Category-based image pools
         const scienceImages = [
@@ -102,12 +94,34 @@ IMPORTANT: Return ONLY valid JSON. Do NOT include markdown code blocks or any te
         const userPrompt = `Title: ${title}
     Keywords: ${keywords}`;
 
-        const result = await model.generateContent([systemPrompt, userPrompt]);
-        const response = await result.response;
-        let content = response.text();
+        // Native Fetch to Google Gemini API (v1beta)
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+
+        const response = await fetch(geminiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{ text: systemPrompt + "\n" + userPrompt }]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${response.status} - ${errorText}`);
+        }
+
+        const aiResult = await response.json();
+        let content = aiResult.candidates?.[0]?.content?.parts?.[0]?.text;
 
         if (!content) {
-            throw new Error('Failed to generate content');
+            throw new Error('Failed to generate content from AI response');
         }
 
         // Clean markdown code blocks if present
@@ -152,6 +166,11 @@ IMPORTANT: Return ONLY valid JSON. Do NOT include markdown code blocks or any te
             ];
 
             parsedContent.related_materials = fallbackMaterials;
+        }
+
+        // Use the passed imageUrl or the one from prompt logic if API didn't return one (it usually does based on prompt example)
+        if (!parsedContent.imageUrl) {
+            parsedContent.imageUrl = imageUrl;
         }
 
         // Convert back to string for storage
