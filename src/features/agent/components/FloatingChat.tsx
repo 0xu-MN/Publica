@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, StyleSheet, ScrollView, Keyboard } from 'react-native';
 import { MessageSquare, Minimize2, Paperclip, Send } from 'lucide-react-native';
 
 export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFileUpload }: any) => {

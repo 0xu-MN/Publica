@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, ScrollView, Dimensions, Alert, Platform, UIManager } from 'react-native';
-import { supabase } from '../../../lib/supabase';
+import { supabase } from '../../lib/supabase';
 import { RefreshCw, ZoomIn, ZoomOut } from 'lucide-react-native';
 
 // 분리된 컴포넌트 임포트
