@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { Sidebar, WorkspaceTab } from './Sidebar';
 import { HomeView } from './views/HomeView';
-import { AgentView } from './views/AgentView';
+import { AgentView } from '../../features/agent/AgentView';
 import { FilesView, SupportView } from './views/Placeholders';
 
 interface WorkspaceLayoutProps {
