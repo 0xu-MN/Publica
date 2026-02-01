@@ -9,84 +9,123 @@ serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
     try {
-        const { user_input, user_domain } = await req.json();
+        const { user_input, user_job, task_mode } = await req.json();
         const API_KEY = Deno.env.get('GEMINI_API_KEY');
 
-        // 1. Define Persona & Goal
-        const role = user_domain === 'SCIENCE' ? 'Principal Investigator' : 'Strategic Analyst';
-        const focus = user_domain === 'SCIENCE' ? 'Mechanism & Tech' : 'Market & Growth';
+        // 1. Dynamic Mode Instructions (Liner / Moonlight / n8n Phases)
+        let modeInstruction = "";
 
-        // 2. System Prompt (Strict JSON)
+        switch (task_mode) {
+            case "Hypothesis Generator": // Liner Phase (Exploration)
+                modeInstruction = `
+                [MODE: EXPLORATION & HYPOTHESIS]
+                - GOAL: Diverge and brainstorm. Offer various perspectives (Market, Tech, Policy).
+                - ACTION: Break down the topic into mutually exclusive, collectively exhaustive (MECE) branches.
+                - TONE: Creative, strategic, and broad.
+                `;
+                break;
+            case "Literature Review": // Moonlight Phase (Verification)
+                modeInstruction = `
+                [MODE: VERIFICATION & EVIDENCE]
+                - GOAL: Verify facts with academic or industrial sources.
+                - ACTION: Focus on citations, key papers, and concrete data points.
+                - TONE: Academic, rigorous, and evidence-based.
+                `;
+                break;
+            case "Research Planner": // n8n Phase (Planning)
+                modeInstruction = `
+                [MODE: PLANNING & METHODOLOGY]
+                - GOAL: Create a step-by-step roadmap.
+                - ACTION: Outline a sequential process (Step 1 -> Step 2 -> Step 3).
+                - TONE: Practical, actionable, and structured.
+                `;
+                break;
+            default: // General / Data Analyst
+                modeInstruction = `
+                [MODE: GENERAL ANALYSIS]
+                - GOAL: Provide balanced insight.
+                - ACTION: Explain concepts clearly and professionally.
+                `;
+                break;
+        }
+
+        // 2. Persona Generator
+        const personaPrompt = `
+        [ROLE DEFINITION]
+        User's Profession: ${user_job || "General Strategist"}.
+        ACT AS: A world-class expert and advisor in the field of "${user_job}".
+        
+        [ANALYSIS LENS]
+        - If the user is a "VC/Investor": Focus on TAM, CAGR, ROI, Moat, and Exit Strategy. Cite: Bloomberg, TechCrunch.
+        - If the user is a "Researcher/Scientist": Focus on Methodology, Mechanism, Experiments, and Citations. Cite: Nature, PubMed.
+        - For others: Adapt accordingly.
+        `;
+
         const systemPrompt = `
-    You are InsightFlow AI (Role: ${role}).
-    Analyze "${user_input}" focusing on ${focus}.
-    
-    [OUTPUT RULES]
-    1. Return ONLY valid JSON. No Markdown blocks.
-    2. 'type' MUST be "mind_map".
-    
-    Response Structure:
-    {
-      "chat_message": "Short insight summary. End with a question to guide exploration.",
-      "workspace_data": {
-        "type": "mind_map",
-        "root_node": "Short Title",
-        "branches": [
-           { "id": "1", "label": "Key Insight 1", "description": "Detail..." },
-           { "id": "2", "label": "Key Insight 2", "description": "Detail..." },
-           { "id": "3", "label": "Key Insight 3", "description": "Detail..." }
-        ]
-      }
-    }
-    `;
+        ${personaPrompt}
+        
+        ${modeInstruction}
+        
+        [TASK]
+        Analyze the input and expand the knowledge graph step-by-step.
+        
+        [OUTPUT RULES]
+        1. Return ONLY valid JSON.
+        2. 'type' MUST be "mind_map".
+        
+        Response Structure:
+        {
+          "chat_message": "Summary regarding '${user_input}' in ${task_mode || 'General'} mode.",
+          "workspace_data": {
+            "type": "mind_map",
+            "root_node": "Topic Title",
+            "summary": "Deep insight regarding the node (3-4 sentences).",
+            "references": [
+                "Source 1 (Date) - Key Finding",
+                "Source 2 (Date) - Key Finding"
+            ],
+            "branches": [
+               { "id": "1", "label": "Sub-point 1", "description": "Context..." },
+               { "id": "2", "label": "Sub-point 2", "description": "Context..." },
+               { "id": "3", "label": "Sub-point 3", "description": "Context..." }
+            ]
+          }
+        }
+        `;
 
-        // 3. Call Gemini (🌟 UPDATED TO 2.5-FLASH 🌟)
-        // The previous error was because we used 1.5-flash. Now we use 2.5-flash.
+        // 3. Call Gemini
         const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }]
+                contents: [{ parts: [{ text: `${systemPrompt}\n\n[USER INPUT]: ${user_input}` }] }]
             })
         });
 
         const data = await response.json();
-
-        // 4. Parse Response (With Fail-Safe)
         let parsedData = null;
 
-        if (!data.candidates || !data.candidates[0]) {
-            console.error("⚠️ AI Error:", JSON.stringify(data));
-            // Fallback if AI fails (e.g. Safety Block)
-            parsedData = {
-                chat_message: "⚠️ System Alert: " + (data.error?.message || "Model Busy"),
-                workspace_data: {
-                    type: 'mind_map',
-                    root_node: "Connection Issue",
-                    branches: [
-                        { id: 'e1', label: 'Model Mismatch', description: "Check if Gemini 2.5 is enabled." },
-                        { id: 'e2', label: 'Retry', description: "Please try asking again." }
-                    ]
-                }
-            };
-        } else {
-            let rawText = data.candidates[0].content.parts[0].text;
-            rawText = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-            try {
-                parsedData = JSON.parse(rawText);
-            } catch (e) {
-                parsedData = {
-                    chat_message: "Data parsing error.",
-                    workspace_data: {
-                        type: 'mind_map',
-                        root_node: "Parse Error",
-                        branches: [{ id: 'p1', label: 'Raw Output', description: rawText.substring(0, 50) }]
-                    }
-                };
+        if (data.candidates && data.candidates[0]) {
+            const rawText = data.candidates[0].content.parts[0].text;
+            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                try { parsedData = JSON.parse(jsonMatch[0]); } catch (e) { }
+            } else {
+                try { parsedData = JSON.parse(rawText); } catch (e) { }
             }
         }
 
-        // 5. Final Guarantee
+        if (!parsedData) {
+            parsedData = {
+                chat_message: "⚠️ Analysis could not be completed.",
+                workspace_data: {
+                    type: 'mind_map',
+                    root_node: "Error",
+                    summary: "AI response led to a parsing error or was blocked.",
+                    branches: []
+                }
+            };
+        }
         if (parsedData.workspace_data) parsedData.workspace_data.type = 'mind_map';
 
         return new Response(JSON.stringify(parsedData), {
@@ -96,7 +135,7 @@ serve(async (req) => {
     } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500,
+            status: 500
         });
     }
 });
