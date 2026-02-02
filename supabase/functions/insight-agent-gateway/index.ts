@@ -1,133 +1,149 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+
+// Define strict interface for Type Safety
+interface AgentResponse {
+    chat_message: string;
+    workspace_data: {
+        root_node: string;
+        branches: Array<{
+            id: string;
+            label: string;
+            description: string;
+            type: string;
+            references: Array<{
+                title: string;
+                source: string;
+                date: string;
+                url: string;
+            }>;
+        }>;
+    };
+    suggested_actions?: Array<{
+        label: string;
+        type: string;
+        query: string;
+    }>;
+}
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// ------------------------------------------------------------------
+// SYSTEM PROMPT: Strategist Persona & Strict JSON
+// ------------------------------------------------------------------
+const SYSTEM_PROMPT = `
+You are a KOREAN AI Agent.
+No matter what, YOU MUST OUTPUT IN KOREAN.
+Do not use English titles or descriptions.
+
+You are "InsightFlow", an elite strategic AI partner.
+Your goal is to guide the user through a 3-step workflow: 1. Hypothesis (Expand) -> 2. Verification (Evidence) -> 3. Planning (Action).
+
+## 🚨 CRITICAL RULES
+1. **LANGUAGE:** ALWAYS reply in **KOREAN** (한국어).
+2. **PROACTIVE SUGGESTIONS:** You MUST return a \`suggested_actions\` array with 3 distinct options based on the context:
+   - **Option 1 (Deep Dive):** Suggest digging deeper into the current topic (e.g., "Analyze Competitors").
+   - **Option 2 (Verification):** Suggest finding evidence (e.g., "Search for Academic Papers", "Upload Financial Report").
+   - **Option 3 (Planning):** Suggest moving to the execution phase (e.g., "Create Action Plan", "Design Experiments").
+
+## JSON Output Structure (Strict)
+Return a SINGLE JSON object:
+{
+  "chat_message": "Short summary of the analysis.",
+  "workspace_data": {
+    "root_node": "Context Header",
+    "branches": [
+      {
+        "id": "uuid",
+        "label": "Short Keyword",
+        "description": "Detailed analysis. Max 300 chars.",
+        "type": "Insight" | "Risk" | "Opportunity",
+        "references": []
+      }
+    ]
+  },
+  
+  // 🌟 [NEW] Proactive Suggestions
+  "suggested_actions": [
+    {
+      "label": "Button Label (e.g. 경쟁사 분석 심화)",
+      "type": "EXPAND", 
+      "query": "Detailed prompt to execute this action..."
+    },
+    {
+      "label": "Button Label (e.g. 관련 논문/근거 찾기)",
+      "type": "VERIFY", 
+      "query": "Find external evidence and references for this node..."
+    },
+    {
+      "label": "Button Label (e.g. 실행 계획 수립하기)",
+      "type": "PLAN", 
+      "query": "Create a step-by-step action plan based on this hypothesis..."
+    }
+  ]
+}
+`;
+
 serve(async (req) => {
-    if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
+    if (req.method === 'OPTIONS') {
+        return new Response('ok', { headers: corsHeaders });
+    }
 
     try {
         const { user_input, user_job, task_mode } = await req.json();
-        const API_KEY = Deno.env.get('GEMINI_API_KEY');
 
-        // 1. Dynamic Mode Instructions (Liner / Moonlight / n8n Phases)
-        let modeInstruction = "";
+        // 1. Prompt Engineering
+        const finalPrompt = `
+    [User Profile]: ${user_job || 'General Strategist'}
+    [Task Mode]: ${task_mode || 'Hypothesis Generator'}
+    [Input]: ${user_input}
+    
+    Generate the structured breakdown now.
+    `;
 
-        switch (task_mode) {
-            case "Hypothesis Generator": // Liner Phase (Exploration)
-                modeInstruction = `
-                [MODE: EXPLORATION & HYPOTHESIS]
-                - GOAL: Diverge and brainstorm. Offer various perspectives (Market, Tech, Policy).
-                - ACTION: Break down the topic into mutually exclusive, collectively exhaustive (MECE) branches.
-                - TONE: Creative, strategic, and broad.
-                `;
-                break;
-            case "Literature Review": // Moonlight Phase (Verification)
-                modeInstruction = `
-                [MODE: VERIFICATION & EVIDENCE]
-                - GOAL: Verify facts with academic or industrial sources.
-                - ACTION: Focus on citations, key papers, and concrete data points.
-                - TONE: Academic, rigorous, and evidence-based.
-                `;
-                break;
-            case "Research Planner": // n8n Phase (Planning)
-                modeInstruction = `
-                [MODE: PLANNING & METHODOLOGY]
-                - GOAL: Create a step-by-step roadmap.
-                - ACTION: Outline a sequential process (Step 1 -> Step 2 -> Step 3).
-                - TONE: Practical, actionable, and structured.
-                `;
-                break;
-            default: // General / Data Analyst
-                modeInstruction = `
-                [MODE: GENERAL ANALYSIS]
-                - GOAL: Provide balanced insight.
-                - ACTION: Explain concepts clearly and professionally.
-                `;
-                break;
-        }
-
-        // 2. Persona Generator
-        const personaPrompt = `
-        [ROLE DEFINITION]
-        User's Profession: ${user_job || "General Strategist"}.
-        ACT AS: A world-class expert and advisor in the field of "${user_job}".
-        
-        [ANALYSIS LENS]
-        - If the user is a "VC/Investor": Focus on TAM, CAGR, ROI, Moat, and Exit Strategy. Cite: Bloomberg, TechCrunch.
-        - If the user is a "Researcher/Scientist": Focus on Methodology, Mechanism, Experiments, and Citations. Cite: Nature, PubMed.
-        - For others: Adapt accordingly.
-        `;
-
-        const systemPrompt = `
-        ${personaPrompt}
-        
-        ${modeInstruction}
-        
-        [TASK]
-        Analyze the input and expand the knowledge graph step-by-step.
-        
-        [OUTPUT RULES]
-        1. Return ONLY valid JSON.
-        2. 'type' MUST be "mind_map".
-        
-        Response Structure:
-        {
-          "chat_message": "Summary regarding '${user_input}' in ${task_mode || 'General'} mode.",
-          "workspace_data": {
-            "type": "mind_map",
-            "root_node": "Topic Title",
-            "summary": "Deep insight regarding the node (3-4 sentences).",
-            "references": [
-                "Source 1 (Date) - Key Finding",
-                "Source 2 (Date) - Key Finding"
-            ],
-            "branches": [
-               { "id": "1", "label": "Sub-point 1", "description": "Context..." },
-               { "id": "2", "label": "Sub-point 2", "description": "Context..." },
-               { "id": "3", "label": "Sub-point 3", "description": "Context..." }
-            ]
-          }
-        }
-        `;
-
-        // 3. Call Gemini
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
+        // 2. Call OpenAI (via fetch for Deno)
+        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+                'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+                'Content-Type': 'application/json',
+            },
             body: JSON.stringify({
-                contents: [{ parts: [{ text: `${systemPrompt}\n\n[USER INPUT]: ${user_input}` }] }]
-            })
+                model: 'gpt-4o',
+                messages: [
+                    { role: 'system', content: SYSTEM_PROMPT },
+                    { role: 'user', content: finalPrompt }
+                ],
+                temperature: 0.7,
+            }),
         });
 
-        const data = await response.json();
-        let parsedData = null;
+        const aiData = await openAIResponse.json();
 
-        if (data.candidates && data.candidates[0]) {
-            const rawText = data.candidates[0].content.parts[0].text;
-            const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-            if (jsonMatch) {
-                try { parsedData = JSON.parse(jsonMatch[0]); } catch (e) { }
-            } else {
-                try { parsedData = JSON.parse(rawText); } catch (e) { }
-            }
+        if (!aiData.choices || aiData.choices.length === 0) {
+            throw new Error('OpenAI returned no choices');
         }
 
-        if (!parsedData) {
-            parsedData = {
-                chat_message: "⚠️ Analysis could not be completed.",
-                workspace_data: {
-                    type: 'mind_map',
-                    root_node: "Error",
-                    summary: "AI response led to a parsing error or was blocked.",
-                    branches: []
-                }
-            };
-        }
-        if (parsedData.workspace_data) parsedData.workspace_data.type = 'mind_map';
+        // 3. Parse & Validate
+        const content = aiData.choices[0].message.content;
+        let parsedData: AgentResponse;
 
+        try {
+            // Remove any markdown code fences if present
+            const cleaned = content.replace(/```json/g, '').replace(/```/g, '').trim();
+            parsedData = JSON.parse(cleaned);
+        } catch (e) {
+            console.error("JSON Parse Error:", content);
+            return new Response(JSON.stringify({ error: "Failed to parse AI response" }), {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                status: 500
+            });
+        }
+
+        // 4. Return to Client
         return new Response(JSON.stringify(parsedData), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
@@ -135,7 +151,7 @@ serve(async (req) => {
     } catch (error) {
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-            status: 500
+            status: 500,
         });
     }
 });

@@ -1,50 +1,69 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Animated, StyleSheet } from 'react-native';
-import { X, FileText } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, Animated, StyleSheet, Dimensions } from 'react-native';
+import { X, Zap, Calendar, FileText, MessageCircle } from 'lucide-react-native';
 
-export const DetailPanel = ({ node, onClose }: any) => {
+// 🌟 [중요] onAction props가 있어야 버튼이 작동함
+export const DetailPanel = ({ node, onClose, onAction }: any) => {
     const slideAnim = useRef(new Animated.Value(450)).current;
 
     useEffect(() => {
-        if (node) Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, friction: 12 }).start();
+        if (node) Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
     }, [node]);
 
     if (!node) return null;
 
     return (
-        <Animated.View style={[styles.detailPanel, { transform: [{ translateX: slideAnim }] }]}>
+        <Animated.View style={styles.detailPanel}>
+            {/* Header */}
             <View style={styles.detailHeader}>
-                <Text style={styles.detailLabel}>INSIGHT DETAILS</Text>
-                <TouchableOpacity onPress={onClose}><X size={20} color="#94A3B8" /></TouchableOpacity>
+                <Text style={styles.headerTitle}>INSPECTOR</Text>
+                <TouchableOpacity onPress={onClose}><X size={20} color="#64748B" /></TouchableOpacity>
             </View>
-            <ScrollView style={{ flex: 1, padding: 24 }}>
-                <Text style={styles.detailTitle}>{node.label}</Text>
-                <Text style={styles.detailText}>{node.description}</Text>
 
-                {node.references && (
-                    <View style={styles.sectionBox}>
-                        <Text style={styles.sectionLabel}>SOURCES</Text>
-                        {node.references.map((ref: string, i: number) => (
-                            <View key={i} style={styles.refItem}>
-                                <FileText size={14} color="#10B981" style={{ marginTop: 2 }} />
-                                <Text style={styles.refText}>{ref}</Text>
-                            </View>
-                        ))}
-                    </View>
-                )}
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
+                <Text style={styles.titleText}>{node.label}</Text>
+                <Text style={styles.bodyText}>{node.description || "No description."}</Text>
             </ScrollView>
+
+            {/* 🌟 [FIXED] Smart Action Buttons */}
+            <View style={styles.actionBar}>
+                <Text style={styles.actionTitle}>WHAT'S NEXT?</Text>
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {/* 👇 PLAN 버튼 */}
+                    <TouchableOpacity
+                        style={[styles.smartBtn, { backgroundColor: '#7C3AED' }]}
+                        onPress={() => {
+                            console.log("Plan Clicked!"); // 클릭 확인용 로그
+                            if (onAction) onAction('PLAN', node);
+                            else console.error("onAction prop is missing!");
+                        }}
+                    >
+                        <Calendar size={14} color="white" />
+                        <Text style={styles.smartBtnText}>Make Plan</Text>
+                    </TouchableOpacity>
+
+                    {/* 👇 REPORT 버튼 */}
+                    <TouchableOpacity
+                        style={[styles.smartBtn, { backgroundColor: '#2563EB' }]}
+                        onPress={() => onAction && onAction('REPORT', node)}
+                    >
+                        <FileText size={14} color="white" />
+                        <Text style={styles.smartBtnText}>Report</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </Animated.View>
     );
 };
 
 const styles = StyleSheet.create({
-    detailPanel: { position: 'absolute', right: 0, top: 60, bottom: 0, width: 400, backgroundColor: '#020617', borderLeftWidth: 1, borderColor: '#1E293B', zIndex: 90, shadowColor: 'black', shadowOpacity: 0.5, shadowRadius: 50 },
-    detailHeader: { padding: 20, borderBottomWidth: 1, borderColor: '#1E293B', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    detailLabel: { color: '#64748B', fontSize: 11, fontWeight: 'bold' },
-    detailTitle: { fontSize: 20, fontWeight: 'bold', color: 'white', marginBottom: 20 },
-    sectionBox: { marginBottom: 30 },
-    sectionLabel: { color: '#475569', fontSize: 11, fontWeight: 'bold', marginBottom: 10 },
-    detailText: { color: '#CBD5E1', lineHeight: 24, fontSize: 14 },
-    refItem: { flexDirection: 'row', marginBottom: 10 },
-    refText: { color: '#94A3B8', fontSize: 13, marginLeft: 10, flex: 1, lineHeight: 20 },
+    detailPanel: { position: 'absolute', right: 0, top: 60, bottom: 0, width: 400, backgroundColor: '#020617', borderLeftWidth: 1, borderColor: '#1E293B', zIndex: 90 },
+    detailHeader: { height: 60, paddingHorizontal: 24, borderBottomWidth: 1, borderColor: '#1E293B', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    headerTitle: { color: '#64748B', fontWeight: 'bold' },
+    titleText: { color: 'white', fontSize: 24, fontWeight: '800', marginBottom: 20 },
+    bodyText: { color: '#CBD5E1', fontSize: 15, lineHeight: 24 },
+    actionBar: { padding: 20, borderTopWidth: 1, borderColor: '#1E293B', backgroundColor: '#020617' },
+    actionTitle: { color: '#64748B', fontSize: 10, fontWeight: 'bold', marginBottom: 10 },
+    smartBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 8, gap: 6 },
+    smartBtnText: { color: 'white', fontSize: 12, fontWeight: '700' }
 });
