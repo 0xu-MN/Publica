@@ -17,8 +17,8 @@ interface VerticalStackCarouselProps<T> {
     autoPlayInterval?: number;
 }
 
-const COLLAPSED_HEIGHT = 60; // Tighter "Pill" Height
-const ITEM_SPACING = 20; // Increased spacing
+const COLLAPSED_HEIGHT = 50; // Increased pill height for better visibility
+const ITEM_SPACING = 20;
 
 export function VerticalStackCarousel<T>({
     data,
@@ -33,12 +33,12 @@ export function VerticalStackCarousel<T>({
     // Hover State for Pause
     const [isHovered, setIsHovered] = React.useState(false);
 
-    // Auto-play logic
+    // Auto-play logic (REVERSED: Top to Bottom)
     useEffect(() => {
         if (isHovered) return; // Pause if hovered
 
         const timer = setInterval(() => {
-            setCurrentIndex((prev) => prev + 1);
+            setCurrentIndex((prev) => prev - 1);
         }, autoPlayInterval);
 
         return () => clearInterval(timer);
@@ -120,7 +120,7 @@ const CardItem: React.FC<CardItemProps> = ({
         const scale = interpolate(
             diff,
             [-1, 0, 1],
-            [0.95, 1, 0.95],
+            [0.85, 1, 0.85], // Waiting cards even narrower
             Extrapolate.CLAMP
         );
 
@@ -178,8 +178,8 @@ const CardItem: React.FC<CardItemProps> = ({
 const styles = StyleSheet.create({
     cardContainer: {
         position: 'absolute',
-        width: '100%',
-        left: 0,
+        width: '85%', // Reduced width for narrower cards
+        left: '7.5%',   // Centered (7.5% margin left)
         top: 80,
         borderRadius: 30, // KEY FIX: Ensures the clipped bottom is rounded, forming a Pill.
     }
