@@ -27,25 +27,30 @@ export const RecommendedBusinessCard = ({ items, onExploreAll }: RecommendedBusi
             </TouchableOpacity>
 
             {/* List of Recommended Businesses */}
-            <View className="gap-3 mb-4">
+            <View className="gap-5 mb-4">
                 {items.map((item) => (
                     <View
                         key={item.id}
-                        className="bg-black/20 rounded-xl p-4 border border-white/5"
+                        className="bg-black/20 rounded-xl p-6 border border-white/5"
                     >
-                        <View className="flex-row items-center justify-between mb-2">
-                            <Text className="text-white font-semibold text-sm flex-1 mr-2" numberOfLines={1}>
+                        <View className="flex-row items-center justify-between mb-3">
+                            <Text className="text-white font-bold text-lg flex-1 mr-3" numberOfLines={2}>
                                 {item.title}
                             </Text>
-                            <View className="bg-pink-500/10 px-2 py-0.5 rounded border border-pink-500/20">
-                                <Text className="text-pink-500 text-[10px] font-bold">D-{item.dDay}</Text>
+                            <View className="bg-pink-500/10 px-3 py-1 rounded-lg border border-pink-500/20 shadow-sm shadow-pink-500/10">
+                                <Text className="text-pink-500 text-xs font-bold">D-{item.dDay}</Text>
                             </View>
                         </View>
-                        <View className="flex-row items-center gap-1.5">
-                            <Sparkles size={12} color="#6366F1" />
-                            <Text className="text-[#6366F1] text-xs font-bold uppercase tracking-wider">
-                                MATCHING {item.matchingRate}%
-                            </Text>
+                        <View className="flex-row items-center justify-between">
+                            <View className="flex-row items-center gap-2">
+                                <Sparkles size={16} color="#6366F1" />
+                                <Text className="text-[#6366F1] text-sm font-black uppercase tracking-[0.1em]">
+                                    MATCHING {item.matchingRate}%
+                                </Text>
+                            </View>
+                            <TouchableOpacity className="bg-blue-600 px-4 py-2 rounded-lg border border-blue-500/50">
+                                <Text className="text-white text-xs font-bold">지원하기</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
                 ))}

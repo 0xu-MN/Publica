@@ -14,7 +14,8 @@ import { ProfileCard } from '../ProfileCard';
 import { CalendarModal } from '../CalendarModal';
 import { fetchScraps, toggleScrap } from '../../services/newsService';
 import { useAuth } from '../../contexts/AuthContext';
-import { MessageSquare, Bookmark, RefreshCw, X } from 'lucide-react-native';
+import { usePosts } from '../../hooks/usePosts';
+import { MessageSquare, Bookmark, RefreshCw, X, ArrowLeft, Trash2, Edit2, Database } from 'lucide-react-native';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
@@ -47,6 +48,10 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     // Calendar state
     const [calendarVisible, setCalendarVisible] = useState(false);
 
+    // Profile Post List state
+    const [showMyPosts, setShowMyPosts] = useState(false);
+    const { posts, deletePost } = usePosts();
+
     // Persistence Logic
     useEffect(() => {
         const loadTab = async () => {
@@ -77,7 +82,10 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     const setActiveTab = async (tab: WorkspaceTab) => {
         // Handle profile tab separately - toggle panel instead of changing tab
         if (tab === 'profile') {
-            setShowProfilePanel(prev => !prev);
+            setShowProfilePanel(prev => {
+                if (prev) setShowMyPosts(false); // Reset when closing
+                return !prev;
+            });
             return;
         }
 
@@ -86,6 +94,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
 
         // Close profile panel when switching tabs
         setShowProfilePanel(false);
+        setShowMyPosts(false); // Reset post view when switching tabs
 
         try {
             await AsyncStorage.setItem('WORKSPACE_ACTIVE_TAB', tab);
@@ -247,18 +256,69 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                             <X size={18} color="#94A3B8" strokeWidth={2.5} />
                         </TouchableOpacity>
 
-                        {/* Profile Card */}
+                        {/* Profile Content */}
                         <View className="flex-1 p-6">
-                            <ProfileCard
-                                onEditProfile={() => {
-                                    // Navigate to profile edit - for now just close panel
-                                    setShowProfilePanel(false);
-                                }}
-                                onChatPress={() => {
-                                    setShowProfilePanel(false);
-                                    setActiveTab('chat');
-                                }}
-                            />
+                            {!showMyPosts ? (
+                                <ProfileCard
+                                    onEditProfile={() => {
+                                        // Navigate to profile edit - for now just close panel
+                                        setShowProfilePanel(false);
+                                    }}
+                                    onChatPress={() => {
+                                        setShowProfilePanel(false);
+                                        setActiveTab('chat');
+                                    }}
+                                    onShowPosts={() => setShowMyPosts(true)}
+                                />
+                            ) : (
+                                <View className="flex-1">
+                                    <View className="flex-row items-center mb-6">
+                                        <TouchableOpacity
+                                            onPress={() => setShowMyPosts(false)}
+                                            className="w-10 h-10 rounded-full bg-slate-800/50 items-center justify-center mr-3"
+                                        >
+                                            <ArrowLeft size={20} color="#94A3B8" />
+                                        </TouchableOpacity>
+                                        <Text className="text-white text-xl font-bold">게시글 목록</Text>
+                                    </View>
+
+                                    <ScrollView showsVerticalScrollIndicator={false}>
+                                        {posts.filter(p => p.authorId === user?.id || (user?.email && p.author.includes(user.email.split('@')[0]))).length > 0 ? (
+                                            posts
+                                                .filter(p => p.authorId === user?.id || (user?.email && p.author.includes(user.email.split('@')[0])))
+                                                .map(post => (
+                                                    <View key={post.id} className="mb-4 bg-slate-800/40 p-4 rounded-2xl border border-white/5 flex-row items-center justify-between">
+                                                        <View className="flex-1">
+                                                            <Text className="text-white font-bold text-sm mb-1">{post.title}</Text>
+                                                            <Text className="text-slate-400 text-xs" numberOfLines={1}>{post.content}</Text>
+                                                        </View>
+                                                        <View className="flex-row gap-2 ml-4">
+                                                            <TouchableOpacity
+                                                                className="bg-blue-600/20 px-3 py-1.5 rounded-lg border border-blue-500/30"
+                                                                onPress={() => console.log('Edit post:', post.id)}
+                                                            >
+                                                                <Text className="text-blue-400 text-xs font-bold">수정</Text>
+                                                            </TouchableOpacity>
+                                                            <TouchableOpacity
+                                                                className="bg-red-500/20 px-3 py-1.5 rounded-lg border border-red-500/30"
+                                                                onPress={() => deletePost(post.id)}
+                                                            >
+                                                                <Text className="text-red-400 text-xs font-bold">삭제</Text>
+                                                            </TouchableOpacity>
+                                                        </View>
+                                                    </View>
+                                                ))
+                                        ) : (
+                                            <View className="items-center py-20">
+                                                <View className="w-16 h-16 rounded-full bg-slate-800/50 items-center justify-center mb-4">
+                                                    <Database size={32} color="#475569" />
+                                                </View>
+                                                <Text className="text-slate-500 text-base">작성한 게시글이 없습니다</Text>
+                                            </View>
+                                        )}
+                                    </ScrollView>
+                                </View>
+                            )}
                         </View>
                     </View>
                 </View>

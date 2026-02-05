@@ -13,8 +13,8 @@ interface FeedNotification {
 
 interface MainLayoutProps {
     children: React.ReactNode;
-    viewMode: 'feed' | 'dashboard' | 'connect' | 'lounge' | 'workspace' | 'public_profile' | 'settings';
-    setViewMode: (mode: 'feed' | 'dashboard' | 'connect' | 'lounge' | 'workspace' | 'public_profile' | 'settings') => void;
+    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings';
+    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings') => void;
     activeCategory: string;
     setActiveCategory: (category: string) => void;
     user: any;

@@ -12,7 +12,6 @@ interface SidebarProps {
 export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
     const homeItems = [
-        { id: 'home', icon: Home, label: '홈' },
         { id: 'agent', icon: Zap, label: '에이전트' },
         { id: 'chat', icon: MessageSquare, label: '채팅' },
         { id: 'scraps', icon: Bookmark, label: '스크랩' },
@@ -27,8 +26,8 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 key={item.id}
                 onPress={() => onTabChange(item.id as WorkspaceTab)}
                 className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center ${isActive
-                        ? 'bg-blue-500/20 border border-blue-400/30'
-                        : 'bg-slate-800/30'
+                    ? 'bg-blue-500/20 border border-blue-400/30'
+                    : 'bg-slate-800/30'
                     }`}
                 style={{
                     shadowColor: isActive ? '#3B82F6' : 'transparent',
@@ -54,7 +53,28 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                     <Text className="text-xl font-bold text-white">✦</Text>
                 </View>
 
-                {/* Profile Button */}
+                {/* Home Button - Now at the Top */}
+                <TouchableOpacity
+                    onPress={() => onTabChange('home')}
+                    className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center mb-3 ${activeTab === 'home'
+                        ? 'bg-blue-500/20 border border-blue-400/30'
+                        : 'bg-slate-800/30'
+                        }`}
+                    style={{
+                        shadowColor: activeTab === 'home' ? '#3B82F6' : 'transparent',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                    }}
+                >
+                    <Home
+                        size={22}
+                        color={activeTab === 'home' ? '#60A5FA' : '#94A3B8'}
+                        strokeWidth={2.5}
+                    />
+                </TouchableOpacity>
+
+                {/* Profile Button - Now below Home */}
                 <TouchableOpacity
                     onPress={() => onTabChange('profile')}
                     className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center mb-4 ${activeTab === 'profile'

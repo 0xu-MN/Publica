@@ -13,6 +13,7 @@ interface ProfileCardProps {
     readOnly?: boolean;
     targetUserId?: string;
     onEditProfile?: () => void;
+    onShowPosts?: () => void;
     previewData?: {
         nickname: string;
         realName: string;
@@ -24,7 +25,7 @@ interface ProfileCardProps {
 
 const EXPERTISE_BADGES = ['AI/ML', 'Quantum', 'FinTech', 'Biotech'];
 
-export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, targetUserId, onEditProfile, previewData }: ProfileCardProps) => {
+export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, targetUserId, onEditProfile, onShowPosts, previewData }: ProfileCardProps) => {
     const { user } = useAuth();
     // In real app, fetch targetUserId if present.
     // For now, if readOnly is true and targetUserId is different, we simulate "Another User".
@@ -107,7 +108,6 @@ export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, 
         loadProfile();
 
         const interval = setInterval(loadProfile, 2000);
-        return () => clearInterval(interval);
         return () => clearInterval(interval);
     }, [readOnly, targetUserId, user, previewData]);
 
@@ -223,6 +223,12 @@ export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, 
                                 onPress={() => onEditProfile?.()}
                             >
                                 <Text className="text-white font-bold text-sm">프로필 수정</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                className="flex-1 bg-[#1E293B] py-3 rounded-xl items-center justify-center border border-white/10"
+                                onPress={onShowPosts}
+                            >
+                                <Text className="text-white font-bold text-sm">게시글 목록</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 className="w-12 items-center justify-center bg-[#1E293B] rounded-xl border border-white/10"

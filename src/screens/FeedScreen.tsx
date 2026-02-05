@@ -14,7 +14,6 @@ import { MainLayout } from '../components/MainLayout';
 import { ConnectHomeView } from '../components/ConnectHomeView';
 import { ConnectScreen } from './ConnectScreen';
 import { GovernmentDetailScreen } from './GovernmentDetailScreen';
-import { PersonalDashboard } from '../components/PersonalDashboard';
 import { SettingsScreen } from './SettingsScreen';
 import { Workspace } from '../components/Workspace';
 import { AnimatedPillNav } from '../components/AnimatedPillNav';
@@ -140,8 +139,8 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
-    // View Mode State: 'feed' | 'dashboard' | 'connect' | 'lounge' | 'workspace' | 'public_profile' | 'settings'
-    const [viewMode, setViewMode] = useState<'feed' | 'dashboard' | 'connect' | 'lounge' | 'workspace' | 'public_profile' | 'settings'>('connect');
+    // View Mode State: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings'
+    const [viewMode, setViewMode] = useState<'feed' | 'connect' | 'lounge' | 'workspace' | 'settings'>('connect');
     const [targetUserId, setTargetUserId] = useState<string | null>(null);
     const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
 
@@ -177,11 +176,11 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
 
                 if (savedViewMode) {
-                    // PROTECT DASHBOARD & WORKSPACE: If saved mode is dashboard/workspace but not logged in, default to feed
-                    if ((savedViewMode === 'workspace' || savedViewMode === 'dashboard') && !user) {
+                    // PROTECT WORKSPACE: If saved mode is workspace but not logged in, default to feed
+                    if (savedViewMode === 'workspace' && !user) {
                         setViewMode('feed');
                     } else {
-                        setViewMode(savedViewMode as 'feed' | 'dashboard' | 'connect' | 'lounge' | 'workspace');
+                        setViewMode(savedViewMode as any);
                     }
                 }
                 if (savedCategory) {
@@ -385,15 +384,11 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
         >
 
             {
-                viewMode === 'dashboard' ? (
-                    <PersonalDashboard onNavigateToSettings={() => setViewMode('settings')} />
-                ) : viewMode === 'public_profile' ? (
-                    <PersonalDashboard readOnly={true} targetUserId={targetUserId || undefined} onClose={() => setViewMode('feed')} />
-                ) : viewMode === 'workspace' ? (
-                    <Workspace onClose={() => setViewMode('dashboard')} />
+                viewMode === 'workspace' ? (
+                    <Workspace onClose={() => setViewMode('connect')} />
                 ) : viewMode === 'settings' ? (
-                    <SettingsScreen onBack={() => setViewMode('dashboard')} />
-                ) : null // Render nothing if not dashboard or workspace, as Connect/Lounge and feed are handled separately
+                    <SettingsScreen onBack={() => setViewMode('workspace')} />
+                ) : null
             }
             {viewMode === 'connect' && (
                 <ConnectHomeView
@@ -405,8 +400,9 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 <ConnectScreen
                     onLoginRequired={() => setAuthModalVisible(true)}
                     onNavigateToProfile={(userId) => {
-                        setTargetUserId(userId);
-                        setViewMode('public_profile');
+                        console.log('Navigate to profile:', userId);
+                        // Profile view is now integrated into Workspace or a separate component could be added if needed
+                        // For now, we just log it or we could navigate to a dedicated ProfileScreen
                     }}
                 />
             )}

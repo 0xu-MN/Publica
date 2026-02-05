@@ -36,7 +36,7 @@ export const RootNavigator = () => {
                     name="Home"
                     component={FeedScreen}
                     options={{
-                        tabBarLabel: '홈',
+                        tabBarLabel: '인사이트',
                         tabBarIcon: ({ color, size }) => <Home size={size} color={color} />
                     }}
                 />

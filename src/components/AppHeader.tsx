@@ -15,12 +15,10 @@ interface FeedNotification {
 }
 
 interface AppHeaderProps {
-    viewMode: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings';
-    setViewMode: (mode: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings') => void;
+    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings';
+    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings') => void;
     activeCategory: string;
     setActiveCategory: (category: string) => void;
-    supportSubMode: 'overview' | 'support' | 'connect';
-    setSupportSubMode: (mode: 'overview' | 'support' | 'connect') => void;
     user: any;
     onAuthModalOpen: () => void;
     onSignOut: () => void;
@@ -37,8 +35,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     setViewMode,
     activeCategory,
     setActiveCategory,
-    supportSubMode,
-    setSupportSubMode,
     user,
     onAuthModalOpen,
     onSignOut,
@@ -93,133 +89,66 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     </View>
                 </View>
 
-                {/* Centered Navigation (Desktop) */}
+                {/* Centered Navigation (Desktop) - 🌟 MORPHING NAVIGATION */}
                 {isDesktop && (
                     <View className="absolute inset-0 flex-row justify-center items-center pointer-events-none">
-                        <View className="flex-row items-center pointer-events-auto gap-4">
+                        <View className="pointer-events-auto flex-row items-center gap-3">
 
-                            {/* 1. Left Control: Home/Dashboard/Workspace Morphing */}
-                            {viewMode === 'feed' ? (
-                                <TouchableOpacity
-                                    className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all"
-                                    onPress={() => {
-                                        if (!user) {
-                                            onAuthModalOpen();
-                                        } else {
-                                            setViewMode('dashboard');
-                                        }
-                                    }}
-                                >
-                                    <Icons.Home size={20} color="#94A3B8" />
-                                </TouchableOpacity>
-                            ) : (viewMode === 'dashboard' || viewMode === 'workspace') ? (
-                                <View className="h-12 px-6 rounded-full bg-blue-600 flex-row items-center shadow-lg shadow-blue-500/20">
+                            {/* 1. Workspace Button */}
+                            <TouchableOpacity
+                                onPress={() => setViewMode('workspace')}
+                                className={`h-12 px-5 rounded-full border items-center justify-center shadow-lg backdrop-blur-md transition-all ${viewMode === 'workspace'
+                                    ? 'bg-purple-600 border-purple-500 shadow-purple-500/20'
+                                    : 'bg-slate-800/80 border-white/10 shadow-black/20'}`}
+                            >
+                                <View className="flex-row items-center">
+                                    <Icons.Zap size={16} color={viewMode === 'workspace' ? '#fff' : '#94A3B8'} style={{ marginRight: 6 }} />
+                                    <Text className={`text-sm font-bold ${viewMode === 'workspace' ? 'text-white' : 'text-slate-400'}`}>My Workspace</Text>
+                                </View>
+                            </TouchableOpacity>
+
+
+                            {/* 2. HUB Section */}
+                            {!(viewMode === 'workspace') ? (
+                                /* EXPANDED HUB: [ Connect Hub | Insight | Lounge ] */
+                                <View className="h-12 px-2 rounded-full bg-slate-800/80 border border-white/10 flex-row items-center shadow-lg shadow-black/20 backdrop-blur-md">
+
+                                    {/* Connect Hub */}
                                     <TouchableOpacity
-                                        className={`flex-row items-center transition-all ${viewMode === 'dashboard' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                                        onPress={() => {
-                                            if (!user) {
-                                                onAuthModalOpen();
-                                            } else {
-                                                setViewMode('dashboard');
-                                            }
-                                        }}
+                                        onPress={() => setViewMode('connect')}
+                                        className={`h-9 px-3 rounded-full justify-center ${viewMode === 'connect' ? 'bg-emerald-600' : 'hover:bg-white/5'}`}
                                     >
-                                        <Icons.Home size={16} color="#fff" style={{ marginRight: 6 }} />
-                                        <Text className="text-white font-bold text-sm">홈</Text>
+                                        <Text className={`text-[13px] font-bold ${viewMode === 'connect' ? 'text-white' : 'text-slate-400'}`}>Connect Hub</Text>
                                     </TouchableOpacity>
 
-                                    <View className="w-[1px] h-3 bg-white/30 mx-4" />
+                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
 
+                                    {/* Insight: All */}
                                     <TouchableOpacity
-                                        className={`flex-row items-center transition-all ${viewMode === 'workspace' ? 'opacity-100' : 'opacity-60 hover:opacity-100'}`}
-                                        onPress={() => {
-                                            if (!user) {
-                                                onAuthModalOpen();
-                                            } else {
-                                                setViewMode('workspace');
-                                            }
-                                        }}
+                                        onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }}
+                                        className={`h-9 px-3 rounded-full justify-center ${viewMode === 'feed' && activeCategory === '전체' ? 'bg-blue-600' : 'hover:bg-white/5'}`}
                                     >
-                                        <Icons.Sparkles size={16} color="#fff" style={{ marginRight: 6 }} />
-                                        <Text className="text-white font-bold text-sm">Workspace</Text>
+                                        <Text className={`text-[13px] font-bold ${viewMode === 'feed' && activeCategory === '전체' ? 'text-white' : 'text-slate-400'}`}>Insight</Text>
                                     </TouchableOpacity>
+
+                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
+
+                                    {/* Lounge */}
+                                    <TouchableOpacity
+                                        onPress={() => setViewMode('lounge')}
+                                        className={`h-9 px-3 rounded-full justify-center ${viewMode === 'lounge' ? 'bg-pink-600' : 'hover:bg-white/5'}`}
+                                    >
+                                        <Text className={`text-[13px] font-bold ${viewMode === 'lounge' ? 'text-white' : 'text-slate-400'}`}>Lounge</Text>
+                                    </TouchableOpacity>
+
                                 </View>
                             ) : (
+                                /* COLLAPSED HUB: (Globe Icon) */
                                 <TouchableOpacity
-                                    className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all"
-                                    onPress={() => {
-                                        if (!user) {
-                                            onAuthModalOpen();
-                                        } else {
-                                            setViewMode('dashboard');
-                                        }
-                                    }}
+                                    onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }}
+                                    className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all hover:scale-105 active:scale-95"
                                 >
-                                    <Icons.Home size={20} color="#94A3B8" />
-                                </TouchableOpacity>
-                            )}
-
-                            {/* 2. Center Control: Category Morphing */}
-                            {viewMode === 'feed' ? (
-                                <AnimatedPillNav
-                                    items={CATEGORIES}
-                                    activeItem={activeCategory}
-                                    onItemChange={setActiveCategory}
-                                    backgroundColor="rgba(15, 23, 42, 0.5)"
-                                    activeBackgroundColor="#3B82F6"
-                                    textColor="rgb(148, 163, 184)"
-                                    activeTextColor="rgb(255, 255, 255)"
-                                    borderColor="rgba(255, 255, 255, 0.1)"
-                                    renderIcon={(item, isActive) => {
-                                        const iconColor = isActive ? '#fff' : '#94A3B8';
-                                        if (item === '전체') return <Icons.Sparkles size={14} color={iconColor} />;
-                                        if (item === '과학') return <Icons.Atom size={14} color={iconColor} />;
-                                        if (item === '경제') return <Icons.TrendingUp size={14} color={iconColor} />;
-                                        return null;
-                                    }}
-                                />
-                            ) : (
-                                <TouchableOpacity
-                                    className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all"
-                                    onPress={() => setViewMode('feed')}
-                                >
-                                    <Icons.Folder size={20} color="#64748B" />
-                                </TouchableOpacity>
-                            )}
-
-                            {/* 3. Right Control: Support Button / Toggle */}
-                            {viewMode === 'support' ? (
-                                <View className="ml-2">
-                                    <AnimatedPillNav
-                                        items={['Connect Hub', 'Support', 'Lounge']}
-                                        activeItem={supportSubMode === 'overview' ? 'Connect Hub' : supportSubMode === 'support' ? 'Support' : 'Lounge'}
-                                        onItemChange={(item) => setSupportSubMode(item === 'Connect Hub' ? 'overview' : item === 'Support' ? 'support' : 'connect')}
-                                        backgroundColor="rgba(15, 23, 42, 0.5)"
-                                        activeBackgroundColor="#10B981"
-                                        textColor="rgb(148, 163, 184)"
-                                        activeTextColor="rgb(255, 255, 255)"
-                                        borderColor="rgba(255, 255, 255, 0.1)"
-                                        renderIcon={(item, isActive) => {
-                                            const iconColor = isActive ? '#fff' : '#94A3B8';
-                                            if (item === 'Connect Hub') {
-                                                return <Icons.Home size={14} color={iconColor} />;
-                                            } else if (item === 'Support') {
-                                                return <Icons.Building2 size={14} color={iconColor} />;
-                                            } else {
-                                                return <Icons.Users size={14} color={iconColor} />;
-                                            }
-                                        }}
-                                    />
-                                </View>
-                            ) : (
-                                <TouchableOpacity
-                                    className="w-12 h-12 rounded-full flex-row items-center justify-center bg-slate-800/50 border border-white/10 hover:bg-slate-700 transition-all"
-                                    onPress={() => {
-                                        setViewMode('support');
-                                        setSupportSubMode('overview');
-                                    }}
-                                >
-                                    <Icons.HeartHandshake size={20} color="#94A3B8" />
+                                    <Icons.Globe size={20} color="#64748B" />
                                 </TouchableOpacity>
                             )}
 
@@ -334,7 +263,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                         <TouchableOpacity
                                             className="p-4 border-b border-white/5 flex-row items-center hover:bg-white/5"
                                             onPress={() => {
-                                                setViewMode('dashboard');
+                                                setViewMode('workspace');
                                                 setIsUserMenuOpen(false);
                                             }}
                                         >

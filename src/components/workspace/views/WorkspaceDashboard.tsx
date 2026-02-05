@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
-import { Briefcase, AlertCircle, CheckCircle, Zap } from 'lucide-react-native';
+import { Briefcase, AlertCircle, CheckCircle, Zap, Layers, ChevronRight } from 'lucide-react-native';
 import { ProjectPipelineCard } from '../components/ProjectPipelineCard';
 import { ActiveProjectCard } from '../components/ActiveProjectCard';
 import { TodayScheduleWidget } from '../components/TodayScheduleWidget';
@@ -158,11 +158,17 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
                 {/* Main Content Grid - Middle Section with 3 Columns */}
                 <View className="flex-row gap-6 mb-6">
                     {/* Column 1 - Pipeline */}
-                    <View className="w-[360px]">
-                        <Text className="text-white font-bold text-sm mb-4 uppercase tracking-wide opacity-50">
-                            Active Strategy Pipeline
-                        </Text>
-                        <View className="gap-4">
+                    <View className="w-[400px] bg-[#0F172A]/80 rounded-2xl p-5 border border-white/5">
+                        {/* Header */}
+                        <TouchableOpacity className="flex-row items-center justify-between mb-4">
+                            <View className="flex-row items-center gap-2">
+                                <Layers size={18} color="#3B82F6" />
+                                <Text className="text-white font-bold text-base">Active Strategy Pipeline</Text>
+                            </View>
+                            <ChevronRight size={18} color="#475569" />
+                        </TouchableOpacity>
+
+                        <View className="gap-4 mb-4">
                             {pipelineProjects.map(project => (
                                 <ProjectPipelineCard
                                     key={project.id}
@@ -171,10 +177,17 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
                                 />
                             ))}
                         </View>
+
+                        {/* Footer Button */}
+                        <TouchableOpacity
+                            className="bg-white/5 py-3 rounded-xl border border-white/5 items-center justify-center mt-auto"
+                        >
+                            <Text className="text-slate-400 text-xs font-semibold">전체 파이프라인 보기</Text>
+                        </TouchableOpacity>
                     </View>
 
                     {/* Column 2 - Custom Recommendations */}
-                    <View className="w-[360px]">
+                    <View className="w-[400px]">
                         <RecommendedBusinessCard
                             items={recommendedBusinesses}
                             onExploreAll={() => console.log('Explore all')}

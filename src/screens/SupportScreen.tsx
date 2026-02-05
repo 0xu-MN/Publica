@@ -16,7 +16,17 @@ interface SupportScreenProps {
     onNavigateToProfile?: (userId: string) => void;
 }
 
-export const SupportScreen: React.FC<SupportScreenProps> = ({ subMode, onSubModeChange, onLoginRequired, onNavigateToProfile }) => {
+export const SupportScreen: React.FC<Partial<SupportScreenProps>> = ({
+    subMode: propSubMode,
+    onSubModeChange: propOnSubModeChange,
+    onLoginRequired,
+    onNavigateToProfile
+}) => {
+    const [internalSubMode, setInternalSubMode] = React.useState<'overview' | 'support' | 'connect'>('overview');
+
+    const subMode = propSubMode || internalSubMode;
+    const onSubModeChange = propOnSubModeChange || setInternalSubMode;
+
     const [selectedProgram, setSelectedProgram] = React.useState<any | null>(null);
 
     // subMode 변경 시 상세 페이지 닫기
