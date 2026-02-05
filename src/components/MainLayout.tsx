@@ -13,12 +13,10 @@ interface FeedNotification {
 
 interface MainLayoutProps {
     children: React.ReactNode;
-    viewMode: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings';
-    setViewMode: (mode: 'feed' | 'dashboard' | 'support' | 'workspace' | 'public_profile' | 'settings') => void;
+    viewMode: 'feed' | 'dashboard' | 'connect' | 'lounge' | 'workspace' | 'public_profile' | 'settings';
+    setViewMode: (mode: 'feed' | 'dashboard' | 'connect' | 'lounge' | 'workspace' | 'public_profile' | 'settings') => void;
     activeCategory: string;
     setActiveCategory: (category: string) => void;
-    supportSubMode: 'overview' | 'support' | 'connect';
-    setSupportSubMode: (mode: 'overview' | 'support' | 'connect') => void;
     user: any;
     onAuthModalOpen: () => void;
     onSignOut: () => void;
@@ -37,8 +35,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setViewMode,
     activeCategory,
     setActiveCategory,
-    supportSubMode,
-    setSupportSubMode,
     user,
     onAuthModalOpen,
     onSignOut,
@@ -59,8 +55,6 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 setViewMode={setViewMode}
                 activeCategory={activeCategory}
                 setActiveCategory={setActiveCategory}
-                supportSubMode={supportSubMode}
-                setSupportSubMode={setSupportSubMode}
                 user={user}
                 onAuthModalOpen={onAuthModalOpen}
                 onSignOut={onSignOut}

@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, TouchableOpacity, Text } from 'react-native';
-import { Home, Zap, Folder, Handshake } from 'lucide-react-native';
+import { View, TouchableOpacity, Text, ScrollView } from 'react-native';
+import { Home, Zap, MessageSquare, Bookmark, Settings, User } from 'lucide-react-native';
 
-export type WorkspaceTab = 'home' | 'agent' | 'files' | 'support';
+export type WorkspaceTab = 'home' | 'agent' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge';
 
 interface SidebarProps {
     activeTab: WorkspaceTab;
@@ -11,45 +11,94 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
-    const menuItems: { id: WorkspaceTab; icon: React.ElementType; label: string }[] = [
+    const homeItems = [
         { id: 'home', icon: Home, label: '홈' },
         { id: 'agent', icon: Zap, label: '에이전트' },
-        { id: 'files', icon: Folder, label: '파일' },
-        { id: 'support', icon: Handshake, label: '서포트' },
+        { id: 'chat', icon: MessageSquare, label: '채팅' },
+        { id: 'scraps', icon: Bookmark, label: '스크랩' },
     ];
 
+    const renderItem = (item: any) => {
+        const isActive = activeTab === item.id;
+        const Icon = item.icon;
+
+        return (
+            <TouchableOpacity
+                key={item.id}
+                onPress={() => onTabChange(item.id as WorkspaceTab)}
+                className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center ${isActive
+                        ? 'bg-blue-500/20 border border-blue-400/30'
+                        : 'bg-slate-800/30'
+                    }`}
+                style={{
+                    shadowColor: isActive ? '#3B82F6' : 'transparent',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 8,
+                }}
+            >
+                <Icon
+                    size={22}
+                    color={isActive ? '#60A5FA' : '#94A3B8'}
+                    strokeWidth={2.5}
+                />
+            </TouchableOpacity>
+        );
+    };
+
     return (
-        <View className="w-[80px] h-full bg-[#0A1628] border-r border-white/5 flex-col items-center py-6 z-50">
-            {/* Logo Placeholder or Top Spacer */}
-            <View className="mb-8 p-2 rounded-xl bg-blue-500/10">
-                <View className="w-5 h-5 rounded bg-blue-500" />
-            </View>
+        <View className="h-full p-3">
+            <View className="w-[64px] h-full bg-[#0F172A]/80 backdrop-blur-xl rounded-[24px] flex-col items-center py-4 shadow-2xl border border-white/5">
+                {/* Logo at Top */}
+                <View className="w-[48px] h-[48px] rounded-[16px] bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center mb-4 shadow-lg">
+                    <Text className="text-xl font-bold text-white">✦</Text>
+                </View>
 
-            {/* Navigation Items */}
-            <View className="flex-1 gap-6 w-full items-center">
-                {menuItems.map((item) => {
-                    const isActive = activeTab === item.id;
-                    const Icon = item.icon;
+                {/* Profile Button */}
+                <TouchableOpacity
+                    onPress={() => onTabChange('profile')}
+                    className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center mb-4 ${activeTab === 'profile'
+                        ? 'bg-blue-500/20 border border-blue-400/30'
+                        : 'bg-slate-800/30'
+                        }`}
+                    style={{
+                        shadowColor: activeTab === 'profile' ? '#3B82F6' : 'transparent',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                    }}
+                >
+                    <User
+                        size={22}
+                        color={activeTab === 'profile' ? '#60A5FA' : '#94A3B8'}
+                        strokeWidth={2.5}
+                    />
+                </TouchableOpacity>
 
-                    return (
-                        <TouchableOpacity
-                            key={item.id}
-                            onPress={() => onTabChange(item.id)}
-                            className={`items-center justify-center w-full py-3 border-l-2 ${isActive ? 'border-blue-500 bg-blue-500/5' : 'border-transparent'}`}
-                        >
-                            <View className={`p-2.5 rounded-xl transition-all ${isActive ? 'bg-blue-500 shadow-lg shadow-blue-500/30' : 'bg-transparent'}`}>
-                                <Icon
-                                    size={22}
-                                    color={isActive ? '#FFFFFF' : '#64748B'}
-                                    strokeWidth={isActive ? 2.5 : 2}
-                                />
-                            </View>
-                            <Text className={`text-[10px] mt-1.5 font-medium ${isActive ? 'text-blue-400' : 'text-slate-500'}`}>
-                                {item.label}
-                            </Text>
-                        </TouchableOpacity>
-                    );
-                })}
+                {/* Divider */}
+                <View className="w-8 h-[1px] bg-white/10 mb-4" />
+
+                {/* Main Navigation */}
+                <View className="flex-1 gap-3">
+                    {homeItems.map(renderItem)}
+                </View>
+
+                {/* Bottom Actions - Settings */}
+                <View className="w-8 h-[1px] bg-white/10 mb-4" />
+
+                <TouchableOpacity
+                    onPress={() => onTabChange('settings')}
+                    className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center ${activeTab === 'settings'
+                        ? 'bg-slate-500/20 border border-slate-400/30'
+                        : 'bg-slate-800/30'
+                        }`}
+                >
+                    <Settings
+                        size={22}
+                        color={activeTab === 'settings' ? '#94A3B8' : '#64748B'}
+                        strokeWidth={2.5}
+                    />
+                </TouchableOpacity>
             </View>
         </View>
     );

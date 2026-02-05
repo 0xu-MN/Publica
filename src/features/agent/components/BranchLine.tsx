@@ -15,7 +15,8 @@ export const BranchLine = ({ isSelected, myIndex, parentIndex }: BranchLineProps
 
     // 2. 좌표 정의
     const centerY = LAYOUT.CARD_HEIGHT / 2;
-    const startX = 0;
+    const ANCHOR_OFFSET = 4;  // Anchor dot is 4px outside card edge
+    const startX = -ANCHOR_OFFSET;  // Start from parent's right anchor position
     const startY = centerY + verticalDiff; // 부모의 Y 위치
     const endX = LAYOUT.CONNECTOR_WIDTH;
     const endY = centerY; // 나의 Y 위치

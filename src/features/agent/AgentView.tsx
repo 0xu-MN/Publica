@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, Dimensions, Platform, PanResponder, UIManager, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, Dimensions, Platform, PanResponder, UIManager, Alert, ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
-// 🌟 [필수] 아이콘 누락되면 하얀 화면 뜹니다. 꼭 확인하세요!
+// 아이콘 필수!
 import { RefreshCw, ZoomIn, ZoomOut, Folder, Save, X, Trash2 } from 'lucide-react-native';
 
 import { ModeDropdown } from './components/ModeDropdown';
@@ -12,23 +12,25 @@ import { FileUploader } from './components/FileUploader';
 import { LAYOUT } from './AgentLayout';
 import { useSessionManager } from './hooks/useSessionManager';
 
+// New feature imports can go here later if needed
+
 const { width, height } = Dimensions.get('window');
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
     UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-export const AgentView = () => {
-    // 1. User & Session Hook
+export const AgentView = ({ initialSession }: { initialSession?: any }) => {
+    // --- 1. User & Session Hook ---
     const [user, setUser] = useState<any>(null);
     useEffect(() => {
         supabase.auth.getUser().then(({ data }) => setUser(data.user));
     }, []);
 
-    // 🌟 [Hook] 세션 매니저 연결
+    // 세션 매니저 (저장/불러오기 담당)
     const { sessions, saveSession, loadSession, fetchSessions, deleteSession } = useSessionManager(user?.id);
 
-    // 2. UI States
+    // --- 2. UI States ---
     const [agentMode, setAgentMode] = useState("Hypothesis Generator");
     const [columns, setColumns] = useState<any[]>([]);
     const [selectedPath, setSelectedPath] = useState<any>({});
@@ -38,13 +40,23 @@ export const AgentView = () => {
     const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showHistory, setShowHistory] = useState(false);
 
-    // 3. Canvas States
+    // 🌟 [Load Prop] 외부에서 주입된 세션 로드
+    useEffect(() => {
+        if (initialSession) {
+            console.log("📂 Loading Session from Props:", initialSession.title);
+            setAgentMode(initialSession.mode);
+            setColumns(initialSession.workspace_data);
+            setChatHistory(initialSession.chat_history || []);
+        }
+    }, [initialSession]);
+
+    // --- 3. Canvas States ---
     const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
     const scale = useRef(new Animated.Value(1)).current;
     const [scaleDisplay, setScaleDisplay] = useState(1);
     const canvasRef = useRef<View>(null);
 
-    // 4. Web Zoom Fix
+    // --- 4. Web Zoom Fix (스크롤 방지) ---
     useEffect(() => {
         if (Platform.OS === 'web') {
             const canvasEl = canvasRef.current as unknown as HTMLElement;
@@ -72,58 +84,125 @@ export const AgentView = () => {
         })
     ).current;
 
-    // 5. Logic Handlers
+    // --- 5. AI Logic Handlers (Real) ---
+
+    // 🌟 [Real AI] 백엔드 호출 함수
+    const callAgent = async (text: string, context: string = "") => {
+        try {
+            console.log("🚀 Calling AI:", text);
+            const { data, error } = await supabase.functions.invoke('insight-agent-gateway', {
+                body: {
+                    user_input: text,
+                    user_job: "Strategist",
+                    task_mode: agentMode,
+                    context_history: context
+                }
+            });
+            if (error) throw error;
+            return data;
+        } catch (e: any) {
+            console.error("AI Error:", e);
+            Alert.alert("AI Error", e.message);
+            return null;
+        }
+    };
+
+    // 🌟 [Real AI] 시작 함수
     const handleStart = async (text: string) => {
+        if (!text.trim()) return;
         setLoading(true); setColumns([]); setActiveNode(null); setSuggestions([]);
 
-        // Mock Response for Testing (백엔드 없어도 작동하게)
-        setTimeout(() => {
-            const mockData = {
-                root_node: text,
-                branches: [{ id: '1', label: 'Test Node', description: 'This is a test node.', type: 'Insight' }]
-            };
-            setColumns([mockData]);
-            setSuggestions([
-                { label: "실행 계획 수립", type: "PLAN", query: "Plan" },
-                { label: "관련 논문 검색", type: "VERIFY", query: "Verify" }
-            ]);
-            setLoading(false);
-        }, 1000);
+        // Call Real AI
+        const res = await callAgent(text);
+
+        if (res?.workspace_data) {
+            setColumns([res.workspace_data]); // 맵 그리기
+
+            // 추천 칩 업데이트
+            if (res.suggested_actions && res.suggested_actions.length > 0) {
+                setSuggestions(res.suggested_actions);
+            } else {
+                // 백엔드가 추천 안 해주면 기본값이라도 띄움
+                setSuggestions([
+                    { label: "🔍 심층 분석", type: "EXPAND", query: `Analyze '${text}' in depth` },
+                    { label: "🗓️ 실행 계획 수립", type: "PLAN", query: "Create action plan" }
+                ]);
+            }
+        }
+        setLoading(false);
     };
 
-    const handleExpand = (branch: any, idx: number) => {
-        setActiveNode(branch); // 패널 열기
-    };
-
-    const handleChatSend = (text: string) => {
+    // 🌟 [Real AI] 채팅 함수
+    const handleChatSend = async (text: string) => {
         setChatHistory(prev => [...prev, { text, sender: 'me' }]);
         setLoading(true);
-        setTimeout(() => {
-            setChatHistory(prev => [...prev, { text: "AI 응답 테스트입니다.", sender: 'ai' }]);
-            setLoading(false);
-        }, 800);
+        setSuggestions([]); // 칩 숨기기
+
+        const contextStr = activeNode
+            ? `Current Node: ${activeNode.label}\nDescription: ${activeNode.description}`
+            : "General Context";
+
+        const res = await callAgent(text, contextStr);
+
+        if (res) {
+            if (res.workspace_data) {
+                setColumns(prev => [...prev, res.workspace_data]); // 맵 확장
+            }
+            if (res.chat_message) {
+                setChatHistory(prev => [...prev, { text: res.chat_message, sender: 'ai' }]);
+            }
+            if (res.suggested_actions) {
+                setSuggestions(res.suggested_actions); // 칩 업데이트
+            }
+        }
+        setLoading(false);
     };
 
-    // 🌟 [FIXED] 저장 버튼 로직
+    const handleExpand = async (branch: any, idx: number) => {
+        setActiveNode(branch);
+
+        // Don't expand if already at the last column
+        if (idx >= columns.length - 1) {
+            // Generate next steps via AI
+            setLoading(true);
+            setSuggestions([]);
+
+            const contextStr = `Expand on: ${branch.label}\nDescription: ${branch.description}`;
+            const res = await callAgent(
+                `Provide detailed next steps for: ${branch.label}`,
+                contextStr
+            );
+
+            if (res?.workspace_data) {
+                setColumns(prev => [...prev, res.workspace_data]);
+            }
+
+            if (res?.suggested_actions) {
+                setSuggestions(res.suggested_actions);
+            }
+
+            setLoading(false);
+        }
+    };
+
+    // 💾 저장 버튼 로직 (DB에 저장 -> 파일 관리자에 뜸)
     const handleSave = async () => {
         if (!user) { Alert.alert("오류", "로그인이 필요합니다."); return; }
         if (columns.length === 0) { Alert.alert("알림", "빈 화면은 저장할 수 없습니다."); return; }
 
         const title = columns[0]?.branches?.[0]?.label || columns[0]?.root_node || "Untitled Project";
-        console.log("Saving Project:", title); // 로그 확인
-
         await saveSession(title, agentMode, columns, chatHistory);
-        Alert.alert("성공", "프로젝트가 저장되었습니다.");
+        Alert.alert("성공", "프로젝트가 저장되었습니다. 파일 관리자에서 확인하세요.");
     };
 
-    // 🌟 [FIXED] 히스토리 열기 (에러 방지)
+    // 📂 히스토리 열기
     const handleOpenHistory = () => {
-        if (!user) { Alert.alert("오류", "로그인 상태를 확인해주세요."); return; }
-        fetchSessions(); // 목록 갱신
+        if (!user) { Alert.alert("오류", "로그인이 필요합니다."); return; }
+        fetchSessions();
         setShowHistory(true);
     };
 
-    // 🌟 [FIXED] 불러오기 로직
+    // 🔄 불러오기 로직
     const handleLoad = async (sessionId: string) => {
         const data = await loadSession(sessionId);
         if (data) {
@@ -134,20 +213,21 @@ export const AgentView = () => {
         }
     };
 
-    // 🌟 [FIXED] Planner 전환 로직 (맥락 유지)
+    // 🚀 Planner 전환 (맥락 유지)
     const handleSmartAction = (type: string, node: any) => {
-        console.log("Action Triggered:", type); // 로그 확인
         if (type === 'PLAN') {
             setAgentMode('Research Planner');
             setChatHistory(prev => [...prev, { text: `[System] '${node.label}' 기반 실행 계획 수립 시작.`, sender: 'ai' }]);
 
-            // 🔥 핵심: 기존 노드를 유지한 채로 새 맵 시작
+            // 🔥 맥락 유지: 선택한 노드를 루트로 새 트리 시작
             setColumns([{
                 root_node: `Plan: ${node.label}`,
-                branches: [node] // 선택한 노드를 루트로
+                branches: [node]
             }]);
 
-            setActiveNode(null); // 패널 닫기
+            // AI에게 바로 명령
+            handleStart(`Create a detailed action plan for: ${node.label}`);
+            setActiveNode(null);
         }
     };
 
@@ -179,7 +259,7 @@ export const AgentView = () => {
                 </View>
             )}
 
-            {/* 🌟 [Safety] History Sidebar (하얀 화면 방지 처리) */}
+            {/* History Sidebar (상단 폴더 아이콘용) */}
             {showHistory && (
                 <View style={styles.historySidebar}>
                     <View style={styles.sidebarHeader}>
@@ -187,7 +267,6 @@ export const AgentView = () => {
                         <TouchableOpacity onPress={() => setShowHistory(false)}><X size={20} color="#94A3B8" /></TouchableOpacity>
                     </View>
                     <View style={{ flex: 1 }}>
-                        {/* sessions가 undefined여도 에러 안 나게 처리 */}
                         {(!sessions || sessions.length === 0) ? (
                             <Text style={{ color: '#64748B', padding: 20, textAlign: 'center' }}>저장된 프로젝트가 없습니다.</Text>
                         ) : (
@@ -207,41 +286,42 @@ export const AgentView = () => {
                 </View>
             )}
 
-            {/* Canvas */}
-            <View ref={canvasRef} style={styles.canvasViewport} {...panResponder.panHandlers}>
-                <Animated.View style={[styles.canvasWorld, { transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scale }] }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
-                        {columns.length === 0 && !loading && (
-                            <TouchableOpacity style={styles.startBtn} onPress={() => handleStart("전기차 배터리")}>
-                                <Text style={styles.startBtnText}>Start Demo</Text>
-                            </TouchableOpacity>
-                        )}
-                        {columns.map((col, idx) => (
-                            <View key={idx} style={styles.columnWrapper}>
-                                <View style={styles.nodeList}>
-                                    {col.branches?.map((branch: any, bIdx: number) => (
-                                        <TowerCard
-                                            key={branch.id}
-                                            data={branch}
-                                            idx={idx}
-                                            myIndex={bIdx}
-                                            parentIndex={0} // 임시 고정
-                                            selected={false}
-                                            onSelect={() => handleExpand(branch, idx)}
-                                        />
-                                    ))}
+            {/* Main Content - Agent Workspace */}
+            <View style={{ flex: 1 }}>
+                <View ref={canvasRef} style={styles.canvasViewport} {...panResponder.panHandlers}>
+                    <Animated.View style={[styles.canvasWorld, { transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scale }] }]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                            {columns.length === 0 && !loading && (
+                                <TouchableOpacity style={styles.startBtn} onPress={() => handleStart("전기차 배터리 시장")}>
+                                    <Text style={styles.startBtnText}>Start Demo</Text>
+                                </TouchableOpacity>
+                            )}
+                            {columns.map((col, idx) => (
+                                <View key={idx} style={styles.columnWrapper}>
+                                    <View style={styles.nodeList}>
+                                        {col.branches?.map((branch: any, bIdx: number) => (
+                                            <TowerCard
+                                                key={branch.id}
+                                                data={branch}
+                                                idx={idx}
+                                                myIndex={bIdx}
+                                                parentIndex={0}
+                                                selected={false}
+                                                onSelect={() => handleExpand(branch, idx)}
+                                            />
+                                        ))}
+                                    </View>
                                 </View>
-                            </View>
-                        ))}
-                    </View>
-                </Animated.View>
-            </View>
+                            ))}
+                        </View>
+                    </Animated.View>
+                </View>
 
-            {/* Zoom Controls */}
-            <View style={styles.zoomContainer}>
-                <TouchableOpacity onPress={() => manualZoom(-0.2)}><ZoomOut size={16} color="#94A3B8" /></TouchableOpacity>
-                <Text style={styles.zoomText}>{Math.round(scaleDisplay * 100)}%</Text>
-                <TouchableOpacity onPress={() => manualZoom(0.2)}><ZoomIn size={16} color="#94A3B8" /></TouchableOpacity>
+                <View style={styles.zoomContainer}>
+                    <TouchableOpacity onPress={() => manualZoom(-0.2)}><ZoomOut size={16} color="#94A3B8" /></TouchableOpacity>
+                    <Text style={styles.zoomText}>{Math.round(scaleDisplay * 100)}%</Text>
+                    <TouchableOpacity onPress={() => manualZoom(0.2)}><ZoomIn size={16} color="#94A3B8" /></TouchableOpacity>
+                </View>
             </View>
 
             {/* Panels & Chat */}
@@ -249,7 +329,7 @@ export const AgentView = () => {
                 <DetailPanel
                     node={activeNode}
                     onClose={() => setActiveNode(null)}
-                    onAction={handleSmartAction} // 👈 이게 연결되어야 버튼이 작동함!
+                    onAction={handleSmartAction}
                 />
             )}
 
@@ -277,7 +357,34 @@ const styles = StyleSheet.create({
     startBtn: { marginTop: 100, marginLeft: 50, backgroundColor: '#2563EB', padding: 15, borderRadius: 8 },
     startBtnText: { color: 'white', fontWeight: 'bold' },
 
-    // History Sidebar
+    // Left Navigation Sidebar Styles
+    sidebar: {
+        width: 70,
+        backgroundColor: '#0F172A', // Darker slate blue for better visibility
+        borderRightWidth: 1,
+        borderColor: '#1E293B',
+        alignItems: 'center',
+        paddingTop: 16,
+        paddingBottom: 16
+    },
+    sidebarItem: {
+        width: 52,
+        height: 52,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: 'transparent',
+        marginBottom: 8
+    },
+    sidebarItemActive: {
+        backgroundColor: '#3B82F6',
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.4,
+        shadowRadius: 12
+    },
+
+    // Sidebar Styles
     historySidebar: { position: 'absolute', top: 0, left: 0, bottom: 0, width: 300, backgroundColor: '#0F172A', zIndex: 200, borderRightWidth: 1, borderColor: '#334155', padding: 20 },
     sidebarHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
     sidebarTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },

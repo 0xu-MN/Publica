@@ -30,7 +30,7 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
             {/* Header */}
             <View className="px-6 py-4 flex-row items-center justify-between border-b border-white/5 bg-[#020617] z-10">
                 <TouchableOpacity
-                    onPress={() => navigation.goBack()}
+                    onPress={onBack}
                     className="p-2 -ml-2 rounded-full active:bg-white/10"
                 >
                     <ArrowLeft size={24} color="white" />

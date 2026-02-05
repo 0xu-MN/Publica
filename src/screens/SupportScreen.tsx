@@ -35,6 +35,7 @@ export const SupportScreen: React.FC<SupportScreenProps> = ({ subMode, onSubMode
                 <ConnectHomeView
                     onNavigateToSupport={() => onSubModeChange('support')}
                     onNavigateToLounge={() => onSubModeChange('connect')}
+                    onProgramSelect={onProgramSelect}
                 />
             )}
 

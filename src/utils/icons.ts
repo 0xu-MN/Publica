@@ -76,7 +76,8 @@ import {
     TrendingDown,
     Upload,
     UserPlus,
-    Zap
+    Zap,
+    Globe
 } from 'lucide-react-native';
 
 export const Icons = {
@@ -155,5 +156,6 @@ export const Icons = {
     Upload,
     UserPlus,
     Zap,
-    X
+    X,
+    Globe
 } as const;
