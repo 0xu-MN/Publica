@@ -146,6 +146,7 @@ export const mockCommunityPosts: CommunityPost[] = [
   {
     id: 'c1',
     author: '김연구',
+    authorId: 'user_123',
     role: '박사과정',
     isAnonymous: false,
     category: '연구·학술',
@@ -160,6 +161,7 @@ export const mockCommunityPosts: CommunityPost[] = [
   {
     id: 'c2',
     author: '익명',
+    authorId: 'user_anonymous',
     role: '익명',
     isAnonymous: true,
     category: '고민·상담',
@@ -173,6 +175,7 @@ export const mockCommunityPosts: CommunityPost[] = [
   {
     id: 'c3',
     author: '이투자',
+    authorId: 'user_456',
     role: '퀀트 트레이더',
     isAnonymous: false,
     category: '투자·경제',
@@ -187,6 +190,7 @@ export const mockCommunityPosts: CommunityPost[] = [
   {
     id: 'c4',
     author: '최창업',
+    authorId: 'user_789',
     role: '스타트업 CEO',
     isAnonymous: false,
     category: '정부지원·펀딩',
@@ -201,6 +205,7 @@ export const mockCommunityPosts: CommunityPost[] = [
   {
     id: 'c5',
     author: '익명',
+    authorId: 'user_anonymous',
     role: '익명',
     isAnonymous: true,
     category: '커리어·네트워킹',
@@ -214,6 +219,7 @@ export const mockCommunityPosts: CommunityPost[] = [
   {
     id: 'c6',
     author: '한대학',
+    authorId: 'user_012',
     role: '석사과정',
     isAnonymous: false,
     category: '대학·대학원생',
@@ -227,6 +233,7 @@ export const mockCommunityPosts: CommunityPost[] = [
   {
     id: 'c7',
     author: '강코딩',
+    authorId: 'user_345',
     role: '프리랜서',
     isAnonymous: false,
     category: '오프토픽',

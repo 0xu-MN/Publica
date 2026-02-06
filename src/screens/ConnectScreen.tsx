@@ -10,6 +10,7 @@ import { PostDetailPanel } from '../components/PostDetailPanel';
 import { usePosts } from '../hooks/usePosts';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationModal } from '../components/NotificationModal';
+import { PublicProfileView } from '../components/PublicProfileView';
 import Footer from '../components/Footer';
 
 interface ConnectScreenProps {
@@ -67,7 +68,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
         const newPost: CommunityPost = {
             id: `new_${Date.now()}`,
             author: newPostData.isAnonymous ? '익명' : authorName,
-            authorId: user?.id,
+            authorId: user?.id || 'guest_user',
             role: newPostData.isAnonymous ? '익명' : '창업가',
             isAnonymous: newPostData.isAnonymous,
             category: newPostData.category,
@@ -108,12 +109,51 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
         await deletePost(id);
     };
 
-    const handleProfilePress = (userId: string) => {
-        if (onNavigateToProfile) onNavigateToProfile(userId);
-    };
-
     // --- RENDER HELPERS ---
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+
+    // Profile viewing state
+    const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
+    const profilePanelTranslateX = useRef(new Animated.Value(-900)).current;
+    const backdropOpacity = useRef(new Animated.Value(0)).current;
+
+    const handleProfilePress = (userId: string) => {
+        setSelectedProfileUserId(userId);
+    };
+
+    // Animate profile panel
+    useEffect(() => {
+        if (selectedProfileUserId) {
+            // Shooong! bouncy entry
+            Animated.parallel([
+                Animated.spring(profilePanelTranslateX, {
+                    toValue: 0,
+                    useNativeDriver: true,
+                    friction: 5,    // More bounce (lower friction)
+                    tension: 50,    // More snap
+                }),
+                Animated.timing(backdropOpacity, {
+                    toValue: 1,
+                    duration: 300,
+                    useNativeDriver: true,
+                })
+            ]).start();
+        } else {
+            // Smooth exit
+            Animated.parallel([
+                Animated.timing(profilePanelTranslateX, {
+                    toValue: -900,
+                    duration: 350,
+                    useNativeDriver: true,
+                }),
+                Animated.timing(backdropOpacity, {
+                    toValue: 0,
+                    duration: 250,
+                    useNativeDriver: true,
+                })
+            ]).start();
+        }
+    }, [selectedProfileUserId]);
 
     // --- END RESTORED LOGIC ---
 
@@ -240,6 +280,55 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                 {/* --- FOOTER (Main Page Scroll) --- */}
                 <Footer />
             </ScrollView>
+
+            {/* --- PUBLIC PROFILE VIEW BACKDROP --- */}
+            {selectedProfileUserId && (
+                <Animated.View
+                    style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        opacity: backdropOpacity,
+                        zIndex: 55,
+                    }}
+                >
+                    <TouchableOpacity
+                        style={{ flex: 1 }}
+                        activeOpacity={1}
+                        onPress={() => setSelectedProfileUserId(null)}
+                    />
+                </Animated.View>
+            )}
+
+            {/* --- PUBLIC PROFILE VIEW PANEL (Slides from left) --- */}
+            <Animated.View
+                style={{
+                    position: 'absolute',
+                    left: 20,
+                    top: 20,
+                    bottom: 20,
+                    width: 800,
+                    transform: [{ translateX: profilePanelTranslateX }],
+                    zIndex: 60,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 10 },
+                    shadowOpacity: 0.5,
+                    shadowRadius: 20,
+                }}
+                pointerEvents={selectedProfileUserId ? 'auto' : 'none'}
+            >
+                {selectedProfileUserId && (
+                    <View className="flex-1 bg-[#050B14] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl">
+                        <PublicProfileView
+                            userId={selectedProfileUserId}
+                            onClose={() => setSelectedProfileUserId(null)}
+                        />
+                    </View>
+                )}
+            </Animated.View>
 
             {/* --- DETAIL PANEL (Same as before) --- */}
             {selectedPostId && (

@@ -16,6 +16,7 @@ import { fetchScraps, toggleScrap } from '../../services/newsService';
 import { useAuth } from '../../contexts/AuthContext';
 import { usePosts } from '../../hooks/usePosts';
 import { MessageSquare, Bookmark, RefreshCw, X, ArrowLeft, Trash2, Edit2, Database } from 'lucide-react-native';
+import { ProfileEditPage } from '../ProfileEditPage';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
@@ -52,6 +53,10 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     const [showMyPosts, setShowMyPosts] = useState(false);
     const { posts, deletePost } = usePosts();
 
+    // Profile Edit state
+    const [showProfileEdit, setShowProfileEdit] = useState(false);
+    const profileEditPanelWidth = useRef(new Animated.Value(0)).current;
+
     // Persistence Logic
     useEffect(() => {
         const loadTab = async () => {
@@ -78,6 +83,16 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
             tension: 60,
         }).start();
     }, [showProfilePanel]);
+
+    // Animate profile edit panel
+    useEffect(() => {
+        Animated.spring(profileEditPanelWidth, {
+            toValue: showProfileEdit ? 0 : -900,  // Slide from -900 (left) to 0
+            useNativeDriver: true,
+            friction: 10,
+            tension: 65,
+        }).start();
+    }, [showProfileEdit]);
 
     const setActiveTab = async (tab: WorkspaceTab) => {
         // Handle profile tab separately - toggle panel instead of changing tab
@@ -261,8 +276,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                             {!showMyPosts ? (
                                 <ProfileCard
                                     onEditProfile={() => {
-                                        // Navigate to profile edit - for now just close panel
-                                        setShowProfilePanel(false);
+                                        setShowProfileEdit(true);
                                     }}
                                     onChatPress={() => {
                                         setShowProfilePanel(false);
@@ -324,9 +338,56 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                 </View>
             </Animated.View>
 
-            {/* Main Content - Gets pushed when panel opens */}
+            {/* Main Content - No longer affected by panels */}
             <View className="flex-1 flex-col">
                 {renderContent()}
+            </View>
+
+            {/* Animated Profile Edit Panel Container - Clips the slide-in effect */}
+            <View
+                style={{
+                    position: 'absolute',
+                    left: 404, // Sidebar(64) + ProfilePanel(340)
+                    top: 0,
+                    bottom: 0,
+                    width: 900,
+                    overflow: 'hidden',
+                    zIndex: 60,
+                }}
+                pointerEvents={showProfileEdit ? 'auto' : 'none'}
+            >
+                <Animated.View
+                    style={{
+                        flex: 1,
+                        transform: [{ translateX: profileEditPanelWidth }],
+                    }}
+                >
+                    <View className="h-full p-3 pl-0">
+                        <View className="h-full bg-[#0F172A]/95 backdrop-blur-xl rounded-r-[24px] border-r border-t border-b border-white/5 shadow-2xl">
+                            {/* Close Button */}
+                            <TouchableOpacity
+                                onPress={() => setShowProfileEdit(false)}
+                                className="absolute top-6 left-6 z-10 w-10 h-10 rounded-full bg-slate-800/60 backdrop-blur-sm items-center justify-center border border-white/10"
+                                style={{ opacity: showProfileEdit ? 1 : 0 }}
+                            >
+                                <X size={18} color="#94A3B8" strokeWidth={2.5} />
+                            </TouchableOpacity>
+
+                            {/* Profile Edit Content */}
+                            <View className="flex-1">
+                                {showProfileEdit && (
+                                    <ProfileEditPage
+                                        onClose={() => setShowProfileEdit(false)}
+                                        onSave={() => {
+                                            setShowProfileEdit(false);
+                                            // Profile will auto-reload from AsyncStorage
+                                        }}
+                                    />
+                                )}
+                            </View>
+                        </View>
+                    </View>
+                </Animated.View>
             </View>
 
             {/* Modals */}

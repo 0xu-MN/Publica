@@ -393,7 +393,9 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
             {viewMode === 'connect' && (
                 <ConnectHomeView
                     onNavigateToLounge={() => setViewMode('lounge')}
+                    onNavigateToWorkspace={() => setViewMode('workspace')}
                     onProgramSelect={(program) => setSelectedProgram(program)}
+                    onLoginPress={() => setAuthModalVisible(true)}
                 />
             )}
             {viewMode === 'lounge' && (

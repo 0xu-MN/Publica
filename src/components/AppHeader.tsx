@@ -135,7 +135,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
                                     {/* Lounge */}
                                     <TouchableOpacity
-                                        onPress={() => setViewMode('lounge')}
+                                        onPress={() => {
+                                            if (!user) {
+                                                onAuthModalOpen();
+                                            } else {
+                                                setViewMode('lounge');
+                                            }
+                                        }}
                                         className={`h-9 px-3 rounded-full justify-center ${viewMode === 'lounge' ? 'bg-pink-600' : 'hover:bg-white/5'}`}
                                     >
                                         <Text className={`text-[13px] font-bold ${viewMode === 'lounge' ? 'text-white' : 'text-slate-400'}`}>Lounge</Text>
