@@ -11,15 +11,21 @@ interface BranchLineProps {
 
 export const BranchLine = ({ isSelected, myIndex, parentIndex }: BranchLineProps) => {
     // 1. 부모와 나 사이의 수직 거리(Delta Y) 계산
-    const verticalDiff = (parentIndex - myIndex) * LAYOUT.NODE_HEIGHT;
+    const verticalDiff = (parentIndex - myIndex) * (LAYOUT.CARD_HEIGHT + LAYOUT.CARD_GAP);
 
     // 2. 좌표 정의
     const centerY = LAYOUT.CARD_HEIGHT / 2;
-    const ANCHOR_OFFSET = 4;  // Anchor dot is 4px outside card edge
-    const startX = -ANCHOR_OFFSET;  // Start from parent's right anchor position
-    const startY = centerY + verticalDiff; // 부모의 Y 위치
-    const endX = LAYOUT.CONNECTOR_WIDTH;
-    const endY = centerY; // 나의 Y 위치
+    // Parent right anchor is at -4 relative to parent right edge. 
+    // Gap is 50. So parent right edge is at -50 relative to my left edge.
+    // Parent anchor right is at -46 relative to my left edge.
+    // My anchor left is at -4 relative to my left edge.
+    // SVG viewbox starts at -50.
+    // Parent anchor X: -46 - (-50) = 4
+    // My anchor X: -4 - (-50) = 46
+    const startX = 4;
+    const startY = centerY + verticalDiff;
+    const endX = LAYOUT.CONNECTOR_WIDTH - 4; // LAYOUT.CONNECTOR_WIDTH is 50, so 46
+    const endY = centerY;
 
     // 3. 베지에 곡선 핸들
     const cp1X = LAYOUT.CONNECTOR_WIDTH * 0.5;
@@ -31,7 +37,7 @@ export const BranchLine = ({ isSelected, myIndex, parentIndex }: BranchLineProps
 
     return (
         <View style={styles.connectorPos}>
-            <Svg width={LAYOUT.CONNECTOR_WIDTH} height={LAYOUT.CARD_HEIGHT} style={{ overflow: 'visible' }}>
+            <Svg width={LAYOUT.CONNECTOR_WIDTH} height={LAYOUT.CARD_HEIGHT + Math.abs(verticalDiff)} style={{ overflow: 'visible' }}>
                 <Defs>
                     <LinearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
                         <Stop offset="0" stopColor={isSelected ? "#10B981" : "#334155"} stopOpacity="0.6" />

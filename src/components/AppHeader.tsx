@@ -1,7 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Animated, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Animated, ScrollView, Modal } from 'react-native';
 import { Icons } from '../utils/icons';
 import { AnimatedPillNav } from './AnimatedPillNav';
+import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
+import { useAuth } from '../contexts/AuthContext';
 
 const CATEGORIES = ['전체', '과학', '경제'];
 
@@ -15,8 +17,8 @@ interface FeedNotification {
 }
 
 interface AppHeaderProps {
-    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings';
-    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings') => void;
+    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants';
+    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants') => void;
     activeCategory: string;
     setActiveCategory: (category: string) => void;
     user: any;
@@ -45,11 +47,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     notifications,
     setNotifications
 }) => {
+    const { profile } = useAuth();
     const { width } = useWindowDimensions();
     const isDesktop = width >= 768;
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
     const hasNotification = notifications.some(n => !n.isRead);
     const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -260,7 +264,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     }}
                                     className="ml-5"
                                 >
-                                    <Icons.User color="#fff" size={24} className="opacity-90" />
+                                    <View className="flex-row items-center ml-5">
+                                        <View className="mr-3 items-end">
+                                            <Text className="text-white text-[13px] font-bold">
+                                                {user?.email?.split('@')[0]}
+                                            </Text>
+                                            <Text className="text-slate-400 text-[10px]">
+                                                {profile?.major_category || profile?.industry || user?.user_metadata?.user_role || '일반 사용자'}
+                                            </Text>
+                                        </View>
+                                        <Icons.User color="#fff" size={24} className="opacity-90" />
+                                    </View>
                                 </TouchableOpacity>
 
                                 {/* User Dropdown */}
@@ -279,7 +293,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                         <TouchableOpacity
                                             className="p-4 border-b border-white/5 flex-row items-center hover:bg-white/5"
                                             onPress={() => {
-                                                setViewMode('settings');
+                                                setIsProfileModalOpen(true);
                                                 setIsUserMenuOpen(false);
                                             }}
                                         >
@@ -303,6 +317,19 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     )}
                 </View>
             </View>
+
+            {/* Unified Profile Edit Modal */}
+            <Modal
+                visible={isProfileModalOpen}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setIsProfileModalOpen(false)}
+            >
+                <ProfileSetupScreen
+                    isEditing={true}
+                    onClose={() => setIsProfileModalOpen(false)}
+                />
+            </Modal>
         </View>
     );
 };

@@ -95,7 +95,7 @@ IMPORTANT: Return ONLY valid JSON. Do NOT include markdown code blocks or any te
     Keywords: ${keywords}`;
 
         // Native Fetch to Google Gemini API (v1beta)
-        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`;
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=${geminiKey}`;
 
         const response = await fetch(geminiUrl, {
             method: 'POST',

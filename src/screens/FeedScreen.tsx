@@ -16,12 +16,13 @@ import { ConnectScreen } from './ConnectScreen';
 import { GovernmentDetailScreen } from './GovernmentDetailScreen';
 import { SettingsScreen } from './SettingsScreen';
 import { Workspace } from '../components/Workspace';
-import { AnimatedPillNav } from '../components/AnimatedPillNav';
+import { GrantList } from './GrantList';
 import Footer from '../components/Footer';
 import { Separator } from '../components/Separator';
 import { OnboardingModal } from '../components/OnboardingModal';
 import { HotKeywords } from '../components/HotKeywords';
 import { InsightListItem } from '../components/InsightListItem';
+import { AnalysisResultScreen } from './AnalysisResultScreen';
 
 // Filter categories
 const CATEGORIES = ['전체'];
@@ -139,10 +140,11 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
-    // View Mode State: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings'
-    const [viewMode, setViewMode] = useState<'feed' | 'connect' | 'lounge' | 'workspace' | 'settings'>('connect');
+    const [viewMode, setViewMode] = useState<'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants'>('connect');
     const [targetUserId, setTargetUserId] = useState<string | null>(null);
     const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
+    const [selectedAnalysisResult, setSelectedAnalysisResult] = useState<any | null>(null);
+    const [pendingSession, setPendingSession] = useState<any | null>(null); // For passing draft to workspace
 
     // Load saved state on mount and handle Auth State changes
     useEffect(() => {
@@ -385,7 +387,10 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
 
             {
                 viewMode === 'workspace' ? (
-                    <Workspace onClose={() => setViewMode('connect')} />
+                    <Workspace
+                        onClose={() => setViewMode('connect')}
+                        initialSession={pendingSession}
+                    />
                 ) : viewMode === 'settings' ? (
                     <SettingsScreen onBack={() => setViewMode('workspace')} />
                 ) : null
@@ -394,8 +399,15 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 <ConnectHomeView
                     onNavigateToLounge={() => setViewMode('lounge')}
                     onNavigateToWorkspace={() => setViewMode('workspace')}
+                    onNavigateToGrantList={() => setViewMode('grants')}
                     onProgramSelect={(program) => setSelectedProgram(program)}
                     onLoginPress={() => setAuthModalVisible(true)}
+                />
+            )}
+            {viewMode === 'grants' && (
+                <GrantList
+                    onBack={() => setViewMode('connect')}
+                    onSelectGrant={(grant) => setSelectedProgram(grant)}
                 />
             )}
             {viewMode === 'lounge' && (
@@ -415,6 +427,50 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                     <GovernmentDetailScreen
                         program={selectedProgram}
                         onBack={() => setSelectedProgram(null)}
+                        onAnalyzeComplete={(result: any) => setSelectedAnalysisResult(result)}
+                    />
+                </View>
+            )}
+
+            {/* Analysis Result Overlay */}
+            {selectedAnalysisResult && (
+                <View className="absolute inset-0 z-[60] bg-[#020617]">
+                    <AnalysisResultScreen
+                        result={selectedAnalysisResult}
+                        onClose={() => setSelectedAnalysisResult(null)}
+                        onOpenDraft={(content) => {
+                            // 1. Construct Session Object
+                            const newSession = {
+                                id: 'draft-' + Date.now(),
+                                title: `Draft: ${selectedProgram?.title || 'New Project'}`,
+                                mode: 'Hypothesis Generator',
+                                workspace_data: [
+                                    {
+                                        root_node: "Business Plan Draft",
+                                        branches: [
+                                            {
+                                                id: 'node-draft-1',
+                                                label: 'Initial Draft',
+                                                description: content,
+                                                type: 'text',
+                                                status: 'done'
+                                            }
+                                        ]
+                                    }
+                                ],
+                                chat_history: [
+                                    { sender: 'ai', text: `Here is the initial draft based on the analysis of ${selectedProgram?.title}. You can now edit and expand it here.` }
+                                ]
+                            };
+
+                            // 2. State Updates
+                            setPendingSession(newSession);
+                            setSelectedAnalysisResult(null);
+                            setSelectedProgram(null);
+
+                            // 3. Navigate
+                            setViewMode('workspace');
+                        }}
                     />
                 </View>
             )}

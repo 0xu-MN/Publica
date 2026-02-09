@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Layers } from 'lucide-react-native';
 import { BranchLine } from './BranchLine';
 import { LAYOUT } from '../AgentLayout';
@@ -11,60 +11,80 @@ interface TowerCardProps {
     idx: number;
     myIndex: number;
     parentIndex: number;
+    loading?: boolean;
 }
 
-export const TowerCard = ({ data, selected, onSelect, idx, myIndex, parentIndex }: TowerCardProps) => (
-    <View style={styles.nodeWrapper}>
+export const TowerCard = ({ data, selected, onSelect, idx, myIndex, parentIndex, loading }: TowerCardProps) => {
+    const pulseAnim = React.useRef(new Animated.Value(1)).current;
 
-        {/* Branch Line (루트 제외) */}
-        {idx > 0 && (
-            <BranchLine
-                isSelected={selected}
-                myIndex={myIndex}
-                parentIndex={parentIndex}
-            />
-        )}
+    React.useEffect(() => {
+        if (loading) {
+            Animated.loop(
+                Animated.sequence([
+                    Animated.timing(pulseAnim, { toValue: 1.05, duration: 500, useNativeDriver: true }),
+                    Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+                ])
+            ).start();
+        } else {
+            pulseAnim.setValue(1);
+        }
+    }, [loading]);
 
-        {/* Left Anchor Dot */}
-        {idx > 0 && <View style={[styles.anchorDot, styles.anchorLeft, selected && styles.anchorActive]} />}
+    return (
+        <View style={styles.nodeWrapper}>
 
-        <TouchableOpacity
-            style={[styles.card, selected && styles.cardSelected]}
-            onPress={onSelect}
-            activeOpacity={0.95}
-        >
-            <View style={styles.cardHeader}>
-                <Text style={styles.stepLabel}>STEP {idx + 1}</Text>
-                {selected && <View style={styles.statusIndicator} />}
-            </View>
-
-            <Text style={[styles.cardTitle, selected && { color: '#10B981' }]} numberOfLines={2}>
-                {data.label}
-            </Text>
-
-            <View style={styles.divider} />
-
-            <View style={styles.cardBody}>
-                <View style={styles.listItem}>
-                    <View style={[styles.bullet, selected && { backgroundColor: '#10B981' }]} />
-                    <Text style={styles.listText} numberOfLines={4}>
-                        {data.description || "Analysis provided..."}
-                    </Text>
-                </View>
-            </View>
-
-            {data.references && (
-                <View style={styles.cardFooter}>
-                    <Layers size={10} color="#64748B" style={{ marginRight: 4 }} />
-                    <Text style={styles.metaText}>{data.references.length} Sources</Text>
-                </View>
+            {/* Branch Line (루트 제외) */}
+            {idx > 0 && (
+                <BranchLine
+                    isSelected={selected}
+                    myIndex={myIndex}
+                    parentIndex={parentIndex}
+                />
             )}
-        </TouchableOpacity>
 
-        {/* Right Anchor Dot */}
-        <View style={[styles.anchorDot, styles.anchorRight, selected && styles.anchorActive]} />
-    </View>
-);
+            {/* Left Anchor Dot */}
+            {idx > 0 && <View style={[styles.anchorDot, styles.anchorLeft, selected && styles.anchorActive]} />}
+
+            <Animated.View style={{ transform: [{ scale: pulseAnim }] }}>
+                <TouchableOpacity
+                    style={[styles.card, selected && styles.cardSelected, loading && { borderColor: '#3B82F6' }]}
+                    onPress={onSelect}
+                    activeOpacity={0.95}
+                >
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.stepLabel}>STEP {idx + 1}</Text>
+                        {selected && <View style={[styles.statusIndicator, loading && { backgroundColor: '#3B82F6' }]} />}
+                    </View>
+
+                    <Text style={[styles.cardTitle, selected && { color: '#10B981' }, loading && { color: '#3B82F6' }]} numberOfLines={2}>
+                        {data.label}
+                    </Text>
+
+                    <View style={styles.divider} />
+
+                    <View style={styles.cardBody}>
+                        <View style={styles.listItem}>
+                            <View style={[styles.bullet, selected && { backgroundColor: '#10B981' }, loading && { backgroundColor: '#3B82F6' }]} />
+                            <Text style={styles.listText} numberOfLines={4}>
+                                {data.description || "Analysis provided..."}
+                            </Text>
+                        </View>
+                    </View>
+
+                    {data.references && (
+                        <View style={styles.cardFooter}>
+                            <Layers size={10} color="#64748B" style={{ marginRight: 4 }} />
+                            <Text style={styles.metaText}>{data.references.length} Sources</Text>
+                        </View>
+                    )}
+                </TouchableOpacity>
+            </Animated.View>
+
+            {/* Right Anchor Dot */}
+            <View style={[styles.anchorDot, styles.anchorRight, selected && styles.anchorActive, loading && styles.anchorLoading]} />
+        </View>
+    );
+};
 
 const styles = StyleSheet.create({
     nodeWrapper: { position: 'relative', alignItems: 'center', height: LAYOUT.CARD_HEIGHT },
@@ -91,4 +111,5 @@ const styles = StyleSheet.create({
     anchorLeft: { left: -4 },
     anchorRight: { right: -4 },
     anchorActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
+    anchorLoading: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
 });

@@ -1,8 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { X, Check, Building2, Beaker, ShieldCheck, ChevronRight, Briefcase, Crown, ArrowRight, Plus, Trash2, Award, Activity } from 'lucide-react-native';
+import { X, Check, Building2, Beaker, ShieldCheck, ChevronRight, Briefcase, Crown, ArrowRight, Plus, Trash2, Award, Activity, Camera, RotateCcw } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as DocumentPicker from 'expo-document-picker';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileEditPageProps {
     onClose: () => void;
@@ -26,16 +29,10 @@ interface QualificationEntry {
     date: string;
 }
 
-// 🏢 JOB CATEGORIES HIERARCHY
-const JOB_CATEGORIES: Record<string, string[]> = {
-    'Economy': ['Macroeconomics', 'Stock Market', 'Venture Capital', 'Real Estate', 'Crypto/Blockchain'],
-    'Science': ['Biotechnology', 'Physics', 'Chemistry', 'AI/Computer Science', 'Environmental Science'],
-    'Art & Design': ['Graphic Design', 'UI/UX', 'Fine Arts', 'Media Arts'],
-    'Business': ['Marketing', 'Strategy', 'Sales', 'HR', 'Management'],
-    'Other': ['General', 'Student', 'Freelancer']
-};
+import { JOB_CATEGORIES } from '../utils/profileConstants';
 
 export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
+    const { refreshProfile } = useAuth();
     // 1. Profile State
     const [nickname, setNickname] = useState('');
     const [realName, setRealName] = useState('');
@@ -73,12 +70,19 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
                 const fullJob = data.job || '';
                 if (fullJob.includes('(') && fullJob.includes(')')) {
                     const [cat, sub] = fullJob.split(' (');
+                    const cleanSub = sub.replace(')', '');
                     if (JOB_CATEGORIES[cat]) {
                         setSelectedCategory(cat);
-                        setSelectedSubfield(sub.replace(')', ''));
+                        setSelectedSubfield(cleanSub);
+                        setCustomJob('');
                     } else {
                         setCustomJob(fullJob);
                     }
+                } else if (JOB_CATEGORIES[fullJob]) {
+                    // Direct category match (e.g. "Science", "Economy")
+                    setSelectedCategory(fullJob);
+                    setSelectedSubfield('');
+                    setCustomJob('');
                 } else {
                     setCustomJob(fullJob);
                 }
@@ -91,10 +95,25 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
         }
     };
 
+    const handlePickImage = async () => {
+        try {
+            const result = await DocumentPicker.getDocumentAsync({
+                type: 'image/*',
+                copyToCacheDirectory: true,
+            });
+
+            if (!result.canceled && result.assets && result.assets.length > 0) {
+                setImageUrl(result.assets[0].uri);
+            }
+        } catch (err) {
+            console.error('Error picking image:', err);
+        }
+    };
+
     // 4. Save Logic
     const handleSave = async () => {
         try {
-            const finalJob = customJob || (selectedSubfield ? `${selectedCategory} (${selectedSubfield})` : selectedCategory);
+            const finalJob = customJob || selectedCategory;
 
             const profileData = {
                 nickname, realName, bio, imageUrl, interests,
@@ -103,6 +122,39 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
                 qualifications
             };
             await AsyncStorage.setItem('user_profile', JSON.stringify(profileData));
+
+            // Sync to Supabase
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                // Determine user_type from state or existing profile if possible
+                // For now, we update the fields we have. 
+                // Note: Profiles table uses specific columns like industry, major_category.
+                const updates: any = {
+                    id: user.id,
+                    updated_at: new Date().toISOString(),
+                };
+
+                // Pattern matching for industry/major
+                if (customJob) {
+                    updates.industry = customJob;
+                } else if (selectedCategory) {
+                    updates.industry = selectedCategory;
+                    updates.major_category = selectedCategory;
+                }
+
+                await supabase
+                    .from('profiles')
+                    .upsert(updates);
+
+                // Sync to Auth Metadata for Header display
+                await supabase.auth.updateUser({
+                    data: { user_role: finalJob }
+                });
+            }
+
+            // Reload profile in AuthContext
+            await refreshProfile?.();
+
             onSave();
             onClose();
         } catch (e) {
@@ -160,7 +212,7 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
         setInterests(interests.filter(i => i !== interest));
     };
 
-    const displayJob = customJob || (selectedSubfield ? `${selectedCategory} (${selectedSubfield})` : selectedCategory);
+    const displayJob = customJob || selectedCategory;
 
     return (
         <View className="flex-1 bg-[#050B14] flex-row">
@@ -177,26 +229,40 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
-                    {/* Profile Image */}
                     <View className="mb-8">
                         <Text className="text-slate-500 text-xs font-bold uppercase mb-4 tracking-wider">프로필 이미지</Text>
-                        <View className="bg-[#0F172A] p-6 rounded-3xl border border-white/5">
-                            <View className="w-32 h-32 rounded-full bg-slate-800 mx-auto mb-4 overflow-hidden border-2 border-white/10">
+                        <View className="bg-[#0F172A] p-6 rounded-3xl border border-white/5 items-center">
+                            <View className="w-32 h-32 rounded-full bg-slate-800 mb-6 overflow-hidden border-2 border-white/10 shadow-lg shadow-black/50">
                                 {imageUrl ? (
                                     <Image source={{ uri: imageUrl }} className="w-full h-full" />
                                 ) : (
                                     <View className="w-full h-full items-center justify-center">
-                                        <Text className="text-slate-600 text-4xl">IMG</Text>
+                                        <Camera size={40} color="#334155" />
                                     </View>
                                 )}
                             </View>
-                            <TextInput
-                                className="bg-slate-900 border border-white/10 rounded-xl p-3 text-white text-sm"
-                                placeholder="https://example.com/profile.jpg"
-                                placeholderTextColor="#475569"
-                                value={imageUrl}
-                                onChangeText={setImageUrl}
-                            />
+
+                            <View className="flex-row gap-3 w-full">
+                                <TouchableOpacity
+                                    onPress={handlePickImage}
+                                    className="flex-1 flex-row items-center justify-center bg-blue-600 h-12 rounded-xl border border-blue-400/30"
+                                >
+                                    <Plus size={18} color="white" className="mr-2" />
+                                    <Text className="text-white font-bold">이미지 업로드</Text>
+                                </TouchableOpacity>
+
+                                {imageUrl && (
+                                    <TouchableOpacity
+                                        onPress={() => setImageUrl('')}
+                                        className="w-12 h-12 items-center justify-center bg-slate-800 rounded-xl border border-white/10"
+                                    >
+                                        <RotateCcw size={18} color="#94A3B8" />
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                            <Text className="mt-4 text-slate-500 text-[11px] text-center">
+                                JPG, PNG, GIF 파일을 지원하며, 최대 5MB까지 권장합니다.
+                            </Text>
                         </View>
                     </View>
 
@@ -229,10 +295,9 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
 
                     {/* Profession */}
                     <View className="mb-8">
-                        <Text className="text-slate-500 text-xs font-bold uppercase mb-4 tracking-wider">직업 / 전문분야</Text>
+                        <Text className="text-slate-500 text-xs font-bold uppercase mb-4 tracking-wider">산업 / 전공 분야</Text>
                         <View className="bg-[#0F172A] p-6 rounded-3xl border border-white/5">
-                            <Text className="text-slate-300 text-sm mb-3 font-medium">산업 분야</Text>
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2 mb-4">
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row gap-2">
                                 {Object.keys(JOB_CATEGORIES).map(cat => (
                                     <TouchableOpacity
                                         key={cat}
@@ -243,19 +308,6 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
-
-                            <Text className="text-slate-300 text-sm mb-3 font-medium">전문 분야</Text>
-                            <View className="flex-row flex-wrap gap-2">
-                                {JOB_CATEGORIES[selectedCategory]?.map(sub => (
-                                    <TouchableOpacity
-                                        key={sub}
-                                        onPress={() => { setSelectedSubfield(sub); setCustomJob(''); }}
-                                        className={`px-4 py-2 rounded-full border ${selectedSubfield === sub ? 'bg-blue-500/20 border-blue-500' : 'bg-slate-900 border-dashed border-slate-700'}`}
-                                    >
-                                        <Text className={`text-sm ${selectedSubfield === sub ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>{sub}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
                         </View>
                     </View>
 

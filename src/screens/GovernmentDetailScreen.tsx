@@ -1,26 +1,95 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, SafeAreaView, Platform, StatusBar } from 'react-native';
-import { ArrowLeft, Share2, Calendar, Building, CheckCircle, ExternalLink, Globe } from 'lucide-react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, SafeAreaView, Platform, StatusBar, ActivityIndicator } from 'react-native';
+import { ArrowLeft, Share2, Calendar, Building, CheckCircle, ExternalLink, Globe, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface GovernmentDetailScreenProps {
     program: any;
     onBack: () => void;
+    onAnalyzeComplete?: (result: any) => void;
 }
 
-export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ program, onBack }) => {
+export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ program, onBack, onAnalyzeComplete }) => {
+    const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+    const [analysisStep, setAnalysisStep] = React.useState(0);
 
     if (!program) return null;
 
-    const handleOpenLink = () => {
-        if (program.link) {
+    const handleOpenOriginal = () => {
+        if (program.original_url) {
+            Linking.openURL(program.original_url);
+        } else if (program.link) {
             Linking.openURL(program.link);
+        } else {
+            // Fallback for demo
+            Linking.openURL('https://www.mss.go.kr');
         }
     };
+
+    const handleDownloadFile = () => {
+        if (program.file_url) {
+            Linking.openURL(program.file_url);
+        } else {
+            // Fallback for demo
+            console.log('No file url, showing alert');
+        }
+    };
+
+    // Placeholder for handleOpenLink to avoid breaking existing calls if any
+    const handleOpenLink = handleOpenOriginal;
 
     const handleShare = () => {
         // Implement share logic later
         console.log('Share pressed');
+    };
+
+    const handleAnalyze = async () => {
+        setIsAnalyzing(true);
+        setAnalysisStep(1); // Reading
+
+        try {
+            // Simulation logic
+            setTimeout(() => setAnalysisStep(2), 1500); // Analysis
+            setTimeout(() => setAnalysisStep(3), 3000); // Drafting
+
+            // Race Condition: Real API vs Timeout (Fallback)
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Timeout")), 5000)
+            );
+
+            // Replace with your actual API call
+            // const apiPromise = fetch('/api/agent/run-full', ...);
+
+            // For DEMO: Force failure to show Mock or use Mock directly
+            // await Promise.race([apiPromise, timeoutPromise]);
+
+            // MOCK RESULT (Dynamic based on Program)
+            const mockResult = {
+                strategy: `## 🎯 Strategy for ${program.title}\n\n**Analysis:** Based on your profile, this grant from **${program.agency}** is a strong match.\n\n**Key Strengths:**\n- Alignment with **${program.tech_field}**\n- Matches your **Graduate Student** status.\n\n**Recommended Action:** Emphasize your technical novelty in the application.`,
+                initial_draft_content: `# Business Plan: ${program.title}\n\n## 1. Problem Statement\nCurrently, there is a lack of efficient solutions in the ${program.tech_field} sector...\n\n## 2. Solution\nOur proposed solution leverages AI to solve this by...\n\n## 3. Market Analysis\nThe market for ${program.tech_field} is growing rapidly...`
+            };
+
+            setTimeout(() => {
+                setIsAnalyzing(false);
+                console.log("Navigating with Result:", mockResult);
+                if (onAnalyzeComplete) {
+                    onAnalyzeComplete(mockResult);
+                }
+            }, 4500);
+
+        } catch (e) {
+            console.log("API Failed, using Fallback");
+
+            // Fallback Result
+            const fallbackResult = {
+                strategy: "## ⚠️ Offline Analysis\n\nSystem could not reach the advanced agent, but based on your **Bio** background, we recommend emphasizing your lab research data.",
+            };
+
+            setIsAnalyzing(false);
+            if (onAnalyzeComplete) {
+                onAnalyzeComplete(fallbackResult);
+            }
+        }
     };
 
     return (
@@ -172,36 +241,83 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                         <View className="h-[1px] bg-white/5 my-3" />
 
                         <TouchableOpacity
-                            onPress={handleOpenLink}
-                            className="flex-row items-center justify-between bg-slate-800 p-3 rounded-xl border border-white/5 active:bg-slate-700"
+                            onPress={handleDownloadFile}
+                            className={`flex-row items-center justify-between bg-slate-800 p-3 rounded-xl border border-white/5 active:bg-slate-700 ${!program.file_url ? 'opacity-50' : ''}`}
+                            disabled={!program.file_url}
                         >
                             <View className="flex-row items-center gap-3">
                                 <View className="bg-blue-500/10 p-2 rounded-lg">
-                                    <Globe size={20} color="#3B82F6" />
+                                    <Globe size={20} color={program.file_url ? "#3B82F6" : "#94A3B8"} />
                                 </View>
                                 <View>
-                                    <Text className="text-white font-medium">공고문 및 신청서식 내려받기</Text>
-                                    <Text className="text-slate-500 text-xs">원문 사이트에서 파일 다운로드</Text>
+                                    <Text className="text-white font-medium">
+                                        {program.file_url ? '공고문 및 신청서식 내려받기' : '다운로드 가능한 파일 없음'}
+                                    </Text>
+                                    <Text className="text-slate-500 text-xs">
+                                        {program.file_url ? '원문 사이트에서 파일 다운로드' : '해당 공고는 첨부파일이 제공되지 않습니다.'}
+                                    </Text>
                                 </View>
                             </View>
-                            <ArrowLeft size={16} color="#94A3B8" style={{ transform: [{ rotate: '180deg' }] }} />
+                            {program.file_url && (
+                                <ArrowLeft size={16} color="#94A3B8" style={{ transform: [{ rotate: '180deg' }] }} />
+                            )}
                         </TouchableOpacity>
                     </View>
 
                 </View>
             </ScrollView>
 
+            {/* Analysis Overlay Modal (Simple Implementation) */}
+            {isAnalyzing && (
+                <View className="absolute inset-0 bg-black/80 items-center justify-center z-50">
+                    <View className="bg-slate-900 p-8 rounded-3xl items-center w-[80%] border border-blue-500/30">
+                        <ActivityIndicator size="large" color="#3B82F6" className="mb-6" />
+                        <Text className="text-white text-xl font-bold mb-2">AI 전략 분석 중...</Text>
+                        <View className="items-start w-full px-4 gap-3 mt-4">
+                            <View className="flex-row items-center gap-3">
+                                <View className={`w-2 h-2 rounded-full ${analysisStep >= 1 ? 'bg-blue-500' : 'bg-slate-700'}`} />
+                                <Text className={`${analysisStep >= 1 ? 'text-blue-400' : 'text-slate-600'}`}>공고문 PDF 분석</Text>
+                            </View>
+                            <View className="flex-row items-center gap-3">
+                                <View className={`w-2 h-2 rounded-full ${analysisStep >= 2 ? 'bg-purple-500' : 'bg-slate-700'}`} />
+                                <Text className={`${analysisStep >= 2 ? 'text-purple-400' : 'text-slate-600'}`}>합격 전략 수립 (Gemini Pro)</Text>
+                            </View>
+                            <View className="flex-row items-center gap-3">
+                                <View className={`w-2 h-2 rounded-full ${analysisStep >= 3 ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+                                <Text className={`${analysisStep >= 3 ? 'text-emerald-400' : 'text-slate-600'}`}>사업계획서 초안 작성</Text>
+                            </View>
+                        </View>
+                    </View>
+                </View>
+            )}
+
             {/* Bottom Action Bar */}
             <View className="absolute bottom-0 left-0 right-0 bg-[#020617]/90 px-6 py-4 border-t border-white/10 pb-10"
                 style={{ paddingBottom: Platform.OS === 'ios' ? 40 : 16 }}
             >
-                <TouchableOpacity
-                    onPress={handleOpenLink}
-                    className="w-full bg-blue-600 rounded-xl py-4 flex-row items-center justify-center active:bg-blue-700"
-                >
-                    <Text className="text-white font-bold text-base mr-2">원문 공고 확인하기</Text>
-                    <ExternalLink size={18} color="white" />
-                </TouchableOpacity>
+                <View className="flex-row gap-3">
+                    <TouchableOpacity
+                        onPress={handleOpenOriginal}
+                        className="flex-1 bg-slate-800 rounded-xl py-4 flex-row items-center justify-center active:bg-slate-700 border border-white/10"
+                    >
+                        <Text className="text-slate-300 font-bold text-base mr-2">원문 공고</Text>
+                        <ExternalLink size={18} color="#CBD5E1" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        onPress={handleAnalyze}
+                        className="flex-2 flex-[2] bg-blue-600 rounded-xl py-4 flex-row items-center justify-center active:bg-blue-700 shadow-lg shadow-blue-500/30"
+                    >
+                        <LinearGradient
+                            colors={['#2563EB', '#1D4ED8']}
+                            className="absolute inset-0 rounded-xl"
+                        />
+                        <View className="flex-row items-center">
+                            <Text className="text-white font-bold text-base mr-2">AI 전략 분석하기</Text>
+                            <Zap size={18} color="white" fill="white" />
+                        </View>
+                    </TouchableOpacity>
+                </View>
             </View>
         </SafeAreaView>
     );

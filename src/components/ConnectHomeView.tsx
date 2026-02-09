@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, ActivityIndicator, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowRight, Sparkles, AlertCircle, Briefcase, Home, RefreshCcw, Users, Building2, Search, Filter, LayoutGrid, Plus, Bell, User as UserIcon, CheckCircle2 } from 'lucide-react-native';
-import { useSharedValue } from 'react-native-reanimated';
+import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { VerticalStackCarousel } from './VerticalStackCarousel';
 import { GovernmentCard } from './GovernmentCard';
 import { CommunityCard } from './CommunityCard';
@@ -17,6 +18,7 @@ interface ConnectHomeViewProps {
     onNavigateToSupport?: () => void;
     onNavigateToLounge?: () => void;
     onNavigateToWorkspace?: () => void;
+    onNavigateToGrantList?: () => void;
     onProgramSelect?: (program: any) => void;
     onLoginPress?: () => void;
 }
@@ -25,6 +27,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
     onNavigateToSupport,
     onNavigateToLounge,
     onNavigateToWorkspace,
+    onNavigateToGrantList,
     onProgramSelect,
     onLoginPress
 }) => {
@@ -103,6 +106,32 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
         loadData();
     }, []);
 
+    // Auto-scroll Animation for Lounge
+    const translateX = useSharedValue(0);
+    const CARD_WIDTH = 420;
+    const GAP = 24;
+    const TOTAL_ITEMS = communityPosts.length;
+    const TOTAL_WIDTH = (CARD_WIDTH + GAP) * TOTAL_ITEMS;
+
+    useEffect(() => {
+        if (communityPosts.length > 0) {
+            translateX.value = 0;
+            translateX.value = withRepeat(
+                withTiming(-TOTAL_WIDTH, {
+                    duration: 30000, // 30 seconds for one full loop
+                    easing: Easing.linear,
+                }),
+                -1, // Infinite
+                false // Don't reverse
+            );
+        }
+        return () => cancelAnimation(translateX);
+    }, [communityPosts.length, TOTAL_WIDTH]);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+        transform: [{ translateX: translateX.value }],
+    }));
+
     if (loading) {
         return (
             <View className="flex-1 bg-[#020617] items-center justify-center">
@@ -124,7 +153,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                 <View className="mb-8 pt-4 flex-row justify-between items-center">
                     <View>
                         <Text className="text-white text-5xl font-black tracking-tighter mb-2">CONNECT HUB</Text>
-                        <Text className="text-slate-400 text-lg">홍길동 연구원님의 사업 아이템에 맞춘 최적의 기회입니다.</Text>
+                        <Text className="text-slate-400 text-lg">{nickname || '방문자'} 연구원님의 사업 아이템에 맞춘 최적의 기회입니다.</Text>
                     </View>
                     <TouchableOpacity className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 flex-row items-center">
                         <Filter size={18} color="#94A3B8" />
@@ -329,8 +358,11 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                 </View>
                                 <Text className="text-white text-xl font-bold">정부사업 안내</Text>
                             </View>
-                            <TouchableOpacity className="bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
-                                <Text className="text-slate-500 text-[10px]">전체보기 {'>'}</Text>
+                            <TouchableOpacity
+                                onPress={onNavigateToGrantList}
+                                className="bg-white/5 px-3 py-1.5 rounded-md border border-white/10"
+                            >
+                                <Text className="text-blue-400 text-[10px] font-bold">맞춤형 공고 전체보기 {'>'}</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -520,49 +552,49 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                     </View>
 
                     <View className="relative">
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={{ gap: 24, paddingRight: 40 }}
-                        >
-                            {communityPosts.map((post, i) => (
-                                <TouchableOpacity
-                                    key={i}
-                                    onPress={() => {
-                                        if (!user) {
-                                            onLoginPress?.();
-                                        } else {
-                                            onNavigateToLounge?.();
-                                        }
-                                    }}
-                                    className="w-[420px] bg-[#0F172A] p-8 rounded-[40px] border border-white/5 min-h-[220px] justify-between shadow-xl"
-                                >
-                                    <View>
-                                        <View className="flex-row items-center gap-3 mb-6">
-                                            <View className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
-                                                <Image source={{ uri: `https://i.pravatar.cc/100?u=${post.author}` }} className="w-full h-full" />
+                        <View className="overflow-hidden">
+                            <Animated.View
+                                style={[{ flexDirection: 'row', gap: 24 }, animatedStyle]}
+                            >
+                                {[...communityPosts, ...communityPosts, ...communityPosts].map((post, i) => (
+                                    <TouchableOpacity
+                                        key={`${post.author}-${i}`}
+                                        onPress={() => {
+                                            if (!user) {
+                                                onLoginPress?.();
+                                            } else {
+                                                onNavigateToLounge?.();
+                                            }
+                                        }}
+                                        className="w-[420px] bg-[#0F172A] p-8 rounded-[40px] border border-white/5 min-h-[220px] justify-between shadow-xl"
+                                    >
+                                        <View>
+                                            <View className="flex-row items-center gap-3 mb-6">
+                                                <View className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
+                                                    <Image source={{ uri: `https://i.pravatar.cc/100?u=${post.author}` }} className="w-full h-full" />
+                                                </View>
+                                                <View>
+                                                    <Text className="text-white text-sm font-bold">{post.author}</Text>
+                                                    <Text className="text-slate-500 text-[10px]">{post.time}</Text>
+                                                </View>
                                             </View>
-                                            <View>
-                                                <Text className="text-white text-sm font-bold">{post.author}</Text>
-                                                <Text className="text-slate-500 text-[10px]">{post.time}</Text>
+                                            <Text className="text-slate-200 text-base font-bold leading-7 mb-4" numberOfLines={2}>{post.title}</Text>
+                                        </View>
+                                        <View className="flex-row items-center gap-4 border-t border-white/5 pt-4">
+                                            <View className="flex-row items-center gap-1.5">
+                                                <Text className="text-slate-500 text-[10px]">💬 {post.comments}</Text>
+                                            </View>
+                                            <View className="flex-row items-center gap-1.5">
+                                                <Text className="text-slate-500 text-[10px]">👍 {post.likes}</Text>
+                                            </View>
+                                            <View className="ml-auto bg-purple-500/10 px-3 py-1 rounded-lg">
+                                                <Text className="text-purple-400 text-[10px] font-black uppercase">{post.category}</Text>
                                             </View>
                                         </View>
-                                        <Text className="text-slate-200 text-base font-bold leading-7 mb-4" numberOfLines={2}>{post.title}</Text>
-                                    </View>
-                                    <View className="flex-row items-center gap-4 border-t border-white/5 pt-4">
-                                        <View className="flex-row items-center gap-1.5">
-                                            <Text className="text-slate-500 text-[10px]">💬 {post.comments}</Text>
-                                        </View>
-                                        <View className="flex-row items-center gap-1.5">
-                                            <Text className="text-slate-500 text-[10px]">👍 {post.likes}</Text>
-                                        </View>
-                                        <View className="ml-auto bg-purple-500/10 px-3 py-1 rounded-lg">
-                                            <Text className="text-purple-400 text-[10px] font-black uppercase">{post.category}</Text>
-                                        </View>
-                                    </View>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
+                                    </TouchableOpacity>
+                                ))}
+                            </Animated.View>
+                        </View>
 
                         {/* Blur Overlay for Guest Removed - Content now visible */}
 

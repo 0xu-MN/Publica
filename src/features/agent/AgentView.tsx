@@ -116,7 +116,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         const res = await callAgent(text);
 
         if (res?.workspace_data) {
-            setColumns([res.workspace_data]); // 맵 그리기
+            setColumns([{ ...res.workspace_data, parentIndex: -1 }]); // 맵 그리기
 
             // 추천 칩 업데이트
             if (res.suggested_actions && res.suggested_actions.length > 0) {
@@ -146,7 +146,8 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
         if (res) {
             if (res.workspace_data) {
-                setColumns(prev => [...prev, res.workspace_data]); // 맵 확장
+                const pIdx = activeNode ? columns[columns.length - 1].branches.indexOf(activeNode) : 0;
+                setColumns(prev => [...prev, { ...res.workspace_data, parentIndex: pIdx }]); // 맵 확장
             }
             if (res.chat_message) {
                 setChatHistory(prev => [...prev, { text: res.chat_message, sender: 'ai' }]);
@@ -158,31 +159,31 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         setLoading(false);
     };
 
-    const handleExpand = async (branch: any, idx: number) => {
+    const handleExpand = async (branch: any, idx: number, branchIndex: number) => {
         setActiveNode(branch);
 
-        // Don't expand if already at the last column
-        if (idx >= columns.length - 1) {
-            // Generate next steps via AI
-            setLoading(true);
-            setSuggestions([]);
-
-            const contextStr = `Expand on: ${branch.label}\nDescription: ${branch.description}`;
-            const res = await callAgent(
-                `Provide detailed next steps for: ${branch.label}`,
-                contextStr
-            );
-
-            if (res?.workspace_data) {
-                setColumns(prev => [...prev, res.workspace_data]);
-            }
-
-            if (res?.suggested_actions) {
-                setSuggestions(res.suggested_actions);
-            }
-
-            setLoading(false);
+        if (idx < columns.length - 1) {
+            setColumns(prev => prev.slice(0, idx + 1));
         }
+
+        setLoading(true);
+        setSuggestions([]);
+
+        const contextStr = `Expand on: ${branch.label}\nDescription: ${branch.description}`;
+        const res = await callAgent(
+            `Provide detailed next steps for: ${branch.label}`,
+            contextStr
+        );
+
+        if (res?.workspace_data) {
+            setColumns(prev => [...prev, { ...res.workspace_data, parentIndex: branchIndex }]);
+        }
+
+        if (res?.suggested_actions) {
+            setSuggestions(res.suggested_actions);
+        }
+
+        setLoading(false);
     };
 
     // 💾 저장 버튼 로직 (DB에 저장 -> 파일 관리자에 뜸)
@@ -305,14 +306,24 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                                                 data={branch}
                                                 idx={idx}
                                                 myIndex={bIdx}
-                                                parentIndex={0}
-                                                selected={false}
-                                                onSelect={() => handleExpand(branch, idx)}
+                                                parentIndex={col.parentIndex}
+                                                selected={activeNode === branch}
+                                                onSelect={() => handleExpand(branch, idx, bIdx)}
                                             />
                                         ))}
                                     </View>
                                 </View>
                             ))}
+                            {loading && (
+                                <View style={styles.columnWrapper}>
+                                    <View style={[styles.nodeList, { opacity: 0.5 }]}>
+                                        <View style={styles.loadingCard}>
+                                            <ActivityIndicator color="#3B82F6" />
+                                            <Text style={styles.loadingText}>Analyzing...</Text>
+                                        </View>
+                                    </View>
+                                </View>
+                            )}
                         </View>
                     </Animated.View>
                 </View>
@@ -352,7 +363,9 @@ const styles = StyleSheet.create({
     canvasWorld: { padding: 100, flexDirection: 'row', alignItems: 'flex-start' },
     zoomContainer: { position: 'absolute', bottom: 30, left: 30, flexDirection: 'row', backgroundColor: '#111', borderRadius: 8, borderWidth: 1, borderColor: '#222', padding: 6, alignItems: 'center', zIndex: 40, gap: 10 },
     zoomText: { color: '#888', fontSize: 11, fontWeight: '600', width: 40, textAlign: 'center' },
-    columnWrapper: { flexDirection: 'column', marginRight: 50, width: 220, justifyContent: 'center' },
+    columnWrapper: { flexDirection: 'column', marginRight: 50, width: 220, justifyContent: 'flex-start' },
+    loadingCard: { width: 220, height: LAYOUT.CARD_HEIGHT, backgroundColor: '#050505', borderRadius: 8, borderWidth: 1, borderColor: '#1E293B', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
+    loadingText: { color: '#3B82F6', fontSize: 13, fontWeight: '600' },
     nodeList: { gap: 20 },
     startBtn: { marginTop: 100, marginLeft: 50, backgroundColor: '#2563EB', padding: 15, borderRadius: 8 },
     startBtnText: { color: 'white', fontWeight: 'bold' },

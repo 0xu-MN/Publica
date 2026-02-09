@@ -23,7 +23,7 @@ interface ProfileCardProps {
     };
 }
 
-const EXPERTISE_BADGES = ['AI/ML', 'Quantum', 'FinTech', 'Biotech'];
+const DEFAULT_BADGES = ['AI/ML', 'Quantum', 'FinTech', 'Biotech'];
 
 export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, targetUserId, onEditProfile, onShowPosts, previewData }: ProfileCardProps) => {
     const { user } = useAuth();
@@ -39,7 +39,7 @@ export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, 
     const [role, setRole] = useState('AI Researcher');
     const [bio, setBio] = useState('인공지능과 금융의 결합에 관심이 많습니다.');
     const [imageUrl, setImageUrl] = useState('');
-    const [profile, setProfile] = useState<{ nickname?: string, job?: string, bio?: string }>({});
+    const [profile, setProfile] = useState<any>({});
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
     // Stats & Interaction
@@ -171,7 +171,7 @@ export const ProfileCard = ({ onChatPress, onShowInbox, onScrapPress, readOnly, 
 
                     {/* Expertise Badges */}
                     <View className="flex-row flex-wrap gap-2 mb-3">
-                        {EXPERTISE_BADGES.map((badge) => (
+                        {(profile?.research_keywords || profile?.interests || DEFAULT_BADGES).map((badge: string) => (
                             <View key={badge} className="bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
                                 <Text className="text-blue-400 text-xs font-bold">{badge}</Text>
                             </View>

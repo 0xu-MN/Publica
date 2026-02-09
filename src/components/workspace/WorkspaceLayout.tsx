@@ -20,9 +20,10 @@ import { ProfileEditPage } from '../ProfileEditPage';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
+    initialSession?: any;
 }
 
-export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
+export const WorkspaceLayout = ({ onClose, initialSession }: WorkspaceLayoutProps) => {
     // Default to 'home'
     const [activeTab, setActiveTabState] = useState<WorkspaceTab>('home');
     const [isLoaded, setIsLoaded] = useState(false);
@@ -61,6 +62,15 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     useEffect(() => {
         const loadTab = async () => {
             try {
+                // If initialSession is provided, force agent tab
+                if (initialSession) {
+                    console.log("🚀 Workspace Init with Session:", initialSession);
+                    setSessionToLoad(initialSession);
+                    setActiveTabState('agent');
+                    setIsLoaded(true);
+                    return;
+                }
+
                 const saved = await AsyncStorage.getItem('WORKSPACE_ACTIVE_TAB');
                 if (saved && (saved === 'home' || saved === 'agent')) {
                     setActiveTabState(saved as WorkspaceTab);
@@ -72,7 +82,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
             }
         };
         loadTab();
-    }, []);
+    }, [initialSession]);
 
     // Animate profile panel
     useEffect(() => {
@@ -261,7 +271,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                 }}
             >
                 <View className="h-full p-3 pr-0">
-                    <View className="h-full bg-[#0F172A]/80 backdrop-blur-xl rounded-l-[24px] border-l border-t border-b border-white/5 shadow-2xl">
+                    <View className="h-full bg-[#0F172A]/80 backdrop-blur-xl rounded-[24px] border border-white/5 shadow-2xl">
                         {/* Close Button */}
                         <TouchableOpacity
                             onPress={() => setShowProfilePanel(false)}
@@ -363,16 +373,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                     }}
                 >
                     <View className="h-full p-3 pl-0">
-                        <View className="h-full bg-[#0F172A]/95 backdrop-blur-xl rounded-r-[24px] border-r border-t border-b border-white/5 shadow-2xl">
-                            {/* Close Button */}
-                            <TouchableOpacity
-                                onPress={() => setShowProfileEdit(false)}
-                                className="absolute top-6 left-6 z-10 w-10 h-10 rounded-full bg-slate-800/60 backdrop-blur-sm items-center justify-center border border-white/10"
-                                style={{ opacity: showProfileEdit ? 1 : 0 }}
-                            >
-                                <X size={18} color="#94A3B8" strokeWidth={2.5} />
-                            </TouchableOpacity>
-
+                        <View className="h-full bg-[#0F172A]/95 backdrop-blur-xl rounded-[24px] border border-white/5 shadow-2xl">
                             {/* Profile Edit Content */}
                             <View className="flex-1">
                                 {showProfileEdit && (

@@ -66,18 +66,41 @@ const MarketChartCard = ({ data }: { data: MarketData }) => {
 export const MarketCarouselWidget = () => {
     const [marketData, setMarketData] = useState<MarketData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
-    const currentPositionRef = useRef(0); // Ref for persistence
-    const [isPaused, setIsPaused] = useState(false); // Pause state
+    const currentPositionRef = useRef(0);
+    const [isPaused, setIsPaused] = useState(false);
     const [contentWidth, setContentWidth] = useState(0);
     const [scrollViewWidth, setScrollViewWidth] = useState(0);
+    const rotation = useRef(new Animated.Value(0)).current;
 
-    const loadData = async () => {
-        setLoading(true);
-        const data = await fetchMarketData();
-        // Duplicate data for infinite scroll effect
-        setMarketData([...data, ...data, ...data]);
-        setLoading(false);
+    const loadData = async (force: boolean = false) => {
+        if (force) setRefreshing(true);
+        else setLoading(true);
+
+        // Start rotation if refreshing
+        if (force) {
+            Animated.loop(
+                Animated.timing(rotation, {
+                    toValue: 1,
+                    duration: 1000,
+                    useNativeDriver: true,
+                })
+            ).start();
+        }
+
+        try {
+            const data = await fetchMarketData(force);
+            // Duplicate data for infinite scroll effect
+            setMarketData([...data, ...data, ...data]);
+        } catch (error) {
+            console.error('Failed to load market data:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
+            rotation.stopAnimation();
+            rotation.setValue(0);
+        }
     };
 
     useEffect(() => {
@@ -140,9 +163,25 @@ export const MarketCarouselWidget = () => {
                         <Text className="text-red-400 text-[10px] font-bold">LIVE</Text>
                     </View>
                 </View>
-                <TouchableOpacity onPress={loadData} className="flex-row items-center bg-slate-800/80 px-3 py-1.5 rounded-full border border-white/5">
-                    <RefreshCw size={12} color="#94A3B8" style={{ marginRight: 6 }} />
-                    <Text className="text-slate-400 text-xs font-semibold">실시간 갱신</Text>
+                <TouchableOpacity
+                    onPress={() => loadData(true)}
+                    disabled={refreshing}
+                    className={`flex-row items-center px-3 py-1.5 rounded-full border border-white/5 ${refreshing ? 'bg-blue-500/20' : 'bg-slate-800/80'}`}
+                >
+                    <Animated.View style={{
+                        transform: [{
+                            rotate: rotation.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: ['0deg', '360deg']
+                            })
+                        }],
+                        marginRight: 6
+                    }}>
+                        <RefreshCw size={12} color={refreshing ? "#60A5FA" : "#94A3B8"} />
+                    </Animated.View>
+                    <Text className={`text-xs font-semibold ${refreshing ? 'text-blue-400' : 'text-slate-400'}`}>
+                        {refreshing ? '갱신 중...' : '실시간 갱신'}
+                    </Text>
                 </TouchableOpacity>
             </View>
 

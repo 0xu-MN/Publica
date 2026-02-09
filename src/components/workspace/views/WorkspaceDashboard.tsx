@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Briefcase, AlertCircle, CheckCircle, Zap, Layers, ChevronRight } from 'lucide-react-native';
 import { ProjectPipelineCard } from '../components/ProjectPipelineCard';
 import { ActiveProjectCard } from '../components/ActiveProjectCard';
@@ -12,6 +13,24 @@ interface WorkspaceDashboardProps {
 }
 
 export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) => {
+    const [nickname, setNickname] = useState('연구원');
+
+    useEffect(() => {
+        const loadNickname = async () => {
+            try {
+                const stored = await AsyncStorage.getItem('user_profile');
+                if (stored) {
+                    const data = JSON.parse(stored);
+                    if (data.nickname) {
+                        setNickname(data.nickname);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to load nickname", e);
+            }
+        };
+        loadNickname();
+    }, []);
     // Mock Data - Today's Schedule
     const [scheduleItems, setScheduleItems] = useState([
         { id: '1', text: '정부지원사업 서류 마감 (D-2)', checked: false, dueDate: 'D-2' },
@@ -126,7 +145,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
                 {/* Greeting Header */}
                 <View className="mb-6">
                     <Text className="text-white text-3xl font-bold mb-2">
-                        안녕하세요, 홍길동 연구원님 👋
+                        안녕하세요, {nickname}님 👋
                     </Text>
                     <Text className="text-slate-400 text-sm">
                         오늘은 성공적인 연구를 시작하세요

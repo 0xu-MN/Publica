@@ -356,4 +356,5 @@ async function loop() {
     runMaintenance();
 }
 
-loop().catch(console.error);
+// loop().catch(console.error);
+console.log('⚠️ Automatic loop disabled by user request to save API costs.');
