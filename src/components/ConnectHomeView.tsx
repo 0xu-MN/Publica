@@ -4,15 +4,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowRight, Sparkles, AlertCircle, Briefcase, Home, RefreshCcw, Users, Building2, Search, Filter, LayoutGrid, Plus, Bell, User as UserIcon, CheckCircle2 } from 'lucide-react-native';
 import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
-import { VerticalStackCarousel } from './VerticalStackCarousel';
-import { GovernmentCard } from './GovernmentCard';
-import { CommunityCard } from './CommunityCard';
-import { fetchGovernmentPrograms } from '../services/newsService';
-import { AdvancedSearchFilter } from './AdvancedSearchFilter';
-import { GovernmentProgramList } from './GovernmentProgramList';
+import { fetchGrants } from '../services/grants';
+import { calculateGrantScore } from '../utils/scoring';
 import { useAuth } from '../contexts/AuthContext';
 import Footer from './Footer';
 import ElectricBorder from './ElectricBorder';
+import { VerticalStackCarousel } from './VerticalStackCarousel';
+import { GovernmentCard } from './GovernmentCard';
 
 interface ConnectHomeViewProps {
     onNavigateToSupport?: () => void;
@@ -32,37 +30,30 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
     onLoginPress
 }) => {
     const { width } = useWindowDimensions();
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
 
-    // Profile State for Dynamic Sync
-    const [nickname, setNickname] = useState('');
-    const [role, setRole] = useState('AI Strategist');
-    const [imageUrl, setImageUrl] = useState('');
+    const getDisplayData = () => {
+        if (!profile) return { keywords: ['AI_Agent', 'FinTech'], field: '정부 R&D' };
 
-    useEffect(() => {
-        if (!user) return;
+        const keywords = profile.research_keywords && profile.research_keywords.length > 0
+            ? profile.research_keywords
+            : ['설정 필요'];
 
-        const loadProfile = async () => {
-            try {
-                const stored = await AsyncStorage.getItem('user_profile');
-                if (stored) {
-                    const parsed = JSON.parse(stored);
-                    setNickname(parsed.nickname || user?.email?.split('@')[0] || 'User');
-                    setRole(parsed.job || 'AI Strategist');
-                    setImageUrl(parsed.imageUrl || '');
-                } else {
-                    setNickname(user?.email?.split('@')[0] || 'User');
-                    setRole('AI Strategist');
-                }
-            } catch (e) {
-                console.log('Failed to sync profile in ConnectHub:', e);
-            }
-        };
+        const field = profile.expertise || profile.major_category || profile.industry || '미설정';
 
-        loadProfile();
-        const interval = setInterval(loadProfile, 2000);
-        return () => clearInterval(interval);
-    }, [user]);
+        return { keywords, field };
+    };
+
+    const { keywords, field } = getDisplayData();
+
+    // Derive remaining profile data directly
+    const nickname = profile?.full_name || user?.email?.split('@')[0] || 'User';
+    const role = profile?.user_type === 'business' ? (profile?.industry || 'Business') :
+        profile?.user_type === 'pre_entrepreneur' ? (profile?.industry || 'Pre-Ent') :
+            profile?.user_type === 'researcher' ? (profile?.major_category || 'Researcher') :
+                (profile?.industry || 'AI Strategist');
+
+    const imageUrl = profile?.avatar_url || '';
     const isDesktop = width >= 1024;
     const scrollRef = React.useRef<ScrollView>(null);
     const searchSectionRef = React.useRef<View>(null);
@@ -70,25 +61,36 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
     const [govPrograms, setGovPrograms] = React.useState<any[]>([]);
     const [fundingPrograms, setFundingPrograms] = React.useState<any[]>([]);
     const [communityPosts, setCommunityPosts] = React.useState<any[]>([]);
+    const [topGrants, setTopGrants] = React.useState<any[]>([]); // New state for top cards
     const [loading, setLoading] = React.useState(true);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            // Added mock data for govPrograms to ensure enough items for carousel
-            const progs = [
-                { title: '2026년 예비창업패키지 (일반분야)', agency: '중소벤처기업부', status: '접수중', dDay: 'D-15', category: '사업화', budget: '최대 1.0억원', period: '2024.01.01 ~ 2024.03.31' },
-                { title: 'AI 에이전트 고도화 R&D 지원사업', agency: '과학기술정보통신부', status: '접수중', dDay: 'D-30', category: 'R&D', budget: '최대 3.0억원', period: '2024.02.01 ~ 2024.04.30' },
-                { title: '2026년 청년창업사관학교 지원사업', agency: '중소벤처기업진흥공단', status: '접수중', dDay: 'D-5', category: '창업', budget: '최대 0.5억원', period: '2024.03.01 ~ 2024.05.31' },
-            ];
-            setGovPrograms(progs);
+            // 1. Fetch & Score Grants
+            const allGrants = await fetchGrants();
+            let scoredGrants = allGrants.map(g => ({
+                ...g,
+                // If profile is not loaded yet, score is 0
+                score: profile ? calculateGrantScore(g, profile) : 0
+            }));
 
-            setFundingPrograms([
-                { title: '청년창업 활성화 융자 지원금', agency: '중소벤처기업진흥공단', status: '접수중', dDay: 'D-15', category: '지원금', budget: '최대 2.0억원', period: '2024.01.27 ~ 2026.12.31' },
-                { title: '녹색기술 사업화 보조금', agency: '산업통상자원부', status: '예정', dDay: 'D-30', category: '보조금', budget: '최대 3.0억원', period: '2024.02.01 ~ 2026.12.31' },
-                { title: '디지털 전환 솔루션 바우처', agency: '과학기술정보통신부', status: '접수중', dDay: 'D-5', category: '바우처', budget: '최대 5,000만원', period: '2024.03.01 ~ 2026.12.31' },
-            ]);
+            // Sort by Score DESC
+            scoredGrants.sort((a, b) => b.score - a.score);
 
+            // Set Top 2 for the Main Cards
+            setTopGrants(scoredGrants.slice(0, 2));
+
+            // Set Carousel items (Filter for R&D / Commercialization)
+            const rndApps = scoredGrants.filter(g => g.category === 'R&D' || g.category === 'Commercialization').slice(0, 5);
+            setGovPrograms(rndApps.length > 0 ? rndApps : []); // Fallback handled in UI if empty?
+
+            // Set Funding items (Filter for Policy Fund / Voucher)
+            const fundApps = scoredGrants.filter(g => g.category === 'Policy Fund' || g.category === 'Voucher' || g.category === 'Commercialization').slice(0, 5);
+            setFundingPrograms(fundApps);
+
+
+            // Mock Community Data (Keep for now)
             setCommunityPosts([
                 { title: '예비창업패키지 3번 문항 작성 팁 있을까요?', author: '박연구원', time: '54분 전', category: 'Q&A', content: '이번에 예비창업패키지 준비 중인데 3번 BM 구성이 어렵네요...', likes: 4, comments: 12 },
                 { title: '이번 R&D 예산 증액안, 실제로 체감되시나요?', author: '김대표', time: '1시간 전', category: '자유게시판', content: '뉴스에서는 증액이라는데 실제로는 잘 모르겠네요.', likes: 21, comments: 45 },
@@ -104,7 +106,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
 
     React.useEffect(() => {
         loadData();
-    }, []);
+    }, [profile]); // Reload when profile changes
 
     // Auto-scroll Animation for Lounge
     const translateX = useSharedValue(0);
@@ -217,8 +219,8 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                                 <Text className="text-blue-400 text-xs font-bold uppercase">{role}</Text>
                                             </View>
                                         </View>
-                                        <Text className="text-slate-400 font-medium">
-                                            보유 기술: <Text className="text-blue-400">#AI_Agent, #FinTech</Text> • 선호 분야: <Text className="text-emerald-400">정부 R&D</Text>
+                                        <Text className="text-slate-400 font-medium" numberOfLines={1}>
+                                            보유 기술: <Text className="text-blue-400">{keywords.map((k: string) => `#${k}`).join(', ')}</Text> • 선호 분야: <Text className="text-emerald-400">{field}</Text>
                                         </Text>
                                     </View>
                                 </View>
@@ -249,86 +251,90 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                     <View className="relative">
                         <View className="flex-row gap-8">
                             {/* Card 1 */}
-                            <ElectricBorder
-                                color="#3B82F6"
-                                speed={0.5}
-                                chaos={0.05}
-                                borderRadius={48}
-                                style={{ flex: 1, display: 'flex' }}
-                            >
-                                <TouchableOpacity
-                                    onPress={!user ? onLoginPress : undefined}
-                                    className="bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
+                            {topGrants[0] && (
+                                <ElectricBorder
+                                    color="#3B82F6"
+                                    speed={0.5}
+                                    chaos={0.05}
+                                    borderRadius={48}
+                                    style={{ flex: 1, display: 'flex' }}
                                 >
-                                    <View className="absolute top-0 right-0 p-8">
-                                        <View className="items-end">
-                                            <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
-                                            <Text className="text-white text-6xl font-black">{!user ? '??' : '94'}<Text className="text-2xl">%</Text></Text>
+                                    <TouchableOpacity
+                                        onPress={() => onProgramSelect?.(topGrants[0])}
+                                        className="bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
+                                    >
+                                        <View className="absolute top-0 right-0 p-8">
+                                            <View className="items-end">
+                                                <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
+                                                <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[0].score}<Text className="text-2xl">%</Text></Text>
+                                            </View>
                                         </View>
-                                    </View>
-                                    <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">중소벤처기업부</Text>
-                                    <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={2}>2026년 예비창업패키지{"\n"}(일반분야)</Text>
+                                        <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[0].agency}</Text>
+                                        <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={2}>{topGrants[0].title}</Text>
 
-                                    <View className="flex-row gap-3 mb-10">
-                                        <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">사업화</Text></View>
-                                        <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">D-15</Text></View>
-                                    </View>
+                                        <View className="flex-row gap-3 mb-10">
+                                            <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[0].category}</Text></View>
+                                            <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[0].d_day}</Text></View>
+                                        </View>
 
-                                    <View className="flex-row items-center justify-between">
-                                        <View>
-                                            <Text className="text-slate-500 text-sm mb-1">지원 규모</Text>
-                                            <Text className="text-[#34D399] text-xl font-bold">최대 1.0억원</Text>
+                                        <View className="flex-row items-center justify-between">
+                                            <View>
+                                                <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
+                                                <Text className="text-[#34D399] text-xl font-bold">{topGrants[0].tech_field}</Text>
+                                            </View>
+                                            <View
+                                                className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
+                                            >
+                                                <Sparkles size={18} color="white" />
+                                                <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
+                                            </View>
                                         </View>
-                                        <View
-                                            className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
-                                        >
-                                            <Sparkles size={18} color="white" />
-                                            <Text className="text-white font-bold ml-2 text-lg">전략 에이전트 분석</Text>
-                                        </View>
-                                    </View>
-                                </TouchableOpacity>
-                            </ElectricBorder>
+                                    </TouchableOpacity>
+                                </ElectricBorder>
+                            )}
 
                             {/* Card 2 */}
-                            <ElectricBorder
-                                color="#10B981"
-                                speed={0.5}
-                                chaos={0.05}
-                                borderRadius={48}
-                                style={{ flex: 1, display: 'flex' }}
-                            >
-                                <TouchableOpacity
-                                    onPress={!user ? onLoginPress : undefined}
-                                    className="bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
+                            {topGrants[1] && (
+                                <ElectricBorder
+                                    color="#10B981"
+                                    speed={0.5}
+                                    chaos={0.05}
+                                    borderRadius={48}
+                                    style={{ flex: 1, display: 'flex' }}
                                 >
-                                    <View className="absolute top-0 right-0 p-8">
-                                        <View className="items-end">
-                                            <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
-                                            <Text className="text-white text-6xl font-black">{!user ? '??' : '88'}<Text className="text-2xl">%</Text></Text>
+                                    <TouchableOpacity
+                                        onPress={() => onProgramSelect?.(topGrants[1])}
+                                        className="bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
+                                    >
+                                        <View className="absolute top-0 right-0 p-8">
+                                            <View className="items-end">
+                                                <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
+                                                <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[1].score}<Text className="text-2xl">%</Text></Text>
+                                            </View>
                                         </View>
-                                    </View>
-                                    <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">과학기술정보통신부</Text>
-                                    <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={2}>AI 에이전트 고도화 R&D{"\n"}지원사업</Text>
+                                        <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[1].agency}</Text>
+                                        <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={2}>{topGrants[1].title}</Text>
 
-                                    <View className="flex-row gap-3 mb-10">
-                                        <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">R&D</Text></View>
-                                        <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">D-30</Text></View>
-                                    </View>
+                                        <View className="flex-row gap-3 mb-10">
+                                            <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[1].category}</Text></View>
+                                            <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[1].d_day}</Text></View>
+                                        </View>
 
-                                    <View className="flex-row items-center justify-between">
-                                        <View>
-                                            <Text className="text-slate-500 text-sm mb-1">지원 규모</Text>
-                                            <Text className="text-[#34D399] text-xl font-bold">최대 3.0억원</Text>
+                                        <View className="flex-row items-center justify-between">
+                                            <View>
+                                                <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
+                                                <Text className="text-[#34D399] text-xl font-bold">{topGrants[1].tech_field}</Text>
+                                            </View>
+                                            <View
+                                                className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
+                                            >
+                                                <Sparkles size={18} color="white" />
+                                                <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
+                                            </View>
                                         </View>
-                                        <View
-                                            className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
-                                        >
-                                            <Sparkles size={18} color="white" />
-                                            <Text className="text-white font-bold ml-2 text-lg">전략 에이전트 분석</Text>
-                                        </View>
-                                    </View>
-                                </TouchableOpacity>
-                            </ElectricBorder>
+                                    </TouchableOpacity>
+                                </ElectricBorder>
+                            )}
                         </View>
 
                         {/* Blur Overlay for Guest on Recommendations */}

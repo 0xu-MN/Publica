@@ -46,7 +46,7 @@ interface ProfileSetupProps {
 }
 
 export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupProps) => {
-    const { user, profile, refreshProfile } = useAuth();
+    const { user, profile, refreshProfile, setProfileState } = useAuth();
     const [step, setStep] = useState(1);
     const [userType, setUserType] = useState<UserType | null>(null);
 
@@ -64,8 +64,9 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     const [studentId, setStudentId] = useState('');
     const [hasStartupIntent, setHasStartupIntent] = useState(false);
     const [majorCategory, setMajorCategory] = useState('');
+    const [expertise, setExpertise] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'industryCategory' }>({ visible: false, type: 'sido' });
+    const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'expertise' | 'industryCategory' }>({ visible: false, type: 'sido' });
 
     // Populate data if editing or existing profile
     useEffect(() => {
@@ -84,6 +85,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             if (profile.student_id) setStudentId(profile.student_id);
             if (profile.has_startup_intent) setHasStartupIntent(profile.has_startup_intent);
             if (profile.major_category) setMajorCategory(profile.major_category);
+            if (profile.expertise) setExpertise(profile.expertise);
 
             if (isEditing) setStep(2);
         }
@@ -100,9 +102,9 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
         if (userType === 'researcher') {
             const isStudent = researcherType === '대학생' || researcherType === '대학원생';
             if (isStudent) {
-                return keywords !== '' && affiliation !== '' && studentId !== '' && majorCategory !== '';
+                return keywords !== '' && affiliation !== '' && studentId !== '' && majorCategory !== '' && expertise !== '';
             }
-            return researcherType !== '' && keywords !== '' && affiliation !== '' && majorCategory !== '';
+            return researcherType !== '' && keywords !== '' && affiliation !== '' && majorCategory !== '' && expertise !== '';
         }
         if (userType === 'other') {
             return sido !== '' && sigungu !== '' && keywords !== '';
@@ -111,7 +113,35 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     };
 
     const handleSave = async () => {
-        if (!user || !userType || !isFormValid()) return;
+        if (!user || !userType) return;
+
+        if (!isFormValid()) {
+            let missing = "";
+            if (userType === 'business') {
+                if (!sido || !sigungu) missing = "활동 지역";
+                else if (!industry) missing = "산업 분야";
+                else if (!businessYears) missing = "사업 업급";
+            } else if (userType === 'researcher') {
+                if (!researcherType) missing = "연구원 구분";
+                else if (!affiliation) missing = "소속 기관";
+                else if (!majorCategory) missing = "전공 분야";
+                else if (!expertise) missing = "상세 분야";
+                else if (!keywords) missing = "연구 키워드";
+                else if ((researcherType === '대학생' || researcherType === '대학원생') && !studentId) missing = "학번";
+            } else if (userType === 'pre_entrepreneur') {
+                if (!sido || !sigungu) missing = "활동 지역";
+                else if (!industry) missing = "창업 분야";
+            } else if (userType === 'other') {
+                if (!sido || !sigungu) missing = "활동 지역";
+                else if (!keywords) missing = "관심 키워드";
+            }
+
+            if (missing) {
+                Alert.alert('알림', `항목을 모두 입력해주세요: ${missing}`);
+                return;
+            }
+        }
+
         setIsSaving(true);
         const fullLocation = sido && sigungu ? `${sido} ${sigungu}` : sido;
 
@@ -119,17 +149,24 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             const updates = {
                 id: user.id,
                 user_type: userType,
-                industry,
-                business_years: businessYears,
-                birth_year: birthYear ? parseInt(birthYear) : null,
+                // Business/Pre-Ent fields
+                industry: (userType === 'business' || userType === 'pre_entrepreneur') ? industry : null,
+                business_years: userType === 'business' ? businessYears : null,
+                business_reg_no: userType === 'business' ? businessRegNo : null,
+
+                // Pre-Ent specific
+                birth_year: userType === 'pre_entrepreneur' ? (birthYear ? parseInt(birthYear) : null) : null,
+
+                // Researcher specific
+                major_category: userType === 'researcher' ? majorCategory : null,
+                expertise: userType === 'researcher' ? expertise : null,
+                researcher_type: userType === 'researcher' ? researcherType : null,
+                affiliation: (userType === 'researcher' || userType === 'other') ? affiliation : null,
+                student_id: (userType === 'researcher' && (researcherType === '대학생' || researcherType === '대학원생')) ? studentId : null,
+                researcher_id: userType === 'researcher' ? researcherId : null,
+                has_startup_intent: userType === 'researcher' ? hasStartupIntent : false,
+
                 research_keywords: keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
-                affiliation,
-                business_reg_no: businessRegNo,
-                researcher_id: researcherId,
-                researcher_type: researcherType,
-                student_id: studentId,
-                has_startup_intent: hasStartupIntent,
-                major_category: majorCategory,
                 sido,
                 sigungu,
                 updated_at: new Date().toISOString(),
@@ -155,13 +192,16 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
 
             if (error) throw error;
 
-            // Sync to Auth Metadata for Header display
-            await supabase.auth.updateUser({
+            // 4. Update Local State IMMEDIATELY for Instant Redirection
+            setProfileState(updates);
+
+            // 5. Sync to Auth Metadata (Non-blocking fallback)
+            supabase.auth.updateUser({
                 data: { user_role: finalJob }
-            });
+            }).catch(e => console.error("Metadata sync failed:", e));
 
             Alert.alert(isEditing ? '수정 완료' : '환영합니다!', isEditing ? '프로필이 업데이트되었습니다.' : '프로필 설정이 완료되었습니다.');
-            await refreshProfile();
+
             if (onClose) onClose();
         } catch (e: any) {
             console.error('Save Profile Error:', e);
@@ -359,10 +399,24 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                                 onPress={() => setPickerModal({ visible: true, type: 'majorCategory' })}
                                             >
                                                 <Text style={[styles.dropdownText, !majorCategory && styles.placeholderText]}>
-                                                    {majorCategory || '분야 선택'}
+                                                    {majorCategory || '분야 선택 (예: 과학기술)'}
                                                 </Text>
                                             </TouchableOpacity>
                                         </View>
+
+                                        {majorCategory !== '' && (
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>상세 연구 분야 <Text style={styles.required}>*</Text></Text>
+                                                <TouchableOpacity
+                                                    style={styles.dropdown}
+                                                    onPress={() => setPickerModal({ visible: true, type: 'expertise' })}
+                                                >
+                                                    <Text style={[styles.dropdownText, !expertise && styles.placeholderText]}>
+                                                        {expertise || '세부 분야 선택 (예: 바이오/의료)'}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        )}
 
                                         {(researcherType === '대학생' || researcherType === '대학원생') && (
                                             <View style={styles.inputGroup}>
@@ -410,8 +464,8 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                 )}
 
                                 <TouchableOpacity
-                                    style={[styles.saveBtn, (!isFormValid() || isSaving) && styles.btnDisabled]}
-                                    disabled={!isFormValid() || isSaving}
+                                    style={[styles.saveBtn, isSaving && styles.btnDisabled]}
+                                    disabled={isSaving}
                                     onPress={handleSave}
                                 >
                                     <Text style={styles.nextBtnText}>{isSaving ? '처리 중...' : isEditing ? '저장 완료' : '설정 완료'}</Text>
@@ -431,7 +485,8 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                 {pickerModal.type === 'sido' ? '시/도 선택' :
                                     pickerModal.type === 'sigungu' ? '구/군 선택' :
                                         pickerModal.type === 'researcherType' ? '구분 선택' :
-                                            pickerModal.type === 'majorCategory' ? '전공 분야 선택' : '산업 분야 선택'}
+                                            pickerModal.type === 'majorCategory' ? '전공 분야 선택' :
+                                                pickerModal.type === 'expertise' ? '상세 분야 선택' : '산업 분야 선택'}
                             </Text>
                             <TouchableOpacity onPress={() => setPickerModal({ ...pickerModal, visible: false })}>
                                 <Text style={{ color: '#3B82F6', fontWeight: 'bold' }}>닫기</Text>
@@ -442,29 +497,33 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                 pickerModal.type === 'sigungu' ? (LOCATION_DATA[sido] || []) :
                                     pickerModal.type === 'researcherType' ? RESEARCHER_TYPES :
                                         pickerModal.type === 'majorCategory' ? MAJOR_CATEGORIES :
-                                            INDUSTRY_CATEGORIES).map(item => (
-                                                <TouchableOpacity
-                                                    key={item}
-                                                    style={styles.modalItem}
-                                                    onPress={() => {
-                                                        if (pickerModal.type === 'sido') {
-                                                            setSido(item);
-                                                            setSigungu('');
-                                                        } else if (pickerModal.type === 'sigungu') {
-                                                            setSigungu(item);
-                                                        } else if (pickerModal.type === 'researcherType') {
-                                                            setResearcherType(item);
-                                                        } else if (pickerModal.type === 'majorCategory') {
-                                                            setMajorCategory(item);
-                                                        } else if (pickerModal.type === 'industryCategory') {
-                                                            setIndustry(item);
-                                                        }
-                                                        setPickerModal({ ...pickerModal, visible: false });
-                                                    }}
-                                                >
-                                                    <Text style={styles.modalItemText}>{item}</Text>
-                                                </TouchableOpacity>
-                                            ))}
+                                            pickerModal.type === 'expertise' ? (JOB_CATEGORIES[majorCategory] || []) :
+                                                INDUSTRY_CATEGORIES).map(item => (
+                                                    <TouchableOpacity
+                                                        key={item}
+                                                        style={styles.modalItem}
+                                                        onPress={() => {
+                                                            if (pickerModal.type === 'sido') {
+                                                                setSido(item);
+                                                                setSigungu('');
+                                                            } else if (pickerModal.type === 'sigungu') {
+                                                                setSigungu(item);
+                                                            } else if (pickerModal.type === 'researcherType') {
+                                                                setResearcherType(item);
+                                                            } else if (pickerModal.type === 'majorCategory') {
+                                                                setMajorCategory(item);
+                                                                setExpertise(''); // Reset expertise when category changes
+                                                            } else if (pickerModal.type === 'expertise') {
+                                                                setExpertise(item);
+                                                            } else if (pickerModal.type === 'industryCategory') {
+                                                                setIndustry(item);
+                                                            }
+                                                            setPickerModal({ ...pickerModal, visible: false });
+                                                        }}
+                                                    >
+                                                        <Text style={styles.modalItemText}>{item}</Text>
+                                                    </TouchableOpacity>
+                                                ))}
                         </ScrollView>
                     </View>
                 </View>

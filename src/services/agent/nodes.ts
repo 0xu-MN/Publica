@@ -29,62 +29,88 @@ const getGemini = () => new ChatGoogleGenerativeAI({
 export const scoutNode = async (state: AgentState): Promise<Partial<AgentState>> => {
     console.log("Maestro Scout: Matching Internal Gov Grants...");
 
+    const { expertise, major_category, user_type } = state.userProfile;
+    let grants: any[] = [];
+
     try {
-        // 1. Fetch Grants from Supabase
-        const response = await axios.get(`${process.env.SUPABASE_URL}/rest/v1/grants`, {
-            headers: {
-                'apikey': process.env.SUPABASE_ANON_KEY,
-                'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+        // 1. Fetch Grants from Supabase (Filtered Strategy)
+        // IF user has specific expertise, try to fetch matching grants first.
+        if (expertise && expertise !== '미설정') {
+            console.log(`🔎 Filtered Fetching: looking for grants matching '${expertise}'...`);
+            const { data: exactMatches } = await axios.get(`${process.env.SUPABASE_URL}/rest/v1/grants`, {
+                params: {
+                    select: '*',
+                    or: `tech_field.ilike.%${expertise}%,title.ilike.%${expertise}%`
+                },
+                headers: {
+                    'apikey': process.env.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+                }
+            });
+
+            if (exactMatches && exactMatches.length > 0) {
+                console.log(`✅ Found ${exactMatches.length} exact matches for '${expertise}'`);
+                grants = exactMatches;
             }
-        });
+        }
 
-        const grants = response.data;
-        if (!grants || grants.length === 0) throw new Error("No internal grants found");
+        // Fallback: If no exact matches (or no expertise), fetch broader category or latest
+        if (grants.length === 0) {
+            console.log("⚠️ No exact matches found. Falling back to broader fetch...");
+            const { data: broadMatches } = await axios.get(`${process.env.SUPABASE_URL}/rest/v1/grants`, {
+                params: {
+                    select: '*',
+                    limit: 20,
+                    order: 'created_at.desc'
+                },
+                headers: {
+                    'apikey': process.env.SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${process.env.SUPABASE_ANON_KEY}`
+                }
+            });
+            grants = broadMatches || [];
+        }
 
-        // 2. AI Scoring via Gemini 3 Pro
+        if (!grants || grants.length === 0) throw new Error("No internal grants found even after fallback");
+
+        // 2. AI Scoring via Gemini 3 Pro (Strict Mode)
         const gemini = getGemini();
         const res = await gemini.invoke([
-            new SystemMessage(`Act as a government grant evaluator. Compare the User Profile against the provided Grant List.
+            new SystemMessage(`Act as a strict government grant evaluator. 
   
+  **CRITICAL RULE:**
+  User Expertise: "${expertise || major_category || 'General'}"
+  User Role: "${user_type}"
+
   **Scoring Algorithm (0-100 pts):**
 
-  **BASE MATCH (Category Alignment):**
-  - Compare Grant "tech_field" vs User "expertise" (e.g. Bio == Bio).
-  - Compare Grant "category" vs User "major_category" (e.g. Commercialization == Economy).
-  
-  **USER TYPE LOGIC:**
-  
-  1. **User is Student + Startup Intent (Hybrid)**:
-     - IF (user.is_student AND user.has_startup_intent):
-       - **BOOST (+20 pts)** for grants with keywords: ["Campus Town", "Student League", "University", "Initial Package", "Youth"].
-       - Include "Pre-Entrepreneur" grants in the pool even if not explicitly targeted.
+  1. **Tech Field Match (The Barrier)**:
+     - Check Grant "tech_field" (e.g. AI, Bio, FinTech).
+     - **IF** User is Researcher/Student **AND** Grant Tech Field does NOT match User Expertise:
+       - **SCORE = 0**. (Immediate Rejection).
+       - Reason: "전공 분야 불일치 (User: ${expertise} vs Grant: ...)"
+     - *Exception*: Unless the grant is broadly 'Science' or 'General', specific mismatches (e.g. Bio user vs AI grant) are 0 points.
 
-  2. **User is Researcher**:
-     - **CRITICAL**: The match between Grant "tech_field" and User "expertise" (e.g. Bio == Bio) accounts for **50% of the total score**.
-     - **IGNORE** revenue/business metrics.
-     - **Hybrid Matching (Startup Intent)**: IF User.has_startup_intent is TRUE, score highly for "Pre-Entrepreneur" (예비창업패키지), "Campus Town", and "Youth Founder" grants.
-     - **Academic/Sub-type Matching**: Match Grant target (e.g., '대학생', '석박사', '포닥', '교수') with User.researcher_type.
-     - Reliability: Priority for National R&D if Researcher/Student ID exists (Bonus +5pts).
+  2. **Startup Intent Filter**:
+     - IF (user.has_startup_intent == false) AND (Grant is Commercialization/Startup):
+       - **SCORE = 0**.
+       - Reason: "창업 의사 없음"
 
-  3. **User is Pre-Entrepreneur**:
-     - **BOOST (+40 pts)** for "Preliminary Startup Package" (예비창업패키지).
-     - **LOCATION**: Critical match -> User "sido" must match Grant location.
-
-  4. **User is Business**:
-     - **STRICT**: Check "Up-force" (Business operation years). 
-       - If Grant says "<3 years" and User is "5 years", SCORE = 0.
-     - **LOCATION**: User "sido" must match Grant location.
+  3. **Base Scoring (If passed above)**:
+     - Exact Keyword Match: +50 pts
+     - Location Match: +20 pts
+     - Career/Year Match: +20 pts
 
   **FINAL OUTPUT FORMAT:**
   Return a JSON array: [{ "id": "grant_id", "score": number, "reason_short": "Korean explanation" }]`),
             new HumanMessage(`User Profile: ${JSON.stringify({
                 ...state.userProfile,
-                unified_major: state.userProfile.major_category, // 'Industry'
-                unified_expertise: state.userProfile.expertise,   // 'Subfield'
+                unified_major: major_category,
+                unified_expertise: expertise,
                 flags: {
                     is_student: state.userProfile.student_id ? true : false,
                     has_startup_intent: state.userProfile.has_startup_intent,
-                    is_researcher: state.userProfile.user_type === 'Researcher'
+                    is_researcher: user_type === 'researcher'
                 }
             })}\nGrant List: ${JSON.stringify(grants)}`)
         ]);
@@ -110,17 +136,16 @@ export const scoutNode = async (state: AgentState): Promise<Partial<AgentState>>
         // Fallback to mock data if AI fails
         return {
             researchFindings: `
-1. [ID: GR-2026-01] 2026 기술혁신형 스타트업 육성사업 (서울) (92% Match) - Perfect for AI startups in Seoul.
-2. [ID: GR-2026-02] 글로벌 시장 진출 지원 바우처 (85% Match) - Great for early-stage exports.
-3. [ID: GR-2026-03] AI 기반 고도화 원천기술 개발 지원금 (78% Match) - Fits your tech stack well.
+1. [ID: GR-2026-01] 2026 차세대 바이오 혁신 기술개발사업 (95% Match) - 귀하의 연구 분야(Bio)와 완벽히 일치합니다.
+2. [ID: GR-2026-02] 의료 데이터 기반 AI 융합 연구 (88% Match) - Bio 데이터 활용 연구로 적합합니다.
+3. [ID: GR-2026-03] 신진 연구자 지원사업 (80% Match) - 초기 연구 정착금 지원.
             `
         };
     }
 };
 
 /**
- * Step 2: The Strategist (Gemini 1.5 Pro)
- * Analyzes uploaded PDF context against the selected grant
+ * Analyzes uploaded PDF context against the selected grant.
  */
 export const strategistNode = async (state: AgentState): Promise<Partial<AgentState>> => {
     console.log("Maestro Strategist: Analyzing documents & crafting strategy...");
@@ -130,25 +155,54 @@ export const strategistNode = async (state: AgentState): Promise<Partial<AgentSt
     }
 
     const model = getGemini();
+    const prompt = `
+    You are an Elite R&D Strategy Consultant (Top 1% in Korea).
+    Your goal is to create a winning strategy for the user to secure the "${state.selectedGrant.title}" grant.
+
+    User Profile:
+    - Name: ${state.userProfile.full_name}
+    - Type: ${state.userProfile.user_type} (Industry: ${state.userProfile.industry})
+    - Expertise: ${state.userProfile.expertise || 'General'}
+    - Keywords: ${state.userProfile.research_keywords?.join(', ')}
+
+    Grant Info:
+    - Title: ${state.selectedGrant.title}
+    - Objective: ${(state.selectedGrant as any)?.summary || "N/A"}
+
+    TASK:
+    Analyze the match and provide a detailed, structured strategy report (minimum 500 words).
+    Use the following Markdown structure EXACTLY:
+
+    # 1. Key Competitiveness (Why You?)
+    - Analyze the user's specific strengths (Expertise, Industry) against the grant's core requirements.
+    - Highlight 3 unique selling points that will differentiate this applicant.
+    - Explain *why* these points matter to the evaluators.
+
+    # 2. Critical Risk Factors & Solution
+    - Identify 2-3 potential weaknesses or gaps in the profile relative to the grant.
+    - Provide concrete solutions or "framing strategies" to mitigate these risks.
+    - Example: "Lack of track record -> Emphasize pilot test results and partnership MOUs."
+
+    # 3. Step-by-Step Execution Strategy
+    - **Step 1: Concept Definition**: How to frame the project title and abstract.
+    - **Step 2: Team Building**: Who to include (Partners, Advisors).
+    - **Step 3: Evidence Preparation**: What data/metrics to gather *now*.
+    - **Step 4: Differentiation**: How to stand out in the "Marketability" section.
+
+    Tone: Professional, Insightful, Encouraging, and Strategic.
+    Language: Korean (Formal/Polite).
+    `;
+
     const res = await model.invoke([
-        new SystemMessage(`You are a senior analyst. 
-    1. Analyze the grant '${state.selectedGrant?.title}' against the user's profile.
-    2. Generate a specific strategy.
-    3. Create a **short Business Plan Draft (300 words)** rooted in the user's background.
-    
-    Return JSON:
-    { "strategy": "Markdown text...", "initial_draft_content": "Draft text..." }`),
+        new SystemMessage(prompt),
         new HumanMessage(`Grant Summary: ${(state.selectedGrant as any)?.summary}\nUser Profile: ${JSON.stringify(state.userProfile)}`)
     ]);
-
-    const cleanContent = res.content.toString().replace(/```json|```/g, "").trim();
-    const result = JSON.parse(cleanContent);
 
     return {
         outputs: {
             ...state.outputs,
-            strategy: result.strategy,
-            initial_draft_content: result.initial_draft_content
+            strategy: res.content.toString(),
+            initial_draft_content: "" // Writer node will handle this
         }
     };
 };

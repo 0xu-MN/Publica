@@ -60,7 +60,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     <View className="mb-8 items-center">
                         <Text className="text-2xl font-bold text-white mb-2 tracking-tight">환영합니다</Text>
                         <Text className="text-sm text-slate-400 text-center leading-[20px]">
-                            InsightFlow에 로그인하고{'\n'}나만의 인사이트를 발견하세요.
+                            Publica에 로그인하고{'\n'}나만의 인사이트를 발견하세요.
                         </Text>
                     </View>
 
@@ -96,7 +96,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     </View>
 
                     <Text className="text-[11px] text-slate-600 text-center px-4">
-                        계속 진행하면 InsightFlow의 <Text className="underline">이용약관</Text> 및 <Text className="underline">개인정보처리방침</Text>에 동의하는 것으로 간주됩니다.
+                        계속 진행하면 Publica의 <Text className="underline">이용약관</Text> 및 <Text className="underline">개인정보처리방침</Text>에 동의하는 것으로 간주됩니다.
                     </Text>
                 </Animated.View>
             </View>

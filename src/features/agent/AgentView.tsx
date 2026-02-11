@@ -307,7 +307,10 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                                                 idx={idx}
                                                 myIndex={bIdx}
                                                 parentIndex={col.parentIndex}
-                                                selected={activeNode === branch}
+                                                selected={
+                                                    activeNode === branch ||
+                                                    (columns[idx + 1] && columns[idx + 1].parentIndex === bIdx)
+                                                }
                                                 onSelect={() => handleExpand(branch, idx, bIdx)}
                                             />
                                         ))}

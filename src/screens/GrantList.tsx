@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicat
 import { ChevronLeft, Info, Zap, Filter, Search, ArrowRight, Share2, Bookmark, Sparkles } from 'lucide-react-native';
 import { fetchGrants, Grant } from '../services/grants';
 import { useAuth } from '../contexts/AuthContext';
+import { calculateGrantScore } from '../utils/scoring';
 import { Icons } from '../utils/icons';
 
 interface GrantListProps {
@@ -14,42 +15,60 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
     const [grants, setGrants] = useState<Grant[]>([]);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState<'Rec' | 'All'>('Rec');
+    const [sortOption, setSortOption] = useState<'match' | 'deadline' | 'recent'>('match');
     const [filter, setFilter] = useState<'All' | 'R&D' | 'Commercialization' | 'Voucher' | 'Policy Fund'>('All');
-    const { user } = useAuth();
+    const { user, profile } = useAuth();
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [profile]); // Reload when profile changes
 
     const loadData = async () => {
         setLoading(true);
         const data = await fetchGrants();
-        setGrants(data);
+
+        // Calculate scores immediately
+        if (profile) {
+            const scoredData = data.map(grant => ({
+                ...grant,
+                matching_score: calculateGrantScore(grant, profile)
+            }));
+            setGrants(scoredData);
+        } else {
+            setGrants(data);
+        }
         setLoading(false);
     };
 
     const getSortedGrants = () => {
         let filtered = grants.filter(g => filter === 'All' || g.category === filter);
 
-        if (activeTab === 'Rec') {
-            // Simulated AI recommendation sorting (Match score high to low)
-            return [...filtered].sort((a, b) => (b.matching_score || 0) - (a.matching_score || 0));
-        } else {
-            // All Grants: Sort by D-Day (Mock sorting for MVP - extracting number from 'D-XX')
-            return [...filtered].sort((a, b) => {
-                const parseDDay = (d: string) => {
-                    if (d === 'D-Day') return 0;
-                    if (d === 'D-365') return 365;
-                    const match = d.match(/D-(\d+)/);
-                    return match ? parseInt(match[1]) : 999;
-                };
+        const parseDDay = (d: string) => {
+            if (!d) return 999;
+            if (d === 'D-Day') return 0;
+            if (d === 'D-365') return 365; // Long term
+            const match = d.match(/D-(\d+)/);
+            return match ? parseInt(match[1]) : 999;
+        };
+
+        return [...filtered].sort((a, b) => {
+            if (sortOption === 'match') {
+                // High score first
+                return (b.matching_score || 0) - (a.matching_score || 0);
+            } else if (sortOption === 'deadline') {
+                // Low D-Day first
                 return parseDDay(a.d_day) - parseDDay(b.d_day);
-            });
-        }
+            } else {
+                // Recent first (created_at desc)
+                if (!a.created_at) return 1;
+                if (!b.created_at) return -1;
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+            }
+        });
     };
 
     const renderGrantCard = ({ item }: { item: Grant }) => {
-        const score = item.matching_score || Math.floor(Math.random() * 20) + 75;
+        const score = item.matching_score || 0;
         const matchColor = score > 90 ? '#10B981' : score > 80 ? '#3B82F6' : '#F59E0B';
 
         if (activeTab === 'Rec') {
@@ -143,23 +162,37 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
             <View style={styles.tabContainer}>
                 <TouchableOpacity
                     style={[styles.tab, activeTab === 'Rec' && styles.tabActive]}
-                    onPress={() => setActiveTab('Rec')}
+                    onPress={() => { setActiveTab('Rec'); setSortOption('match'); }}
                 >
                     <Sparkles size={16} color={activeTab === 'Rec' ? '#3B82F6' : '#64748B'} />
                     <Text style={[styles.tabText, activeTab === 'Rec' && styles.tabTextActive]}>AI Recommendation</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                     style={[styles.tab, activeTab === 'All' && styles.tabActive]}
-                    onPress={() => setActiveTab('All')}
+                    onPress={() => { setActiveTab('All'); setSortOption('deadline'); }}
                 >
                     <Filter size={16} color={activeTab === 'All' ? '#3B82F6' : '#64748B'} />
                     <Text style={[styles.tabText, activeTab === 'All' && styles.tabTextActive]}>All Grants</Text>
                 </TouchableOpacity>
             </View>
 
-            {/* Filter Bar */}
-            <View style={styles.filterBar}>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
+            {/* Sorting & Filter Bar */}
+            <View style={styles.filterContainer}>
+                {/* Sort Options */}
+                <View style={styles.sortRow}>
+                    <TouchableOpacity onPress={() => setSortOption('match')} style={[styles.sortChip, sortOption === 'match' && styles.sortChipActive]}>
+                        <Text style={[styles.sortText, sortOption === 'match' && styles.sortTextActive]}>매칭률 높은순</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setSortOption('deadline')} style={[styles.sortChip, sortOption === 'deadline' && styles.sortChipActive]}>
+                        <Text style={[styles.sortText, sortOption === 'deadline' && styles.sortTextActive]}>마감 임박순</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => setSortOption('recent')} style={[styles.sortChip, sortOption === 'recent' && styles.sortChipActive]}>
+                        <Text style={[styles.sortText, sortOption === 'recent' && styles.sortTextActive]}>최근 공고순</Text>
+                    </TouchableOpacity>
+                </View>
+
+                {/* Category Filters */}
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
                     {['All', 'R&D', 'Commercialization', 'Voucher', 'Policy Fund'].map((cat) => (
                         <TouchableOpacity
                             key={cat}
@@ -209,13 +242,19 @@ const styles = StyleSheet.create({
     tabText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
     tabTextActive: { color: 'white' },
 
-    filterBar: { paddingVertical: 15 },
+    filterContainer: { paddingHorizontal: 20, paddingVertical: 15, gap: 12 },
+    sortRow: { flexDirection: 'row', gap: 8 },
+    sortChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#1E293B' },
+    sortChipActive: { backgroundColor: '#1E293B', borderColor: '#3B82F6' },
+    sortText: { color: '#64748B', fontSize: 12, fontWeight: '600' },
+    sortTextActive: { color: '#3B82F6' },
+
     filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#1E293B' },
     filterChipActive: { backgroundColor: '#1E3A8A', borderColor: '#3B82F6' },
     filterChipText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
     filterChipTextActive: { color: 'white' },
 
-    listContent: { padding: 20, gap: 16 },
+    listContent: { paddingHorizontal: 20, paddingBottom: 20, gap: 16 },
     card: { backgroundColor: '#0F172A', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: '#1E293B' },
     // ... rest of shared card styles stay roughly same
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },

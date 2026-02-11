@@ -80,7 +80,7 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
                 {/* Header */}
                 <View className="px-6 py-4 bg-[#1E293B] border-b border-white/5 flex-row items-center justify-between">
                     <View>
-                        <Text className="text-white font-bold text-xl">InsightFlow</Text>
+                        <Text className="text-white font-bold text-xl">Publica</Text>
                         <Text className="text-slate-400 text-xs">AI 뉴스 큐레이션</Text>
                     </View>
                     <TouchableOpacity onPress={onClose} className="p-2 bg-white/5 rounded-full">

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Animated, ScrollView, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Animated, ScrollView, Modal, Image } from 'react-native';
+import { Svg, Path, Circle, G, Rect, Text as SvgText } from 'react-native-svg';
 import { Icons } from '../utils/icons';
 import { AnimatedPillNav } from './AnimatedPillNav';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
@@ -83,15 +84,42 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         <View className="px-6 py-4 z-50">
             <View className="max-w-[1400px] w-full mx-auto flex-row justify-between items-center relative">
                 {/* Left: Logo */}
-                <View className="flex-row items-center z-10">
-                    <View className="w-9 h-9 bg-blue-500 rounded-lg items-center justify-center mr-3">
-                        <Text className="text-white font-bold text-[22px]">I</Text>
+                <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }}
+                    className="flex-row items-center z-10"
+                >
+                    <View className="w-11 h-11 items-center justify-center bg-[#FDF8F3] rounded-[14px]">
+                        <Svg width="36" height="36" viewBox="0 0 36 36">
+                            {/* Minimalism Logo 'p.' - centered and padded */}
+                            <G transform="translate(6, 4)">
+                                {/* The 'p' stem and loop */}
+                                <Path
+                                    d="M 4,4 L 4,26 M 4,4 C 14,4 16,9 16,13 C 16,17 14,22 4,22"
+                                    stroke="#1e1f20"
+                                    strokeWidth="4.5"
+                                    fill="none"
+                                    strokeLinecap="round"
+                                />
+                                {/* Small text 'UBLICA' */}
+                                <SvgText
+                                    fill="#1e1f20"
+                                    fontSize="5"
+                                    fontWeight="900"
+                                    x="16"
+                                    y="11"
+                                >
+                                    UBLICA
+                                </SvgText>
+                                {/* The Dot next to 'p' */}
+                                <Rect x="16" y="20" width="5.5" height="5.5" rx="1.5" fill="#1e1f20" />
+                            </G>
+                        </Svg>
                     </View>
-                    <View>
-                        <Text className="text-white font-extrabold text-lg tracking-tighter">InsightFlow</Text>
-                        <Text className="text-slate-400 text-[11px] mt-0.5">AI 뉴스 큐레이션</Text>
+                    <View className="ml-3">
+                        <Text className="text-white font-extrabold text-xl tracking-tighter">Publica</Text>
                     </View>
-                </View>
+                </TouchableOpacity>
 
                 {/* Centered Navigation (Desktop) - 🌟 MORPHING NAVIGATION */}
                 {isDesktop && (
@@ -270,7 +298,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                                 {user?.email?.split('@')[0]}
                                             </Text>
                                             <Text className="text-slate-400 text-[10px]">
-                                                {profile?.major_category || profile?.industry || user?.user_metadata?.user_role || '일반 사용자'}
+                                                {profile?.user_type === 'business' || profile?.user_type === 'pre_entrepreneur'
+                                                    ? (profile?.industry || '미지정')
+                                                    : profile?.user_type === 'researcher'
+                                                        ? (profile?.expertise || profile?.major_category || '미지정')
+                                                        : (profile?.industry || user?.user_metadata?.user_role || '일반 사용자')}
                                             </Text>
                                         </View>
                                         <Icons.User color="#fff" size={24} className="opacity-90" />

@@ -12,46 +12,87 @@ interface WorkspaceDashboardProps {
     onOpenCalendar: () => void;
 }
 
+import { fetchProjects, Project } from '../../../services/projects';
+import { fetchGrants } from '../../../services/grants';
+import { calculateGrantScore } from '../../../utils/scoring';
+import { useAuth } from '../../../contexts/AuthContext';
+
+// ... (imports)
+
 export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) => {
+    const { user, profile } = useAuth();
     const [nickname, setNickname] = useState('연구원');
 
+    // Real Data State
+    const [pipelineProjects, setPipelineProjects] = useState<Project[]>([]);
+    const [recommendedBusinesses, setRecommendedBusinesses] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
     useEffect(() => {
-        const loadNickname = async () => {
-            try {
+        loadData();
+    }, [profile]); // Reload when profile changes
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            // 1. Load Nickname (fallback if not in profile context)
+            if (profile?.full_name) {
+                setNickname(profile.full_name);
+            } else {
                 const stored = await AsyncStorage.getItem('user_profile');
                 if (stored) {
                     const data = JSON.parse(stored);
-                    if (data.nickname) {
-                        setNickname(data.nickname);
-                    }
+                    if (data.nickname) setNickname(data.nickname);
                 }
-            } catch (e) {
-                console.error("Failed to load nickname", e);
             }
-        };
-        loadNickname();
-    }, []);
-    // Mock Data - Today's Schedule
+
+            // 2. Fetch Projects
+            const userProjects = await fetchProjects();
+            setPipelineProjects(userProjects);
+
+            // 3. Fetch & Score Grants for Recommendations
+            const allGrants = await fetchGrants();
+            let scoredGrants = allGrants.map(g => ({
+                ...g,
+                dDay: g.d_day ? g.d_day.replace('D-', '') : '30', // Normalize dDay for UI
+                matchingRate: profile ? calculateGrantScore(g, profile) : 0
+            }));
+
+            // Sort by Score DESC
+            scoredGrants.sort((a, b) => b.matchingRate - a.matchingRate);
+
+            // Take Top 3
+            setRecommendedBusinesses(scoredGrants.slice(0, 3));
+
+        } catch (e) {
+            console.error("Failed to load workspace data", e);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Mock Data - Today's Schedule (Keep for now)
     const [scheduleItems, setScheduleItems] = useState([
         { id: '1', text: '정부지원사업 서류 마감 (D-2)', checked: false, dueDate: 'D-2' },
         { id: '2', text: '네이처 논문 리뷰 작성', checked: false },
         { id: '3', text: '개발팀 주간 회의', checked: true },
     ]);
 
-    // Mock Data - AI Briefings
+    // Mock Data - AI Briefings (Keep for now)
     const [briefings, setBriefings] = useState([
         {
             id: '1',
             message: '오늘의 브리핑: 2026 예비창업패키지 서류가 거의 완성되었습니다. 에이전트가 검토를 기다리고 있어요.',
         },
-        {
-            id: '2',
-            message: '오늘의 브리핑: 2026 예비창업패키지 서류가 거의 완성되었습니다. 에이전트가 검토를 기다리고 있어요.',
-        },
     ]);
 
-    // Mock Data - Active Projects
-    const projects = [
+    // Derived Active Projects from Pipeline (or keep mock)
+    // Let's use the fetched pipeline projects for the bottom section too if possible, 
+    // but the UI expects different fields. For safety, let's keep mock for bottom 
+    // OR map the pipeline projects to "Active Projects". 
+    // Let's use mock for bottom "Active Projects" to avoid scope creep, 
+    // unless user explicitly asked. User asked for "Pipeline" and "Recommendations".
+    const activeProjectsMock = [
         {
             id: '1',
             name: 'InsightFlow MVP 개발',
@@ -68,40 +109,6 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
             icon: 'code' as const,
             progressColor: '#10B981',
         },
-        {
-            id: '3',
-            name: '2026 예비창업패키지 준비',
-            description: '사업계획서 최종 작성',
-            progress: 90,
-            icon: 'document' as const,
-            progressColor: '#F59E0B',
-        },
-    ];
-
-    // Mock Data - Recommended Businesses
-    const [recommendedBusinesses] = useState([
-        { id: '1', title: '2026 예비창업패키지', dDay: '18', matchingRate: 94 },
-        { id: '2', title: '데이터바우처 지원사업', dDay: '5', matchingRate: 86 },
-    ]);
-
-    // Mock Data - Pipeline Projects
-    const pipelineProjects = [
-        {
-            id: '1',
-            title: '2026년 예비창업패키지 (생활분야)',
-            subtitle: '',
-            progress: 94,
-            currentStage: '실행 계획',
-            stages: ['가설 수립', '근거 검증', '실행 계획'],
-        },
-        {
-            id: '2',
-            title: 'AI 에이전트 고도화 R&D 지원 사업',
-            subtitle: '',
-            progress: 88,
-            currentStage: '근거 검증',
-            stages: ['가설 수립', '근거 검증', '실행 계획'],
-        },
     ];
 
     const handleToggleSchedule = (id: string) => {
@@ -112,29 +119,11 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
         );
     };
 
-    const handleAddSchedule = () => {
-        // TODO: Open modal or inline form
-        console.log('Add schedule item');
-    };
-
-    const handleDismissBriefing = (id: string) => {
-        setBriefings(briefings => briefings.filter(b => b.id !== id));
-    };
-
-    const handleContinueProject = (projectId: string) => {
-        // TODO: Navigate to agent view with this project
-        console.log('Continue project:', projectId);
-    };
-
-    const handleViewFiles = (projectId: string) => {
-        // TODO: Navigate to files view
-        console.log('View files:', projectId);
-    };
-
-    const handleViewReport = (projectId: string) => {
-        // TODO: Open strategy report
-        console.log('View report:', projectId);
-    };
+    const handleAddSchedule = () => { console.log('Add schedule item'); };
+    const handleDismissBriefing = (id: string) => { setBriefings(prev => prev.filter(b => b.id !== id)); };
+    const handleContinueProject = (projectId: string) => { console.log('Continue project:', projectId); };
+    const handleViewFiles = (projectId: string) => { console.log('View files:', projectId); };
+    const handleViewReport = (projectId: string) => { console.log('View report:', projectId); };
 
     return (
         <ScrollView
@@ -188,13 +177,23 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
                         </TouchableOpacity>
 
                         <View className="gap-4 mb-4">
-                            {pipelineProjects.map(project => (
-                                <ProjectPipelineCard
-                                    key={project.id}
-                                    {...project}
-                                    onViewReport={() => handleViewReport(project.id)}
-                                />
-                            ))}
+                            {pipelineProjects.length > 0 ? (
+                                pipelineProjects.map(project => (
+                                    <ProjectPipelineCard
+                                        key={project.id}
+                                        title={project.grant_title} // Map grant_title to title
+                                        subtitle={project.currentStage}
+                                        progress={project.progress || 0}
+                                        currentStage={project.currentStage || 'Unknown'}
+                                        stages={project.stages || []}
+                                        onViewReport={() => handleViewReport(project.id)}
+                                    />
+                                ))
+                            ) : (
+                                <View className="py-8 items-center justify-center">
+                                    <Text className="text-slate-500 text-sm">진행 중인 프로젝트가 없습니다</Text>
+                                </View>
+                            )}
                         </View>
 
                         {/* Footer Button */}
@@ -221,13 +220,13 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
                             onAddItem={onOpenCalendar}
                         />
 
-                        {/* Stats Cards Row - Moved below schedule */}
+                        {/* Stats Cards Row */}
                         <View className="flex-row gap-3">
                             <StatsCard
                                 icon={Briefcase}
                                 iconColor="#3B82F6"
                                 title="진행중 프로젝트"
-                                value="3"
+                                value={pipelineProjects.length.toString()}
                                 subtitle="+1개 이번 주 시작"
                                 valueColor="#3B82F6"
                             />
@@ -266,7 +265,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
 
                     {/* Horizontal Layout for Projects */}
                     <View className="flex-row gap-4">
-                        {projects.map(project => (
+                        {activeProjectsMock.map(project => (
                             <View key={project.id} className="flex-1">
                                 <ActiveProjectCard
                                     {...project}

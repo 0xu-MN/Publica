@@ -11,9 +11,11 @@ export interface Grant {
     summary: string;
     description: string;
     category: 'R&D' | 'Commercialization' | 'Voucher' | 'Policy Fund';
+    location?: string; // New field for strict filtering
     link?: string;
     matching_score?: number;
     matching_reason?: string;
+    created_at?: string; // For sorting
 }
 
 export const fetchGrants = async (): Promise<Grant[]> => {

@@ -126,15 +126,15 @@ export const AnalysisResultScreen: React.FC<AnalysisResultScreenProps> = ({ resu
                     <TouchableOpacity
                         className="flex-[3] bg-blue-600 py-4 rounded-xl items-center justify-center shadow-lg shadow-blue-900/50"
                         onPress={() => {
-                            if (result.initial_draft_content && onOpenDraft) {
-                                onOpenDraft(result.initial_draft_content);
+                            if (onOpenDraft) {
+                                onOpenDraft(result.strategy);
                             } else {
                                 onClose();
                             }
                         }}
                     >
                         <Text className="text-white font-bold text-base">
-                            {result.initial_draft_content ? '🚀 사업계획서 초안 열기' : '확인 완료'}
+                            🚀 서류 작성 계획하기
                         </Text>
                     </TouchableOpacity>
                 </View>

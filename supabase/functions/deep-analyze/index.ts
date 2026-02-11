@@ -8,7 +8,7 @@ const corsHeaders = {
 
 // 2. Deep Analyzer System Prompt template
 const ANALYZER_SYSTEM_PROMPT = `
-You are InsightFlow's Deep Analyzer.
+You are Publica's Deep Analyzer.
 Your Role: Analyze specific document chunks to answer user queries with high precision.
 
 [Current Document Type]: {{DOC_TYPE}}

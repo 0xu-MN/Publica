@@ -3,7 +3,7 @@ import { BaseMessage } from "@langchain/core/messages";
 export interface AgentState {
     // User context
     userProfile: {
-        user_type?: 'Business' | 'Researcher';
+        user_type?: 'business' | 'pre_entrepreneur' | 'researcher' | 'other';
         industry?: string;
         location?: string;
         techStack?: string[];

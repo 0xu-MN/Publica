@@ -23,6 +23,7 @@ import { OnboardingModal } from '../components/OnboardingModal';
 import { HotKeywords } from '../components/HotKeywords';
 import { InsightListItem } from '../components/InsightListItem';
 import { AnalysisResultScreen } from './AnalysisResultScreen';
+import { createProject } from '../services/projects';
 
 // Filter categories
 const CATEGORIES = ['전체'];
@@ -438,38 +439,74 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                     <AnalysisResultScreen
                         result={selectedAnalysisResult}
                         onClose={() => setSelectedAnalysisResult(null)}
-                        onOpenDraft={(content) => {
-                            // 1. Construct Session Object
-                            const newSession = {
-                                id: 'draft-' + Date.now(),
-                                title: `Draft: ${selectedProgram?.title || 'New Project'}`,
-                                mode: 'Hypothesis Generator',
-                                workspace_data: [
-                                    {
-                                        root_node: "Business Plan Draft",
-                                        branches: [
-                                            {
-                                                id: 'node-draft-1',
-                                                label: 'Initial Draft',
-                                                description: content,
-                                                type: 'text',
-                                                status: 'done'
-                                            }
-                                        ]
+                        onOpenDraft={async (content) => {
+                            try {
+                                if (!user) {
+                                    Alert.alert('로그인 필요', '프로젝트를 생성하려면 로그인이 필요합니다.');
+                                    return;
+                                }
+
+                                // 1. Construct Initial Workspace Data (Agent Context)
+                                const initialSession = {
+                                    id: 'project-' + Date.now(),
+                                    title: selectedProgram?.title || 'New Project',
+                                    mode: 'Hypothesis Generator',
+                                    workspace_data: [
+                                        {
+                                            root_node: selectedProgram?.title || "Business Plan",
+                                            branches: [
+                                                {
+                                                    id: 'analysis-root',
+                                                    label: 'Analysis Strategy',
+                                                    description: content.substring(0, 500) + '...', // Summary for node
+                                                    full_content: content, // Full strategy stored
+                                                    type: 'text',
+                                                    status: 'done'
+                                                }
+                                            ]
+                                        }
+                                    ],
+                                    chat_history: [
+                                        { sender: 'ai', text: `안녕하세요! '${selectedProgram?.title}' 지원을 위한 분석 리포트가 준비되었습니다. 이 내용을 바탕으로 가설 수립 및 서류 작성을 도와 드릴까요?` }
+                                    ]
+                                };
+
+                                // 2. PERSIST TO DB (Projects Table)
+                                let projectId = initialSession.id;
+                                try {
+                                    const newProject = await createProject(
+                                        user.id,
+                                        selectedProgram?.id || 'manual',
+                                        selectedProgram?.title || 'New Grant Project',
+                                        initialSession
+                                    );
+                                    if (newProject) {
+                                        projectId = newProject.id;
                                     }
-                                ],
-                                chat_history: [
-                                    { sender: 'ai', text: `Here is the initial draft based on the analysis of ${selectedProgram?.title}. You can now edit and expand it here.` }
-                                ]
-                            };
+                                } catch (dbError) {
+                                    console.error("DB Save failed, proceeding with local session for demo:", dbError);
+                                }
 
-                            // 2. State Updates
-                            setPendingSession(newSession);
-                            setSelectedAnalysisResult(null);
-                            setSelectedProgram(null);
+                                // 3. State Updates & Navigation (Fail-safe with stabilization)
+                                // We clear overlays FIRST to avoid z-index conflicts
+                                setSelectedAnalysisResult(null);
+                                setSelectedProgram(null);
 
-                            // 3. Navigate
-                            setViewMode('workspace');
+                                // Set session data
+                                setPendingSession({
+                                    ...initialSession,
+                                    id: projectId
+                                });
+
+                                // Small delay to ensure React handles overlay unmounting before Workspace mounting
+                                setTimeout(() => {
+                                    setViewMode('workspace');
+                                }, 100);
+
+                            } catch (e) {
+                                console.error("Critical failure starting project:", e);
+                                Alert.alert("오류", "프로젝트 시작 중 치명적인 오류가 발생했습니다.");
+                            }
                         }}
                     />
                 </View>

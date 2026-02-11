@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, ScrollView, Animated } from 'react-native';
+import { View, Text, ScrollView, Animated, Pressable } from 'react-native';
 import { Svg, Path } from 'react-native-svg';
 import { TrendingUp, TrendingDown } from 'lucide-react-native';
 import { fetchMarketData, MarketData } from '../services/marketService';
@@ -112,12 +112,10 @@ export const CompactMarketTicker = () => {
     if (marketData.length === 0) return null;
 
     return (
-        <View
+        <Pressable
             className="w-full rounded-[20px] py-1 px-6 overflow-hidden max-w-full"
-            // @ts-ignore - Web only props
-            onMouseEnter={() => setIsHovered(true)}
-            // @ts-ignore - Web only props
-            onMouseLeave={() => setIsHovered(false)}
+            onHoverIn={() => setIsHovered(true)}
+            onHoverOut={() => setIsHovered(false)}
         >
             <View className="flex-row items-center h-full">
                 <ScrollView
@@ -133,6 +131,6 @@ export const CompactMarketTicker = () => {
                     ))}
                 </ScrollView>
             </View>
-        </View>
+        </Pressable>
     );
 };

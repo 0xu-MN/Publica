@@ -17,6 +17,32 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         { id: 'scraps', icon: Bookmark, label: '스크랩' },
     ];
 
+    const [projects, setProjects] = React.useState<any[]>([]);
+
+    React.useEffect(() => {
+        const fetchProjects = async () => {
+            // Basic fetch from projects table
+            // In a real app, use a proper service or context
+            try {
+                // @ts-ignore
+                const { data, error } = await window.supabase
+                    .from('projects')
+                    .select('id, grant_title, status')
+                    .order('last_updated', { ascending: false })
+                    .limit(5);
+
+                if (data) setProjects(data);
+            } catch (e) {
+                console.log("Failed to fetch sidebar projects", e);
+            }
+        };
+
+        // Poll every 5 seconds for updates (Simple sync)
+        fetchProjects();
+        const interval = setInterval(fetchProjects, 5000);
+        return () => clearInterval(interval);
+    }, []);
+
     const renderItem = (item: any) => {
         const isActive = activeTab === item.id;
         const Icon = item.icon;
@@ -101,6 +127,25 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 {/* Main Navigation */}
                 <View className="flex-1 gap-3">
                     {homeItems.map(renderItem)}
+
+                    {/* My Projects Section */}
+                    {projects.length > 0 && (
+                        <View className="mt-4 mb-2 w-full h-[1px] bg-white/10" />
+                    )}
+
+                    <ScrollView className="flex-1 w-full" showsVerticalScrollIndicator={false}>
+                        {projects.map((p, i) => (
+                            <TouchableOpacity
+                                key={p.id}
+                                onPress={() => onTabChange('agent')} // TODO: Load specific project
+                                className="w-[48px] h-[48px] rounded-[16px] bg-slate-800/50 mb-2 items-center justify-center border border-white/5 active:bg-blue-500/20"
+                            >
+                                <Text className="text-[10px] text-slate-400 font-bold text-center leading-3 px-1" numberOfLines={2}>
+                                    {p.grant_title.slice(0, 4)}..
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
                 </View>
 
                 {/* Bottom Actions - Settings */}

@@ -13,6 +13,7 @@ interface AuthContextType {
     signInWithKakao: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
+    setProfileState: (profile: any) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -77,7 +78,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 options: {
                     redirectTo: Platform.select({
                         web: window.location.origin,
-                        default: 'insightflow://auth/callback' // Requires scheme setup in app.json
+                        default: 'publica://auth/callback' // Requires scheme setup in app.json
                     })
                 }
             });
@@ -95,7 +96,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 options: {
                     redirectTo: Platform.select({
                         web: window.location.origin,
-                        default: 'insightflow://auth/callback'
+                        default: 'publica://auth/callback'
                     })
                 }
             });
@@ -124,7 +125,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             signInWithGoogle,
             signInWithKakao,
             signOut,
-            refreshProfile
+            refreshProfile,
+            setProfileState: (data: any) => setProfile(data)
         }}>
             {children}
         </AuthContext.Provider>

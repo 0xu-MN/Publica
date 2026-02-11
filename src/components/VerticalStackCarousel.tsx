@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, StyleSheet } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, StyleSheet, Pressable } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -17,7 +17,7 @@ interface VerticalStackCarouselProps<T> {
     autoPlayInterval?: number;
 }
 
-const COLLAPSED_HEIGHT = 50; // Increased pill height for better visibility
+const COLLAPSED_HEIGHT = 50;
 const ITEM_SPACING = 20;
 
 export function VerticalStackCarousel<T>({
@@ -32,16 +32,22 @@ export function VerticalStackCarousel<T>({
 
     // Hover State for Pause
     const [isHovered, setIsHovered] = React.useState(false);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     // Auto-play logic (REVERSED: Top to Bottom)
     useEffect(() => {
-        if (isHovered) return; // Pause if hovered
+        if (isHovered) {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+            return;
+        }
 
-        const timer = setInterval(() => {
+        intervalRef.current = setInterval(() => {
             setCurrentIndex((prev) => prev - 1);
         }, autoPlayInterval);
 
-        return () => clearInterval(timer);
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
     }, [autoPlayInterval, isHovered]);
 
     // Sync shared value with state
@@ -54,13 +60,11 @@ export function VerticalStackCarousel<T>({
     }, [currentIndex]);
 
     return (
-        <View
+        <Pressable
             style={{ height: containerHeight, overflow: 'hidden' }}
             className="relative bg-transparent"
-            // @ts-ignore - Web only props
-            onMouseEnter={() => setIsHovered(true)}
-            // @ts-ignore - Web only props
-            onMouseLeave={() => setIsHovered(false)}
+            onHoverIn={() => setIsHovered(true)}
+            onHoverOut={() => setIsHovered(false)}
         >
             {data.map((item, index) => {
                 return (
@@ -75,7 +79,7 @@ export function VerticalStackCarousel<T>({
                     </CardItem>
                 );
             })}
-        </View>
+        </Pressable>
     );
 }
 

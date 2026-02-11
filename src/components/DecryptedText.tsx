@@ -19,41 +19,51 @@ export const DecryptedText: React.FC<DecryptedTextProps> = ({
     const [isDecrypting, setIsDecrypting] = useState(false);
 
     useEffect(() => {
-        const rotationTimer = setInterval(() => {
-            setIsDecrypting(true);
-            const nextIndex = (currentIndex + 1) % words.length;
-            const targetWord = words[nextIndex];
+        let rotationTimer: NodeJS.Timeout;
 
-            // Decryption animation
-            let iterations = 0;
-            const decryptInterval = setInterval(() => {
-                setDisplayText(
-                    targetWord
-                        .split('')
-                        .map((char, index) => {
-                            if (index < iterations) {
-                                return targetWord[index];
-                            }
-                            return CHARS[Math.floor(Math.random() * CHARS.length)];
-                        })
-                        .join('')
-                );
+        const startRotation = () => {
+            rotationTimer = setInterval(() => {
+                if (isDecrypting) return;
 
-                iterations += 1;
+                setIsDecrypting(true);
+                setCurrentIndex((prev) => (prev + 1) % words.length);
+            }, interval);
+        };
 
-                if (iterations > targetWord.length) {
-                    clearInterval(decryptInterval);
-                    setDisplayText(targetWord);
-                    setIsDecrypting(false);
-                    setCurrentIndex(nextIndex);
-                }
-            }, 80); // Speed up for snappy effect
-
-            return () => clearInterval(decryptInterval);
-        }, interval);
-
+        startRotation();
         return () => clearInterval(rotationTimer);
-    }, [currentIndex, words, interval]);
+    }, [words, interval, isDecrypting]);
+
+    useEffect(() => {
+        if (!isDecrypting) return;
+
+        const targetWord = words[currentIndex];
+        let iterations = 0;
+
+        const decryptInterval = setInterval(() => {
+            setDisplayText(
+                targetWord
+                    .split('')
+                    .map((char, index) => {
+                        if (index < iterations) {
+                            return targetWord[index];
+                        }
+                        return CHARS[Math.floor(Math.random() * CHARS.length)];
+                    })
+                    .join('')
+            );
+
+            iterations += 1;
+
+            if (iterations > targetWord.length) {
+                clearInterval(decryptInterval);
+                setDisplayText(targetWord);
+                setIsDecrypting(false);
+            }
+        }, 80);
+
+        return () => clearInterval(decryptInterval);
+    }, [isDecrypting, currentIndex, words]);
 
     return <Text className={className}>{displayText}</Text>;
 };
