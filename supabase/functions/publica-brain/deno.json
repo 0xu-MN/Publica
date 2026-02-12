@@ -1,0 +1,7 @@
+{
+    "imports": {
+        "@langchain/google-genai": "npm:@langchain/google-genai@0.1.0",
+        "@langchain/langgraph": "npm:@langchain/langgraph@0.2.0",
+        "zod": "npm:zod@3.22.4"
+    }
+}

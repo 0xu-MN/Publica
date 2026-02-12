@@ -1,5 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+// Setup type definitions for built-in Supabase Runtime APIs
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+
+declare const Deno: any;
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -19,59 +21,67 @@ Analyze the provided text excerpt (first 500-1000 chars) and classify it into on
 Return JSON: { "doc_type": "string", "confidence": number }
 `;
 
-serve(async (req) => {
+Deno.serve(async (req: Request) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
     try {
         const { text_content, filename } = await req.json();
 
-        // Step 1: Classify Document
-        const classificationRes = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o',
-                messages: [
-                    { role: 'system', content: CLASSIFIER_PROMPT },
-                    { role: 'user', content: `Filename: ${filename}\n\nText Preview: ${text_content.substring(0, 1000)}` }
-                ],
-                temperature: 0,
-            }),
-        });
+        // Step 1: Classify Document using Gemini 1.5 Pro
+        const apiKey = Deno.env.get('GEMINI_API_KEY');
+        if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
-        const clsData = await classificationRes.json();
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: `${CLASSIFIER_PROMPT}\n\nFilename: ${filename}\n\nText Preview: ${text_content.substring(0, 1000)}` }]
+                    }],
+                    generationConfig: {
+                        temperature: 0,
+                        responseMimeType: "application/json"
+                    }
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${errorText}`);
+        }
+
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
         let docType = 'general';
         try {
-            const clsParams = JSON.parse(clsData.choices[0].message.content.replace(/```json/g, '').replace(/```/g, ''));
-            docType = clsParams.doc_type;
+            const clsParams = JSON.parse(rawText);
+            docType = clsParams.doc_type || 'general';
         } catch (e) { console.error("Classification Parsing Error", e); }
 
-        // Step 2: Semantic Chunking (Mock Implementation for Edge)
-        // In production, this would use embeddings + clustering. 
-        // Here we strictly split by double newlines or common headers based on docType.
-
-        let splitterRegex = /\n\n+/; // Default parameter-based
+        // Step 2: Semantic Chunking (Mock Implementation)
+        let splitterRegex = /\n\n+/; // Default
 
         if (docType === 'government_notice') {
-            // Look for common headers like "1. 사업개요", "2. 지원자격"
             splitterRegex = /(?=\n\d+\.\s)/;
         } else if (docType === 'legal_doc') {
-            // Look for "제N조"
             splitterRegex = /(?=\n제\d+조)/;
         }
 
         const chunks = text_content.split(splitterRegex).filter((c: string) => c.length > 50);
 
-        // Step 3: Return processed logic (in real app, insert into DB here)
+        // Step 3: Return result
         const result = {
             metadata: {
                 filename,
                 detected_type: docType,
                 total_chunks: chunks.length,
-                processed_at: new Date().toISOString()
+                processed_at: new Date().toISOString(),
+                model: "gemini-1.5-pro"
             },
             sample_chunk: chunks[0] // Preview
         };
@@ -80,7 +90,7 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
-    } catch (error) {
+    } catch (error: any) {
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,

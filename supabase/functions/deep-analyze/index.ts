@@ -1,5 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+// Setup type definitions for built-in Supabase Runtime APIs
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+
+declare const Deno: any;
 
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
@@ -14,7 +16,7 @@ Your Role: Analyze specific document chunks to answer user queries with high pre
 [Current Document Type]: {{DOC_TYPE}}
 
 [Analysis Rules]:
-- If 'Government Notice': Focus on "Eligibility", "Deadlines", "Funding limits", "Required docs". extract Facts.
+- If 'Government Notice': Focus on "Eligibility", "Deadlines", "Funding limits", "Required docs". Extract Facts.
 - If 'Financial Report': Focus on "Revenue", "YoY Growth", "Risk Factors", "Forward-looking statements".
 - If 'Research Paper': Focus on "Methodology", "Results", "Novelty".
 - If 'Legal Doc': Focus on "Definitions", "Obligations", "Penalties".
@@ -32,48 +34,69 @@ Return ONLY JSON:
 }
 `;
 
-serve(async (req) => {
+Deno.serve(async (req) => {
     if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
 
     try {
         const { query, context_node, doc_type_hint } = await req.json(); // doc_type_hint comes from previous upload-knowledge step
+        const apiKey = Deno.env.get('GEMINI_API_KEY');
+
+        if (!apiKey) {
+            console.error("❌ GEMINI_API_KEY is missing");
+            throw new Error("Server Misconfiguration: GEMINI_API_KEY is missing");
+        }
 
         // 1. Construct Dynamic System Prompt
         const currentDocType = doc_type_hint || 'general';
         const finalSystemPrompt = ANALYZER_SYSTEM_PROMPT.replace('{{DOC_TYPE}}', currentDocType);
 
-        // 2. Call OpenAI
-        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o',
-                messages: [
-                    { role: 'system', content: finalSystemPrompt },
-                    { role: 'user', content: `User Query: ${query}\nContext Node: ${context_node?.label || 'None'}\n\n(Simulated Retrieved Chunks would go here in RAG system)` }
-                ],
-                temperature: 0.3, // Fact-based, low temp
-            }),
-        });
+        const userPrompt = `User Query: ${query}\nContext Node: ${context_node?.label || 'None'}\n\n(Simulated Retrieved Chunks would go here in RAG system)`;
 
-        const aiData = await openAIResponse.json();
-        const content = aiData.choices[0].message.content;
+        // 2. Call Gemini 1.5 Pro
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: finalSystemPrompt + "\n\n" + userPrompt }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.3, // Fact-based, low temp
+                        responseMimeType: "application/json"
+                    }
+                })
+            }
+        );
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${errorText}`);
+        }
+
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
 
         let parsedData = {};
         try {
-            parsedData = JSON.parse(content.replace(/```json/g, '').replace(/```/g, ''));
+            parsedData = JSON.parse(rawText);
         } catch (e) {
-            parsedData = { summary: content, key_facts: [], references: [] };
+            console.error("JSON Parse Error:", rawText);
+            parsedData = {
+                summary: "Error parsing AI response",
+                key_facts: [],
+                references: []
+            };
         }
 
         return new Response(JSON.stringify(parsedData), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Analyzer Error:", error);
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,

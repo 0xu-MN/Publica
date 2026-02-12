@@ -130,14 +130,14 @@ export async function fetchAndProcessNews() {
 }
 
 // 직접 실행 시
-if (require.main === module) {
-    fetchAndProcessNews()
-        .then(result => {
-            console.log('\n📊 수집 완료:', result);
-            process.exit(0);
-        })
-        .catch(error => {
-            console.error('\n💥 에러 발생:', error);
-            process.exit(1);
-        });
-}
+// if (require.main === module) {
+//     fetchAndProcessNews()
+//         .then(result => {
+//             console.log('\n📊 수집 완료:', result);
+//             process.exit(0);
+//         })
+//         .catch(error => {
+//             console.error('\n💥 에러 발생:', error);
+//             process.exit(1);
+//         });
+// }

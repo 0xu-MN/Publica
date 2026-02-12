@@ -423,12 +423,40 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
             )}
 
             {/* Government Program Detail Overlay */}
+            {/* Government Program Detail Overlay */}
             {selectedProgram && (
                 <View className="absolute inset-0 z-50 bg-[#020617]">
                     <GovernmentDetailScreen
                         program={selectedProgram}
                         onBack={() => setSelectedProgram(null)}
                         onAnalyzeComplete={(result: any) => setSelectedAnalysisResult(result)}
+                        onStartAnalysis={(program) => {
+                            // 1. Close Overlay
+                            setSelectedProgram(null);
+
+                            // 2. Prepare Session for Agent
+                            console.log("🚀 Starting Agent Analysis for:", program.title);
+                            const autoSession = {
+                                id: 'auto-' + Date.now(),
+                                title: program.title,
+                                mode: 'Grant Strategist',
+                                workspace_data: [
+                                    {
+                                        root_node: `Analyzing: ${program.title}`,
+                                        branches: []
+                                    }
+                                ],
+                                chat_history: [
+                                    { sender: 'ai', text: `안녕하세요! '${program.title}' 공고를 기반으로 맞춤형 합격 전략을 수립하겠습니다. 3단계(적합성-전략-실행) 분석을 시작합니다.` }
+                                ],
+                                // 🌟 Magic Query to Trigger Agent
+                                auto_run_query: `Analyze this government grant program: ${program.title}.\n\nContext:\n- Agency: ${program.agency}\n- Target: ${program.target}\n- Tech Field: ${program.tech_field}\n\nTask: Provide a comprehensive strategy including Fit Analysis, Winning Strategy, and Action Plan.`
+                            };
+
+                            // 3. Navigate to Workspace
+                            setPendingSession(autoSession);
+                            setViewMode('workspace');
+                        }}
                     />
                 </View>
             )}

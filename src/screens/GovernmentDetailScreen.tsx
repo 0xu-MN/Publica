@@ -7,9 +7,10 @@ interface GovernmentDetailScreenProps {
     program: any;
     onBack: () => void;
     onAnalyzeComplete?: (result: any) => void;
+    onStartAnalysis?: (program: any) => void;
 }
 
-export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ program, onBack, onAnalyzeComplete }) => {
+export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ program, onBack, onAnalyzeComplete, onStartAnalysis }) => {
     const [isAnalyzing, setIsAnalyzing] = React.useState(false);
     const [analysisStep, setAnalysisStep] = React.useState(0);
 
@@ -21,7 +22,6 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
         } else if (program.link) {
             Linking.openURL(program.link);
         } else {
-            // Fallback for demo
             Linking.openURL('https://www.mss.go.kr');
         }
     };
@@ -29,67 +29,32 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
     const handleDownloadFile = () => {
         if (program.file_url) {
             Linking.openURL(program.file_url);
-        } else {
-            // Fallback for demo
-            console.log('No file url, showing alert');
         }
     };
 
-    // Placeholder for handleOpenLink to avoid breaking existing calls if any
-    const handleOpenLink = handleOpenOriginal;
-
     const handleShare = () => {
-        // Implement share logic later
         console.log('Share pressed');
     };
 
     const handleAnalyze = async () => {
-        setIsAnalyzing(true);
-        setAnalysisStep(1); // Reading
-
-        try {
-            // Simulation logic
-            setTimeout(() => setAnalysisStep(2), 1500); // Analysis
-            setTimeout(() => setAnalysisStep(3), 3000); // Drafting
-
-            // Race Condition: Real API vs Timeout (Fallback)
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Timeout")), 5000)
-            );
-
-            // Replace with your actual API call
-            // const apiPromise = fetch('/api/agent/run-full', ...);
-
-            // For DEMO: Force failure to show Mock or use Mock directly
-            // await Promise.race([apiPromise, timeoutPromise]);
-
-            // MOCK RESULT (Dynamic based on Program)
-            const mockResult = {
-                strategy: `## 🎯 Strategy for ${program.title}\n\n**Analysis:** Based on your profile, this grant from **${program.agency}** is a strong match.\n\n**Key Strengths:**\n- Alignment with **${program.tech_field}**\n- Matches your **Graduate Student** status.\n\n**Recommended Action:** Emphasize your technical novelty in the application.`,
-                initial_draft_content: `# Business Plan: ${program.title}\n\n## 1. Problem Statement\nCurrently, there is a lack of efficient solutions in the ${program.tech_field} sector...\n\n## 2. Solution\nOur proposed solution leverages AI to solve this by...\n\n## 3. Market Analysis\nThe market for ${program.tech_field} is growing rapidly...`
-            };
-
-            setTimeout(() => {
-                setIsAnalyzing(false);
-                console.log("Navigating with Result:", mockResult);
-                if (onAnalyzeComplete) {
-                    onAnalyzeComplete(mockResult);
-                }
-            }, 4500);
-
-        } catch (e) {
-            console.log("API Failed, using Fallback");
-
-            // Fallback Result
-            const fallbackResult = {
-                strategy: "## ⚠️ Offline Analysis\n\nSystem could not reach the advanced agent, but based on your **Bio** background, we recommend emphasizing your lab research data.",
-            };
-
-            setIsAnalyzing(false);
-            if (onAnalyzeComplete) {
-                onAnalyzeComplete(fallbackResult);
-            }
+        if (onStartAnalysis) {
+            onStartAnalysis(program);
+            return;
         }
+
+        // Fallback for demo simulation if onStartAnalysis is not provided
+        setIsAnalyzing(true);
+        setAnalysisStep(1);
+        setTimeout(() => setAnalysisStep(2), 1500);
+        setTimeout(() => setAnalysisStep(3), 3000);
+
+        setTimeout(() => {
+            const mockResult = {
+                strategy: `## 🎯 Strategy for ${program.title}\n\n**Analysis:** Strong match for your profile.\n\n**Key Strengths:**\n- Matches ${program.tech_field}\n- Fits Graduate Student status.`,
+            };
+            setIsAnalyzing(false);
+            if (onAnalyzeComplete) onAnalyzeComplete(mockResult);
+        }, 4500);
     };
 
     return (

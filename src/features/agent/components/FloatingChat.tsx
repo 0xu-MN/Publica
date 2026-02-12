@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, StyleSheet, ScrollView } from 'react-native';
 import { MessageSquare, Minimize2, Paperclip, Send, Sparkles, ArrowRight } from 'lucide-react-native';
 
-export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFileUpload, suggestions }: any) => {
+export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFileUpload, suggestions, activeNodeLabel }: any) => {
     const [expanded, setExpanded] = useState(false);
     const [input, setInput] = useState("");
     const widthAnim = useRef(new Animated.Value(140)).current;
@@ -52,7 +52,9 @@ export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFil
                         <View style={styles.chatHeader}>
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <Sparkles size={14} color="#10B981" style={{ marginRight: 6 }} />
-                                <Text style={styles.chatContext}>{contextLabel ? `Context: ${contextLabel}` : "InsightFlow Agent"}</Text>
+                                <Text style={styles.chatContext}>
+                                    {activeNodeLabel ? `분석 중: ${activeNodeLabel}` : contextLabel ? `Context: ${contextLabel}` : "Publica Agent"}
+                                </Text>
                             </View>
                             <TouchableOpacity onPress={() => setExpanded(false)}><Minimize2 size={18} color="#94A3B8" /></TouchableOpacity>
                         </View>

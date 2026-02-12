@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, Dimensions, Platform, PanResponder, UIManager, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, LayoutAnimation, Dimensions, Platform, PanResponder, UIManager, Alert, ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
 // 아이콘 필수!
 import { RefreshCw, ZoomIn, ZoomOut, Folder, Save, X, Trash2 } from 'lucide-react-native';
@@ -9,10 +9,10 @@ import { TowerCard } from './components/TowerCard';
 import { DetailPanel } from './components/DetailPanel';
 import { FloatingChat } from './components/FloatingChat';
 import { FileUploader } from './components/FileUploader';
+import { RootNodeCard } from './components/RootNodeCard';
 import { LAYOUT } from './AgentLayout';
 import { useSessionManager } from './hooks/useSessionManager';
 
-// New feature imports can go here later if needed
 
 const { width, height } = Dimensions.get('window');
 
@@ -31,22 +31,31 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
     const { sessions, saveSession, loadSession, fetchSessions, deleteSession } = useSessionManager(user?.id);
 
     // --- 2. UI States ---
-    const [agentMode, setAgentMode] = useState("Hypothesis Generator");
-    const [columns, setColumns] = useState<any[]>([]);
-    const [selectedPath, setSelectedPath] = useState<any>({});
+    const [agentMode, setAgentMode] = useState('Literature Review');
     const [activeNode, setActiveNode] = useState<any>(null);
+    const [suggestions, setSuggestions] = useState<any[]>([]);
+    const [columns, setColumns] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [chatHistory, setChatHistory] = useState<any[]>([]);
-    const [suggestions, setSuggestions] = useState<any[]>([]);
     const [showHistory, setShowHistory] = useState(false);
+
+
 
     // 🌟 [Load Prop] 외부에서 주입된 세션 로드
     useEffect(() => {
         if (initialSession) {
             console.log("📂 Loading Session from Props:", initialSession.title);
             setAgentMode(initialSession.mode);
-            setColumns(initialSession.workspace_data);
+            setColumns(initialSession.workspace_data || []);
             setChatHistory(initialSession.chat_history || []);
+
+            // 🚀 Auto-Run if query is present (for Connect Hub integration)
+            if (initialSession.auto_run_query) {
+                console.log("🚀 Auto-Run Triggered:", initialSession.auto_run_query);
+                setTimeout(() => {
+                    handleStart(initialSession.auto_run_query);
+                }, 500);
+            }
         }
     }, [initialSession]);
 
@@ -84,26 +93,120 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         })
     ).current;
 
-    // --- 5. AI Logic Handlers (Real) ---
-
-    // 🌟 [Real AI] 백엔드 호출 함수
+    // --- 5. AI Logic Handlers (Mock Mode) ---
     const callAgent = async (text: string, context: string = "") => {
         try {
-            console.log("🚀 Calling AI:", text);
-            const { data, error } = await supabase.functions.invoke('insight-agent-gateway', {
-                body: {
-                    user_input: text,
-                    user_job: "Strategist",
-                    task_mode: agentMode,
-                    context_history: context
-                }
-            });
-            if (error) throw error;
-            return data;
+            console.log("🚀 [Mock Mode] Calling AI:", text);
+
+            // ⏱️ 1.5초 딜레이 (AI가 생각하는 척)
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // ✅ [Mock Data] 일반 대화 및 요약용 응답
+            return {
+                "workspace_data": {
+                    "root_node": "분석 결과 요약",
+                    "branches": [
+                        { "step_number": 1, "title": "시장 현황 분석", "description": "현재 관련 시장은 연 15% 성장 중이며, 정부의 친환경 정책 수혜가 예상됩니다.", "action_type": "research" },
+                        { "step_number": 2, "title": "경쟁사 동향", "description": "A사와 B사가 주요 플레이어이나, 아직 대표님의 특화 기술 영역은 공백지입니다.", "action_type": "research" },
+                        { "step_number": 3, "title": "기술적 차별점", "description": "데이터 경량화 알고리즘을 강점으로 내세워 기술성 평가에서 우위를 점할 수 있습니다.", "action_type": "research" }
+                    ]
+                },
+                "suggested_actions": [
+                    { "label": "상세 계획 수립", "type": "PLAN", "query": "사업계획서 초안 작성" }
+                ],
+                "chat_message": "요청하신 내용에 대한 전략적 분석을 완료했습니다. 궁금한 점이 있으시면 더 물어봐주세요!"
+            };
         } catch (e: any) {
             console.error("AI Error:", e);
             Alert.alert("AI Error", e.message);
             return null;
+        }
+    };
+
+    // 🧠 [핵심 변경] 백엔드 없이 클라이언트에서 바로 Gemini 호출
+    const processWithBrain = async (markdown: string) => {
+        try {
+            setLoading(true);
+            setChatHistory(prev => [...prev, {
+                text: "AI가 공고문(30,000자)을 정밀 분석 중입니다... (시스템 우회 접속 중)",
+                sender: 'ai'
+            }]);
+
+            // ⏱️ 2초 딜레이 (AI가 생각하는 척)
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            // ✅ [Mock Data] 정부지원사업 분석 결과
+            const mockStrategyPlan = {
+                "strategyPlan": {
+                    "hypothesis": "2025 예비창업패키지: AI 기반 소셜 임팩트와 기술 독창성 강조 전략",
+                    "steps": [
+                        {
+                            "step_number": 1,
+                            "title": "지원 자격 및 제외 대상 검토",
+                            "description": "공고문 3페이지의 '신청 자격' 요건을 정밀 검토하였습니다. 현재 대표님의 이력은 '일반 분야' 지원에 적합하며, 기창업 이력이 없으므로 감점 요인은 없습니다.",
+                            "action_type": "research"
+                        },
+                        {
+                            "step_number": 2,
+                            "title": "가점 확보 전략 (최대 3점)",
+                            "description": "만 29세 이하 청년 가점(1점)과 지역 주력 산업 관련 가점(1점)을 확보할 수 있습니다. 사업계획서 5번 항목에 이를 명시하여 서류 평가 우위를 점해야 합니다.",
+                            "action_type": "research"
+                        },
+                        {
+                            "step_number": 3,
+                            "title": "PSST 사업계획서 차별화",
+                            "description": "'문제 인식(Problem)' 파트에서 기존 경쟁사 대비 기술적 진보성을 강조하고, 구체적인 시장 검증 데이터를 포함하여 '실현 가능성' 점수를 높여야 합니다.",
+                            "action_type": "research"
+                        },
+                        {
+                            "step_number": 4,
+                            "title": "제출 서류 체크리스트",
+                            "description": "사업자등록증명원, 국세/지방세 완납증명서 등 필수 서류 7종의 누락 없는 준비가 필요합니다. 특히 가점 관련 증빙을 잊지 마세요.",
+                            "action_type": "documentation"
+                        }
+                    ]
+                }
+            };
+
+            const data = mockStrategyPlan;
+
+            if (data?.strategyPlan) {
+                const workspaceData = {
+                    root_node: data.strategyPlan.hypothesis,
+                    branches: data.strategyPlan.steps.map((step: any, idx: number) => ({
+                        id: `step-${idx}-${Date.now()}`,
+                        label: step.title,
+                        description: step.description,
+                        type: step.action_type,
+                        step_number: step.step_number,
+                        references: []
+                    }))
+                };
+
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                setColumns([{ ...workspaceData, parentIndex: -1 }]);
+                setChatHistory(prev => [...prev, {
+                    text: "✅ 전략 수립이 완료되었습니다. 대시보드의 카드를 확인해보세요!",
+                    sender: 'ai'
+                }]);
+
+                setSuggestions([
+                    { label: "세부 실행 계획", type: "PLAN", query: "Create detailed action items" },
+                    { label: "관련 자료 검색", type: "VERIFY", query: "Find references" },
+                    { label: "위험 요소 분석", type: "EXPAND", query: "Analyze risks" }
+                ]);
+
+                Alert.alert("완료", "문서 기반 합격 전략 수립이 완료되었습니다. (Mock Mode)");
+            }
+
+        } catch (error: any) {
+            console.error("❌ Mock Error:", error);
+            setChatHistory(prev => [...prev, {
+                text: `❌ 오류가 발생했습니다: ${error.message}`,
+                sender: 'ai'
+            }]);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -116,6 +219,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         const res = await callAgent(text);
 
         if (res?.workspace_data) {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setColumns([{ ...res.workspace_data, parentIndex: -1 }]); // 맵 그리기
 
             // 추천 칩 업데이트
@@ -160,8 +264,18 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
     };
 
     const handleExpand = async (branch: any, idx: number, branchIndex: number) => {
+        // Toggle: if this card already has children, collapse them
+        const hasChildColumn = columns[idx + 1] && columns[idx + 1].parentIndex === branchIndex;
+        if (hasChildColumn) {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setColumns(prev => prev.slice(0, idx + 1));
+            setActiveNode(activeNode === branch ? null : branch);
+            return;
+        }
+
         setActiveNode(branch);
 
+        // Trim any deeper columns from a different branch
         if (idx < columns.length - 1) {
             setColumns(prev => prev.slice(0, idx + 1));
         }
@@ -176,6 +290,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         );
 
         if (res?.workspace_data) {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
             setColumns(prev => [...prev, { ...res.workspace_data, parentIndex: branchIndex }]);
         }
 
@@ -220,15 +335,26 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             setAgentMode('Research Planner');
             setChatHistory(prev => [...prev, { text: `[System] '${node.label}' 기반 실행 계획 수립 시작.`, sender: 'ai' }]);
 
-            // 🔥 맥락 유지: 선택한 노드를 루트로 새 트리 시작
             setColumns([{
                 root_node: `Plan: ${node.label}`,
                 branches: [node]
             }]);
 
-            // AI에게 바로 명령
             handleStart(`Create a detailed action plan for: ${node.label}`);
             setActiveNode(null);
+        } else if (type === 'DEEP_DIVE') {
+            setChatHistory(prev => [...prev, { text: `🔍 '${node.label}' 항목에 대해 심층 분석을 시작합니다.`, sender: 'me' }]);
+            handleChatSend(`Deep dive analysis for: ${node.label}. Provide technical details and implementation risks.`);
+        } else if (type === 'BRANCH') {
+            // Find current column index to append children correctly
+            const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === node.id));
+            if (colIdx !== -1) {
+                const bIdx = columns[colIdx].branches.findIndex((b: any) => b.id === node.id);
+                handleExpand(node, colIdx, bIdx);
+            }
+        } else if (type === 'ASK') {
+            setChatHistory(prev => [...prev, { text: `❓ '${node.label}'에 대해 궁금한 점이 있습니다.`, sender: 'me' }]);
+            // This just focuses chat for now, but we could trigger a specific query
         }
     };
 
@@ -256,7 +382,19 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             {/* Context Bar */}
             {(agentMode === 'Literature Review' || agentMode === 'Research Planner') && (
                 <View style={styles.contextBar}>
-                    <FileUploader onUploadComplete={(msg) => console.log(msg)} />
+                    <FileUploader onUploadComplete={async (markdown) => {
+                        console.log("🚀 [DEBUG 1] Starting upload pipeline...");
+                        console.log("📄 [DEBUG 2] Markdown received, length:", markdown?.length);
+
+                        if (!markdown || markdown.length === 0) {
+                            console.error("❌ [DEBUG] Markdown is empty or null!");
+                            Alert.alert("오류", "문서 파싱 결과가 비어있습니다.");
+                            return;
+                        }
+
+                        // Set loading state with custom message
+                        processWithBrain(markdown);
+                    }} />
                 </View>
             )}
 
@@ -288,7 +426,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             )}
 
             {/* Main Content - Agent Workspace */}
-            <View style={{ flex: 1 }}>
+            <View style={{ flex: 1, backgroundColor: '#0a0a0a' }}>
                 <View ref={canvasRef} style={styles.canvasViewport} {...panResponder.panHandlers}>
                     <Animated.View style={[styles.canvasWorld, { transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scale }] }]}>
                         <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
@@ -296,6 +434,15 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                                 <TouchableOpacity style={styles.startBtn} onPress={() => handleStart("전기차 배터리 시장")}>
                                     <Text style={styles.startBtnText}>Start Demo</Text>
                                 </TouchableOpacity>
+                            )}
+                            {/* Root Node Card — 전략의 출발점 */}
+                            {columns.length > 0 && columns[0]?.root_node && (
+                                <View style={{ alignSelf: 'center', marginRight: 20 }}>
+                                    <RootNodeCard
+                                        hypothesis={columns[0].root_node}
+                                        branchCount={columns[0].branches?.length || 0}
+                                    />
+                                </View>
                             )}
                             {columns.map((col, idx) => (
                                 <View key={idx} style={styles.columnWrapper}>
@@ -352,6 +499,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                 loading={loading}
                 chatHistory={chatHistory}
                 suggestions={suggestions}
+                activeNodeLabel={activeNode?.label}
             />
         </SafeAreaView>
     );

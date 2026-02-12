@@ -2,99 +2,136 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from 'react-native';
 import { UploadCloud, FileText, CheckCircle, X } from 'lucide-react-native';
 import * as DocumentPicker from 'expo-document-picker';
-import { supabase } from '../../../lib/supabase'; // 수정된 경로
+import { supabase } from '../../../lib/supabase';
 
 interface FileUploaderProps {
-    onUploadComplete: (summary: string) => void;
+    onUploadComplete: (markdown: string) => void;
 }
 
 export const FileUploader = ({ onUploadComplete }: FileUploaderProps) => {
     const [uploading, setUploading] = useState(false);
     const [fileName, setFileName] = useState<string | null>(null);
+    const [statusMessage, setStatusMessage] = useState("AI 분석 준비 중...");
 
     const pickAndUpload = async () => {
         try {
-            // 1. 파일 선택
             const result = await DocumentPicker.getDocumentAsync({
-                type: ['application/pdf', 'text/plain'], // PDF나 텍스트 파일만
+                type: ['application/pdf'],
+                copyToCacheDirectory: true,
             });
 
             if (result.canceled) return;
-
             const file = result.assets[0];
             setFileName(file.name);
             setUploading(true);
+            setStatusMessage("문서 업로드 및 분석 요청 중...");
 
-            // ⚠️ 실제 앱에서는 여기서 PDF -> Text 변환 로직이 필요합니다.
-            // 현재는 테스트를 위해 "가짜 텍스트"를 보내거나, 텍스트 파일 내용을 읽어야 합니다.
-            // (Client-side PDF parsing is heavy. For now, we simulate extraction)
+            // 1. Base64 변환
+            const response = await fetch(file.uri);
+            const blob = await response.blob();
+            const reader = new FileReader();
+            const base64Promise = new Promise<string>((resolve) => {
+                reader.onload = () => resolve((reader.result as string).split(',')[1]);
+                reader.readAsDataURL(blob);
+            });
+            const fileBase64 = await base64Promise;
 
-            // TODO: 실제 구현 시에는 파일을 Supabase Storage에 올리고, Edge Function이 다운받아 파싱하는 것이 정석입니다.
-            // 여기서는 백엔드 테스트를 위해 "파일 이름과 메타데이터"를 텍스트로 보냅니다.
-            const mockExtractedText = `
-                [DOCUMENT START]
-                Filename: ${file.name}
-                Type: Official Document
-                Content: (This is a placeholder for actual PDF content extraction...)
-                1. Project Overview: This document outlines the strategic roadmap for...
-                2. Requirements: Must have revenue over $1M...
-                [DOCUMENT END]
-            `;
-
-            // 2. 백엔드(upload-knowledge)로 전송
-            const { data, error } = await supabase.functions.invoke('upload-knowledge', {
-                body: {
-                    text_content: mockExtractedText, // 실제로는 추출된 텍스트
-                    filename: file.name
-                }
+            // 2. 업로드 요청 (LlamaParse Job 시작)
+            const { data: uploadData, error: uploadError } = await supabase.functions.invoke('publica-parser', {
+                body: { action: 'upload', fileBase64, fileName: file.name }
             });
 
-            if (error) throw error;
+            if (uploadError) throw uploadError;
+            if (!uploadData || !uploadData.success) {
+                throw new Error(uploadData?.error || "Upload failed without details");
+            }
 
-            Alert.alert("Success", "Knowledge Base Updated!");
-            onUploadComplete("Document uploaded and analyzed.");
+            const jobId = uploadData.jobId;
+            console.log(`✅ Job ID Received: ${jobId}`);
+
+            // 3. 폴링 시작 (결과 대기)
+            let attempts = 0;
+            const pollInterval = setInterval(async () => {
+                attempts++;
+                setStatusMessage(`AI가 정밀 분석 중입니다... (${attempts * 2}초)`);
+
+                const { data: checkData, error: checkError } = await supabase.functions.invoke('publica-parser', {
+                    body: { action: 'check', jobId }
+                });
+
+                if (checkError) {
+                    clearInterval(pollInterval);
+                    Alert.alert("통신 오류", "분석 상태를 확인하는 중 오류가 발생했습니다.");
+                    setUploading(false);
+                    return;
+                }
+
+                console.log(`⏳ Check Status: ${checkData.status}`);
+
+                if (checkData.status === 'SUCCESS') {
+                    clearInterval(pollInterval);
+                    console.log("🎉 Analysis Done!");
+                    onUploadComplete(checkData.markdown);
+                    Alert.alert("성공", "문서 분석이 완료되었습니다!");
+                    setUploading(false);
+                } else if (checkData.status === 'FAILED') {
+                    clearInterval(pollInterval);
+                    Alert.alert("분석 실패", "LlamaParse가 문서를 처리하지 못했습니다.");
+                    setUploading(false);
+                } else if (attempts > 90) { // 3분 타임아웃
+                    clearInterval(pollInterval);
+                    Alert.alert("시간 초과", "분석 시간이 너무 오래 걸립니다.");
+                    setUploading(false);
+                }
+            }, 2000); // 2초마다 체크
 
         } catch (e: any) {
-            Alert.alert("Upload Failed", e.message);
-            setFileName(null);
-        } finally {
+            console.error("❌ Error:", e);
+            Alert.alert("오류", e.message || "알 수 없는 오류가 발생했습니다.");
             setUploading(false);
+            setFileName(null);
         }
     };
 
     return (
         <View style={styles.container}>
-            {!fileName ? (
-                <TouchableOpacity style={styles.uploadBtn} onPress={pickAndUpload} disabled={uploading}>
-                    {uploading ? <ActivityIndicator color="#10B981" /> : <UploadCloud size={20} color="#10B981" />}
-                    <Text style={styles.btnText}>{uploading ? "Analyzing..." : "Upload Context (PDF)"}</Text>
-                </TouchableOpacity>
-            ) : (
-                <View style={styles.fileInfo}>
-                    <FileText size={16} color="#94A3B8" />
-                    <Text style={styles.fileName} numberOfLines={1}>{fileName}</Text>
-                    <CheckCircle size={16} color="#10B981" style={{ marginLeft: 8 }} />
-                    <TouchableOpacity onPress={() => setFileName(null)} style={{ marginLeft: 10 }}>
-                        <X size={16} color="#EF4444" />
-                    </TouchableOpacity>
-                </View>
-            )}
+            <TouchableOpacity
+                style={[styles.uploadBtn, uploading && styles.uploadBtnDisabled]}
+                onPress={pickAndUpload}
+                disabled={uploading}
+            >
+                {uploading ? (
+                    <>
+                        <ActivityIndicator color="#10B981" style={{ marginRight: 10 }} />
+                        <Text style={styles.btnText}>{statusMessage}</Text>
+                    </>
+                ) : fileName ? (
+                    <>
+                        <CheckCircle size={20} color="#10B981" />
+                        <Text style={styles.btnText}>분석 완료: {fileName}</Text>
+                        <TouchableOpacity onPress={() => setFileName(null)} style={{ marginLeft: 10 }}>
+                            <X size={16} color="#EF4444" />
+                        </TouchableOpacity>
+                    </>
+                ) : (
+                    <>
+                        <UploadCloud size={20} color="#10B981" />
+                        <Text style={styles.btnText}>LlamaParse로 정밀 분석 시작</Text>
+                    </>
+                )}
+            </TouchableOpacity>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { marginHorizontal: 20, marginBottom: 10 },
+    container: { marginHorizontal: 20, marginBottom: 20 },
     uploadBtn: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
         backgroundColor: 'rgba(16, 185, 129, 0.1)',
         borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)',
-        borderStyle: 'dashed', borderRadius: 8, padding: 12
+        borderStyle: 'dashed', borderRadius: 12, paddingVertical: 16, height: 60,
     },
-    btnText: { color: '#10B981', fontWeight: '600', marginLeft: 8, fontSize: 13 },
-    fileInfo: {
-        flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B',
-        padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#334155'
-    },
-    fileName: { color: 'white', marginLeft: 8, flex: 1, fontSize: 13 }
+    uploadBtnDisabled: { opacity: 0.7, backgroundColor: '#0f172a' },
+    btnText: { color: '#10B981', fontWeight: '600', marginLeft: 8, fontSize: 14 }
 });

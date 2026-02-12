@@ -1,5 +1,7 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0";
+// Setup type definitions for built-in Supabase Runtime APIs
+import "jsr:@supabase/functions-js/edge-runtime.d.ts"
+
+declare const Deno: any;
 
 // Define strict interface for Type Safety
 interface AgentResponse {
@@ -87,13 +89,19 @@ Return a SINGLE JSON object:
 }
 `;
 
-serve(async (req) => {
+Deno.serve(async (req: any) => {
     if (req.method === 'OPTIONS') {
         return new Response('ok', { headers: corsHeaders });
     }
 
     try {
         const { user_input, user_job, task_mode } = await req.json();
+        const apiKey = Deno.env.get('GEMINI_API_KEY');
+
+        if (!apiKey) {
+            console.error("❌ GEMINI_API_KEY is missing");
+            throw new Error("Server Misconfiguration: GEMINI_API_KEY is missing");
+        }
 
         // 1. Prompt Engineering
         const finalPrompt = `
@@ -104,39 +112,40 @@ serve(async (req) => {
     Generate the structured breakdown now.
     `;
 
-        // 2. Call OpenAI (via fetch for Deno)
-        const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                model: 'gpt-4o',
-                messages: [
-                    { role: 'system', content: SYSTEM_PROMPT },
-                    { role: 'user', content: finalPrompt }
-                ],
-                temperature: 0.7,
-            }),
-        });
+        // 2. Call Gemini 1.5 Pro (via fetch for Deno)
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        role: "user",
+                        parts: [{ text: SYSTEM_PROMPT + "\n\n" + finalPrompt }]
+                    }],
+                    generationConfig: {
+                        temperature: 0.7,
+                        responseMimeType: "application/json"
+                    }
+                })
+            }
+        );
 
-        const aiData = await openAIResponse.json();
-
-        if (!aiData.choices || aiData.choices.length === 0) {
-            throw new Error('OpenAI returned no choices');
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Gemini API Error: ${errorText}`);
         }
 
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+
         // 3. Parse & Validate
-        const content = aiData.choices[0].message.content;
         let parsedData: AgentResponse;
 
         try {
-            // Remove any markdown code fences if present
-            const cleaned = content.replace(/```json/g, '').replace(/```/g, '').trim();
-            parsedData = JSON.parse(cleaned);
+            parsedData = JSON.parse(rawText);
         } catch (e) {
-            console.error("JSON Parse Error:", content);
+            console.error("JSON Parse Error:", rawText);
             return new Response(JSON.stringify({ error: "Failed to parse AI response" }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
                 status: 500
@@ -148,7 +157,8 @@ serve(async (req) => {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
 
-    } catch (error) {
+    } catch (error: any) {
+        console.error("Gateway Error:", error);
         return new Response(JSON.stringify({ error: error.message }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             status: 500,

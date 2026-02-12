@@ -134,6 +134,6 @@ async function main() {
 }
 
 // 직접 실행시
-if (require.main === module) {
-    main().catch(console.error);
-}
+// if (require.main === module) {
+//     main().catch(console.error);
+// }

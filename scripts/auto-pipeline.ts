@@ -173,10 +173,11 @@ async function main() {
 }
 
 if (require.main === module) {
-    main().catch(error => {
-        console.error(error);
-        process.exit(1);
-    });
+    // main().catch(error => {
+    //     console.error(error);
+    //     process.exit(1);
+    // });
+    console.log("Auto pipeline disabled.");
 }
 
 export { runPipeline, startScheduler };
