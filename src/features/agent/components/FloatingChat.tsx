@@ -1,15 +1,28 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { View, Text, TouchableOpacity, TextInput, ActivityIndicator, Animated, KeyboardAvoidingView, Platform, StyleSheet, ScrollView } from 'react-native';
 import { MessageSquare, Minimize2, Paperclip, Send, Sparkles, ArrowRight } from 'lucide-react-native';
 
-export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFileUpload, suggestions, activeNodeLabel }: any) => {
-    const [expanded, setExpanded] = useState(false);
+export interface FloatingChatRef {
+    setInput: (text: string) => void;
+}
+
+export const FloatingChat = forwardRef<FloatingChatRef, any>(({ onSend, loading, contextLabel, chatHistory, onFileUpload, suggestions, activeNodeLabel, expanded, onToggleExpand, onCitationClick }, ref) => {
+    // const [expanded, setExpanded] = useState(false); // Controlled by parent now
     const [input, setInput] = useState("");
     const widthAnim = useRef(new Animated.Value(140)).current;
     const heightAnim = useRef(new Animated.Value(50)).current;
 
     // 제안 버튼(Chips)이 부드럽게 뜨도록 애니메이션
     const fadeAnim = useRef(new Animated.Value(0)).current;
+
+    useImperativeHandle(ref, () => ({
+        setInput: (text: string) => {
+            setInput(text);
+            if (!expanded && onToggleExpand) {
+                onToggleExpand(); // Auto-open chat if closed
+            }
+        }
+    }));
 
     useEffect(() => {
         Animated.parallel([
@@ -42,7 +55,7 @@ export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFil
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.floatingContainer}>
             <Animated.View style={[styles.chatBox, { width: widthAnim, height: heightAnim }]}>
                 {!expanded ? (
-                    <TouchableOpacity style={styles.collapsedContent} onPress={() => setExpanded(true)}>
+                    <TouchableOpacity style={styles.collapsedContent} onPress={onToggleExpand}>
                         <MessageSquare size={18} color="white" style={{ marginRight: 8 }} />
                         <Text style={styles.chatBtnText}>AI Chat</Text>
                     </TouchableOpacity>
@@ -56,14 +69,32 @@ export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFil
                                     {activeNodeLabel ? `분석 중: ${activeNodeLabel}` : contextLabel ? `Context: ${contextLabel}` : "Publica Agent"}
                                 </Text>
                             </View>
-                            <TouchableOpacity onPress={() => setExpanded(false)}><Minimize2 size={18} color="#94A3B8" /></TouchableOpacity>
+                            <TouchableOpacity onPress={onToggleExpand}><Minimize2 size={18} color="#94A3B8" /></TouchableOpacity>
                         </View>
 
                         {/* History Area */}
                         <ScrollView style={styles.historyArea} contentContainerStyle={{ paddingBottom: 20 }}>
                             {chatHistory.map((msg: any, i: number) => (
                                 <View key={i} style={[styles.msgBubble, msg.sender === 'me' ? styles.msgMe : styles.msgAi]}>
-                                    <Text style={styles.msgText}>{msg.text}</Text>
+                                    {/* 🌟 Rich Text Rendering for Citations */}
+                                    <Text style={styles.msgText}>
+                                        {msg.text.split(/(\[Page \d+\])/g).map((part: string, index: number) => {
+                                            const match = part.match(/\[Page (\d+)\]/);
+                                            if (match) {
+                                                const pageNum = parseInt(match[1], 10);
+                                                return (
+                                                    <Text
+                                                        key={index}
+                                                        style={{ color: '#60A5FA', textDecorationLine: 'underline', fontWeight: 'bold' }}
+                                                        onPress={() => onCitationClick && onCitationClick(pageNum)}
+                                                    >
+                                                        {part}
+                                                    </Text>
+                                                );
+                                            }
+                                            return <Text key={index}>{part}</Text>;
+                                        })}
+                                    </Text>
                                 </View>
                             ))}
 
@@ -98,7 +129,11 @@ export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFil
 
                         {/* Input Area */}
                         <View style={styles.inputRow}>
-                            <TouchableOpacity style={{ padding: 8 }} onPress={onFileUpload}><Paperclip size={20} color="#94A3B8" /></TouchableOpacity>
+                            {/* 🌟 PDF Pill Button */}
+                            <TouchableOpacity style={styles.attachPill} onPress={onFileUpload}>
+                                <Paperclip size={14} color="#10B981" />
+                                <Text style={styles.attachText}>PDF</Text>
+                            </TouchableOpacity>
                             <TextInput
                                 style={styles.chatInput}
                                 placeholder="Ask follow-up questions..."
@@ -116,7 +151,7 @@ export const FloatingChat = ({ onSend, loading, contextLabel, chatHistory, onFil
             </Animated.View>
         </KeyboardAvoidingView>
     );
-};
+});
 
 const styles = StyleSheet.create({
     floatingContainer: { position: 'absolute', bottom: 30, left: 0, right: 0, alignItems: 'center', zIndex: 200 },
@@ -145,5 +180,16 @@ const styles = StyleSheet.create({
         borderRadius: 12, marginBottom: 8,
         borderWidth: 1, borderColor: '#334155'
     },
-    suggestionLabel: { color: '#E2E8F0', fontSize: 13, fontWeight: '500' }
+    suggestionLabel: { color: '#E2E8F0', fontSize: 13, fontWeight: '500' },
+
+    // 🌟 Pill Button Style
+    attachPill: {
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: 'rgba(16, 185, 129, 0.15)', // Green tint
+        paddingHorizontal: 12, paddingVertical: 6,
+        borderRadius: 14,
+        marginRight: 8,
+        borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)'
+    },
+    attachText: { color: '#10B981', fontSize: 12, fontWeight: '700', marginLeft: 4 }
 });

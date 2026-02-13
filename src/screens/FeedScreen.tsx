@@ -172,7 +172,8 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 // Check Onboarding Status
                 const storedProfile = await AsyncStorage.getItem('user_profile');
                 if (!storedProfile) {
-                    setOnboardingVisible(true);
+                    // 🌟 Emergency Bypass: Disable Onboarding Modal for Testing
+                    // setOnboardingVisible(true);
                 }
 
                 const savedViewMode = await AsyncStorage.getItem('viewMode');
