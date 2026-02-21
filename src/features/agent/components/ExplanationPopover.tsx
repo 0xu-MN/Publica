@@ -12,7 +12,7 @@ import { X, BookOpen, Languages, ChevronRight, Bookmark } from 'lucide-react-nat
 // ─────────────────────────────────────────────────────────────────────────────
 const GEMINI_KEY =
     (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_GEMINI_API_KEY) ||
-    ''; // ← API Key moved to .env (ignored by git)
+    'AIzaSyCzFrkxwNs6hAZGRIhwSDRh9jfqcShntgk'; // ← 새로 발급받은 키로 교체
 
 // ✅ gemini-2.0-flash: 2025년 이후 신규 키에서 동작하는 최신 모델
 const GEMINI_URL =

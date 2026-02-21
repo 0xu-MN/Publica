@@ -203,14 +203,22 @@ export class SmartBlockEngine {
 
     /** 텍스트가 번호 섹션 제목으로 시작하는지 판단 (2.7 / 3.1 / 1. / Abstract 등) */
     private static isHeadingSegment(text: string): boolean {
-        const t = text.trim();
-        // 숫자 섹션: "2.", "2.7", "2.7.", "1.2.3"
-        if (/^\d{1,2}(\.\d{1,2}){0,2}\.?\s+[A-Z]/.test(t)) return true;
-        // 로마자 섹션: "I. ", "II. "
-        if (/^[IVX]{1,5}\.\s+[A-Z]/.test(t)) return true;
-        // 알려진 단독 섹션명 (짧은 단어)
-        if (/^(Abstract|Introduction|Conclusion|Results|Discussion|Methods?|References?|Acknowledgment)\b/i.test(t) &&
-            t.split(/\s+/).length <= 4) return true;
+        // Use only the first line for matching (title may continue on next line)
+        const firstLine = text.trim().split('\n')[0].trim();
+
+        // ── Numbered section ─────────────────────────────────────────────────
+        // Matches: "2.", "2.7", "2.7.", "2.7 cell", "2.7 Cell", "1.2.3 Title"
+        // ✅ [A-Z] 제거 → 소문자 타이틀도 인식
+        // ✅ \s*$ 추가 → 숫자만 있는 줄도(단독 "2.7") 인식
+        if (/^\d{1,2}(\.\d{1,2}){0,2}\.?(\s+\S|\.?\s*$)/.test(firstLine)) return true;
+
+        // ── Roman numeral section ─────────────────────────────────────────────
+        if (/^[IVX]{1,5}\.\s/.test(firstLine)) return true;
+
+        // ── Named section keywords ────────────────────────────────────────────
+        if (/^(Abstract|Introduction|Conclusion|Results|Discussion|Methods?|Materials?|References?|Acknowledgment)\b/i.test(firstLine) &&
+            firstLine.split(/\s+/).length <= 5) return true;
+
         return false;
     }
 
