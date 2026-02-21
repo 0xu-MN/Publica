@@ -16,17 +16,12 @@ export interface Block {
 }
 
 /**
- * SmartBlockEngine v7.4
+ * SmartBlockEngine v7.5
  * 핵심 수정:
- * 1. heading 감지를 폰트 크기 기반으로 변경
- *    - 기존: bold 폰트명 || 숫자로 시작 → PDF에서 폰트명이 인코딩돼서 bold 감지 실패
- *    - 수정: 본문 평균 폰트보다 10% 이상 크면 heading으로 판정
- * 2. bodyFontSize를 clusterToBlocks → blockFromSegments로 전달
+ * - clusterToBlocks: 번호 섹션(2.7, 3.1 등)으로 시작하는 줄은
+ *   항상 새 블록으로 강제 분리 → 본문과 합쳐지는 문제 해결
  */
 export class SmartBlockEngine {
-    constructor() {
-        console.log('🚀 SmartBlockEngine v7.4 initialized');
-    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // PUBLIC
@@ -58,8 +53,6 @@ export class SmartBlockEngine {
 
         const segments = this.createLineSegments(rectsWithCol);
         const stats = this.calcPageStats(segments);
-
-        // ✅ stats를 clusterToBlocks로 전달 (bodyFontSize 기반 heading 감지에 필요)
         const blocks = this.clusterToBlocks(segments, stats, columnBoundaries, pageWidth);
         const finalBlocks = this.splitOverWideBlocks(blocks, columnBoundaries, pageWidth);
         const enriched = finalBlocks.map(b => this.enrich(b));
@@ -67,7 +60,7 @@ export class SmartBlockEngine {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // COLUMN DETECTION v7.4 (임계값 완화 유지)
+    // COLUMN DETECTION
     // ─────────────────────────────────────────────────────────────────────────
     private static detectColumnBoundaries(rects: any[], pageWidth: number): number[] {
         const BUCKET = 6;
@@ -109,13 +102,13 @@ export class SmartBlockEngine {
             const maxRightPx = pageWidth * 0.80;
 
             if (rightPeakX < minRightPx || rightPeakX > maxRightPx) {
-                console.log(`📊 Single-col: right peak ${rightPeakX.toFixed(0)}px out of range [${minRightPx.toFixed(0)}, ${maxRightPx.toFixed(0)}]`);
+                console.log(`📊 Single-col: right peak ${rightPeakX.toFixed(0)}px out of range`);
                 return [0];
             }
 
             const valleyVal = Math.min(...smooth.slice(peaks[0], peaks[1] + 1));
             if (valleyVal > maxVal * 0.35) {
-                console.log(`📊 Single-col: valley too high (${valleyVal.toFixed(1)} vs max ${maxVal.toFixed(1)})`);
+                console.log(`📊 Single-col: valley too high`);
                 return [0];
             }
 
@@ -169,11 +162,11 @@ export class SmartBlockEngine {
         if (segments.length < 2) return { medianHeight: 12, medianGap: 3, bodyFontSize: 12 };
 
         const heights = segments.map((s: any) => s.height);
-        const sorted = [...segments].sort((a: any, b: any) => a.y - b.y);
+        const sortedSegs = [...segments].sort((a: any, b: any) => a.y - b.y);
         const gaps: number[] = [];
 
-        for (let i = 1; i < sorted.length; i++) {
-            const curr = sorted[i], prev = sorted[i - 1];
+        for (let i = 1; i < sortedSegs.length; i++) {
+            const curr = sortedSegs[i], prev = sortedSegs[i - 1];
             if (curr.col !== prev.col) continue;
             const xOverlap =
                 Math.min(curr.x + curr.width, prev.x + prev.width) -
@@ -193,7 +186,6 @@ export class SmartBlockEngine {
         const medianHeight = median(heights) || 12;
         const medianGap = median(gaps) || 3;
 
-        // bodyFontSize: 가장 많이 등장하는 폰트 크기 = 본문 기준
         const freq = new Map<number, number>();
         heights.forEach((h: number) => {
             const k = Math.round(h);
@@ -201,14 +193,27 @@ export class SmartBlockEngine {
         });
         const bodyFontSize = [...freq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || medianHeight;
 
-        console.log(`📝 Page stats: bodyFontSize=${bodyFontSize}, medianHeight=${medianHeight.toFixed(1)}, medianGap=${medianGap.toFixed(1)}`);
-
         return { medianHeight, medianGap, bodyFontSize };
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // VERTICAL CLUSTERING
+    // 핵심 수정: 번호 섹션 패턴 감지 시 강제 새 블록 시작
     // ─────────────────────────────────────────────────────────────────────────
+
+    /** 텍스트가 번호 섹션 제목으로 시작하는지 판단 (2.7 / 3.1 / 1. / Abstract 등) */
+    private static isHeadingSegment(text: string): boolean {
+        const t = text.trim();
+        // 숫자 섹션: "2.", "2.7", "2.7.", "1.2.3"
+        if (/^\d{1,2}(\.\d{1,2}){0,2}\.?\s+[A-Z]/.test(t)) return true;
+        // 로마자 섹션: "I. ", "II. "
+        if (/^[IVX]{1,5}\.\s+[A-Z]/.test(t)) return true;
+        // 알려진 단독 섹션명 (짧은 단어)
+        if (/^(Abstract|Introduction|Conclusion|Results|Discussion|Methods?|References?|Acknowledgment)\b/i.test(t) &&
+            t.split(/\s+/).length <= 4) return true;
+        return false;
+    }
+
     private static clusterToBlocks(
         segments: any[],
         stats: { medianHeight: number; medianGap: number; bodyFontSize: number },
@@ -221,29 +226,37 @@ export class SmartBlockEngine {
         const openBlocks: { items: any[]; lastSeg: any }[] = [];
 
         for (const seg of segments) {
+            // ✅ 핵심 수정: 번호 섹션 제목이면 항상 새 블록 강제 시작
+            const segIsHeading = this.isHeadingSegment(seg.text);
+
             let matched = -1;
 
-            for (let i = openBlocks.length - 1; i >= 0; i--) {
-                const blk = openBlocks[i];
-                const last = blk.lastSeg;
+            if (!segIsHeading) {
+                for (let i = openBlocks.length - 1; i >= 0; i--) {
+                    const blk = openBlocks[i];
+                    const last = blk.lastSeg;
 
-                if (seg.col !== last.col) continue;
+                    if (seg.col !== last.col) continue;
 
-                const vGap = seg.y - (last.y + last.height);
-                if (vGap < -2 || vGap > maxParaGap) continue;
+                    const vGap = seg.y - (last.y + last.height);
+                    if (vGap < -2 || vGap > maxParaGap) continue;
 
-                const segFont = seg.avgFontSize || seg.height;
-                const lastFont = last.avgFontSize || last.height;
-                const ratio = segFont / lastFont;
-                if (ratio < 0.85 || ratio > 1.15) continue;
+                    const segFont = seg.avgFontSize || seg.height;
+                    const lastFont = last.avgFontSize || last.height;
+                    const ratio = segFont / lastFont;
+                    if (ratio < 0.85 || ratio > 1.15) continue;
 
-                const leftDiff = Math.abs(seg.x - last.x);
-                const rightDiff = Math.abs((seg.x + seg.width) - (last.x + last.width));
-                const centDiff = Math.abs((seg.x + seg.width / 2) - (last.x + last.width / 2));
-                if (leftDiff > 50 && rightDiff > 50 && centDiff > 30) continue;
+                    const leftDiff = Math.abs(seg.x - last.x);
+                    const rightDiff = Math.abs((seg.x + seg.width) - (last.x + last.width));
+                    const centDiff = Math.abs((seg.x + seg.width / 2) - (last.x + last.width / 2));
+                    if (leftDiff > 50 && rightDiff > 50 && centDiff > 30) continue;
 
-                matched = i;
-                break;
+                    // ✅ 현재 열려있는 블록이 heading이면 본문을 거기 합치지 않음
+                    if (this.isHeadingSegment(blk.items[0]?.text || '')) continue;
+
+                    matched = i;
+                    break;
+                }
             }
 
             if (matched !== -1) {
@@ -251,6 +264,9 @@ export class SmartBlockEngine {
                 openBlocks[matched].lastSeg = seg;
             } else {
                 openBlocks.push({ items: [seg], lastSeg: seg });
+                if (segIsHeading) {
+                    console.log(`🏷️ Heading forced new block: "${seg.text.substring(0, 50)}"`);
+                }
             }
         }
 
@@ -261,7 +277,6 @@ export class SmartBlockEngine {
                 const colEnd = columnBoundaries[colIdx + 1]
                     ? columnBoundaries[colIdx + 1] - 2
                     : pageWidth;
-                // ✅ bodyFontSize를 전달해서 폰트 크기 기반 heading 감지
                 return this.blockFromSegments(blk.items, colStart, colEnd, stats.bodyFontSize);
             })
             .sort((a, b) => {
@@ -272,7 +287,7 @@ export class SmartBlockEngine {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // POST-PROCESS: split blocks that span both columns
+    // POST-PROCESS
     // ─────────────────────────────────────────────────────────────────────────
     private static splitOverWideBlocks(
         blocks: Block[], columnBoundaries: number[], pageWidth: number
@@ -293,14 +308,12 @@ export class SmartBlockEngine {
                 const mid = Math.ceil(lines.length / 2);
 
                 const leftBlock: Block = {
-                    ...block,
-                    id: `${block.id}-L`,
+                    ...block, id: `${block.id}-L`,
                     width: splitX - block.x - 4,
                     text: lines.slice(0, mid).join('\n') || block.text,
                 };
                 const rightBlock: Block = {
-                    ...block,
-                    id: `${block.id}-R`,
+                    ...block, id: `${block.id}-R`,
                     x: splitX + 4,
                     width: (block.x + block.width) - splitX - 4,
                     text: lines.slice(mid).join('\n') || block.text,
@@ -308,7 +321,6 @@ export class SmartBlockEngine {
 
                 if (leftBlock.width > 20) result.push(leftBlock);
                 if (rightBlock.width > 20) result.push(rightBlock);
-                console.log(`✂️ Split over-wide at X=${splitX}: "${block.text.substring(0, 40)}"`);
             } else {
                 result.push(block);
             }
@@ -325,15 +337,7 @@ export class SmartBlockEngine {
         const [x, y] = viewport.convertToViewportPoint(tx[4], tx[5]);
         const w = item.width * viewport.scale;
         const h = item.height * viewport.scale;
-        return {
-            text: item.str,
-            x,
-            y: y - h,
-            width: w,
-            height: h,
-            fontName: item.fontName,
-            col: 0
-        };
+        return { text: item.str, x, y: y - h, width: w, height: h, fontName: item.fontName, col: 0 };
     }
 
     private static makeSegment(items: any[]): any {
@@ -349,12 +353,8 @@ export class SmartBlockEngine {
         return { x: minX, y, width: maxX - minX, height, text, items, avgFontSize, col };
     }
 
-    // ✅ 핵심 수정: bodyFontSize 파라미터 추가, 폰트 크기 기반 heading 감지
     private static blockFromSegments(
-        segs: any[],
-        colStart: number = 0,
-        colEnd: number = 9999,
-        bodyFontSize: number = 12
+        segs: any[], colStart: number = 0, colEnd: number = 9999, bodyFontSize: number = 12
     ): Block {
         const minX = Math.max(Math.min(...segs.map((s: any) => s.x)), colStart);
         const minY = Math.min(...segs.map((s: any) => s.y));
@@ -364,19 +364,11 @@ export class SmartBlockEngine {
         const fullText = segs.map((s: any) => s.text).join('\n');
         const avgFont = segs.reduce((s: number, seg: any) => s + (seg.avgFontSize || seg.height), 0) / segs.length;
 
-        // ✅ heading 판정 기준 (3가지 중 하나라도 해당하면 heading)
-        // 1. bold/heavy 폰트명 (인코딩 안 된 경우)
         const hasBold = segs.some((s: any) => s.items?.some((i: any) => /bold|heavy|black/i.test(i.fontName || '')));
-        // 2. 숫자/로마자로 시작하는 섹션 번호 (예: "2.3 Cell culture")
-        const isNumbered = /^(?:\d+(?:\.\d+)*\.?\s|[IVX]{1,5}\.\s)/.test(fullText.trim());
-        // 3. ✅ 신규: 본문 폰트보다 10% 이상 크면 heading (폰트 인코딩 무관)
+        const isNumbered = this.isHeadingSegment(fullText.split('\n')[0]);
         const isLargerFont = avgFont > bodyFontSize * 1.10;
 
         const isHeading = hasBold || isNumbered || isLargerFont;
-
-        if (isHeading) {
-            console.log(`🏷️ Heading detected: "${fullText.trim().substring(0, 40)}" (font: ${avgFont.toFixed(1)} vs body: ${bodyFontSize})`);
-        }
 
         return {
             id: `blk-${Math.random().toString(36).substr(2, 8)}`,
@@ -396,7 +388,6 @@ export class SmartBlockEngine {
         if (/^(?:fig(?:ure)?|table)\.?\s*\d+/i.test(t)) return { ...block, type: 'figure' };
         const isMath = t.includes('$') || t.includes('\\(') || t.includes('\\[') || t.includes('\\begin{equation}');
         if (isMath) return { ...block, type: 'formula' };
-
         const citationRx = /\[\d+(?:-\d+)?(?:,\s*\d+)*\]|\[\w+\s*\d+\]/g;
         return { ...block, citations: t.match(citationRx) || [] };
     }
