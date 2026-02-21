@@ -12,11 +12,11 @@ import { X, BookOpen, Languages, ChevronRight, Bookmark } from 'lucide-react-nat
 // ─────────────────────────────────────────────────────────────────────────────
 const GEMINI_KEY =
     (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_GEMINI_API_KEY) ||
-    'AIzaSyCzFrkxwNs6hAZGRIhwSDRh9jfqcShntgk'; // ← 새로 발급받은 키로 교체
+    'AIzaSyCGp89X79z6dqlsb2I-m52746C6jiF7hEc'; // ← 새로 발급받은 키로 교체
 
-// ✅ gemini-2.0-flash: 2025년 이후 신규 키에서 동작하는 최신 모델
+// gemini-2.0-flash-lite: 신규 키에서 사용 가능한 최신 안정 버전
 const GEMINI_URL =
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${GEMINI_KEY}`;
 
 const SYSTEM_PROMPT = `You are an expert academic research colleague (PhD level).
 Analyze the provided text from a research paper and give a structured response.

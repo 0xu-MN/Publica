@@ -20,15 +20,11 @@ export interface StructureNode {
  */
 export class StructureEngine {
 
-    // ✅ 전역 중복 헤딩 추적 (페이지 간 공유)
-    private static globalSeenHeadings = new Set<string>();
-
     /**
-     * 새 문서 로드 시 반드시 호출 — 전역 상태 초기화
+     * 새 문서 로드 시 호출 (현재는 globalSeenHeadings 제거로 no-op이지만 API 호환성 유지)
      */
     static resetState() {
-        this.globalSeenHeadings.clear();
-        console.log('🔄 StructureEngine: state reset for new document');
+        console.log('🔄 StructureEngine: ready for new document');
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -43,10 +39,9 @@ export class StructureEngine {
 
         const classified = blocks.map(block => {
             const firstLine = block.text.trim().split('\n')[0];
-            const key = firstLine.toLowerCase().substring(0, 80).replace(/\s+/g, ' ');
 
-            // ✅ 위치 기반 running header/footer 억제
-            // 페이지 상단 8% 또는 하단 5% 에 있는 짧은(단어 4개 이하) 텍스트
+            // 위치 기반 running header/footer 억제
+            // 페이지 상단 8% 또는 하단 8% 에 있는 짧은 텍스트
             const isTopArea = block.y < pageHeight * 0.08;
             const isBottomArea = block.y > pageHeight * 0.92;
             const isShortText = firstLine.split(/\s+/).length <= 6;
@@ -55,14 +50,6 @@ export class StructureEngine {
             }
 
             const level = this.classifyHeading(block, bodyFontSize);
-
-            if (level > 0) {
-                // ✅ 전역 중복 체크 (페이지 간 공유)
-                if (this.globalSeenHeadings.has(key)) {
-                    return { ...block, headingLevel: 0, type: 'paragraph' as const };
-                }
-                this.globalSeenHeadings.add(key);
-            }
 
             return {
                 ...block,
@@ -127,34 +114,39 @@ export class StructureEngine {
         const fontSize = block.fontSize || 12;
         const lineCount = block.text.trim().split('\n').length;
 
-        // ── 제외 조건 ────────────────────────────────────────────────────────
+        // ── 기본 제외 조건 ────────────────────────────────────────────────────
         if (firstLine.length < 2) return 0;
-        if (/^\d+$/.test(firstLine)) return 0;                          // 페이지 번호
-        if (/^\([a-zA-Z0-9i]+\)$/.test(firstLine)) return 0;           // (a) (b) (i)
-        if (/^\[?\d+\]/.test(firstLine)) return 0;                      // [1] 인용
+        if (firstLine.length > 120) return 0;                            // 너무 긴 본문
+        if (/^\d+$/.test(firstLine)) return 0;                           // 페이지 번호만
+        if (/^\([a-zA-Z0-9i]+\)$/.test(firstLine)) return 0;            // (a) (b)
+        if (/^\[?\d+\]/.test(firstLine)) return 0;                       // [1] 인용
         if (/^(fig(ure)?|table)\s*\.?\s*\d+/i.test(firstLine)) return 0;
-        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return 0;  // 저자명: X. Yang
-        if (/@/.test(firstLine)) return 0;                              // 이메일
-        if (/^[a-z]/.test(firstLine)) return 0;                        // 소문자 시작
-        if (firstLine.endsWith(',')) return 0;                          // 리스트 연속
-        if (firstLine.length > 120) return 0;                           // 너무 긴 본문
+        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return 0;   // 저자명
+        if (/@/.test(firstLine)) return 0;                               // 이메일
+        if (firstLine.endsWith(',')) return 0;                           // 리스트 연속
 
-        // ── 1. 명시적 번호 섹션 (가장 신뢰도 높음) ───────────────────────────
-        if (/^\d{1,2}\.\d{1,2}\.\d{1,2}[\s.]/.test(firstLine)) return 3; // 1.2.3
-        if (/^\d{1,2}\.\d{1,2}[\s.]/.test(firstLine)) return 2;           // 1.1
-        if (/^(\d{1,2}\.?\s+[A-Z]|[IVX]{1,5}\.\s+[A-Z])/.test(firstLine)) return 1; // 1. or I.
+        // ── 1. 명시적 번호 섹션 — 소문자/단독 숫자 모두 허용 ─────────────────
+        // ✅ [\s.]? → 뒤에 공백/점 없어도 인식 ("2.7" 단독 허용)
+        // ✅ 소문자 제외 조건을 여기서 적용 안 함 → "2.7 cell viability" 인식
+        if (/^\d{1,2}\.\d{1,2}\.\d{1,2}([\s.]|$)/.test(firstLine)) return 3;  // 1.2.3
+        if (/^\d{1,2}\.\d{1,2}([\s.]|$)/.test(firstLine)) return 2;            // 1.1 or 1.1 alone
+        if (/^\d{1,2}\.?\s+\S/.test(firstLine)) return 1;                      // "1. Title"
+        if (/^[IVX]{1,5}\.\s/.test(firstLine)) return 1;                       // I. or II.
+
+        // ── 이 아래는 소문자 시작하면 제외 ──────────────────────────────────────
+        if (/^[a-z]/.test(firstLine)) return 0;
 
         // ── 2. 폰트 크기 기반 ─────────────────────────────────────────────────
         const fontRatio = fontSize / bodyFontSize;
         if (fontRatio >= 1.5 && lineCount <= 3) return 1;
         if (fontRatio >= 1.25 && lineCount <= 2) return 2;
 
-        // ── 3. 알려진 섹션명 (짧고 단독으로 서있는 경우) ──────────────────────
+        // ── 3. 알려진 섹션명 ──────────────────────────────────────────────────
         const wordCount = firstLine.split(/\s+/).length;
         if (
-            wordCount <= 4 &&
+            wordCount <= 5 &&
             lineCount <= 2 &&
-            /^(abstract|introduction|conclusion[s]?|results?|discussion|method[s]?|methodology|background|related\s+work|overview|summary|references?|acknowledgment[s]?)/i.test(firstLine)
+            /^(Abstract|Introduction|Conclusion[s]?|Results?|Discussion|Material[s]?|Method[s]?|Methodology|Background|References?|Acknowledgment[s]?)/i.test(firstLine)
         ) {
             return 1;
         }
