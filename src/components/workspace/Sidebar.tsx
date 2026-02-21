@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { Home, Zap, MessageSquare, Bookmark, Settings, User } from 'lucide-react-native';
+import { supabase } from '../../lib/supabase';
 
 export type WorkspaceTab = 'home' | 'agent' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge';
 
@@ -21,15 +22,13 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
     React.useEffect(() => {
         const fetchProjects = async () => {
-            // Basic fetch from projects table
-            // In a real app, use a proper service or context
             try {
                 // @ts-ignore
-                const { data, error } = await window.supabase
+                const { data, error } = await supabase
                     .from('projects')
                     .select('id, grant_title, status')
-                    .order('last_updated', { ascending: false })
-                    .limit(5);
+                    .order('last_updated', { ascending: false });
+                // .limit(5) removed to be safe
 
                 if (data) setProjects(data);
             } catch (e) {
@@ -37,7 +36,6 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
             }
         };
 
-        // Poll every 5 seconds for updates (Simple sync)
         fetchProjects();
         const interval = setInterval(fetchProjects, 5000);
         return () => clearInterval(interval);
@@ -137,7 +135,7 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                         {projects.map((p, i) => (
                             <TouchableOpacity
                                 key={p.id}
-                                onPress={() => onTabChange('agent')} // TODO: Load specific project
+                                onPress={() => onTabChange('agent')}
                                 className="w-[48px] h-[48px] rounded-[16px] bg-slate-800/50 mb-2 items-center justify-center border border-white/5 active:bg-blue-500/20"
                             >
                                 <Text className="text-[10px] text-slate-400 font-bold text-center leading-3 px-1" numberOfLines={2}>

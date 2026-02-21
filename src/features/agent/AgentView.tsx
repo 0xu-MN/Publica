@@ -12,6 +12,9 @@ import { FloatingChat } from './components/FloatingChat';
 import { FileUploader } from './components/FileUploader';
 import { RootNodeCard } from './components/RootNodeCard';
 import { SplitLayout } from './components/SplitLayout';
+import { FloatingContextMenu } from './components/FloatingContextMenu';
+import { ExplanationPopover } from './components/ExplanationPopover';
+
 // import { PDFViewerPanel } from './components/PDFViewerPanel'; // Lazy load for safety
 const PDFViewerPanel = React.lazy(() => import('./components/PDFViewerPanel').then(module => ({ default: module.PDFViewerPanel }))) as any;
 import { LAYOUT } from './AgentLayout';
@@ -56,6 +59,24 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
     const [pdfUrl, setPdfUrl] = useState<string | null>(null); // For Split View
     const [isDragging, setIsDragging] = useState(false);
 
+    // [DEBUG] Force load PDF for TOC Verification
+    useEffect(() => {
+        if (!pdfUrl) {
+            console.log("🔄 [DEBUG] Force Loading PDF for Verification");
+            setPdfUrl("https://raw.githubusercontent.com/mozilla/pdf.js/master/test/pdfs/tracemonkey.pdf");
+        }
+    }, []);
+
+    // 🌟 Context Menu State (The Nervous System Step 2)
+    const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; text: string; type?: string; context?: any }>({
+        visible: false, x: 0, y: 0, text: "", type: undefined, context: undefined
+    });
+
+    // 🌟 Explanation Popover State
+    const [explanation, setExplanation] = useState<{ visible: boolean; x: number; y: number; text: string; mode: 'explain' | 'translate'; context?: any }>({
+        visible: false, x: 0, y: 0, text: "", mode: 'explain', context: undefined
+    });
+
     // 🌟 [Load Prop] 외부에서 주입된 세션 로드
     useEffect(() => {
         if (initialSession) {
@@ -63,6 +84,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             setAgentMode(initialSession.mode);
             setColumns(initialSession.workspace_data || []);
             setChatHistory(initialSession.chat_history || []);
+            if (initialSession.pdf_url) setPdfUrl(initialSession.pdf_url);
             setShowWelcome(false); // Hide welcome if loading session
 
             // 🚀 Auto-Run if query is present (for Connect Hub integration)
@@ -109,32 +131,53 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         })
     ).current;
 
-    // --- 5. AI Logic Handlers (Mock Mode) ---
-    const callAgent = async (text: string, context: string = "") => {
+    // --- 5. AI Logic Handlers (Real AI Mode) ---
+    const callAgent = async (text: string, context: string = "", nodeLabel?: string) => {
         try {
-            console.log("🚀 [Mock Mode] Calling AI:", text);
+            console.log("🚀 [Real AI] Calling deep-analyze:", text.substring(0, 80));
 
-            // ⏱️ 1.5초 딜레이 (AI가 생각하는 척)
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            const { data, error } = await supabase.functions.invoke('deep-analyze', {
+                body: {
+                    query: text,
+                    context_node: { label: nodeLabel || text.substring(0, 60), description: context },
+                    doc_type_hint: 'Research Paper'
+                }
+            });
 
-            // ✅ [Mock Data] 일반 대화 및 요약용 응답
+            if (error) throw error;
+
+            // deep-analyze returns: { summary, key_facts, references }
+            // Convert to workspace_data format expected by AgentView
+            const summary = data?.summary || 'Analysis complete';
+            const keyFacts: Array<{ label: string; value: string }> = data?.key_facts || [];
+
+            const branches = keyFacts.length > 0
+                ? keyFacts.map((fact: { label: string; value: string }, idx: number) => ({
+                    id: `fact-${idx}-${Date.now()}`,
+                    step_number: idx + 1,
+                    label: fact.label,
+                    description: fact.value,
+                    type: 'research'
+                }))
+                : [
+                    { id: `s-1-${Date.now()}`, step_number: 1, label: 'Summary', description: summary, type: 'research' }
+                ];
+
             return {
-                "workspace_data": {
-                    "root_node": "분석 결과 요약",
-                    "branches": [
-                        { "step_number": 1, "title": "시장 현황 분석", "description": "현재 관련 시장은 연 15% 성장 중이며, 정부의 친환경 정책 수혜가 예상됩니다.", "action_type": "research" },
-                        { "step_number": 2, "title": "경쟁사 동향", "description": "A사와 B사가 주요 플레이어이나, 아직 대표님의 특화 기술 영역은 공백지입니다.", "action_type": "research" },
-                        { "step_number": 3, "title": "기술적 차별점", "description": "데이터 경량화 알고리즘을 강점으로 내세워 기술성 평가에서 우위를 점할 수 있습니다.", "action_type": "research" }
-                    ]
+                workspace_data: {
+                    root_node: nodeLabel || text.substring(0, 60),
+                    branches
                 },
-                "suggested_actions": [
-                    { "label": "상세 계획 수립", "type": "PLAN", "query": "사업계획서 초안 작성" }
+                suggested_actions: [
+                    { label: '심층 분석', type: 'DEEP_DIVE', query: `Deep dive: ${nodeLabel || text.substring(0, 40)}` },
+                    { label: '하위 단계 생성', type: 'BRANCH', query: `Branch from: ${nodeLabel || text.substring(0, 40)}` }
                 ],
-                "chat_message": "요청하신 내용에 대한 전략적 분석을 완료했습니다. [Page 5]의 예산 계획과 [Page 7]의 추진 일정을 참고하세요!"
+                chat_message: summary
             };
         } catch (e: any) {
             console.error("AI Error:", e);
-            Alert.alert("AI Error", e.message);
+            // Show error in chat instead of Alert
+            setChatHistory(prev => [...prev, { text: `❌ AI 분석 오류: ${e.message}`, sender: 'ai' }]);
             return null;
         }
     };
@@ -208,9 +251,9 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                 }]);
 
                 setSuggestions([
-                    { label: "세부 실행 계획", type: "PLAN", query: "Create detailed action items" },
-                    { label: "관련 자료 검색", type: "VERIFY", query: "Find references" },
-                    { label: "위험 요소 분석", type: "EXPAND", query: "Analyze risks" }
+                    { label: "세부 실행 계획", type: "PLAN", "query": "Create detailed action items" },
+                    { label: "관련 자료 검색", type: "VERIFY", "query": "Find references" },
+                    { label: "위험 요소 분석", type: "EXPAND", "query": "Analyze risks" }
                 ]);
 
                 Alert.alert("완료", "문서 기반 합격 전략 수립이 완료되었습니다. (Mock Mode)");
@@ -324,16 +367,14 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         if (columns.length === 0) { Alert.alert("알림", "빈 화면은 저장할 수 없습니다."); return; }
 
         const title = columns[0]?.branches?.[0]?.label || columns[0]?.root_node || "Untitled Project";
-        await saveSession(title, agentMode, columns, chatHistory);
+        // Pass pdfUrl as 5th argument
+        await saveSession(title, agentMode, columns, chatHistory, pdfUrl || undefined);
         Alert.alert("성공", "프로젝트가 저장되었습니다. 파일 관리자에서 확인하세요.");
     };
 
-    // 📂 히스토리 열기
-    const handleOpenHistory = () => {
-        if (!user) { Alert.alert("오류", "로그인이 필요합니다."); return; }
-        fetchSessions();
-        setShowHistory(true);
-    };
+    // ... (omitted)
+
+    const handleOpenHistory = () => setShowHistory(true);
 
     // 🔄 불러오기 로직
     const handleLoad = async (sessionId: string) => {
@@ -342,12 +383,13 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             setAgentMode(data.mode);
             setColumns(data.workspace_data);
             setChatHistory(data.chat_history || []);
+            if (data.pdf_url) setPdfUrl(data.pdf_url);
             setShowHistory(false);
         }
     };
 
     // 🚀 Planner 전환 (맥락 유지)
-    const handleSmartAction = (type: string, node: any) => {
+    const handleSmartAction = async (type: string, node: any) => {
         if (type === 'PLAN') {
             setAgentMode('Research Planner');
             setChatHistory(prev => [...prev, { text: `[System] '${node.label}' 기반 실행 계획 수립 시작.`, sender: 'ai' }]);
@@ -370,8 +412,25 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                 handleExpand(node, colIdx, bIdx);
             }
         } else if (type === 'ASK') {
-            setChatHistory(prev => [...prev, { text: `❓ '${node.label}'에 대해 궁금한 점이 있습니다.`, sender: 'me' }]);
-            // This just focuses chat for now, but we could trigger a specific query
+            // Real AI call for Ask AI — deliver a direct AI answer in chat
+            setChatHistory(prev => [...prev, { text: `❓ '${node.label}'에 대해 분석 중...`, sender: 'me' }]);
+            setLoading(true);
+            try {
+                const { data, error } = await supabase.functions.invoke('deep-analyze', {
+                    body: {
+                        query: `Explain in detail: ${node.label}. ${node.description || ''}`,
+                        context_node: { label: node.label, description: node.description },
+                        doc_type_hint: 'Research Paper'
+                    }
+                });
+                if (error) throw error;
+                const answer = data?.summary || '분석 결과를 가져오지 못했습니다.';
+                setChatHistory(prev => [...prev, { text: answer, sender: 'ai' }]);
+            } catch (err: any) {
+                setChatHistory(prev => [...prev, { text: `❌ 오류: ${err.message}`, sender: 'ai' }]);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -388,6 +447,52 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
     const handleCitationClick = (page: number) => {
         console.log(`🔗 Jumping to PDF Page: ${page}`);
         pdfViewerRef.current?.scrollToPage(page);
+    };
+
+    // 🧠 Action: Pin to Canvas (Add to Mind Map)
+    const handlePinToCanvas = (text: string) => {
+        const newNode = {
+            id: `pin-${Date.now()}`,
+            label: "Pinned Note",
+            description: text,
+            type: 'note', // Distinct type for notes
+            step_number: 0
+        };
+
+        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+        if (columns.length === 0) {
+            // Create Root
+            setColumns([{
+                root_node: "My Research Notes",
+                branches: [{ ...newNode, step_number: 1 }]
+            }]);
+        } else {
+            // Append to the last active column or create a new branch in it
+            const lastColIdx = columns.length - 1;
+            const updatedColumns = [...columns];
+            const lastCol = updatedColumns[lastColIdx];
+
+            // Add to branches
+            lastCol.branches = [...(lastCol.branches || []), { ...newNode, step_number: (lastCol.branches?.length || 0) + 1 }];
+            setColumns(updatedColumns);
+        }
+
+        // Feedback (Moonlight style toast or sound could trigger here)
+        console.log("📌 Node added to Mind Map:", text);
+    };
+
+    // 🧠 Action: Ask AI (Deep Dive)
+    const handleAskAI = (text: string) => {
+        floatingChatRef.current?.setInput(`"${text}"\n\n`);
+        setIsChatExpanded(true);
+    };
+
+    // 🧠 Action: Summarize
+    const handleSummarize = (text: string) => {
+        floatingChatRef.current?.setInput(`Please summarize this section:\n"${text}"`);
+        setIsChatExpanded(true);
+        // Optional: Auto-submit? handleChatSend(...)
     };
 
     // 🌟 Workspace Render Helper (Extract for Split View Reuse)
@@ -548,7 +653,6 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            {/* Header */}
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <Text style={styles.logo}>Publica NEXUS</Text>
@@ -558,8 +662,6 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                     <TouchableOpacity onPress={handleSave}><Save size={22} color="#10B981" /></TouchableOpacity>
                 </View>
             </View>
-
-            {/* Hidden File Input for Programmatic Access */}
             <FileUploader
                 ref={fileUploaderRef}
                 style={{ display: 'none' }}
@@ -616,24 +718,81 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
             {/* 🌟 Split View Logic */}
             {!showWelcome && pdfUrl ? (
-                <SplitLayout
-                    leftNode={
-                        <ErrorBoundary compName="PDFViewer">
-                            <React.Suspense fallback={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color="#10B981" /></View>}>
-                                <PDFViewerPanel
-                                    ref={pdfViewerRef}
-                                    url={pdfUrl}
-                                    onQuote={(text: string) => {
-                                        console.log("📝 Quote Received:", text);
-                                        floatingChatRef.current?.setInput(text);
-                                    }}
-                                />
-                            </React.Suspense>
-                        </ErrorBoundary>
-                    }
-                    rightNode={renderWorkspace()}
-                    initialLeftWidth={Dimensions.get('window').width * 0.5}
-                />
+                <>
+                    <SplitLayout
+                        leftNode={
+                            <ErrorBoundary compName="PDFViewer">
+                                <React.Suspense fallback={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color="#10B981" /></View>}>
+                                    <PDFViewerPanel
+                                        ref={pdfViewerRef}
+                                        url={pdfUrl}
+                                        onQuote={(text: string, x: number, y: number, type?: string, context?: any) => {
+                                            console.log("📝 Quote Received:", text.substring(0, 60), type, context?.sectionTitle);
+                                            const px = x || 400;
+                                            const py = y || 300;
+                                            setContextMenu({ visible: true, x: px, y: py, text, type, context });
+                                        }}
+                                        onExplainSection={(text: string, x: number, y: number, context?: any) => {
+                                            // ✨ Sparkle on section heading → directly open ExplanationPopover
+                                            console.log("✨ Section Explain:", context?.heading?.substring(0, 40));
+                                            setContextMenu({ visible: false, x: 0, y: 0, text: '', type: '', context: null });
+                                            setExplanation({
+                                                visible: true,
+                                                x: x || 400,
+                                                y: y || 300,
+                                                text,
+                                                mode: 'explain',
+                                                context
+                                            });
+                                        }}
+                                    />
+                                </React.Suspense>
+                            </ErrorBoundary>
+                        }
+                        rightNode={renderWorkspace()}
+                        initialLeftWidth={Dimensions.get('window').width * 0.5}
+                    />
+
+                    {/* 🌟 Floating Context Menu (Lifted to Root for Z-Index) */}
+                    <FloatingContextMenu
+                        visible={contextMenu.visible}
+                        x={contextMenu.x}
+                        y={contextMenu.y}
+                        text={contextMenu.text}
+                        type={contextMenu.type}
+                        onAskAI={handleAskAI}
+                        onPinToCanvas={handlePinToCanvas}
+                        onSummarize={handleSummarize}
+                        onClose={() => setContextMenu({ ...contextMenu, visible: false })}
+                        onExplain={() => {
+                            setContextMenu({ ...contextMenu, visible: false });
+                            setExplanation({ visible: true, x: contextMenu.x, y: contextMenu.y, text: contextMenu.text, mode: 'explain', context: contextMenu.context });
+                        }}
+                        onTranslate={() => {
+                            setContextMenu({ ...contextMenu, visible: false });
+                            setExplanation({ visible: true, x: contextMenu.x, y: contextMenu.y, text: contextMenu.text, mode: 'translate', context: contextMenu.context });
+                        }}
+                    />
+
+                    {/* 🌟 In-Place Explanation Popover */}
+                    <ExplanationPopover
+                        visible={explanation.visible}
+                        x={explanation.x}
+                        y={explanation.y}
+                        text={explanation.text}
+                        mode={explanation.mode}
+                        onClose={() => setExplanation({ ...explanation, visible: false })}
+                        onAskFurther={(context) => {
+                            setExplanation({ ...explanation, visible: false });
+                            handleAskAI(context); // Open Chat
+                        }}
+                        onSaveToNote={(content) => {
+                            handlePinToCanvas(content);
+                            setExplanation({ ...explanation, visible: false });
+                        }}
+                        context={explanation.context}
+                    />
+                </>
             ) : (
                 renderWorkspace()
             )}

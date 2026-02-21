@@ -18,7 +18,7 @@ export const useSessionManager = (userId: string | undefined) => {
     };
 
     // 2. 저장하기 (Auto-Save or Manual Save)
-    const saveSession = async (title: string, mode: string, columns: any[], chatHistory: any[]) => {
+    const saveSession = async (title: string, mode: string, columns: any[], chatHistory: any[], pdfUrl?: string) => {
         if (!userId) return;
 
         const payload = {
@@ -27,6 +27,7 @@ export const useSessionManager = (userId: string | undefined) => {
             mode,
             workspace_data: columns,
             chat_history: chatHistory,
+            pdf_url: pdfUrl || null,
             updated_at: new Date().toISOString()
         };
 

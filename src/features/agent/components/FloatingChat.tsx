@@ -17,9 +17,9 @@ export const FloatingChat = forwardRef<FloatingChatRef, any>(({ onSend, loading,
 
     useImperativeHandle(ref, () => ({
         setInput: (text: string) => {
-            setInput(text);
+            setInput(prev => prev + text);
             if (!expanded && onToggleExpand) {
-                onToggleExpand(); // Auto-open chat if closed
+                setTimeout(() => onToggleExpand(), 100); // Slight delay for smooth transition
             }
         }
     }));

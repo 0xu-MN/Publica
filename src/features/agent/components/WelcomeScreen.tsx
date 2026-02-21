@@ -48,7 +48,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartChat, onUpl
 
                 {/* 3. Subheadline */}
                 <Text className="text-slate-400 text-lg mb-12 text-center leading-relaxed px-4">
-                    정부 지원사업 공고부터 복잡한 문서 분석까지,<br />
+                    정부 지원사업 공고부터 복잡한 문서 분석까지,{'\n'}
                     당신의 전략 파트너가 되어드릴게요.
                 </Text>
 
