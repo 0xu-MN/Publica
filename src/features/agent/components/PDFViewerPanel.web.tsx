@@ -16,22 +16,10 @@ export interface PDFViewerRef {
 
 interface PDFViewerPanelProps {
     url: string;
-    /** Called when a block is clicked or a ✨ sparkle button triggers explain/translate */
     onQuote?: (text: string, x: number, y: number, type?: string, context?: any) => void;
-    /** Called when the ✨ sparkle on a section heading is clicked → triggers Explain panel */
     onExplainSection?: (text: string, x: number, y: number, context?: any) => void;
 }
 
-/**
- * Cross-page section accumulation:
- * We maintain a ref (currentSectionRef) that persists across page renders.
- * When a page loads, we process its blocks and:
- *   - If a block is a heading → flush the previous section, start a new one
- *   - Otherwise → accumulate paragraphs into the current open section
- *
- * The onSparkle callback in PDFBookPage delivers the FULL accumulated text
- * for that section (which may span multiple pages) to the Explain panel.
- */
 export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
     ({ url, onQuote, onExplainSection }, ref) => {
         const [numPages, setNumPages] = useState<number | null>(null);
@@ -43,7 +31,6 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
         const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
         // Cross-page section accumulator
-        // Maps section heading id → accumulated text across all pages
         const sectionTextAccumulator = useRef<Map<string, string>>(new Map());
         const currentSectionId = useRef<string | null>(null);
         const currentSectionHeading = useRef<string>('');
@@ -58,7 +45,6 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
 
         function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
             setNumPages(numPages);
-            // Reset cross-page state on new document
             sectionTextAccumulator.current.clear();
             currentSectionId.current = null;
             currentSectionHeading.current = '';
@@ -69,11 +55,6 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
             scrollViewRef.current?.scrollTo({ y: (page - 1) * pageHeight + y, animated: true });
         };
 
-        /**
-         * Processes blocks from a newly loaded page.
-         * Accumulates paragraph text into the current open section,
-         * and starts a new section whenever a heading block is encountered.
-         */
         const processPageBlocks = (blocks: Block[], pageNumber: number) => {
             // Update TOC
             const newTOCItems = StructureEngine.buildTOC(blocks, pageNumber);
@@ -87,16 +68,17 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                 });
             }
 
-            // Accumulate section text cross-page
+            // ✅ 수정: block.headingLevel → block.type === 'heading'
+            // 이전 코드는 headingLevel 필드를 체크했는데 smartBlockEngine이 이 필드를 생성하지 않아서
+            // 크로스페이지 섹션 누적이 전혀 작동하지 않았음
             for (const block of blocks) {
-                if (block.headingLevel && block.headingLevel > 0) {
-                    // New heading → start a new section
+                if (block.type === 'heading') {
+                    // 새 헤딩 → 새 섹션 시작
                     currentSectionId.current = block.id;
                     currentSectionHeading.current = block.text.split('\n')[0].trim();
-                    // Initialize with heading text
                     sectionTextAccumulator.current.set(block.id, block.text + '\n');
                 } else if (currentSectionId.current) {
-                    // Paragraph → append to current section
+                    // 본문 → 현재 섹션에 누적
                     const prev = sectionTextAccumulator.current.get(currentSectionId.current) || '';
                     sectionTextAccumulator.current.set(
                         currentSectionId.current,
@@ -106,7 +88,6 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
             }
         };
 
-        /** Returns accumulated text for the section that owns the given block */
         const getSectionText = (block: Block): string => {
             if (!block.sectionId) return block.text;
             return sectionTextAccumulator.current.get(block.sectionId) || block.text;
@@ -164,13 +145,11 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                                         onQuote(block.text, cx, cy, block.type, {
                                             sectionTitle: block.sectionTitle,
                                             sectionId: block.sectionId,
-                                            // Include accumulated section text as AI context
                                             sectionText: getSectionText(block),
                                         });
                                     }
                                 }}
                                 onSparkle={(block: Block, event: any) => {
-                                    // ✨ Sparkle on heading → explain the FULL section
                                     if (onExplainSection) {
                                         const sectionText = getSectionText(block);
                                         const cx = event.pageX ?? event.clientX ?? 400;

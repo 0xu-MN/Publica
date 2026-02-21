@@ -9,16 +9,27 @@ export interface StructureNode {
 }
 
 /**
- * StructureEngine v3 — Numbered Section Aware
+ * StructureEngine v4
  *
- * Key improvements:
- * 1. Parses section numbers (1., 1.1, 1.2.3 …) to determine exact heading level
- * 2. Running header / footer suppression (repeated text across pages)
- * 3. Font-size–based fallback for documents without explicit numbering
- * 4. Deduplication of identical headings
- * 5. Clean TOC export with proper hierarchy and display titles
+ * 핵심 수정:
+ * 1. 페이지 상단/하단 5% 위치의 짧은 텍스트를 running header/footer로 억제
+ *    → "Biomedicine & Pharmacotherapy" 같은 저널명 반복 제거
+ * 2. globalSeenHeadings를 static으로 유지해서 페이지 간 중복 heading 제거
+ *    → "Introduction" 이 여러 페이지에서 중복 등록되는 문제 해결
+ * 3. PDFViewerPanel에서 페이지 전환 시 globalSeenHeadings 리셋 가능하도록 resetState() 추가
  */
 export class StructureEngine {
+
+    // ✅ 전역 중복 헤딩 추적 (페이지 간 공유)
+    private static globalSeenHeadings = new Set<string>();
+
+    /**
+     * 새 문서 로드 시 반드시 호출 — 전역 상태 초기화
+     */
+    static resetState() {
+        this.globalSeenHeadings.clear();
+        console.log('🔄 StructureEngine: state reset for new document');
+    }
 
     // ─────────────────────────────────────────────────────────────────────────
     // PUBLIC
@@ -27,30 +38,30 @@ export class StructureEngine {
     static analyzeStructure(blocks: Block[]): Block[] {
         if (!blocks || blocks.length === 0) return [];
 
-        // Step 0: detect running headers / footers (text repeated 3+ times)
-        const runningHeaders = this.detectRunningHeaders(blocks);
-
-        // Step 1: estimate body font size
         const bodyFontSize = this.estimateBodyFont(blocks);
+        const pageHeight = this.estimatePageHeight(blocks);
 
-        // Step 2: classify each block as heading (with level) or paragraph
-        const seen = new Set<string>(); // deduplication
         const classified = blocks.map(block => {
-            const key = block.text.trim().substring(0, 80).toLowerCase();
+            const firstLine = block.text.trim().split('\n')[0];
+            const key = firstLine.toLowerCase().substring(0, 80).replace(/\s+/g, ' ');
 
-            // Suppress running headers
-            if (runningHeaders.has(key)) {
+            // ✅ 위치 기반 running header/footer 억제
+            // 페이지 상단 8% 또는 하단 5% 에 있는 짧은(단어 4개 이하) 텍스트
+            const isTopArea = block.y < pageHeight * 0.08;
+            const isBottomArea = block.y > pageHeight * 0.92;
+            const isShortText = firstLine.split(/\s+/).length <= 6;
+            if ((isTopArea || isBottomArea) && isShortText) {
                 return { ...block, headingLevel: 0, type: block.type };
             }
 
             const level = this.classifyHeading(block, bodyFontSize);
 
-            // Deduplicate: if we've seen this heading text before, demote it
             if (level > 0) {
-                if (seen.has(key)) {
+                // ✅ 전역 중복 체크 (페이지 간 공유)
+                if (this.globalSeenHeadings.has(key)) {
                     return { ...block, headingLevel: 0, type: 'paragraph' as const };
                 }
-                seen.add(key);
+                this.globalSeenHeadings.add(key);
             }
 
             return {
@@ -60,7 +71,7 @@ export class StructureEngine {
             };
         });
 
-        // Step 3: assign section context (bread-crumb stack)
+        // 섹션 컨텍스트 할당 (bread-crumb stack)
         const stack: { level: number; id: string; title: string }[] = [];
         return classified.map(block => {
             if (block.headingLevel && block.headingLevel > 0) {
@@ -78,13 +89,9 @@ export class StructureEngine {
         });
     }
 
-    /**
-     * Build a clean, ordered TOC from the structured blocks.
-     * Returns items in document order with proper hierarchy levels.
-     */
     static buildTOC(blocks: Block[], pageNumber: number = 1): TOCItem[] {
         const items: TOCItem[] = [];
-        const seen = new Set<string>();
+        const pageSeen = new Set<string>(); // 이 페이지 내 중복만 체크
 
         for (const block of blocks) {
             if (!block.headingLevel || block.headingLevel === 0) continue;
@@ -92,10 +99,9 @@ export class StructureEngine {
             const rawTitle = block.text.split('\n')[0].trim();
             const normalized = rawTitle.toLowerCase().substring(0, 80);
 
-            if (seen.has(normalized)) continue;
-            seen.add(normalized);
+            if (pageSeen.has(normalized)) continue;
+            pageSeen.add(normalized);
 
-            // Parse out the section number and clean display title
             const { number, displayTitle } = this.parseHeadingTitle(rawTitle);
 
             items.push({
@@ -116,51 +122,34 @@ export class StructureEngine {
     // HEADING CLASSIFICATION
     // ─────────────────────────────────────────────────────────────────────────
 
-    /**
-     * Determines if a block is a heading and what level (1/2/3) it is.
-     * Returns 0 for non-headings.
-     *
-     * Priority order:
-     *   1. Explicit section number pattern (most reliable for academic papers)
-     *   2. Font size significantly larger than body
-     *   3. Known section keyword (Abstract, Introduction, etc.)
-     */
     private static classifyHeading(block: Block, bodyFontSize: number): number {
         const firstLine = block.text.trim().split('\n')[0].trim();
         const fontSize = block.fontSize || 12;
         const lineCount = block.text.trim().split('\n').length;
 
-        // ── Exclusions ────────────────────────────────────────────────────────
-
+        // ── 제외 조건 ────────────────────────────────────────────────────────
         if (firstLine.length < 2) return 0;
-        if (/^\d+$/.test(firstLine)) return 0;                          // page number
+        if (/^\d+$/.test(firstLine)) return 0;                          // 페이지 번호
         if (/^\([a-zA-Z0-9i]+\)$/.test(firstLine)) return 0;           // (a) (b) (i)
-        if (/^\[?\d+\]/.test(firstLine)) return 0;                      // [1] citation
-        if (/^(fig(ure)?|table)\s*\.?\s*\d+/i.test(firstLine)) return 0; // Figure 3.
-        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return 0;  // author: X. Yang
-        if (/@/.test(firstLine)) return 0;                              // email
-        if (/^[a-z]/.test(firstLine)) return 0;                         // starts lowercase
-        if (firstLine.endsWith(',')) return 0;                          // list continuation
-        if (firstLine.length > 120) return 0;                           // too long → body paragraph
+        if (/^\[?\d+\]/.test(firstLine)) return 0;                      // [1] 인용
+        if (/^(fig(ure)?|table)\s*\.?\s*\d+/i.test(firstLine)) return 0;
+        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return 0;  // 저자명: X. Yang
+        if (/@/.test(firstLine)) return 0;                              // 이메일
+        if (/^[a-z]/.test(firstLine)) return 0;                        // 소문자 시작
+        if (firstLine.endsWith(',')) return 0;                          // 리스트 연속
+        if (firstLine.length > 120) return 0;                           // 너무 긴 본문
 
-        // ── 1. Explicit numbered section ─────────────────────────────────────
+        // ── 1. 명시적 번호 섹션 (가장 신뢰도 높음) ───────────────────────────
+        if (/^\d{1,2}\.\d{1,2}\.\d{1,2}[\s.]/.test(firstLine)) return 3; // 1.2.3
+        if (/^\d{1,2}\.\d{1,2}[\s.]/.test(firstLine)) return 2;           // 1.1
+        if (/^(\d{1,2}\.?\s+[A-Z]|[IVX]{1,5}\.\s+[A-Z])/.test(firstLine)) return 1; // 1. or I.
 
-        // Level 3: "1.2.3" or "1.2.3." or "1.2.3 Title"
-        if (/^\d{1,2}\.\d{1,2}\.\d{1,2}[\s.]/.test(firstLine)) return 3;
-
-        // Level 2: "1.1" or "1.1." or "1.1 Title"
-        if (/^\d{1,2}\.\d{1,2}[\s.]/.test(firstLine)) return 2;
-
-        // Level 1: "1." or "1 Title" or "I." or "II."
-        // Must be followed by a capitalized word (not author name — already excluded above)
-        if (/^(\d{1,2}\.?\s+[A-Z]|[IVX]{1,5}\.\s+[A-Z])/.test(firstLine)) return 1;
-
-        // ── 2. Font size (layout-based) ───────────────────────────────────────
+        // ── 2. 폰트 크기 기반 ─────────────────────────────────────────────────
         const fontRatio = fontSize / bodyFontSize;
         if (fontRatio >= 1.5 && lineCount <= 3) return 1;
         if (fontRatio >= 1.25 && lineCount <= 2) return 2;
 
-        // ── 3. Named sections (short, standalone) ────────────────────────────
+        // ── 3. 알려진 섹션명 (짧고 단독으로 서있는 경우) ──────────────────────
         const wordCount = firstLine.split(/\s+/).length;
         if (
             wordCount <= 4 &&
@@ -174,40 +163,26 @@ export class StructureEngine {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // TITLE PARSING
+    // HELPERS
     // ─────────────────────────────────────────────────────────────────────────
 
     /**
-     * Given a raw heading like "3.2. Results of the experiment", extract:
-     *   number: "3.2"
-     *   displayTitle: "Results of the experiment"
-     *
-     * Or "Abstract" → number: undefined, displayTitle: "Abstract"
+     * 페이지 높이 추정: 블록 Y 좌표 최댓값 기준
      */
+    private static estimatePageHeight(blocks: Block[]): number {
+        if (!blocks.length) return 800;
+        const maxY = Math.max(...blocks.map(b => b.y + b.height));
+        return maxY > 100 ? maxY : 800;
+    }
+
     private static parseHeadingTitle(raw: string): { number?: string; displayTitle: string } {
-        // Match section numbers like "1.", "1.1", "1.1.", "3.2.1", "II."
         const m = raw.match(/^((?:\d{1,2}\.){1,3}\d{0,2}|[IVX]{1,5}\.?)\s*(.*)/);
         if (m) {
-            const number = m[1].replace(/\.$/, '').trim(); // strip trailing dot
+            const number = m[1].replace(/\.$/, '').trim();
             const rest = m[2].trim();
             return { number, displayTitle: rest || number };
         }
         return { displayTitle: raw };
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────────────────────────────────
-
-    private static detectRunningHeaders(blocks: Block[]): Set<string> {
-        const freq = new Map<string, number>();
-        blocks.forEach(b => {
-            const k = b.text.trim().substring(0, 80).toLowerCase().replace(/\s+/g, ' ');
-            if (k.length > 3) freq.set(k, (freq.get(k) || 0) + 1);
-        });
-        const headers = new Set<string>();
-        freq.forEach((count, key) => { if (count >= 3) headers.add(key); });
-        return headers;
     }
 
     private static estimateBodyFont(blocks: Block[]): number {

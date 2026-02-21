@@ -15,14 +15,18 @@ export interface Block {
     headingLevel?: number;
 }
 
-/** 
- * SmartBlockEngine v7.1 - Math regex fixed
+/**
+ * SmartBlockEngine v7.4
+ * 핵심 수정:
+ * 1. heading 감지를 폰트 크기 기반으로 변경
+ *    - 기존: bold 폰트명 || 숫자로 시작 → PDF에서 폰트명이 인코딩돼서 bold 감지 실패
+ *    - 수정: 본문 평균 폰트보다 10% 이상 크면 heading으로 판정
+ * 2. bodyFontSize를 clusterToBlocks → blockFromSegments로 전달
  */
 export class SmartBlockEngine {
     constructor() {
-        console.log('🚀 SmartBlockEngine v7.1 initialized');
+        console.log('🚀 SmartBlockEngine v7.4 initialized');
     }
-
 
     // ─────────────────────────────────────────────────────────────────────────
     // PUBLIC
@@ -37,7 +41,6 @@ export class SmartBlockEngine {
 
         if (rects.length === 0) return [];
 
-        // Sort top-down, left-right
         const sorted = [...rects].sort((a, b) => {
             const dy = a.y - b.y;
             if (Math.abs(dy) < 2) return a.x - b.x;
@@ -45,49 +48,27 @@ export class SmartBlockEngine {
         });
 
         const pageWidth = viewport.width;
-
-        // Detect column split
         const columnBoundaries = this.detectColumnBoundaries(sorted, pageWidth);
         console.log('📐 Column boundaries:', columnBoundaries, 'pageWidth:', pageWidth.toFixed(0));
 
-        // Assign column index
         const rectsWithCol = sorted.map(r => ({
             ...r,
             col: this.getColumnIndex(r.x, columnBoundaries)
         }));
 
-        // Group into line segments
         const segments = this.createLineSegments(rectsWithCol);
-
-        // Page statistics for gap detection
         const stats = this.calcPageStats(segments);
 
-        // Cluster segments into blocks
+        // ✅ stats를 clusterToBlocks로 전달 (bodyFontSize 기반 heading 감지에 필요)
         const blocks = this.clusterToBlocks(segments, stats, columnBoundaries, pageWidth);
-
-        // Post-process: split any block that still wrongly spans both columns
         const finalBlocks = this.splitOverWideBlocks(blocks, columnBoundaries, pageWidth);
-
-        // Enrich with type hints
         const enriched = finalBlocks.map(b => this.enrich(b));
         return StructureEngine.analyzeStructure(enriched);
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // COLUMN DETECTION v7 — strict X-histogram cluster method
+    // COLUMN DETECTION v7.4 (임계값 완화 유지)
     // ─────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Builds a histogram of X start-positions of text lines.
-     * In a 2-column academic paper, two clear clusters form:
-     *   Left:  X ≈ 30–100 px  (left margin indent)
-     *   Right: X ≈ 280–450 px (center of page)
-     *
-     * Strict validation:
-     *   - Right cluster must be in 35%–72% of page width
-     *   - Valley between clusters must be < 20% of peak value
-     *   - Peaks must be separated by ≥ 15% of page width
-     */
     private static detectColumnBoundaries(rects: any[], pageWidth: number): number[] {
         const BUCKET = 6;
         const bucketCount = Math.ceil(pageWidth / BUCKET);
@@ -98,7 +79,6 @@ export class SmartBlockEngine {
             hist[b]++;
         }
 
-        // 5-bucket smoothing
         const smooth = hist.map((_, i) => {
             let sum = 0, cnt = 0;
             for (let j = Math.max(0, i - 2); j <= Math.min(bucketCount - 1, i + 2); j++) {
@@ -125,27 +105,21 @@ export class SmartBlockEngine {
             const leftPeakX = peaks[0] * BUCKET;
             const rightPeakX = peaks[1] * BUCKET;
 
-            // Right column must start in the middle zone of the page
-            if (rightPeakX < pageWidth * 0.35 || rightPeakX > pageWidth * 0.72) {
-                console.log(`📊 Single-col: right peak ${rightPeakX.toFixed(0)}px out of range [${(pageWidth * 0.35).toFixed(0)}, ${(pageWidth * 0.72).toFixed(0)}]`);
+            const minRightPx = Math.max(pageWidth * 0.20, 40);
+            const maxRightPx = pageWidth * 0.80;
+
+            if (rightPeakX < minRightPx || rightPeakX > maxRightPx) {
+                console.log(`📊 Single-col: right peak ${rightPeakX.toFixed(0)}px out of range [${minRightPx.toFixed(0)}, ${maxRightPx.toFixed(0)}]`);
                 return [0];
             }
 
-            // Valley must be a real gap
             const valleyVal = Math.min(...smooth.slice(peaks[0], peaks[1] + 1));
-            if (valleyVal > maxVal * 0.20) {
+            if (valleyVal > maxVal * 0.35) {
                 console.log(`📊 Single-col: valley too high (${valleyVal.toFixed(1)} vs max ${maxVal.toFixed(1)})`);
                 return [0];
             }
 
-            // Find lowest valley bucket
-            let valleyBucket = peaks[0];
-            let minV = Infinity;
-            for (let i = peaks[0]; i <= peaks[1]; i++) {
-                if (smooth[i] < minV) { minV = smooth[i]; valleyBucket = i; }
-            }
-
-            const splitX = valleyBucket * BUCKET;
+            const splitX = Math.round((peaks[0] + peaks[1]) / 2) * BUCKET;
             console.log(`📊 2-col detected: L=${leftPeakX.toFixed(0)}px R=${rightPeakX.toFixed(0)}px split=${splitX.toFixed(0)}px`);
             return [0, splitX];
         }
@@ -164,7 +138,6 @@ export class SmartBlockEngine {
     // ─────────────────────────────────────────────────────────────────────────
     // LINE SEGMENTATION
     // ─────────────────────────────────────────────────────────────────────────
-
     private static createLineSegments(rects: any[]): any[] {
         const segments: any[] = [];
         let current: any[] = [];
@@ -192,7 +165,6 @@ export class SmartBlockEngine {
     // ─────────────────────────────────────────────────────────────────────────
     // PAGE STATISTICS
     // ─────────────────────────────────────────────────────────────────────────
-
     private static calcPageStats(segments: any[]) {
         if (segments.length < 2) return { medianHeight: 12, medianGap: 3, bodyFontSize: 12 };
 
@@ -220,6 +192,8 @@ export class SmartBlockEngine {
 
         const medianHeight = median(heights) || 12;
         const medianGap = median(gaps) || 3;
+
+        // bodyFontSize: 가장 많이 등장하는 폰트 크기 = 본문 기준
         const freq = new Map<number, number>();
         heights.forEach((h: number) => {
             const k = Math.round(h);
@@ -227,13 +201,14 @@ export class SmartBlockEngine {
         });
         const bodyFontSize = [...freq.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || medianHeight;
 
+        console.log(`📝 Page stats: bodyFontSize=${bodyFontSize}, medianHeight=${medianHeight.toFixed(1)}, medianGap=${medianGap.toFixed(1)}`);
+
         return { medianHeight, medianGap, bodyFontSize };
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // VERTICAL CLUSTERING
     // ─────────────────────────────────────────────────────────────────────────
-
     private static clusterToBlocks(
         segments: any[],
         stats: { medianHeight: number; medianGap: number; bodyFontSize: number },
@@ -286,10 +261,10 @@ export class SmartBlockEngine {
                 const colEnd = columnBoundaries[colIdx + 1]
                     ? columnBoundaries[colIdx + 1] - 2
                     : pageWidth;
-                return this.blockFromSegments(blk.items, colStart, colEnd);
+                // ✅ bodyFontSize를 전달해서 폰트 크기 기반 heading 감지
+                return this.blockFromSegments(blk.items, colStart, colEnd, stats.bodyFontSize);
             })
             .sort((a, b) => {
-                // Left column first, then top-to-bottom
                 if (a.x < b.x - 20 && b.x > pageWidth * 0.4) return -1;
                 if (b.x < a.x - 20 && a.x > pageWidth * 0.4) return 1;
                 return a.y - b.y;
@@ -299,7 +274,6 @@ export class SmartBlockEngine {
     // ─────────────────────────────────────────────────────────────────────────
     // POST-PROCESS: split blocks that span both columns
     // ─────────────────────────────────────────────────────────────────────────
-
     private static splitOverWideBlocks(
         blocks: Block[], columnBoundaries: number[], pageWidth: number
     ): Block[] {
@@ -346,7 +320,6 @@ export class SmartBlockEngine {
     // ─────────────────────────────────────────────────────────────────────────
     // HELPERS
     // ─────────────────────────────────────────────────────────────────────────
-
     private static normalizeItem(item: any, viewport: any) {
         const tx = item.transform;
         const [x, y] = viewport.convertToViewportPoint(tx[4], tx[5]);
@@ -376,7 +349,13 @@ export class SmartBlockEngine {
         return { x: minX, y, width: maxX - minX, height, text, items, avgFontSize, col };
     }
 
-    private static blockFromSegments(segs: any[], colStart: number = 0, colEnd: number = 9999): Block {
+    // ✅ 핵심 수정: bodyFontSize 파라미터 추가, 폰트 크기 기반 heading 감지
+    private static blockFromSegments(
+        segs: any[],
+        colStart: number = 0,
+        colEnd: number = 9999,
+        bodyFontSize: number = 12
+    ): Block {
         const minX = Math.max(Math.min(...segs.map((s: any) => s.x)), colStart);
         const minY = Math.min(...segs.map((s: any) => s.y));
         const rawMaxX = Math.max(...segs.map((s: any) => s.x + s.width));
@@ -385,8 +364,19 @@ export class SmartBlockEngine {
         const fullText = segs.map((s: any) => s.text).join('\n');
         const avgFont = segs.reduce((s: number, seg: any) => s + (seg.avgFontSize || seg.height), 0) / segs.length;
 
+        // ✅ heading 판정 기준 (3가지 중 하나라도 해당하면 heading)
+        // 1. bold/heavy 폰트명 (인코딩 안 된 경우)
         const hasBold = segs.some((s: any) => s.items?.some((i: any) => /bold|heavy|black/i.test(i.fontName || '')));
+        // 2. 숫자/로마자로 시작하는 섹션 번호 (예: "2.3 Cell culture")
         const isNumbered = /^(?:\d+(?:\.\d+)*\.?\s|[IVX]{1,5}\.\s)/.test(fullText.trim());
+        // 3. ✅ 신규: 본문 폰트보다 10% 이상 크면 heading (폰트 인코딩 무관)
+        const isLargerFont = avgFont > bodyFontSize * 1.10;
+
+        const isHeading = hasBold || isNumbered || isLargerFont;
+
+        if (isHeading) {
+            console.log(`🏷️ Heading detected: "${fullText.trim().substring(0, 40)}" (font: ${avgFont.toFixed(1)} vs body: ${bodyFontSize})`);
+        }
 
         return {
             id: `blk-${Math.random().toString(36).substr(2, 8)}`,
@@ -396,7 +386,7 @@ export class SmartBlockEngine {
             width: Math.max(maxX - minX, 1),
             height: maxY - minY,
             fontSize: avgFont,
-            type: (hasBold || isNumbered) ? 'heading' : 'paragraph',
+            type: isHeading ? 'heading' : 'paragraph',
             citations: []
         };
     }

@@ -9,11 +9,9 @@ interface PDFBookPageProps {
     selectedBlockId?: string | null;
     onLoadSuccess?: (page: any) => void;
     onBlockClick?: (block: Block, event: any) => void;
-    /** Called when the ✨ sparkle button on a heading/figure is tapped */
     onSparkle?: (block: Block, event: any) => void;
 }
 
-// ── Color mapping by block type ──────────────────────────────────────────────
 const BLOCK_COLORS: Record<string, { hover: string; selected: string; badge: string }> = {
     heading: { hover: 'rgba(139,92,246,0.07)', selected: 'rgba(139,92,246,0.14)', badge: '#8B5CF6' },
     paragraph: { hover: 'rgba(59,130,246,0.06)', selected: 'rgba(59,130,246,0.12)', badge: '#3B82F6' },
@@ -28,6 +26,9 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
     const [blocks, setBlocks] = useState<Block[]>([]);
     const [hoveredBlock, setHoveredBlock] = useState<string | null>(null);
 
+    // ✅ 수정: onLoadSuccess 중복 호출 제거
+    // 이전 코드는 즉시 호출(blocks 없음) + getTextContent 완료 후 호출 = 2번 호출되었음
+    // 이제 getTextContent 완료 후 blocks와 함께 단 1번만 호출
     const handlePageLoadSuccess = (page: any) => {
         const unscaledViewport = page.getViewport({ scale: 1 });
         const scale = width / unscaledViewport.width;
@@ -36,14 +37,11 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
         page.getTextContent().then((content: any) => {
             const extractedBlocks = SmartBlockEngine.processPage(content.items, viewport);
             setBlocks(extractedBlocks);
-            if (onLoadSuccess) onLoadSuccess({ ...page, blocks: extractedBlocks, height: viewport.height });
+            onLoadSuccess?.({ ...page, blocks: extractedBlocks, height: viewport.height });
         });
-
-        if (onLoadSuccess) onLoadSuccess({ ...page, height: page.getViewport({ scale: width / page.getViewport({ scale: 1 }).width }).height });
     };
 
     if (Platform.OS !== 'web') {
-        // Native fallback (minimal — blocks invisible, just click)
         return (
             <View style={styles.pageContainer}>
                 <Page pageNumber={pageNumber} width={width}
@@ -61,7 +59,6 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
         );
     }
 
-    // Web-specific: hover, sparkle ✨ buttons
     return (
         <View style={styles.pageContainer}>
             <Page
@@ -91,7 +88,7 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                     return (
                         <View
                             key={block.id}
-                            // @ts-ignore — web-only events
+                            // @ts-ignore
                             onMouseEnter={() => setHoveredBlock(block.id)}
                             onMouseLeave={() => setHoveredBlock(null)}
                             onClick={(e: any) => {
@@ -119,7 +116,7 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                                 <View style={[styles.headingBar, { backgroundColor: colors.badge }]} />
                             )}
 
-                            {/* ✨ Sparkle button — appears on heading/figure hover */}
+                            {/* ✨ Sparkle button */}
                             {showSparkle && (
                                 <View
                                     // @ts-ignore

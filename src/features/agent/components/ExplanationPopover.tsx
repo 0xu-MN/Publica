@@ -5,13 +5,12 @@ import {
 } from 'react-native';
 import { X, BookOpen, Languages, ChevronRight, Bookmark } from 'lucide-react-native';
 
-// ── Gemini direct call (bypasses Supabase edge function) ─────────────────────
-const GEMINI_KEY =
-    (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_GEMINI_API_KEY) ||
-    'AIzaSyAEcHf8mz6EbEvjzZi_Nh8WVm2LefvDS9Q';
+// ── Gemini direct call ────────────────────────────────────────────────────────
+const GEMINI_KEY = (typeof process !== 'undefined' && process.env?.EXPO_PUBLIC_GEMINI_API_KEY) || '';
 
+// ✅ 2025년 이후 발급 신규 키는 gemini-2.0-flash 만 지원
 const GEMINI_URL =
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${GEMINI_KEY}`;
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`;
 
 const SYSTEM_PROMPT = `You are an expert academic research colleague (PhD level).
 Analyze the provided text from a research paper and give a structured response.
@@ -40,26 +39,30 @@ async function callGemini(text: string, mode: string, context?: any): Promise<an
 Text to analyze: "${text.substring(0, 3000)}"
 Section context: "${context?.sectionTitle || context?.heading || ''}"`;
 
+    console.log('🔵 Gemini 호출:', GEMINI_URL);
+
     const res = await fetch(GEMINI_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
-            generationConfig: { temperature: 0.3, responseMimeType: 'application/json' }
+            contents: [{ parts: [{ text: systemPrompt + '\n\n' + userContent }] }],
+            generationConfig: { temperature: 0.3 }
         })
     });
 
     if (!res.ok) {
         const err = await res.text();
-        throw new Error(`Gemini error ${res.status}: ${err.substring(0, 200)}`);
+        console.error('🔴 Gemini 실패:', res.status, err);
+        throw new Error(`Gemini error ${res.status}: ${err.substring(0, 300)}`);
     }
 
     const data = await res.json();
+    console.log('🟢 Gemini 성공');
     const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-    try { return JSON.parse(raw); }
+    const cleaned = raw.replace(/```json\s*/g, '').replace(/```\s*/g, '').trim();
+    try { return JSON.parse(cleaned); }
     catch { return { outcome: raw, key_terms: [], context_significance: '', questions: [] }; }
 }
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface ExplanationPopoverProps {
     visible: boolean;
@@ -93,10 +96,8 @@ export const ExplanationPopover: React.FC<ExplanationPopoverProps> = ({
 
     if (!visible) return null;
 
-    // Position popover: try to keep it on screen
     const popoverX = Math.min(Math.max(x - 170, 10), (Platform.OS === 'web' ? window.innerWidth - 380 : 20));
     const popoverY = y > 500 ? y - 420 : y + 20;
-
     const modeColor = mode === 'translate' ? '#10B981' : '#8B5CF6';
     const modeIcon = mode === 'translate'
         ? <Languages size={14} color="white" />
@@ -105,15 +106,12 @@ export const ExplanationPopover: React.FC<ExplanationPopoverProps> = ({
 
     return (
         <View style={[styles.container, { left: popoverX, top: popoverY }]}>
-            {/* Header */}
             <View style={[styles.header, { backgroundColor: modeColor }]}>
                 <View style={styles.headerLeft}>
                     {modeIcon}
                     <Text style={styles.headerTitle}>{modeLabel}</Text>
                     {context?.heading && (
-                        <Text style={styles.sectionTag} numberOfLines={1}>
-                            · {context.heading.substring(0, 30)}
-                        </Text>
+                        <Text style={styles.sectionTag} numberOfLines={1}>· {context.heading.substring(0, 30)}</Text>
                     )}
                 </View>
                 <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
@@ -128,24 +126,19 @@ export const ExplanationPopover: React.FC<ExplanationPopoverProps> = ({
                         <Text style={styles.loadingText}>분석 중...</Text>
                     </View>
                 )}
-
                 {error && (
                     <View style={styles.errorBox}>
                         <Text style={styles.errorTitle}>⚠️ 오류 발생</Text>
                         <Text style={styles.errorText}>{error}</Text>
                     </View>
                 )}
-
                 {result && !loading && (
                     <>
-                        {/* Main outcome */}
                         {result.outcome && (
                             <View style={styles.section}>
                                 <Text style={styles.outcomeText}>{result.outcome}</Text>
                             </View>
                         )}
-
-                        {/* Key terms */}
                         {result.key_terms?.length > 0 && (
                             <View style={styles.section}>
                                 <Text style={styles.sectionLabel}>핵심 개념</Text>
@@ -157,24 +150,18 @@ export const ExplanationPopover: React.FC<ExplanationPopoverProps> = ({
                                 ))}
                             </View>
                         )}
-
-                        {/* Context significance */}
                         {result.context_significance && (
                             <View style={styles.section}>
                                 <Text style={styles.sectionLabel}>맥락 속 의미</Text>
                                 <Text style={styles.contextText}>{result.context_significance}</Text>
                             </View>
                         )}
-
-                        {/* Follow-up question */}
                         {result.questions?.[0] && (
                             <TouchableOpacity
                                 style={[styles.questionBtn, { borderColor: modeColor + '40' }]}
                                 onPress={() => onAskFurther?.(result.questions[0])}
                             >
-                                <Text style={[styles.questionText, { color: modeColor }]}>
-                                    💬 {result.questions[0]}
-                                </Text>
+                                <Text style={[styles.questionText, { color: modeColor }]}>💬 {result.questions[0]}</Text>
                                 <ChevronRight size={12} color={modeColor} />
                             </TouchableOpacity>
                         )}
@@ -182,7 +169,6 @@ export const ExplanationPopover: React.FC<ExplanationPopoverProps> = ({
                 )}
             </ScrollView>
 
-            {/* Footer actions */}
             {result && !loading && (
                 <View style={styles.footer}>
                     <TouchableOpacity
@@ -207,23 +193,10 @@ export const ExplanationPopover: React.FC<ExplanationPopoverProps> = ({
 
 const styles = StyleSheet.create({
     container: {
-        position: 'absolute',
-        width: 360,
-        maxHeight: 480,
-        backgroundColor: 'white',
-        borderRadius: 12,
-        zIndex: 9999,
-        // @ts-ignore
-        boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-        overflow: 'hidden',
+        position: 'absolute', width: 360, maxHeight: 480, backgroundColor: 'white', borderRadius: 12, zIndex: 9999, //@ts-ignore
+        boxShadow: '0 8px 32px rgba(0,0,0,0.18)', overflow: 'hidden'
     },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-    },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 14, paddingVertical: 10 },
     headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
     headerTitle: { color: 'white', fontWeight: '700', fontSize: 13 },
     sectionTag: { color: 'rgba(255,255,255,0.75)', fontSize: 11, flex: 1 },
@@ -241,19 +214,9 @@ const styles = StyleSheet.create({
     termName: { fontSize: 12, fontWeight: '700', marginBottom: 2 },
     termDef: { fontSize: 12, color: '#475569', lineHeight: 18 },
     contextText: { fontSize: 13, color: '#475569', lineHeight: 20 },
-    questionBtn: {
-        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        borderWidth: 1, borderRadius: 8, padding: 10, marginVertical: 8, gap: 6
-    },
+    questionBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderRadius: 8, padding: 10, marginVertical: 8, gap: 6 },
     questionText: { fontSize: 12, flex: 1, lineHeight: 18 },
-    footer: {
-        flexDirection: 'row',
-        borderTopWidth: 1, borderColor: '#F1F5F9',
-        paddingHorizontal: 10, paddingVertical: 8, gap: 8
-    },
-    footerBtn: {
-        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderRadius: 6, paddingVertical: 6, gap: 4
-    },
+    footer: { flexDirection: 'row', borderTopWidth: 1, borderColor: '#F1F5F9', paddingHorizontal: 10, paddingVertical: 8, gap: 8 },
+    footerBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderRadius: 6, paddingVertical: 6, gap: 4 },
     footerBtnText: { fontSize: 11, fontWeight: '600' },
 });
