@@ -1,4 +1,4 @@
-import React, { useState, useRef, useImperativeHandle, forwardRef, useCallback } from 'react';
+import React, { useState, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Platform, ScrollView } from 'react-native';
 import { Document, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -10,6 +10,38 @@ import { TableOfContents } from './TableOfContents';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 
+// ─── API 설정 ──────────────────────────────────────────────────────────
+const PYTHON_PARSER_URL = 'http://127.0.0.1:8000/api/parse-pdf';
+
+async function fetchPythonTOC(url: string) {
+    try {
+        console.log("🚀 Python 서버로 PDF 분석 요청 시작:", url);
+        // 1. URL에서 PDF 다운로드 (Blob)
+        const pdfRes = await fetch(url);
+        const pdfBlob = await pdfRes.blob();
+
+        // 2. FormData 생성
+        const formData = new FormData();
+        formData.append('file', pdfBlob, 'document.pdf');
+
+        // 3. 서버로 전송
+        const res = await fetch(PYTHON_PARSER_URL, {
+            method: 'POST',
+            body: formData,
+        });
+
+        if (!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data = await res.json();
+        console.log("✅ Python 서버 분석 완료:", data);
+        return data; // { numPages, toc, sections }
+    } catch (e) {
+        console.error("❌ Python 파서 실패:", e);
+        return null;
+    }
+}
+
+// ─── 기존 유틸 ────────────────────────────────────────────────────────────────
+
 export interface PDFViewerRef {
     scrollToPage: (page: number) => void;
 }
@@ -20,8 +52,8 @@ interface PDFViewerPanelProps {
     onExplainSection?: (text: string, x: number, y: number, context?: any) => void;
 }
 
-const PAGE_GAP = 8;      // 페이지 간 gap (px) — PDFBookPage 마진과 일치시켜야 함
-const PAGE_PADDING = 20; // scrollContent paddingVertical
+const PAGE_GAP = 8;
+const PAGE_PADDING = 20;
 
 function sortTOCItems(items: any[]): any[] {
     return [...items].sort((a, b) => {
@@ -46,17 +78,35 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
         const [showTOC] = useState(true);
         const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
-        // ✅ 페이지별 렌더링 높이 추적 (누적 offset 계산용)
+        // ✅ 페이지별 높이 추적
         const pageHeightsRef = useRef<number[]>([]);
-        const [pageHeightsReady, setPageHeightsReady] = useState(false);
-
         const sectionTextAccumulator = useRef<Map<string, string>>(new Map());
         const currentSectionId = useRef<string | null>(null);
         const currentSectionHeading = useRef<string>('');
         const globalTOCSeen = useRef<Set<string>>(new Set());
 
-        // ✅ 페이지 n의 스크롤 상단 offset 계산
-        // offset = paddingTop + sum(height[0..n-2]) + (n-1) * gap
+        // Server TOC
+        const [serverMode, setServerMode] = useState(false);
+        const serverSectionsRef = useRef<Record<string, string>>({});
+
+        useEffect(() => {
+            if (!url) return;
+
+            // 파일이 바뀌면 파이썬 서버로 파싱 요청
+            fetchPythonTOC(url).then(res => {
+                if (res && res.toc && res.toc.length > 0) {
+                    setServerMode(true);
+                    setTocItems(res.toc);
+                    if (res.sections) {
+                        serverSectionsRef.current = res.sections;
+                    }
+                } else {
+                    setServerMode(false);
+                    console.log("⚠️ Python 서버 실패 또는 결과 없음. 기존 클라이언트 텍스트 기반 파싱으로 전환 (Fallback).");
+                }
+            });
+        }, [url]);
+
         const getPageTopOffset = useCallback((pageNumber: number): number => {
             let offset = PAGE_PADDING;
             for (let i = 0; i < pageNumber - 1; i++) {
@@ -80,25 +130,24 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
             currentSectionId.current = null;
             currentSectionHeading.current = '';
             pageHeightsRef.current = new Array(numPages).fill(0);
-            setPageHeightsReady(false);
             StructureEngine.resetState();
-            console.log(`📄 Document loaded: ${numPages} pages`);
+            console.log(`📄 Document loaded: ${numPages} pages. Server Mode: ${serverMode}`);
         }
 
-        // ✅ TOC 항목 클릭 → 해당 페이지 + 블록 y 위치로 정확하게 스크롤
         const handleTOCClick = useCallback((page: number, y: number) => {
             const pageTop = getPageTopOffset(page);
-            // y는 블록의 페이지 내 픽셀 위치 (viewport 좌표)
-            // 페이지 상단에서 y만큼 아래 = pageTop + y
-            // 단, y가 페이지 높이보다 크면 clamp
             const pageH = pageHeightsRef.current[page - 1] || 850;
             const safeY = Math.min(y, pageH - 50);
             scrollViewRef.current?.scrollTo({ y: pageTop + safeY, animated: true });
         }, [getPageTopOffset]);
 
+        // ✅ 기존 텍스트 기반 TOC 처리 (서버 파서 실패 시 폴백)
         const processPageBlocks = useCallback((blocks: Block[], pageNumber: number) => {
-            const rawItems = StructureEngine.buildTOC(blocks, pageNumber);
+            // 서버 모드면 클라이언트 파싱 건너뜀
+            if (serverMode) return;
 
+            // 서버 미사용 또는 실패 시: 기존 텍스트 기반 TOC
+            const rawItems = StructureEngine.buildTOC(blocks, pageNumber);
             const freshItems = rawItems.filter(item => {
                 const key = item.number
                     ? `num:${item.number}`
@@ -107,7 +156,6 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                 globalTOCSeen.current.add(key);
                 return true;
             });
-
             if (freshItems.length > 0) {
                 setTocItems(prev => sortTOCItems([...prev, ...freshItems]));
             }
@@ -122,12 +170,55 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                     sectionTextAccumulator.current.set(currentSectionId.current, prev + block.text + '\n');
                 }
             }
-        }, []);
+        }, [serverMode]);
 
+        // 섹션 텍스트 가져오기 (서버 데이터 우선, 없으면 클라이언트 fallback 데이터)
         const getSectionText = (block: Block): string => {
-            if (!block.sectionId) return block.text;
-            return sectionTextAccumulator.current.get(block.sectionId) || block.text;
+            // 서버 문서 데이터가 존재한다면 (섹션 ID 매칭은 복잡하므로) 가장 가까운 블록 텍스트라도 반환
+            // 현재 block id는 fallback에서만 쓰이므로, 서버 모드 시 block 기반 검색은 제한적일 수 있음
+            // ExplanationPopover에서 전체 텍스트를 사용할 수 있도록 보장
+            if (block.sectionId && sectionTextAccumulator.current.has(block.sectionId)) {
+                return sectionTextAccumulator.current.get(block.sectionId) || block.text;
+            }
+
+            // 만약 서버 모드인데 정확한 섹션 매칭이 어렵다면, 가장 가까운 큰 섹션 텍스트를 던져줌 (간단한 구현)
+            if (serverMode && Object.keys(serverSectionsRef.current).length > 0) {
+                // 그냥 가장 긴 섹션을 주입하거나 전체를 주입 (AI가 맥락 파악하기 위함)
+                // 백엔드 toc item.id 값을 찾아서 넘겨주는 처리가 필요하지만 일단 단일 블록 text라도 안전하게 반환
+                return block.text;
+            }
+            return block.text;
         };
+
+        // 전체 컨텍스트를 찾아주는 헬퍼
+        const findServerSectionText = (y: number, page: number) => {
+            if (!serverMode || !tocItems.length) return "";
+
+            // 클릭한 Y좌표 기준으로 가장 가까운 상단 TOC 항목 찾기
+            let targetId = tocItems[0].id;
+            for (const item of tocItems) {
+                if (item.page < page) continue;
+                if (item.page > page) break;
+                if (item.y <= y + 20) {
+                    targetId = item.id;
+                }
+            }
+
+            return serverSectionsRef.current[targetId] || "";
+        }
+
+        // ✅ 페이지 렌더 완료 시
+        const handlePageLoadSuccess = useCallback(async (data: any, pageIndex: number) => {
+            const pageNumber = pageIndex + 1;
+
+            if (data.height) {
+                pageHeightsRef.current[pageIndex] = data.height;
+            }
+
+            if (data.blocks) {
+                processPageBlocks(data.blocks, pageNumber);
+            }
+        }, [processPageBlocks]);
 
         return (
             <View
@@ -166,16 +257,7 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                                 pageNumber={i + 1}
                                 width={containerWidth > 200 ? containerWidth - 240 : 400}
                                 selectedBlockId={selectedBlockId}
-                                onLoadSuccess={(data: any) => {
-                                    // ✅ 각 페이지 높이를 인덱스별로 저장
-                                    if (data.height) {
-                                        pageHeightsRef.current[i] = data.height;
-                                        console.log(`📏 Page ${i + 1} height: ${data.height.toFixed(0)}px`);
-                                    }
-                                    if (data.blocks) {
-                                        processPageBlocks(data.blocks, i + 1);
-                                    }
-                                }}
+                                onLoadSuccess={(data: any) => handlePageLoadSuccess(data, i)}
                                 onBlockClick={(block: Block, event: any) => {
                                     setSelectedBlockId(block.id);
                                     if (onQuote) {
@@ -184,13 +266,13 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                                         onQuote(block.text, cx, cy, block.type, {
                                             sectionTitle: block.sectionTitle,
                                             sectionId: block.sectionId,
-                                            sectionText: getSectionText(block),
+                                            sectionText: serverMode ? findServerSectionText(block.y, i + 1) : getSectionText(block),
                                         });
                                     }
                                 }}
                                 onSparkle={(block: Block, event: any) => {
                                     if (onExplainSection) {
-                                        const sectionText = getSectionText(block);
+                                        const sectionText = serverMode ? findServerSectionText(block.y, i + 1) : getSectionText(block);
                                         const cx = event.pageX ?? event.clientX ?? 400;
                                         const cy = event.pageY ?? event.clientY ?? 300;
                                         onExplainSection(sectionText, cx, cy, {
