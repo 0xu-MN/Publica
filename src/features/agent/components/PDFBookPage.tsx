@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, Platform } from 'react-native';
 import { Page } from 'react-pdf';
 import { SmartBlockEngine, Block } from '../utils/smartBlockEngine';
+import { StructureEngine } from '../utils/StructureEngine';
 
 interface PDFBookPageProps {
     pageNumber: number;
@@ -35,7 +36,8 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
         const viewport = page.getViewport({ scale });
 
         page.getTextContent().then((content: any) => {
-            const extractedBlocks = SmartBlockEngine.processPage(content.items, viewport);
+            const initialBlocks = SmartBlockEngine.processPage(content.items, viewport);
+            const extractedBlocks = StructureEngine.analyzeStructure(initialBlocks);
             setBlocks(extractedBlocks);
             onLoadSuccess?.({ ...page, blocks: extractedBlocks, height: viewport.height });
         });

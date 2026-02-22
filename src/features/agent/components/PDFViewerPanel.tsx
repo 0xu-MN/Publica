@@ -68,9 +68,10 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                 setTocItems(prev => {
                     const merged = [...prev, ...newTOCItems];
                     const unique = Array.from(new Map(merged.map(item => [item.id, item])).values());
-                    return unique.sort((a, b) =>
-                        a.page !== b.page ? a.page - b.page : a.y - b.y
-                    );
+                    return unique.sort((a, b) => {
+                        if (a.page !== b.page) return a.page - b.page;
+                        return a.readingOrder - b.readingOrder;
+                    });
                 });
             }
 

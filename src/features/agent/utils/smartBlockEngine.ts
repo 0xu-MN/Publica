@@ -8,24 +8,27 @@ export interface Block {
     width: number;
     height: number;
     fontSize?: number;
-    type: 'paragraph' | 'heading' | 'list-item' | 'figure' | 'formula';
+    type: 'paragraph' | 'heading' | 'list-item' | 'figure' | 'formula' | 'table-cell';
     citations?: string[];
     sectionId?: string;
     sectionTitle?: string;
     headingLevel?: number;
+    readingOrder?: number;
+    isTableCell?: boolean;
 }
 
 /**
- * SmartBlockEngine v7.5
+ * SmartBlockEngine v9
  * 핵심 수정:
- * - clusterToBlocks: 번호 섹션(2.7, 3.1 등)으로 시작하는 줄은
- *   항상 새 블록으로 강제 분리 → 본문과 합쳐지는 문제 해결
+ * "1 사업 개요" 같은 박스형 제목에서 "1" (박스)과 "사업 개요" (텍스트)가
+ * 별도 텍스트 아이템으로 분리되어 있을 때 올바르게 합쳐지도록 수정
+ *
+ * 수정사항:
+ * 1. createLineSegments: Y 비교 threshold를 더 관대하게 (max height 기준)
+ * 2. boxed number stitching: 단독 숫자 뒤에 같은 라인 텍스트 후처리 합치기
+ * 3. isHeadingSegment: "사업 개요" 단독 (2-3 한국어 단어) + 폰트 크면 heading
  */
 export class SmartBlockEngine {
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // PUBLIC
-    // ─────────────────────────────────────────────────────────────────────────
 
     static processPage(textItems: any[], viewport: any): Block[] {
         if (!textItems || textItems.length === 0) return [];
@@ -36,15 +39,15 @@ export class SmartBlockEngine {
 
         if (rects.length === 0) return [];
 
+        // Y로 정렬, 동일 Y면 X로 정렬
         const sorted = [...rects].sort((a, b) => {
             const dy = a.y - b.y;
-            if (Math.abs(dy) < 2) return a.x - b.x;
+            if (Math.abs(dy) < 3) return a.x - b.x;
             return dy;
         });
 
         const pageWidth = viewport.width;
         const columnBoundaries = this.detectColumnBoundaries(sorted, pageWidth);
-        console.log('📐 Column boundaries:', columnBoundaries, 'pageWidth:', pageWidth.toFixed(0));
 
         const rectsWithCol = sorted.map(r => ({
             ...r,
@@ -52,16 +55,140 @@ export class SmartBlockEngine {
         }));
 
         const segments = this.createLineSegments(rectsWithCol);
-        const stats = this.calcPageStats(segments);
-        const blocks = this.clusterToBlocks(segments, stats, columnBoundaries, pageWidth);
+        // ✅ 단독 숫자 세그먼트를 다음 세그먼트와 합치기
+        const stitchedSegments = this.stitchBoxedNumbers(segments);
+        const stats = this.calcPageStats(stitchedSegments);
+        const tableYLines = this.detectTableRows(stitchedSegments);
+        const blocks = this.clusterToBlocks(stitchedSegments, stats, columnBoundaries, pageWidth, tableYLines);
         const finalBlocks = this.splitOverWideBlocks(blocks, columnBoundaries, pageWidth);
         const enriched = finalBlocks.map(b => this.enrich(b));
-        return StructureEngine.analyzeStructure(enriched);
+        const structured = StructureEngine.analyzeStructure(enriched);
+
+        const byCol = new Map<number, Block[]>();
+        structured.forEach(b => {
+            const col = this.getColumnIndex(b.x, columnBoundaries);
+            if (!byCol.has(col)) byCol.set(col, []);
+            byCol.get(col)!.push(b);
+        });
+
+        let order = 0;
+        const orderedBlocks: Block[] = [];
+        for (const col of [...byCol.keys()].sort()) {
+            byCol.get(col)!.sort((a, b) => a.y - b.y).forEach(b => {
+                orderedBlocks.push({ ...b, readingOrder: order++ });
+            });
+        }
+
+        return orderedBlocks;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // BOXED NUMBER STITCHING
+    // ─────────────────────────────────────────────────────────────────────────
+
+    /**
+     * PDF에서 박스형 제목 "1 사업 개요"는 두 별도 텍스트 아이템:
+     *   seg[i]   = "1"         (박스 안 숫자, 큰 폰트)
+     *   seg[i+1] = "사업 개요" (제목 텍스트, 조금 다른 Y일 수 있음)
+     *
+     * 조건:
+     * - seg[i].text가 단독 1-2자리 숫자
+     * - seg[i+1]이 가까운 Y (20px 이내) + 바로 오른쪽 X
+     * - seg[i+1].text가 한국어 또는 영어 단어
+     */
+    private static stitchBoxedNumbers(segments: any[]): any[] {
+        const result: any[] = [];
+        let i = 0;
+
+        while (i < segments.length) {
+            const seg = segments[i];
+            const isStandaloneNumber = /^\d{1,2}$/.test(seg.text.trim());
+
+            if (isStandaloneNumber && i + 1 < segments.length) {
+                const next = segments[i + 1];
+                const yDiff = Math.abs(next.y - seg.y);
+                const xGap = next.x - (seg.x + seg.width);
+                const nextIsTitle = /^[가-힣A-Z]/.test(next.text.trim());
+                const sameCol = next.col === seg.col;
+
+                // 같은 컬럼, 수직 20px 이내, 오른쪽에 있고, 한국어/영어로 시작
+                if (sameCol && yDiff < 20 && xGap >= -5 && xGap < 100 && nextIsTitle) {
+                    // 합치기
+                    const merged = {
+                        ...seg,
+                        text: `${seg.text.trim()} ${next.text.trim()}`,
+                        width: (next.x + next.width) - seg.x,
+                        height: Math.max(seg.height, next.height),
+                        avgFontSize: Math.max(seg.avgFontSize || seg.height, next.avgFontSize || next.height),
+                        items: [...(seg.items || []), ...(next.items || [])]
+                    };
+                    result.push(merged);
+                    console.log(`🔗 Stitched: "${seg.text}" + "${next.text}" → "${merged.text}"`);
+                    i += 2;
+                    continue;
+                }
+            }
+
+            result.push(seg);
+            i++;
+        }
+
+        return result;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TABLE ROW DETECTION
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private static detectTableRows(segments: any[]): Set<number> {
+        const tableYLines = new Set<number>();
+        const YBUCKET = 4;
+        const yGroups = new Map<number, any[]>();
+
+        for (const seg of segments) {
+            const bucket = Math.round(seg.y / YBUCKET);
+            if (!yGroups.has(bucket)) yGroups.set(bucket, []);
+            yGroups.get(bucket)!.push(seg);
+        }
+
+        const tableLikeBuckets = new Set<number>();
+
+        for (const [bucket, segs] of yGroups) {
+            if (segs.length < 3) continue;
+
+            const xs = segs.map((s: any) => s.x).sort((a: number, b: number) => a - b);
+            const xSpread = xs[xs.length - 1] - xs[0];
+            const avgTextLen = segs.reduce((s: number, seg: any) => s + seg.text.length, 0) / segs.length;
+
+            // heading 후보 있으면 table 판단 스킵
+            const hasHeadingCandidate = segs.some((seg: any) => {
+                const t = seg.text.trim();
+                return /^\d{1,2}\s+[가-힣]{2,}/.test(t) ||
+                    /^□\s+[가-힣]/.test(t);
+            });
+            if (hasHeadingCandidate) continue;
+
+            if (xSpread > 50 && avgTextLen < 30) {
+                tableLikeBuckets.add(bucket);
+            }
+        }
+
+        // 인접 버킷 최소 2개 이상일 때만 table
+        const arr = [...tableLikeBuckets].sort((a, b) => a - b);
+        for (let i = 0; i < arr.length; i++) {
+            const curr = arr[i];
+            const hasNeighbor = arr.includes(curr - 1) || arr.includes(curr + 1) ||
+                arr.includes(curr - 2) || arr.includes(curr + 2);
+            if (hasNeighbor) tableYLines.add(curr);
+        }
+
+        return tableYLines;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // COLUMN DETECTION
     // ─────────────────────────────────────────────────────────────────────────
+
     private static detectColumnBoundaries(rects: any[], pageWidth: number): number[] {
         const BUCKET = 6;
         const bucketCount = Math.ceil(pageWidth / BUCKET);
@@ -95,29 +222,18 @@ export class SmartBlockEngine {
         }
 
         if (peaks.length >= 2) {
-            const leftPeakX = peaks[0] * BUCKET;
             const rightPeakX = peaks[1] * BUCKET;
-
             const minRightPx = Math.max(pageWidth * 0.20, 40);
             const maxRightPx = pageWidth * 0.80;
-
-            if (rightPeakX < minRightPx || rightPeakX > maxRightPx) {
-                console.log(`📊 Single-col: right peak ${rightPeakX.toFixed(0)}px out of range`);
-                return [0];
-            }
+            if (rightPeakX < minRightPx || rightPeakX > maxRightPx) return [0];
 
             const valleyVal = Math.min(...smooth.slice(peaks[0], peaks[1] + 1));
-            if (valleyVal > maxVal * 0.35) {
-                console.log(`📊 Single-col: valley too high`);
-                return [0];
-            }
+            if (valleyVal > maxVal * 0.35) return [0];
 
             const splitX = Math.round((peaks[0] + peaks[1]) / 2) * BUCKET;
-            console.log(`📊 2-col detected: L=${leftPeakX.toFixed(0)}px R=${rightPeakX.toFixed(0)}px split=${splitX.toFixed(0)}px`);
             return [0, splitX];
         }
 
-        console.log('📊 Single-col page');
         return [0];
     }
 
@@ -131,6 +247,7 @@ export class SmartBlockEngine {
     // ─────────────────────────────────────────────────────────────────────────
     // LINE SEGMENTATION
     // ─────────────────────────────────────────────────────────────────────────
+
     private static createLineSegments(rects: any[]): any[] {
         const segments: any[] = [];
         let current: any[] = [];
@@ -139,8 +256,9 @@ export class SmartBlockEngine {
             if (current.length === 0) { current.push(rect); continue; }
 
             const last = current[current.length - 1];
-            const lineH = Math.min(rect.height, last.height);
-            const isSameLine = Math.abs(rect.y - last.y) < lineH * 0.4;
+            // ✅ max height 기준으로 threshold 계산 (박스 숫자가 크더라도 합쳐짐)
+            const lineH = Math.max(rect.height, last.height);
+            const isSameLine = Math.abs(rect.y - last.y) < lineH * 0.55;
             const isSameCol = rect.col === last.col;
             const notOverlap = rect.x >= last.x - 2;
 
@@ -158,6 +276,7 @@ export class SmartBlockEngine {
     // ─────────────────────────────────────────────────────────────────────────
     // PAGE STATISTICS
     // ─────────────────────────────────────────────────────────────────────────
+
     private static calcPageStats(segments: any[]) {
         if (segments.length < 2) return { medianHeight: 12, medianGap: 3, bodyFontSize: 12 };
 
@@ -185,7 +304,6 @@ export class SmartBlockEngine {
 
         const medianHeight = median(heights) || 12;
         const medianGap = median(gaps) || 3;
-
         const freq = new Map<number, number>();
         heights.forEach((h: number) => {
             const k = Math.round(h);
@@ -197,45 +315,63 @@ export class SmartBlockEngine {
     }
 
     // ─────────────────────────────────────────────────────────────────────────
-    // VERTICAL CLUSTERING
-    // 핵심 수정: 번호 섹션 패턴 감지 시 강제 새 블록 시작
+    // HEADING CHECK
     // ─────────────────────────────────────────────────────────────────────────
 
-    /** 텍스트가 번호 섹션 제목으로 시작하는지 판단 (2.7 / 3.1 / 1. / Abstract 등) */
     private static isHeadingSegment(text: string): boolean {
-        // Use only the first line for matching (title may continue on next line)
         const firstLine = text.trim().split('\n')[0].trim();
+        if (firstLine.length < 1) return false;
+        if (firstLine.startsWith('[') || firstLine.startsWith('(')) return false;
+        if (/[±μ%°<>~*;{}!=@]/.test(firstLine.substring(0, 30))) return false;
+        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return false;
 
-        // ── Numbered section ─────────────────────────────────────────────────
-        // Matches: "2.", "2.7", "2.7.", "2.7 cell", "2.7 Cell", "1.2.3 Title"
-        // ✅ [A-Z] 제거 → 소문자 타이틀도 인식
-        // ✅ \s*$ 추가 → 숫자만 있는 줄도(단독 "2.7") 인식
-        if (/^\d{1,2}(\.\d{1,2}){0,2}\.?(\s+\S|\.?\s*$)/.test(firstLine)) return true;
+        // 중첩 번호 섹션
+        if (/^\d{1,2}(\.\d{1,2}){1,3}/.test(firstLine)) {
+            const match = firstLine.match(/^(\d{1,2}(\.\d{1,2}){1,3})\.?\s*(.*)/);
+            if (match) {
+                const rest = match[3].trim();
+                if (rest.length === 0) return firstLine.length <= 5;
+                return /^[a-zA-Z가-힣]/.test(rest);
+            }
+        }
 
-        // ── Roman numeral section ─────────────────────────────────────────────
-        if (/^[IVX]{1,5}\.\s/.test(firstLine)) return true;
+        // 레벨1: "1 사업 개요" / "3 신청자격 및 요건"
+        if (/^\d{1,2}\.?\s+/.test(firstLine)) {
+            const match = firstLine.match(/^(\d{1,2})\.?\s+(.*)/);
+            if (match) {
+                const rest = match[2].trim();
+                if (/^[인명팀개월일주년분기]/.test(rest)) return false;
+                if (/^[A-Z가-힣]/.test(rest) && rest.split(/\s+/).length >= 1) return true;
+            }
+        }
 
-        // ── Named section keywords ────────────────────────────────────────────
-        if (/^(Abstract|Introduction|Conclusion|Results|Discussion|Methods?|Materials?|References?|Acknowledgment)\b/i.test(firstLine) &&
-            firstLine.split(/\s+/).length <= 5) return true;
+        if (/^[IVX]{1,5}\.\s+[A-Z가-힣]/.test(firstLine)) return true;
+        if (/^(Abstract|Introduction|Conclusion|Results|Discussion|Methods?|Materials?|References?|Acknowledgment)\b/i.test(firstLine)
+            && firstLine.split(/\s+/).length <= 4) return true;
 
         return false;
     }
 
+    // ─────────────────────────────────────────────────────────────────────────
+    // VERTICAL CLUSTERING
+    // ─────────────────────────────────────────────────────────────────────────
+
     private static clusterToBlocks(
         segments: any[],
         stats: { medianHeight: number; medianGap: number; bodyFontSize: number },
-        columnBoundaries: number[] = [0],
-        pageWidth: number = 9999
+        columnBoundaries: number[],
+        pageWidth: number,
+        tableYLines: Set<number>
     ): Block[] {
         const { medianHeight, medianGap } = stats;
         const maxParaGap = Math.max((medianHeight + medianGap) * 1.3, medianHeight * 1.6, 8);
+        const YBUCKET = 4;
 
-        const openBlocks: { items: any[]; lastSeg: any }[] = [];
+        const openBlocks: { items: any[]; lastSeg: any; isTable: boolean }[] = [];
 
         for (const seg of segments) {
-            // ✅ 핵심 수정: 번호 섹션 제목이면 항상 새 블록 강제 시작
             const segIsHeading = this.isHeadingSegment(seg.text);
+            const segIsTable = tableYLines.has(Math.round(seg.y / YBUCKET));
 
             let matched = -1;
 
@@ -244,6 +380,7 @@ export class SmartBlockEngine {
                     const blk = openBlocks[i];
                     const last = blk.lastSeg;
 
+                    if (segIsTable !== blk.isTable) continue;
                     if (seg.col !== last.col) continue;
 
                     const vGap = seg.y - (last.y + last.height);
@@ -251,15 +388,13 @@ export class SmartBlockEngine {
 
                     const segFont = seg.avgFontSize || seg.height;
                     const lastFont = last.avgFontSize || last.height;
-                    const ratio = segFont / lastFont;
-                    if (ratio < 0.85 || ratio > 1.15) continue;
+                    if (segFont / lastFont < 0.85 || segFont / lastFont > 1.15) continue;
 
                     const leftDiff = Math.abs(seg.x - last.x);
                     const rightDiff = Math.abs((seg.x + seg.width) - (last.x + last.width));
                     const centDiff = Math.abs((seg.x + seg.width / 2) - (last.x + last.width / 2));
                     if (leftDiff > 50 && rightDiff > 50 && centDiff > 30) continue;
 
-                    // ✅ 현재 열려있는 블록이 heading이면 본문을 거기 합치지 않음
                     if (this.isHeadingSegment(blk.items[0]?.text || '')) continue;
 
                     matched = i;
@@ -271,10 +406,7 @@ export class SmartBlockEngine {
                 openBlocks[matched].items.push(seg);
                 openBlocks[matched].lastSeg = seg;
             } else {
-                openBlocks.push({ items: [seg], lastSeg: seg });
-                if (segIsHeading) {
-                    console.log(`🏷️ Heading forced new block: "${seg.text.substring(0, 50)}"`);
-                }
+                openBlocks.push({ items: [seg], lastSeg: seg, isTable: segIsTable });
             }
         }
 
@@ -285,23 +417,18 @@ export class SmartBlockEngine {
                 const colEnd = columnBoundaries[colIdx + 1]
                     ? columnBoundaries[colIdx + 1] - 2
                     : pageWidth;
-                return this.blockFromSegments(blk.items, colStart, colEnd, stats.bodyFontSize);
+                return this.blockFromSegments(blk.items, colStart, colEnd, stats.bodyFontSize, blk.isTable);
             })
             .sort((a, b) => {
-                if (a.x < b.x - 20 && b.x > pageWidth * 0.4) return -1;
-                if (b.x < a.x - 20 && a.x > pageWidth * 0.4) return 1;
+                const colA = this.getColumnIndex(a.x, columnBoundaries);
+                const colB = this.getColumnIndex(b.x, columnBoundaries);
+                if (colA !== colB) return colA - colB;
                 return a.y - b.y;
             });
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // POST-PROCESS
-    // ─────────────────────────────────────────────────────────────────────────
-    private static splitOverWideBlocks(
-        blocks: Block[], columnBoundaries: number[], pageWidth: number
-    ): Block[] {
+    private static splitOverWideBlocks(blocks: Block[], columnBoundaries: number[], pageWidth: number): Block[] {
         if (columnBoundaries.length < 2) return blocks;
-
         const splitX = columnBoundaries[1];
         const result: Block[] = [];
 
@@ -314,32 +441,21 @@ export class SmartBlockEngine {
             if (isTooWide && !isHeading && startsLeft && endsRight) {
                 const lines = block.text.split('\n');
                 const mid = Math.ceil(lines.length / 2);
-
-                const leftBlock: Block = {
-                    ...block, id: `${block.id}-L`,
-                    width: splitX - block.x - 4,
-                    text: lines.slice(0, mid).join('\n') || block.text,
-                };
-                const rightBlock: Block = {
-                    ...block, id: `${block.id}-R`,
-                    x: splitX + 4,
-                    width: (block.x + block.width) - splitX - 4,
-                    text: lines.slice(mid).join('\n') || block.text,
-                };
-
-                if (leftBlock.width > 20) result.push(leftBlock);
-                if (rightBlock.width > 20) result.push(rightBlock);
+                const left: Block = { ...block, id: `${block.id}-L`, width: splitX - block.x - 4, text: lines.slice(0, mid).join('\n') || block.text };
+                const right: Block = { ...block, id: `${block.id}-R`, x: splitX + 4, width: (block.x + block.width) - splitX - 4, text: lines.slice(mid).join('\n') || block.text };
+                if (left.width > 20) result.push(left);
+                if (right.width > 20) result.push(right);
             } else {
                 result.push(block);
             }
         }
-
         return result;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
     // HELPERS
     // ─────────────────────────────────────────────────────────────────────────
+
     private static normalizeItem(item: any, viewport: any) {
         const tx = item.transform;
         const [x, y] = viewport.convertToViewportPoint(tx[4], tx[5]);
@@ -351,51 +467,60 @@ export class SmartBlockEngine {
     private static makeSegment(items: any[]): any {
         const xs = items.map((i: any) => i.x);
         const xe = items.map((i: any) => i.x + i.width);
-        const minX = Math.min(...xs);
-        const maxX = Math.max(...xe);
         const y = Math.min(...items.map((i: any) => i.y));
         const height = Math.max(...items.map((i: any) => i.height));
         const text = items.map((i: any) => i.text).join(' ');
         const avgFontSize = items.reduce((s: number, i: any) => s + i.height, 0) / items.length;
-        const col = items[0].col;
-        return { x: minX, y, width: maxX - minX, height, text, items, avgFontSize, col };
+        return {
+            x: Math.min(...xs), y, width: Math.max(...xe) - Math.min(...xs),
+            height, text, items, avgFontSize, col: items[0].col
+        };
     }
 
-    private static blockFromSegments(
-        segs: any[], colStart: number = 0, colEnd: number = 9999, bodyFontSize: number = 12
-    ): Block {
+    private static blockFromSegments(segs: any[], colStart = 0, colEnd = 9999, bodyFontSize = 12, isTableCell = false): Block {
         const minX = Math.max(Math.min(...segs.map((s: any) => s.x)), colStart);
         const minY = Math.min(...segs.map((s: any) => s.y));
-        const rawMaxX = Math.max(...segs.map((s: any) => s.x + s.width));
-        const maxX = Math.min(rawMaxX, colEnd);
+        const maxX = Math.min(Math.max(...segs.map((s: any) => s.x + s.width)), colEnd);
         const maxY = Math.max(...segs.map((s: any) => s.y + s.height));
         const fullText = segs.map((s: any) => s.text).join('\n');
         const avgFont = segs.reduce((s: number, seg: any) => s + (seg.avgFontSize || seg.height), 0) / segs.length;
 
+        if (isTableCell) {
+            return {
+                id: `blk-${Math.random().toString(36).substr(2, 8)}`,
+                text: fullText, x: minX, y: minY,
+                width: Math.max(maxX - minX, 1), height: maxY - minY,
+                fontSize: avgFont, type: 'table-cell', citations: [], isTableCell: true
+            };
+        }
+
         const hasBold = segs.some((s: any) => s.items?.some((i: any) => /bold|heavy|black/i.test(i.fontName || '')));
         const isNumbered = this.isHeadingSegment(fullText.split('\n')[0]);
         const isLargerFont = avgFont > bodyFontSize * 1.10;
-
         const isHeading = hasBold || isNumbered || isLargerFont;
 
         return {
             id: `blk-${Math.random().toString(36).substr(2, 8)}`,
-            text: fullText,
-            x: minX,
-            y: minY,
-            width: Math.max(maxX - minX, 1),
-            height: maxY - minY,
-            fontSize: avgFont,
-            type: isHeading ? 'heading' : 'paragraph',
-            citations: []
+            text: fullText, x: minX, y: minY,
+            width: Math.max(maxX - minX, 1), height: maxY - minY,
+            fontSize: avgFont, type: isHeading ? 'heading' : 'paragraph', citations: []
         };
     }
 
     private static enrich(block: Block): Block {
+        if (block.type === 'table-cell') return block;
         const t = block.text.trim();
-        if (/^(?:fig(?:ure)?|table)\.?\s*\d+/i.test(t)) return { ...block, type: 'figure' };
-        const isMath = t.includes('$') || t.includes('\\(') || t.includes('\\[') || t.includes('\\begin{equation}');
-        if (isMath) return { ...block, type: 'formula' };
+
+        if (/^(fig(ure)?\.?\s*\d+|그림\s*\d+|표\s*\d+|table\s*\d+)/i.test(t)) {
+            return { ...block, type: 'figure' };
+        }
+        if (t.includes('$') || t.includes('\\(') || t.includes('\\begin{')) {
+            return { ...block, type: 'formula' };
+        }
+        // 리스트/체크박스 마커 — □는 정부문서 서브제목일 수 있으므로 제외
+        if (/^[■○●◎◆◇▶▷→※①②③④⑤⑥⑦⑧⑨⑩\-·•]/.test(t)) {
+            return { ...block, type: 'list-item' };
+        }
         const citationRx = /\[\d+(?:-\d+)?(?:,\s*\d+)*\]|\[\w+\s*\d+\]/g;
         return { ...block, citations: t.match(citationRx) || [] };
     }

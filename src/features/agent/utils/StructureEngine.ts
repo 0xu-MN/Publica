@@ -1,4 +1,4 @@
-import { Block } from './smartBlockEngine';
+import type { Block } from './smartBlockEngine';
 import type { TOCItem } from '../components/TableOfContents';
 
 export interface StructureNode {
@@ -8,28 +8,11 @@ export interface StructureNode {
     children: StructureNode[];
 }
 
-/**
- * StructureEngine v4
- *
- * 핵심 수정:
- * 1. 페이지 상단/하단 5% 위치의 짧은 텍스트를 running header/footer로 억제
- *    → "Biomedicine & Pharmacotherapy" 같은 저널명 반복 제거
- * 2. globalSeenHeadings를 static으로 유지해서 페이지 간 중복 heading 제거
- *    → "Introduction" 이 여러 페이지에서 중복 등록되는 문제 해결
- * 3. PDFViewerPanel에서 페이지 전환 시 globalSeenHeadings 리셋 가능하도록 resetState() 추가
- */
 export class StructureEngine {
 
-    /**
-     * 새 문서 로드 시 호출 (현재는 globalSeenHeadings 제거로 no-op이지만 API 호환성 유지)
-     */
     static resetState() {
-        console.log('🔄 StructureEngine: ready for new document');
+        console.log('🔄 StructureEngine: ready');
     }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // PUBLIC
-    // ─────────────────────────────────────────────────────────────────────────
 
     static analyzeStructure(blocks: Block[]): Block[] {
         if (!blocks || blocks.length === 0) return [];
@@ -37,20 +20,56 @@ export class StructureEngine {
         const bodyFontSize = this.estimateBodyFont(blocks);
         const pageHeight = this.estimatePageHeight(blocks);
 
-        const classified = blocks.map(block => {
-            const firstLine = block.text.trim().split('\n')[0];
+        // 반복 텍스트 감지 (페이지 헤더/푸터)
+        const textFreq = new Map<string, number>();
+        blocks.forEach(b => {
+            const k = b.text.trim().toLowerCase().substring(0, 60).replace(/\s+/g, ' ');
+            if (k.length > 3) textFreq.set(k, (textFreq.get(k) || 0) + 1);
+        });
+        const repeatedTexts = new Set<string>();
+        textFreq.forEach((count, key) => { if (count >= 2) repeatedTexts.add(key); });
 
-            // 위치 기반 running header/footer 억제
-            // 페이지 상단 8% 또는 하단 8% 에 있는 짧은 텍스트
+        // 밀집 번호 구간 — "1인", "5월" 같은 단위 붙은 것 제외하고 순수 짧은 번호만
+        const shortNumberedYs = blocks
+            .filter(b => {
+                const t = b.text.trim();
+                if (!/^\d{1,2}[\s.]/.test(t)) return false;
+                if (t.length >= 18) return false;
+                const match = t.match(/^\d{1,2}\.?\s+(.*)/);
+                if (match) {
+                    const rest = match[1].trim();
+                    // 2단어 이상이면 섹션 제목 → 밀집 감지 대상 제외
+                    if (rest.split(/\s+/).length >= 2) return false;
+                }
+                return true;
+            })
+            .map(b => b.y);
+        const denseZones = this.detectDenseZones(shortNumberedYs);
+
+        const classified = blocks.map(block => {
+            if (block.type === 'table-cell' || block.type === 'list-item' || block.type === 'figure') {
+                return { ...block, headingLevel: 0 };
+            }
+
+            const firstLine = block.text.trim().split('\n')[0].trim();
+            const textKey = block.text.trim().toLowerCase().substring(0, 60).replace(/\s+/g, ' ');
+
+            if (repeatedTexts.has(textKey)) return { ...block, headingLevel: 0, type: block.type };
+
             const isTopArea = block.y < pageHeight * 0.08;
             const isBottomArea = block.y > pageHeight * 0.92;
-            const isShortText = firstLine.split(/\s+/).length <= 6;
-            if ((isTopArea || isBottomArea) && isShortText) {
+            if ((isTopArea || isBottomArea) && firstLine.split(/\s+/).length <= 10
+                && !/^\d+[\.\s]\s*[가-힣A-Z]{2}/.test(firstLine)) {
                 return { ...block, headingLevel: 0, type: block.type };
             }
 
-            const level = this.classifyHeading(block, bodyFontSize);
+            if (denseZones.some(([min, max]) => block.y >= min && block.y <= max)) {
+                if (/^\d{1,2}[\s.]/.test(firstLine) && firstLine.length < 20) {
+                    return { ...block, headingLevel: 0, type: 'list-item' as const };
+                }
+            }
 
+            const level = this.classifyHeading(block, bodyFontSize);
             return {
                 ...block,
                 headingLevel: level,
@@ -58,38 +77,116 @@ export class StructureEngine {
             };
         });
 
-        // 섹션 컨텍스트 할당 (bread-crumb stack)
         const stack: { level: number; id: string; title: string }[] = [];
         return classified.map(block => {
             if (block.headingLevel && block.headingLevel > 0) {
                 while (stack.length > 0 && stack[stack.length - 1].level >= block.headingLevel) {
                     stack.pop();
                 }
-                stack.push({
-                    level: block.headingLevel,
-                    id: block.id,
-                    title: block.text.split('\n')[0].trim().substring(0, 80)
-                });
+                stack.push({ level: block.headingLevel, id: block.id, title: block.text.split('\n')[0].trim().substring(0, 80) });
             }
             const ctx = stack.length > 0 ? stack[stack.length - 1] : null;
             return { ...block, sectionId: ctx?.id, sectionTitle: ctx?.title };
         });
     }
 
+    private static classifyHeading(block: Block, bodyFontSize: number): number {
+        const text = block.text.trim();
+        const firstLine = text.split('\n')[0].trim();
+        const fontSize = block.fontSize || 12;
+        const lineCount = text.split('\n').length;
+
+        if (firstLine.length < 2 || firstLine.length > 150) return 0;
+
+        // ✅ □ 서브제목 허용: □ 신청자격, □ 평가 방법 등
+        if (/^□\s+/.test(firstLine)) {
+            const rest = firstLine.replace(/^□\s+/, '').trim();
+            const words = rest.split(/\s+/);
+            if (words.length >= 1 && words.length <= 5 && rest.length <= 30
+                && !/않|가능$|불가$|있음$|없음$|됨$|경우$|이내$|한다$|합니다$|이행$/.test(rest)) {
+                return 2;
+            }
+            return 0;
+        }
+
+        if (/^[■○●◎◆◇▶▷→←↑↓※①②③④⑤⑥⑦⑧⑨⑩ㄱ-ㅎ]/.test(firstLine)) return 0;
+        if (/^[\[\(《「『<]/.test(firstLine)) return 0;
+        if (/@/.test(firstLine) || /https?:\/\//.test(firstLine)) return 0;
+        if (/[±μ%°~*;{}!=]/.test(firstLine.substring(0, 30))) return 0;
+        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return 0;
+        if (/^[：:·]/.test(firstLine)) return 0;
+        if (/^(및|의|에|을|를|이|가|과|와|도|는|은|로|으로|에서|에게|부터|까지)\s/.test(firstLine)) return 0;
+
+        const lastWord = firstLine.replace(/[.,!?]$/, '');
+        if (/않[은을]?\s*자$|가능$|불가$|이행$|해당$|아래$|따름$|있음$|없음$|됨$|함$|한다$|된다$|경우$|이내$/.test(lastWord)) return 0;
+        if (/하지\s*(않|못)/.test(firstLine) && firstLine.length < 30) return 0;
+        if (/^\d{2}\.\d{1,2}\.\d{1,2}/.test(firstLine)) return 0;
+        if (/^\d+[명팀개억만원]$/.test(firstLine)) return 0;
+
+        // ✅ 중첩 번호: 2.7 / 2.11 / 1.2.3
+        if (/^\d{1,2}(\.\d{1,2}){1,3}/.test(firstLine)) {
+            const match = firstLine.match(/^(\d{1,2}(\.\d{1,2}){1,3})\.?\s*(.*)/);
+            if (match) {
+                const rest = match[3].trim();
+                if (rest.length > 0 && !/^[a-zA-Z가-힣]/.test(rest)) return 0;
+                if (rest.length === 0 && firstLine.length > 6) return 0;
+                const dots = (match[1].match(/\./g) || []).length;
+                return Math.min(dots + 1, 3);
+            }
+        }
+
+        // ✅ 레벨1: "1 사업 개요" / "4 접수방법" / "6 유의 사항"
+        if (/^\d{1,2}\.?\s+/.test(firstLine)) {
+            const match = firstLine.match(/^(\d{1,2})\.?\s+(.*)/);
+            if (match) {
+                const rest = match[2].trim();
+                // 단위/조사로 시작하는 경우 제외
+                if (/^[인명팀개월일주년분기단계]/.test(rest)) return 0;
+                if (/^(붙임|별첨|부\s|Chapter|Section|Annex)/i.test(rest)) return 0;
+                if (/^\d/.test(rest)) return 0;
+                if (/^[A-Z가-힣]/.test(rest)) {
+                    const specialChars = (rest.match(/[^a-zA-Z가-힣0-9\s\-·]/g) || []).length;
+                    if (specialChars / (rest.length || 1) > 0.3) return 0;
+                    if (rest.split(/\s+/).length >= 1) return 1;
+                }
+            }
+        }
+
+        if (/^[a-z]/.test(firstLine)) return 0;
+
+        const fontRatio = fontSize / bodyFontSize;
+        const lastChar = firstLine.slice(-1);
+        if (!/[.,;:?!]/.test(lastChar)) {
+            if (fontRatio >= 1.5 && lineCount <= 3) return 1;
+            if (fontRatio >= 1.25 && lineCount <= 2) return 1;
+        }
+
+        if (firstLine.split(/\s+/).length <= 5 && lineCount <= 2
+            && /^(Abstract|Introduction|Conclusion[s]?|Results?|Discussion|Material[s]?|Method[s]?|Background|References?|Acknowledgment[s]?)/i.test(firstLine)
+        ) return 1;
+
+        return 0;
+    }
+
     static buildTOC(blocks: Block[], pageNumber: number = 1): TOCItem[] {
         const items: TOCItem[] = [];
-        const pageSeen = new Set<string>(); // 이 페이지 내 중복만 체크
+        const pageSeen = new Set<string>();
 
         for (const block of blocks) {
+            if (block.type === 'table-cell' || block.type === 'list-item' || block.type === 'figure') continue;
             if (!block.headingLevel || block.headingLevel === 0) continue;
 
             const rawTitle = block.text.split('\n')[0].trim();
-            const normalized = rawTitle.toLowerCase().substring(0, 80);
+            if (/^(REVIEW|ARTICLE|RESEARCH|ORIGINAL)\s+\d+/i.test(rawTitle)) continue;
+            if (/^\S+\s+\S+$/.test(rawTitle) && rawTitle.length < 8) continue;
+            if (/^(붙임|별첨)\s*\d/i.test(rawTitle)) continue;
 
+            const normalized = rawTitle.toLowerCase().substring(0, 80);
             if (pageSeen.has(normalized)) continue;
             pageSeen.add(normalized);
 
             const { number, displayTitle } = this.parseHeadingTitle(rawTitle);
+            if (displayTitle.length < 2) continue;
 
             items.push({
                 id: block.id,
@@ -97,6 +194,8 @@ export class StructureEngine {
                 rawTitle,
                 page: pageNumber,
                 y: block.y,
+                x: block.x ?? 0,
+                readingOrder: block.readingOrder ?? 0,
                 level: block.headingLevel,
                 number
             });
@@ -105,81 +204,80 @@ export class StructureEngine {
         return items;
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // HEADING CLASSIFICATION
-    // ─────────────────────────────────────────────────────────────────────────
+    static parseHeadingTitle(raw: string): { number?: string; displayTitle: string } {
+        const firstLine = raw.split('\n')[0].trim();
 
-    private static classifyHeading(block: Block, bodyFontSize: number): number {
-        const firstLine = block.text.trim().split('\n')[0].trim();
-        const fontSize = block.fontSize || 12;
-        const lineCount = block.text.trim().split('\n').length;
-
-        // ── 기본 제외 조건 ────────────────────────────────────────────────────
-        if (firstLine.length < 2) return 0;
-        if (firstLine.length > 120) return 0;                            // 너무 긴 본문
-        if (/^\d+$/.test(firstLine)) return 0;                           // 페이지 번호만
-        if (/^\([a-zA-Z0-9i]+\)$/.test(firstLine)) return 0;            // (a) (b)
-        if (/^\[?\d+\]/.test(firstLine)) return 0;                       // [1] 인용
-        if (/^(fig(ure)?|table)\s*\.?\s*\d+/i.test(firstLine)) return 0;
-        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return 0;   // 저자명
-        if (/@/.test(firstLine)) return 0;                               // 이메일
-        if (firstLine.endsWith(',')) return 0;                           // 리스트 연속
-
-        // ── 1. 명시적 번호 섹션 — 소문자/단독 숫자 모두 허용 ─────────────────
-        // ✅ [\s.]? → 뒤에 공백/점 없어도 인식 ("2.7" 단독 허용)
-        // ✅ 소문자 제외 조건을 여기서 적용 안 함 → "2.7 cell viability" 인식
-        if (/^\d{1,2}\.\d{1,2}\.\d{1,2}([\s.]|$)/.test(firstLine)) return 3;  // 1.2.3
-        if (/^\d{1,2}\.\d{1,2}([\s.]|$)/.test(firstLine)) return 2;            // 1.1 or 1.1 alone
-        if (/^\d{1,2}\.?\s+\S/.test(firstLine)) return 1;                      // "1. Title"
-        if (/^[IVX]{1,5}\.\s/.test(firstLine)) return 1;                       // I. or II.
-
-        // ── 이 아래는 소문자 시작하면 제외 ──────────────────────────────────────
-        if (/^[a-z]/.test(firstLine)) return 0;
-
-        // ── 2. 폰트 크기 기반 ─────────────────────────────────────────────────
-        const fontRatio = fontSize / bodyFontSize;
-        if (fontRatio >= 1.5 && lineCount <= 3) return 1;
-        if (fontRatio >= 1.25 && lineCount <= 2) return 2;
-
-        // ── 3. 알려진 섹션명 ──────────────────────────────────────────────────
-        const wordCount = firstLine.split(/\s+/).length;
-        if (
-            wordCount <= 5 &&
-            lineCount <= 2 &&
-            /^(Abstract|Introduction|Conclusion[s]?|Results?|Discussion|Material[s]?|Method[s]?|Methodology|Background|References?|Acknowledgment[s]?)/i.test(firstLine)
-        ) {
-            return 1;
+        if (/^□\s+/.test(firstLine)) {
+            const rest = firstLine.replace(/^□\s+/, '').trim();
+            const words = rest.split(/\s+/);
+            return { number: undefined, displayTitle: words.length > 4 ? words.slice(0, 4).join(' ') : rest };
         }
 
-        return 0;
+        const numMatch = firstLine.match(/^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2})([.\s]+)(.*)/);
+        let number: string | undefined;
+        let titlePart: string;
+
+        if (numMatch) {
+            number = numMatch[1].replace(/\.$/, '').trim();
+            titlePart = numMatch[4].trim();
+        } else {
+            titlePart = firstLine;
+        }
+
+        titlePart = titlePart.split('\n')[0].trim();
+        const sentenceBreak = titlePart.search(/\.\s+[A-Z가-힣]/);
+        if (sentenceBreak > 0) titlePart = titlePart.substring(0, sentenceBreak).trim();
+        titlePart = titlePart.replace(/\s+(and|or|the|of|in|by|with|for|from|to|및|또는|그리고)$/i, '').trim();
+
+        const words = titlePart.split(/\s+/);
+        const maxWords = number ? 4 : 5;
+        if (words.length > maxWords) titlePart = words.slice(0, maxWords).join(' ');
+        titlePart = titlePart.replace(/[,;:\-–—]$/, '').trim();
+
+        return { number, displayTitle: titlePart || number || firstLine.substring(0, 40) };
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // HELPERS
-    // ─────────────────────────────────────────────────────────────────────────
+    static compareSectionNumbers(a: string | undefined, b: string | undefined): number {
+        if (!a && !b) return 0;
+        if (!a) return -1;
+        if (!b) return 1;
+        const partsA = a.split('.').map(s => parseInt(s) || 0);
+        const partsB = b.split('.').map(s => parseInt(s) || 0);
+        const len = Math.max(partsA.length, partsB.length);
+        for (let i = 0; i < len; i++) {
+            const pa = partsA[i] ?? 0;
+            const pb = partsB[i] ?? 0;
+            if (pa !== pb) return pa - pb;
+        }
+        return partsA.length - partsB.length;
+    }
 
-    /**
-     * 페이지 높이 추정: 블록 Y 좌표 최댓값 기준
-     */
+    private static detectDenseZones(ys: number[]): [number, number][] {
+        if (ys.length < 3) return [];
+        const sorted = [...ys].sort((a, b) => a - b);
+        const zones: [number, number][] = [];
+        let start = sorted[0], prev = sorted[0], count = 1;
+        for (let i = 1; i < sorted.length; i++) {
+            if (sorted[i] - prev < 25) { count++; prev = sorted[i]; }
+            else {
+                if (count >= 3) zones.push([start - 5, prev + 20]);
+                start = sorted[i]; prev = sorted[i]; count = 1;
+            }
+        }
+        if (count >= 3) zones.push([start - 5, prev + 20]);
+        return zones;
+    }
+
     private static estimatePageHeight(blocks: Block[]): number {
         if (!blocks.length) return 800;
         const maxY = Math.max(...blocks.map(b => b.y + b.height));
         return maxY > 100 ? maxY : 800;
     }
 
-    private static parseHeadingTitle(raw: string): { number?: string; displayTitle: string } {
-        const m = raw.match(/^((?:\d{1,2}\.){1,3}\d{0,2}|[IVX]{1,5}\.?)\s*(.*)/);
-        if (m) {
-            const number = m[1].replace(/\.$/, '').trim();
-            const rest = m[2].trim();
-            return { number, displayTitle: rest || number };
-        }
-        return { displayTitle: raw };
-    }
-
     private static estimateBodyFont(blocks: Block[]): number {
         const freq = new Map<number, number>();
         blocks.forEach(b => {
+            if (b.type === 'table-cell') return;
             const k = Math.round((b.fontSize || 12) * 2) / 2;
             freq.set(k, (freq.get(k) || 0) + 1);
         });

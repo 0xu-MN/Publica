@@ -8,8 +8,10 @@ export interface TOCItem {
     rawTitle: string;    // Original full text from block
     page: number;
     y: number;
+    x: number;
+    readingOrder: number; // Important for multi-column order
     level: number;       // 1 = top section, 2 = subsection, 3 = sub-subsection
-    number?: string;     // Extracted number prefix: "1.", "1.1", "3.2.1"
+    number?: string;     // Extracted number prefix
 }
 
 interface TableOfContentsProps {
@@ -60,14 +62,7 @@ export const TableOfContents = ({ items, onItemClick, activeId }: TableOfContent
                             {/* Level indicator dot */}
                             <View style={[styles.dot, { backgroundColor: dotColor }]} />
 
-                            {/* Number badge for top-level sections */}
-                            {item.number && level === 1 && (
-                                <View style={styles.numBadge}>
-                                    <Text style={styles.numBadgeText}>{item.number}</Text>
-                                </View>
-                            )}
-
-                            {/* Title */}
+                            {/* Title (Number + Title) */}
                             <Text
                                 style={[
                                     styles.itemTitle,
@@ -76,7 +71,7 @@ export const TableOfContents = ({ items, onItemClick, activeId }: TableOfContent
                                 ]}
                                 numberOfLines={2}
                             >
-                                {item.title}
+                                {item.number ? `${item.number} ${item.title}` : item.title}
                             </Text>
 
                             {/* Page number */}
