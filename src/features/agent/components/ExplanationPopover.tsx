@@ -69,7 +69,9 @@ function robustParseJSON(raw: string): any {
 
         // 4차: 불완전한 JSON 수리 시도
         let repaired = jsonMatch[0];
-        // 마지막에 닫히지 않은 따옴표/괄호 처리
+        // 마지막에 따옴표가 안 닫혔다면 닫아줌
+        if ((repaired.match(/"/g) || []).length % 2 !== 0) repaired += '"';
+
         const openBraces = (repaired.match(/\{/g) || []).length;
         const closeBraces = (repaired.match(/\}/g) || []).length;
         if (openBraces > closeBraces) {
@@ -78,14 +80,30 @@ function robustParseJSON(raw: string): any {
         try { return JSON.parse(repaired); } catch { }
     }
 
-    // 5차: 수동 필드 추출 (파싱이 완전히 실패한 경우)
+    // 5차: 수동 필드 추출 (망가진 문자열에서도 최대한 값 추출)
     console.warn('🟡 JSON 파싱 실패, 수동 추출 시도:', raw.substring(0, 100));
+
     const extractField = (field: string): string => {
-        const match = raw.match(new RegExp(`"${field}"\\s*:\\s*"([^"]*(?:[^"\\\\]|\\\\.)*?)"`));
-        return match ? match[1].replace(/\\n/g, '\n').replace(/\\"/g, '"') : '';
+        // "field": " 또는 "field":" 부분 찾기
+        const regex = new RegExp(`"${field}"\\s*:\\s*"`);
+        const match = raw.match(regex);
+        if (!match) return '';
+
+        const startIdx = match.index! + match[0].length;
+        let endIdx = startIdx;
+
+        // 다음 따옴표를 찾되, \로 이스케이프된 따옴표는 무시. 따옴표가 없으면 끝까지.
+        while (endIdx < raw.length) {
+            if (raw[endIdx] === '"' && raw[endIdx - 1] !== '\\') break;
+            endIdx++;
+        }
+
+        const extracted = raw.substring(startIdx, endIdx);
+        return extracted.replace(/\\n/g, '\n').replace(/\\"/g, '"');
     };
+
     return {
-        outcome: extractField('outcome') || raw.substring(0, 300),
+        outcome: extractField('outcome') || raw.substring(0, 300).replace(/[{"}]/g, '').trim(),
         mechanism: extractField('mechanism'),
         key_terms: [],
         significance: extractField('significance'),
@@ -115,8 +133,8 @@ async function callGemini(text: string, mode: string, context?: any): Promise<an
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
                 temperature: isTranslate ? 0.1 : 0.4,
-                maxOutputTokens: 1500,
-                responseMimeType: 'application/json' // ✅ JSON 모드 강제 (지원 모델에서)
+                maxOutputTokens: 4000,
+                responseMimeType: 'application/json'
             }
         })
     });

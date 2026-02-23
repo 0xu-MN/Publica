@@ -10,37 +10,25 @@ import { TableOfContents } from './TableOfContents';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 
-// ─── API 설정 ──────────────────────────────────────────────────────────
-const PYTHON_PARSER_URL = 'http://127.0.0.1:8000/api/parse-pdf';
+const PYTHON_PARSER_URL = 'http://127.0.0.1:8001/api/parse-pdf';
 
 async function fetchPythonTOC(url: string) {
     try {
-        console.log("🚀 Python 서버로 PDF 분석 요청 시작:", url);
-        // 1. URL에서 PDF 다운로드 (Blob)
+        console.log("🚀 Python 서버로 PDF 분석 요청:", url);
         const pdfRes = await fetch(url);
         const pdfBlob = await pdfRes.blob();
-
-        // 2. FormData 생성
         const formData = new FormData();
         formData.append('file', pdfBlob, 'document.pdf');
-
-        // 3. 서버로 전송
-        const res = await fetch(PYTHON_PARSER_URL, {
-            method: 'POST',
-            body: formData,
-        });
-
+        const res = await fetch(PYTHON_PARSER_URL, { method: 'POST', body: formData });
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const data = await res.json();
-        console.log("✅ Python 서버 분석 완료:", data);
-        return data; // { numPages, toc, sections }
+        console.log("✅ Python 서버 완료:", data.toc?.length, "개 항목");
+        return data;
     } catch (e) {
         console.error("❌ Python 파서 실패:", e);
         return null;
     }
 }
-
-// ─── 기존 유틸 ────────────────────────────────────────────────────────────────
 
 export interface PDFViewerRef {
     scrollToPage: (page: number) => void;
@@ -78,31 +66,54 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
         const [showTOC] = useState(true);
         const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
 
-        // ✅ 페이지별 높이 추적
+        // 페이지별 높이 추적
         const pageHeightsRef = useRef<number[]>([]);
+
+        // 클라이언트 파싱용 섹션 텍스트 누적
         const sectionTextAccumulator = useRef<Map<string, string>>(new Map());
         const currentSectionId = useRef<string | null>(null);
         const currentSectionHeading = useRef<string>('');
         const globalTOCSeen = useRef<Set<string>>(new Set());
 
-        // Server TOC
+        // ✅ FIX: serverMode를 ref로 관리 (클로저 문제 해결)
+        // state는 UI 표시용, ref는 callback 내부 판단용
+        const serverModeRef = useRef(false);
         const [serverMode, setServerMode] = useState(false);
         const serverSectionsRef = useRef<Record<string, string>>({});
+        const serverTOCRef = useRef<any[]>([]);
+
+        // ✅ FIX: 서버 데이터 로드 여부 추적 (onDocumentLoadSuccess가 TOC 지우는 것 방지)
+        const serverDataLoadedRef = useRef(false);
+
+        // URL이 바뀌면 초기화
+        const prevUrlRef = useRef<string>('');
 
         useEffect(() => {
-            if (!url) return;
+            if (!url || url === prevUrlRef.current) return;
+            prevUrlRef.current = url;
 
-            // 파일이 바뀌면 파이썬 서버로 파싱 요청
+            // 초기화
+            serverModeRef.current = false;
+            serverDataLoadedRef.current = false;
+            setServerMode(false);
+            serverSectionsRef.current = {};
+            serverTOCRef.current = [];
+
             fetchPythonTOC(url).then(res => {
                 if (res && res.toc && res.toc.length > 0) {
+                    console.log(`✅ 서버 TOC 로드: ${res.toc.length}개`);
+                    serverModeRef.current = true;
+                    serverDataLoadedRef.current = true;
                     setServerMode(true);
+                    serverSectionsRef.current = res.sections || {};
+                    serverTOCRef.current = res.toc;
+                    // ✅ 서버 TOC를 즉시 적용 (onDocumentLoadSuccess보다 나중에 올 수도 있음)
                     setTocItems(res.toc);
-                    if (res.sections) {
-                        serverSectionsRef.current = res.sections;
-                    }
                 } else {
+                    console.log("⚠️ Python 서버 결과 없음 → 클라이언트 파싱으로 전환");
+                    serverModeRef.current = false;
+                    serverDataLoadedRef.current = false;
                     setServerMode(false);
-                    console.log("⚠️ Python 서버 실패 또는 결과 없음. 기존 클라이언트 텍스트 기반 파싱으로 전환 (Fallback).");
                 }
             });
         }, [url]);
@@ -124,14 +135,23 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
 
         function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
             setNumPages(numPages);
-            setTocItems([]);
-            globalTOCSeen.current.clear();
+
+            // ✅ FIX: 서버 데이터가 이미 로드된 경우 TOC를 지우지 않음
+            if (!serverDataLoadedRef.current) {
+                setTocItems([]);
+                globalTOCSeen.current.clear();
+            } else {
+                // 서버 TOC가 이미 있으면 다시 적용 (혹시 race condition으로 비워진 경우 복원)
+                setTocItems(serverTOCRef.current);
+                console.log(`📋 서버 TOC 복원: ${serverTOCRef.current.length}개`);
+            }
+
             sectionTextAccumulator.current.clear();
             currentSectionId.current = null;
             currentSectionHeading.current = '';
             pageHeightsRef.current = new Array(numPages).fill(0);
             StructureEngine.resetState();
-            console.log(`📄 Document loaded: ${numPages} pages. Server Mode: ${serverMode}`);
+            console.log(`📄 Document loaded: ${numPages}p, serverMode: ${serverModeRef.current}`);
         }
 
         const handleTOCClick = useCallback((page: number, y: number) => {
@@ -141,12 +161,25 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
             scrollViewRef.current?.scrollTo({ y: pageTop + safeY, animated: true });
         }, [getPageTopOffset]);
 
-        // ✅ 기존 텍스트 기반 TOC 처리 (서버 파서 실패 시 폴백)
+        // ✅ FIX: serverModeRef 사용 (serverMode state 클로저 문제 해결)
         const processPageBlocks = useCallback((blocks: Block[], pageNumber: number) => {
-            // 서버 모드면 클라이언트 파싱 건너뜀
-            if (serverMode) return;
+            // 섹션 텍스트 항상 누적 (AI 분석용, 서버 모드 여부와 무관)
+            for (const block of blocks) {
+                if (block.type === 'heading') {
+                    currentSectionId.current = block.id;
+                    currentSectionHeading.current = block.text.split('\n')[0].trim();
+                    sectionTextAccumulator.current.set(block.id, block.text + '\n');
+                } else if (currentSectionId.current) {
+                    const prev = sectionTextAccumulator.current.get(currentSectionId.current) || '';
+                    if (prev.length < 8000) {
+                        sectionTextAccumulator.current.set(currentSectionId.current, prev + block.text + '\n');
+                    }
+                }
+            }
 
-            // 서버 미사용 또는 실패 시: 기존 텍스트 기반 TOC
+            // 서버 모드면 클라이언트 TOC 추가 건너뜀
+            if (serverModeRef.current) return;
+
             const rawItems = StructureEngine.buildTOC(blocks, pageNumber);
             const freshItems = rawItems.filter(item => {
                 const key = item.number
@@ -159,66 +192,42 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
             if (freshItems.length > 0) {
                 setTocItems(prev => sortTOCItems([...prev, ...freshItems]));
             }
+        }, []); // ✅ deps 없음 - ref 기반이라 클로저 문제 없음
 
-            for (const block of blocks) {
-                if (block.type === 'heading') {
-                    currentSectionId.current = block.id;
-                    currentSectionHeading.current = block.text.split('\n')[0].trim();
-                    sectionTextAccumulator.current.set(block.id, block.text + '\n');
-                } else if (currentSectionId.current) {
-                    const prev = sectionTextAccumulator.current.get(currentSectionId.current) || '';
-                    sectionTextAccumulator.current.set(currentSectionId.current, prev + block.text + '\n');
-                }
-            }
-        }, [serverMode]);
-
-        // 섹션 텍스트 가져오기 (서버 데이터 우선, 없으면 클라이언트 fallback 데이터)
-        const getSectionText = (block: Block): string => {
-            // 서버 문서 데이터가 존재한다면 (섹션 ID 매칭은 복잡하므로) 가장 가까운 블록 텍스트라도 반환
-            // 현재 block id는 fallback에서만 쓰이므로, 서버 모드 시 block 기반 검색은 제한적일 수 있음
-            // ExplanationPopover에서 전체 텍스트를 사용할 수 있도록 보장
-            if (block.sectionId && sectionTextAccumulator.current.has(block.sectionId)) {
-                return sectionTextAccumulator.current.get(block.sectionId) || block.text;
-            }
-
-            // 만약 서버 모드인데 정확한 섹션 매칭이 어렵다면, 가장 가까운 큰 섹션 텍스트를 던져줌 (간단한 구현)
-            if (serverMode && Object.keys(serverSectionsRef.current).length > 0) {
-                // 그냥 가장 긴 섹션을 주입하거나 전체를 주입 (AI가 맥락 파악하기 위함)
-                // 백엔드 toc item.id 값을 찾아서 넘겨주는 처리가 필요하지만 일단 단일 블록 text라도 안전하게 반환
-                return block.text;
-            }
-            return block.text;
-        };
-
-        // 전체 컨텍스트를 찾아주는 헬퍼
-        const findServerSectionText = (y: number, page: number) => {
-            if (!serverMode || !tocItems.length) return "";
-
-            // 클릭한 Y좌표 기준으로 가장 가까운 상단 TOC 항목 찾기
-            let targetId = tocItems[0].id;
-            for (const item of tocItems) {
-                if (item.page < page) continue;
-                if (item.page > page) break;
-                if (item.y <= y + 20) {
-                    targetId = item.id;
-                }
-            }
-
-            return serverSectionsRef.current[targetId] || "";
-        }
-
-        // ✅ 페이지 렌더 완료 시
         const handlePageLoadSuccess = useCallback(async (data: any, pageIndex: number) => {
             const pageNumber = pageIndex + 1;
-
             if (data.height) {
                 pageHeightsRef.current[pageIndex] = data.height;
             }
-
             if (data.blocks) {
                 processPageBlocks(data.blocks, pageNumber);
             }
         }, [processPageBlocks]);
+
+        // 클라이언트 섹션 텍스트 가져오기
+        const getSectionText = (block: Block): string => {
+            if (block.sectionId && sectionTextAccumulator.current.has(block.sectionId)) {
+                return sectionTextAccumulator.current.get(block.sectionId) || block.text;
+            }
+            return block.text;
+        };
+
+        // 서버 섹션 텍스트 가져오기 (✨ 버튼 클릭 시)
+        const findServerSectionText = useCallback((y: number, page: number): string => {
+            if (!serverModeRef.current || !serverTOCRef.current.length) return "";
+            const sorted = [...serverTOCRef.current].sort((a, b) =>
+                a.page !== b.page ? a.page - b.page : a.y - b.y
+            );
+            let targetId = sorted[0]?.id || "";
+            for (const item of sorted) {
+                if (item.page < page || (item.page === page && item.y <= y + 20)) {
+                    targetId = item.id;
+                } else {
+                    break;
+                }
+            }
+            return serverSectionsRef.current[targetId] || "";
+        }, []);
 
         return (
             <View
@@ -257,27 +266,35 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                                 pageNumber={i + 1}
                                 width={containerWidth > 200 ? containerWidth - 240 : 400}
                                 selectedBlockId={selectedBlockId}
+                                serverTOCItems={tocItems.filter(t => t.page === i + 1)}
                                 onLoadSuccess={(data: any) => handlePageLoadSuccess(data, i)}
                                 onBlockClick={(block: Block, event: any) => {
                                     setSelectedBlockId(block.id);
                                     if (onQuote) {
-                                        const cx = event.pageX ?? event.clientX ?? 400;
-                                        const cy = event.pageY ?? event.clientY ?? 300;
+                                        const cx = event.clientX ?? event.pageX ?? 400;
+                                        const cy = event.clientY ?? event.pageY ?? 300;
+                                        const sectionText = serverModeRef.current
+                                            ? findServerSectionText(block.y, i + 1)
+                                            : getSectionText(block);
                                         onQuote(block.text, cx, cy, block.type, {
                                             sectionTitle: block.sectionTitle,
                                             sectionId: block.sectionId,
-                                            sectionText: serverMode ? findServerSectionText(block.y, i + 1) : getSectionText(block),
+                                            sectionText,
+                                            heading: block.text.split('\n')[0].trim(),
                                         });
                                     }
                                 }}
-                                onSparkle={(block: Block, event: any) => {
-                                    if (onExplainSection) {
-                                        const sectionText = serverMode ? findServerSectionText(block.y, i + 1) : getSectionText(block);
-                                        const cx = event.pageX ?? event.clientX ?? 400;
-                                        const cy = event.pageY ?? event.clientY ?? 300;
-                                        onExplainSection(sectionText, cx, cy, {
-                                            sectionTitle: block.sectionTitle || block.text.split('\n')[0],
-                                            heading: block.text.split('\n')[0].trim(),
+                                onSparkle={(info: { y: number; text: string; type: string }, event: any) => {
+                                    if (onQuote) {
+                                        const cx = event.clientX ?? event.pageX ?? 400;
+                                        const cy = event.clientY ?? event.pageY ?? 300;
+                                        const sectionText = serverModeRef.current
+                                            ? findServerSectionText(info.y, i + 1)
+                                            : info.text;
+                                        onQuote(sectionText, cx, cy, 'heading', {
+                                            sectionTitle: info.text,
+                                            heading: info.text.trim(),
+                                            sectionText,
                                         });
                                     }
                                 }}

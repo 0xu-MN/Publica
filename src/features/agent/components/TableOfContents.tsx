@@ -71,7 +71,7 @@ export const TableOfContents = ({ items, onItemClick, activeId }: TableOfContent
                                 ]}
                                 numberOfLines={2}
                             >
-                                {item.number ? `${item.number} ${item.title}` : item.title}
+                                {item.title}
                             </Text>
 
                             {/* Page number */}

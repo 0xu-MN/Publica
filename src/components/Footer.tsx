@@ -15,9 +15,9 @@ const Footer = () => {
                         </View>
 
                         <View className="gap-1">
-                            <Text className="text-slate-600 text-xs">상호명: (주)인사이트플로우 | 대표자: 홍길동</Text>
-                            <Text className="text-slate-600 text-xs">사업자등록번호: 123-45-67890 | 통신판매업신고: 2026-서울강남-00000</Text>
-                            <Text className="text-slate-600 text-xs">주소: 서울특별시 강남구 테헤란로 123, 4층</Text>
+                            <Text className="text-slate-600 text-xs">상호명: HALOFORGE | 대표자: 홍수민</Text>
+                            <Text className="text-slate-600 text-xs">사업자등록번호: 846-04-03662 | 통신판매업신고: 2026-서울강남-00000</Text>
+                            <Text className="text-slate-600 text-xs">주소: 경기도 안산시 단원구 고잔로 57-11</Text>
                             <Text className="text-slate-600 text-xs">문의: contact@publica.ai | 02-1234-5678</Text>
                         </View>
 
