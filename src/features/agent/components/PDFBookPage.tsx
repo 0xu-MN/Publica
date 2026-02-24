@@ -11,7 +11,7 @@ interface PDFBookPageProps {
     serverTOCItems?: any[];
     onLoadSuccess?: (page: any) => void;
     onBlockClick?: (block: Block, event: any) => void;
-    onSparkle?: (info: { y: number; text: string; type: string }, event: any) => void;
+    onSparkle?: (info: { id?: string; y: number; text: string; type: 'heading' }, event: any) => void;
 }
 
 const BLOCK_COLORS: Record<string, { hover: string; selected: string; badge: string }> = {
@@ -128,8 +128,16 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                     const pixelX = item.x * pageScale;
 
                     // ✨ 버튼을 제목 왼쪽에 배치 (최소 0, 최대 제목 x의 왼쪽)
-                    const btnLeft = Math.max(2, pixelX - 32);
-                    const btnTop = pixelY - 1;
+                    let btnLeft = Math.max(2, pixelX - 32);
+                    let btnTop = pixelY - 1;
+
+                    // 만약 PyMuPDF가 좌표를 찾지 못해 (0,0)을 반환했다면, 왼쪽 여백에 예쁘게 나열
+                    if (item.x === 0 && item.y === 0) {
+                        const itemsOnPage = serverTOCItems.filter(t => t.page === item.page);
+                        const indexOnPage = itemsOnPage.indexOf(item);
+                        btnLeft = 8;
+                        btnTop = 40 + (indexOnPage * 36);
+                    }
 
                     return (
                         <View
@@ -140,7 +148,7 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                             onClick={(e: any) => {
                                 e.stopPropagation();
                                 onSparkle?.(
-                                    { y: item.y, text: item.title, type: 'heading' },
+                                    { id: item.id, y: item.y, text: item.title, type: 'heading' },
                                     { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }
                                 );
                             }}

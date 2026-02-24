@@ -1,3 +1,5 @@
+import io
+import fitz
 import pdfplumber
 import re
 import math
@@ -38,7 +40,9 @@ def get_body_font_size(words):
     freq = {}
     for w in words:
         size = round(w['size'] * 2) / 2
-        freq[size] = freq.get(size, 0) + 1
+        # 글자 수만큼 가중치를 부여하여, 잘게 쪼개진 작은 표 숫자들이 본문 크기를 왜곡하지 않도록 방지
+        weight = len(w.get('text', 'a'))
+        freq[size] = freq.get(size, 0) + weight
     return max(freq.items(), key=lambda x: x[1])[0]
 
 def group_by_line(words, y_tolerance=4, x_tolerance=10):
@@ -92,6 +96,12 @@ def group_by_line(words, y_tolerance=4, x_tolerance=10):
             })
     return grouped
 
+def is_bold(fontname):
+    if not fontname: return False
+    name_lower = fontname.lower()
+    # HWP PDF 변환 시 'hdr' (header) 폰트가 대제목으로 쓰이는 경우가 많음
+    return any(w in name_lower for w in ['bold', 'heavy', 'black', 'godic', '고딕', 'hdr'])
+
 def parse_section_number(text):
     first_word = text.split(' ')[0].rstrip('.')
     m = re.match(r'^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2})$', first_word)
@@ -111,11 +121,30 @@ def determine_level(group, body_size):
     if "et al." in text.lower():
         return 0, group['text']
 
+    # ── 0. 명백한 본문/불릿 기호 거르기 (절대 제목이 될 수 없음) ──────────────────────
+    if re.match(r'^[\-◦•※\*]\s', text) or re.match(r'^[-◦•※\*]$', text):
+        return 0, group['text']
+    # 원문자(①, ②, ⓐ, ㉮ 등)로 시작하는 항목은 대개 세부 지시사항이거나 본문 리스트임
+    if re.match(r'^[①-⑳ⓐ-ⓩ㉠-㉾]', text):
+        return 0, group['text']
+
     # ── 1. 명백한 비제목 패턴 제거 ──────────────────────────────────────────
 
     # 표/그림 캡션 제외
     if re.search(r'^(표|그림|table|figure|fig\.?|ref\.?)\s*[\d\[\(]', text, re.IGNORECASE):
         return 0, group['text']
+
+    # 폰트 기반 크기/굵기 확인
+    is_large = group['size'] > body_size * 1.15
+    is_very_large = group['size'] > body_size * 1.3
+    group_is_bold = is_bold(group.get('fontname', ''))
+
+    # ✅ 새로운 FIX: 참고문헌(References) 가짜 제목 필터링
+    # 번호로 시작하지만, 본문 크기이고 굵지 않으며, 길이가 제법 길면 참고문헌 의심
+    if not is_large and not group_is_bold and len(text) > 30:
+        # 연도, 페이지, vol, 또는 전형적인 서지사항 저자 이름 패턴 (& Name, Name Initial)
+        if re.search(r'\(\d{4}\)|vol\.|pp\.|[A-Z][a-z]+\s+[A-Z]\.?\s*\&|&\s*[A-Z][a-z]+', text):
+             return 0, group['text']
 
     # ✅ FIX: 문장 종결 패턴 — 번호+점으로 끝나는 경우는 제외해야 함
     # "2.2." 같은 번호는 마침표로 끝나지만 제목임
@@ -135,6 +164,9 @@ def determine_level(group, body_size):
     is_korean_box = text.startswith('□') or text.startswith('■') or text.startswith('▣') or text.startswith('▶')
     if is_korean_box:
         rest = re.sub(r'^[□■▣▶]\s*', '', text).strip()
+        # 폰트 크기가 충분히 크지 않은 단순 체크박스는 제목 취급 불가
+        if not is_large and not group_is_bold:
+            return 0, group['text']
         # 콜론이 있는 항목 (□ 지원내용 : 사업화)은 제목이 아님
         if ':' in rest or '：' in rest:
             return 0, group['text']
@@ -199,6 +231,25 @@ def determine_level(group, body_size):
             return 2, text
         return 3, text
 
+    # ── 6. 한국어 공문서 개요 기호 (가., 1), 가), (1)) ────────────────────────
+    korean_outline = re.match(r'^([가-하]\.|\d{1,2}\)|[가-하]\)|\(\d{1,2}\)|\([가-하]\))\s+(.*)', text)
+    if korean_outline:
+        content = korean_outline.group(2).strip()
+        if not content or re.match(r'^[a-z\-•·oㅇ○\*]', content) or len(text) > 100:
+             return 0, group['text']
+        if re.search(r'(다|함|됨|음|니다)[\.\s]*$', content):
+             return 0, group['text']
+        return 3, text
+
+    # ── 7. 폰트 크기 기반 무번호 대제목 추론 (정부 공고문용 최후의 보루) ────────────────────────
+    # 숫자가 전혀 없더라도, 글씨가 압도적으로 크고 굵으면 대제목(L1)으로 인정
+    if is_very_large and group_is_bold and len(text) < 40 and len(text.split()) < 8:
+        # 단, 진짜 문장처럼 마침표나 종결어미로 끝나면 안됨
+        stripped_for_check = text.rstrip()
+        if not re.search(r'(다\.|함\.|됨\.|음\.|니다\.|기\.|고\.|며\.|은\.|는\.|이\.|가\.|을\.|를\.|,\s*|;\s*|\.\s*)$', stripped_for_check):
+             # 압도적으로 크고 굵은 무번호 제목은 보통 1 레벨로 간주
+             return 1, text
+
     return 0, group['text']
 
 
@@ -213,7 +264,118 @@ async def parse_pdf(file: UploadFile = File(...)):
     seen_numbers = set()
     seen_titles = set()
 
-    with pdfplumber.open(file.file) as pdf:
+    file_content = await file.read()
+    
+    # 1. 문서 메타데이터 TOC (Bookmarks) 우선 탐색 (fitz 사용)
+    try:
+        fitz_doc = fitz.open(stream=file_content, filetype="pdf")
+        embedded_toc = fitz_doc.get_toc()
+        # fitz.get_toc() 리턴 구조: [[level, title, page_num], ...]
+        if embedded_toc and len(embedded_toc) > 0:
+            print(f"🌟 SUCCESS: Found native embedded TOC with {len(embedded_toc)} items!")
+            for idx, item in enumerate(embedded_toc):
+                level, title, page_num_native = item[0], str(item[1]).strip(), int(item[2])
+                
+                # Sparkle 버튼을 위한 X, Y 좌표 계산
+                x_coord, y_coord = 0.0, 0.0
+                try:
+                    # PyMuPDF pages are 0-indexed, internal TOC is typically 1-indexed
+                    actual_page_idx = max(0, page_num_native - 1)
+                    if actual_page_idx < len(fitz_doc):
+                        # 목차의 페이지 번호가 실제 논리적 페이지와 다를 수 있으므로 해당 페이지와 다음 페이지(혹은 다다음)까지 검색
+                        search_pages = [actual_page_idx, actual_page_idx + 1]
+                        for search_idx in search_pages:
+                            if search_idx >= len(fitz_doc): continue
+                            page_obj = fitz_doc[search_idx]
+                            
+                            rects = page_obj.search_for(title)
+                            
+                            # PDF 본문에는 리거처(ligature)가 쓰였을 수 있음 (fi -> ﬁ, fl -> ﬂ)
+                            if not rects and ("fi" in title or "fl" in title):
+                                lig_title = title.replace("fi", "ﬁ").replace("fl", "ﬂ")
+                                rects = page_obj.search_for(lig_title)
+                                
+                            # 목차 메타데이터 번호 형식("2. ")과 실제 본문 형식("2 ")이 다를 수 있음. 문자 부분만 추출하여 검색
+                            if not rects:
+                                clean_text_only = re.sub(r'^[\d\.\s]+', '', title)
+                                if len(clean_text_only) > 5:
+                                    rects = page_obj.search_for(clean_text_only)
+                            
+                            if not rects and len(title.split()) > 3:
+                                short_title = " ".join(title.split()[:4])
+                                rects = page_obj.search_for(short_title)
+                                if not rects and ("fi" in short_title or "fl" in short_title):
+                                    rects = page_obj.search_for(short_title.replace("fi", "ﬁ").replace("fl", "ﬂ"))
+                                    
+                            # 문자 부분만의 첫 3단어 검색 (단어 불일치 대비 최후 보루)
+                            if not rects:
+                                clean_text_only = re.sub(r'^[\d\.\s]+', '', title)
+                                if len(clean_text_only.split()) > 2:
+                                    short_clean = " ".join(clean_text_only.split()[:3])
+                                    rects = page_obj.search_for(short_clean)
+                                    
+                            if not rects and len(title.split()) > 2:
+                                short_title = " ".join(title.split()[:2])
+                                rects = page_obj.search_for(short_title)
+                                if not rects and ("fi" in short_title or "fl" in short_title):
+                                    rects = page_obj.search_for(short_title.replace("fi", "ﬁ").replace("fl", "ﬂ"))
+                                
+                            if rects:
+                                x_coord = float(rects[0].x0)
+                                y_coord = float(rects[0].y0)
+                                # 만약 실제 찾은 페이지가 목차 페이지와 다르면, 목차 페이지 넘버도 업데이트해줌
+                                if search_idx != actual_page_idx:
+                                    page_num_native = search_idx + 1
+                                break
+                except Exception:
+                    pass
+
+                toc.append(TOCItem(
+                    id=f"native-toc-{idx}",
+                    level=level,
+                    title=title,
+                    rawTitle=title,
+                    number=parse_section_number(title),
+                    page=page_num_native,
+                    readingOrder=idx,
+                    x=x_coord,
+                    y=y_coord
+                ))
+            
+            # 본문 추출 (검색/컨텍스트를 위해) - 목차 ID를 키로 매핑
+            # 페이지별 텍스트를 추출한 뒤, 해당 페이지에 있는 목차 ID들에게 텍스트를 분배 (가장 단순한 폴백 매핑)
+            page_to_tocs = {}
+            for t in toc:
+                if t.page not in page_to_tocs:
+                    page_to_tocs[t.page] = []
+                page_to_tocs[t.page].append(t)
+
+            for page_num in range(len(fitz_doc)):
+                # fitz_doc is 0-indexed, toc.page is 1-indexed
+                page = fitz_doc[page_num]
+                text = page.get_text("text") + "\n"
+                
+                tocs_on_page = page_to_tocs.get(page_num + 1, [])
+                for t in tocs_on_page:
+                    # 해당 페이지의 모든 목차 ID들에 대해 페이지 전체 텍스트를 할당 (클라이언트에서 어떤 걸 클릭해도 조회 가능)
+                    sections[t.id] = text
+                
+                # 이전 버전 호환성을 위해 기본 sec- ID에도 저장
+                sec_id = f"sec-{page_num}-0"
+                sections[sec_id] = text
+                
+            return PDFParseResult(
+                numPages=len(fitz_doc),
+                toc=toc,
+                sections=sections,
+                summary=f"Native metadata TOC extracted. Pages: {len(fitz_doc)}"
+            )
+    except Exception as e:
+        print(f"⚠️ PyMuPDF TOC extraction failed: {e}")
+        pass
+
+    # 2. 메타데이터 TOC가 없을 경우 기존의 휴리스틱 파서로 폴백
+    with pdfplumber.open(io.BytesIO(file_content)) as pdf:
         num_pages = len(pdf.pages)
 
         # 본문 폰트 크기: 1번째, 중간 페이지 샘플링

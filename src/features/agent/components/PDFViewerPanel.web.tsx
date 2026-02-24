@@ -161,14 +161,30 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
             scrollViewRef.current?.scrollTo({ y: pageTop + safeY, animated: true });
         }, [getPageTopOffset]);
 
-        // ✅ FIX: serverModeRef 사용 (serverMode state 클로저 문제 해결)
         const processPageBlocks = useCallback((blocks: Block[], pageNumber: number) => {
-            // 섹션 텍스트 항상 누적 (AI 분석용, 서버 모드 여부와 무관)
+            // 섹션 텍스트 누적 시, 서버 모드라면 서버 TOC 아이템(거리 기반)으로 ID를 매핑하여 누적
             for (const block of blocks) {
+                let targetId = block.id;
+
+                // 만약 서버 모드라면, 현재 block의 y 좌표와 가장 가까운 위쪽 서버 TOC 아이템을 찾음
+                if (serverModeRef.current && serverTOCRef.current.length > 0) {
+                    const pageTOCs = serverTOCRef.current.filter(t => t.page === pageNumber);
+                    if (pageTOCs.length > 0) {
+                        // y 좌표 기준 내림차순 정렬 (아래에서 위로 탐색)
+                        const sorted = [...pageTOCs].sort((a, b) => b.y - a.y);
+                        const closest = sorted.find(t => t.y <= block.y + 10);
+                        if (closest) {
+                            targetId = closest.id;
+                        } else {
+                            targetId = sorted[sorted.length - 1].id; // 가장 위에 있는 항목
+                        }
+                    }
+                }
+
                 if (block.type === 'heading') {
-                    currentSectionId.current = block.id;
+                    currentSectionId.current = targetId;
                     currentSectionHeading.current = block.text.split('\n')[0].trim();
-                    sectionTextAccumulator.current.set(block.id, block.text + '\n');
+                    sectionTextAccumulator.current.set(targetId, block.text + '\n');
                 } else if (currentSectionId.current) {
                     const prev = sectionTextAccumulator.current.get(currentSectionId.current) || '';
                     if (prev.length < 8000) {
@@ -177,7 +193,7 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                 }
             }
 
-            // 서버 모드면 클라이언트 TOC 추가 건너뜀
+            // 서버 모드면 클라이언트 TOC 추가 건너뜀 (텍스트 누적은 위에서 진행함)
             if (serverModeRef.current) return;
 
             const rawItems = StructureEngine.buildTOC(blocks, pageNumber);
@@ -284,13 +300,25 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                                         });
                                     }
                                 }}
-                                onSparkle={(info: { y: number; text: string; type: string }, event: any) => {
+                                onSparkle={(info: { id?: string; y: number; text: string; type: string }, event: any) => {
                                     if (onQuote) {
                                         const cx = event.clientX ?? event.pageX ?? 400;
                                         const cy = event.clientY ?? event.pageY ?? 300;
-                                        const sectionText = serverModeRef.current
-                                            ? findServerSectionText(info.y, i + 1)
-                                            : info.text;
+
+                                        // 🌟 FIX: 서버에서 넘겨받은 뭉텅이 텍스트(페이지 전체)를 버리고, 프론트엔드 TextBlock 구조를 통해 축적된 "정확한 섹션 본문"만 사용함
+                                        // info.id 가 서버 TOC id이므로 이를 기반으로 누적된 텍스트를 찾거나, 없으면 클라이언트 fallback 활용
+                                        let sectionText = info.text;
+                                        if (info.id && sectionTextAccumulator.current.has(info.id)) {
+                                            sectionText = sectionTextAccumulator.current.get(info.id) || info.text;
+                                        } else {
+                                            // Fallback: y 좌표 기반 가장 가까운 섹션 텍스트 찾기
+                                            // StructureEngine.buildTOC 에서 생성된 클라이언트 사이드 id 중 가장 가까운 것
+                                            const closestId = currentSectionId.current;
+                                            if (closestId && sectionTextAccumulator.current.has(closestId)) {
+                                                sectionText = sectionTextAccumulator.current.get(closestId) || info.text;
+                                            }
+                                        }
+
                                         onQuote(sectionText, cx, cy, 'heading', {
                                             sectionTitle: info.text,
                                             heading: info.text.trim(),
