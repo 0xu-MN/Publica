@@ -89,32 +89,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }}
                     className="flex-row items-center z-10"
                 >
-                    <View className="w-11 h-11 items-center justify-center bg-[#FDF8F3] rounded-[14px]">
-                        <Svg width="36" height="36" viewBox="0 0 36 36">
-                            {/* Minimalism Logo 'p.' - centered and padded */}
-                            <G transform="translate(6, 4)">
-                                {/* The 'p' stem and loop */}
-                                <Path
-                                    d="M 4,4 L 4,26 M 4,4 C 14,4 16,9 16,13 C 16,17 14,22 4,22"
-                                    stroke="#1e1f20"
-                                    strokeWidth="4.5"
-                                    fill="none"
-                                    strokeLinecap="round"
-                                />
-                                {/* Small text 'UBLICA' */}
-                                <SvgText
-                                    fill="#1e1f20"
-                                    fontSize="5"
-                                    fontWeight="900"
-                                    x="16"
-                                    y="11"
-                                >
-                                    UBLICA
-                                </SvgText>
-                                {/* The Dot next to 'p' */}
-                                <Rect x="16" y="20" width="5.5" height="5.5" rx="1.5" fill="#1e1f20" />
-                            </G>
-                        </Svg>
+                    <View className="w-12 h-12 items-center justify-center bg-[#FDF8F3] rounded-[14px]">
+                        <Image
+                            source={require('../../assets/publica logo.png')}
+                            style={{ width: 36, height: 36 }}
+                            resizeMode="contain"
+                        />
                     </View>
                     <View className="ml-3">
                         <Text className="text-white font-extrabold text-xl tracking-tighter">Publica</Text>
