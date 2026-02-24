@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, Text, Platform } from 'react-native';
+import { Svg, Path, G, Rect, Text as SvgText } from 'react-native-svg';
 import { Page } from 'react-pdf';
 import { SmartBlockEngine, Block } from '../utils/smartBlockEngine';
 import { StructureEngine } from '../utils/StructureEngine';
@@ -175,9 +176,27 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                                 pointerEvents: 'auto',
                             } as any}
                         >
-                            <Text style={{ fontSize: 13, color: isHovered ? 'white' : '#64748B' }}>
-                                ✨
-                            </Text>
+                            <Svg width="18" height="18" viewBox="0 0 36 36">
+                                <G transform="translate(6, 4)">
+                                    <Path
+                                        d="M 4,4 L 4,26 M 4,4 C 14,4 16,9 16,13 C 16,17 14,22 4,22"
+                                        stroke={isHovered ? 'white' : '#64748B'}
+                                        strokeWidth="4.5"
+                                        fill="none"
+                                        strokeLinecap="round"
+                                    />
+                                    <SvgText
+                                        fill={isHovered ? 'white' : '#64748B'}
+                                        fontSize="5"
+                                        fontWeight="900"
+                                        x="16"
+                                        y="11"
+                                    >
+                                        UBLICA
+                                    </SvgText>
+                                    <Rect x="16" y="20" width="5.5" height="5.5" rx="1.5" fill={isHovered ? 'white' : '#64748B'} />
+                                </G>
+                            </Svg>
                         </View>
                     );
                 })}
