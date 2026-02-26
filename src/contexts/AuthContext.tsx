@@ -9,6 +9,7 @@ interface AuthContextType {
     profile: any | null;
     loading: boolean;
     profileComplete: boolean;
+    authEvent: string | null;
     signInWithGoogle: () => Promise<void>;
     signInWithKakao: () => Promise<void>;
     signOut: () => Promise<void>;
@@ -22,6 +23,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
     const [loading, setLoading] = useState(true);
+    const [authEvent, setAuthEvent] = useState<string | null>(null);
 
     const fetchProfile = async (userId: string) => {
         try {
@@ -52,7 +54,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            setAuthEvent(event);
             setSession(session);
             if (session?.user) {
                 fetchProfile(session.user.id);
@@ -122,6 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             profile,
             loading,
             profileComplete: !!profile?.user_type,
+            authEvent,
             signInWithGoogle,
             signInWithKakao,
             signOut,

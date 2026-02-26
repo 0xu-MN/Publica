@@ -15,10 +15,10 @@ const Footer = () => {
                         </View>
 
                         <View className="gap-1">
-                            <Text className="text-slate-600 text-xs">상호명: HALOFORGE | 대표자: 홍수민</Text>
+                            <Text className="text-slate-600 text-xs">상호명: HALOFORGE 헤일로포지 | 대표자: 홍수민</Text>
                             <Text className="text-slate-600 text-xs">사업자등록번호: 846-04-03662 | 통신판매업신고: 2026-서울강남-00000</Text>
                             <Text className="text-slate-600 text-xs">주소: 경기도 안산시 단원구 고잔로 57-11</Text>
-                            <Text className="text-slate-600 text-xs">문의: contact@publica.ai | 02-1234-5678</Text>
+                            <Text className="text-slate-600 text-xs">문의: contact@publica.ai | s</Text>
                         </View>
 
                         <Text className="text-slate-700 text-[10px] mt-2">

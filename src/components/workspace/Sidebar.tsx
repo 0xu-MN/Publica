@@ -23,12 +23,18 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     React.useEffect(() => {
         const fetchProjects = async () => {
             try {
-                // @ts-ignore
                 const { data, error } = await supabase
                     .from('projects')
                     .select('id, grant_title, status')
                     .order('last_updated', { ascending: false });
-                // .limit(5) removed to be safe
+
+                if (error) {
+                    // Ignore 404 if the table hasn't been created yet
+                    if (error.code !== 'PGRST205') {
+                        console.log("Failed to fetch sidebar projects", error);
+                    }
+                    return;
+                }
 
                 if (data) setProjects(data);
             } catch (e) {

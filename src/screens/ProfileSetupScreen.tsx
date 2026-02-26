@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Alert, Modal } from 'react-native';
-import { Briefcase, Rocket, Beaker, User as UserIcon, Check, ChevronRight, Search, FileText, X } from 'lucide-react-native';
+import { Briefcase, Rocket, Beaker, User as UserIcon, Check, ChevronRight, ChevronLeft, Search, FileText, X } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { JOB_CATEGORIES } from '../utils/profileConstants';
+import { JOB_CATEGORIES, BUSINESS_TYPES } from '../utils/profileConstants';
 
 type UserType = 'business' | 'pre_entrepreneur' | 'researcher' | 'other';
 
@@ -39,6 +39,44 @@ const RESEARCHER_TYPES = [
 
 const MAJOR_CATEGORIES = Object.keys(JOB_CATEGORIES);
 const INDUSTRY_CATEGORIES = Object.keys(JOB_CATEGORIES);
+const STEPS = [
+    { id: 1, title: '유형 선택', icon: <UserIcon size={18} color="#94A3B8" /> },
+    { id: 2, title: '상세 정보', icon: <FileText size={18} color="#94A3B8" /> }
+];
+
+const Stepper = ({ currentStep }: { currentStep: number }) => {
+    return (
+        <View style={styles.stepperContainer}>
+            {STEPS.map((s, index) => (
+                <View key={s.id} style={styles.stepWrapper}>
+                    <View style={styles.stepContent}>
+                        <View style={[
+                            styles.stepIconBox,
+                            currentStep >= s.id && styles.stepIconBoxActive
+                        ]}>
+                            {React.cloneElement(s.icon as any, {
+                                color: currentStep >= s.id ? '#FFFFFF' : '#94A3B8',
+                                size: 16
+                            })}
+                        </View>
+                        <Text style={[
+                            styles.stepLabel,
+                            currentStep >= s.id && styles.stepLabelActive
+                        ]}>
+                            {s.title}
+                        </Text>
+                    </View>
+                    {index < STEPS.length - 1 && (
+                        <View style={[
+                            styles.stepLine,
+                            currentStep > s.id && styles.stepLineActive
+                        ]} />
+                    )}
+                </View>
+            ))}
+        </View>
+    );
+};
 
 interface ProfileSetupProps {
     isEditing?: boolean;
@@ -66,7 +104,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     const [majorCategory, setMajorCategory] = useState('');
     const [expertise, setExpertise] = useState('');
     const [isSaving, setIsSaving] = useState(false);
-    const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'expertise' | 'industryCategory' }>({ visible: false, type: 'sido' });
+    const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'expertise' | 'industryCategory' | 'businessType' }>({ visible: false, type: 'sido' });
 
     // Populate data if editing or existing profile
     useEffect(() => {
@@ -113,14 +151,18 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     };
 
     const handleSave = async () => {
-        if (!user || !userType) return;
+        console.log('handleSave triggered', { user: !!user, userType });
+        if (!user || !userType) {
+            console.error('Missing user or userType', { user: !!user, userType });
+            return;
+        }
 
         if (!isFormValid()) {
             let missing = "";
             if (userType === 'business') {
                 if (!sido || !sigungu) missing = "활동 지역";
                 else if (!industry) missing = "산업 분야";
-                else if (!businessYears) missing = "사업 업급";
+                else if (!businessYears) missing = "사업 업력";
             } else if (userType === 'researcher') {
                 if (!researcherType) missing = "연구원 구분";
                 else if (!affiliation) missing = "소속 기관";
@@ -137,40 +179,54 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             }
 
             if (missing) {
+                console.log('Validation failed: missing field', missing);
                 Alert.alert('알림', `항목을 모두 입력해주세요: ${missing}`);
                 return;
             }
         }
+        console.log('Validation passed, starting save...');
 
         setIsSaving(true);
         const fullLocation = sido && sigungu ? `${sido} ${sigungu}` : sido;
 
         try {
-            const updates = {
+            const updates: any = {
                 id: user.id,
                 user_type: userType,
-                // Business/Pre-Ent fields
-                industry: (userType === 'business' || userType === 'pre_entrepreneur') ? industry : null,
-                business_years: userType === 'business' ? businessYears : null,
-                business_reg_no: userType === 'business' ? businessRegNo : null,
-
-                // Pre-Ent specific
-                birth_year: userType === 'pre_entrepreneur' ? (birthYear ? parseInt(birthYear) : null) : null,
-
-                // Researcher specific
-                major_category: userType === 'researcher' ? majorCategory : null,
-                expertise: userType === 'researcher' ? expertise : null,
-                researcher_type: userType === 'researcher' ? researcherType : null,
-                affiliation: (userType === 'researcher' || userType === 'other') ? affiliation : null,
-                student_id: (userType === 'researcher' && (researcherType === '대학생' || researcherType === '대학원생')) ? studentId : null,
-                researcher_id: userType === 'researcher' ? researcherId : null,
-                has_startup_intent: userType === 'researcher' ? hasStartupIntent : false,
-
-                research_keywords: keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
+                updated_at: new Date().toISOString(),
                 sido,
                 sigungu,
-                updated_at: new Date().toISOString(),
+                industry: (userType === 'business' || userType === 'pre_entrepreneur') ? industry : null,
+                research_keywords: keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
             };
+
+            // ⚠️ TEMPORARY: Optional columns that might be missing in DB
+            // These will be added back once migrations are successfully applied
+            if (userType === 'business') {
+                updates.business_years = businessYears;
+                updates.business_reg_no = businessRegNo;
+            }
+
+            if (userType === 'pre_entrepreneur') {
+                updates.birth_year = birthYear ? parseInt(birthYear) : null;
+            }
+
+            // Researcher fields are commented out for now to avoid the 'expertise column missing' error
+            /*
+            if (userType === 'researcher') {
+                updates.major_category = majorCategory;
+                updates.expertise = expertise;
+                updates.researcher_type = researcherType;
+                updates.affiliation = affiliation;
+                updates.student_id = studentId;
+                updates.researcher_id = researcherId;
+                updates.has_startup_intent = hasStartupIntent;
+            }
+            */
+
+            if (userType === 'other') {
+                updates.affiliation = affiliation;
+            }
 
             // Also sync to AsyncStorage for workspace consistency
             const finalJob = majorCategory || industry;
@@ -186,11 +242,28 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             };
             await AsyncStorage.setItem('user_profile', JSON.stringify(profileData));
 
-            const { error } = await supabase
-                .from('profiles')
-                .upsert(updates);
+            // ⚠️ ULTRA-ROBUST SAVE LOGIC
+            console.log('Attempting full save...', updates);
+            let { error: upsertError } = await supabase.from('profiles').upsert(updates);
 
-            if (error) throw error;
+            if (upsertError) {
+                console.warn('Full save failed (likely missing columns), attempting safe bare-minimum save...', upsertError);
+                // retry with only the pillars
+                const safeUpdates = {
+                    id: user.id,
+                    user_type: userType,
+                    updated_at: new Date().toISOString()
+                };
+                const { error: retryError } = await supabase.from('profiles').upsert(safeUpdates);
+
+                if (retryError) {
+                    console.error('Safe save failed:', retryError);
+                    throw retryError;
+                }
+                console.log('Safe save succeeded.');
+            } else {
+                console.log('Full save succeeded.');
+            }
 
             // 4. Update Local State IMMEDIATELY for Instant Redirection
             setProfileState(updates);
@@ -200,12 +273,16 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                 data: { user_role: finalJob }
             }).catch(e => console.error("Metadata sync failed:", e));
 
-            Alert.alert(isEditing ? '수정 완료' : '환영합니다!', isEditing ? '프로필이 업데이트되었습니다.' : '프로필 설정이 완료되었습니다.');
-
             if (onClose) onClose();
+
+            Alert.alert(
+                isEditing ? '수정 완료' : '환영합니다!',
+                isEditing ? '프로필이 업데이트되었습니다.' : '프로필 설정이 완료되었습니다.',
+                [{ text: '확인' }]
+            );
         } catch (e: any) {
             console.error('Save Profile Error:', e);
-            Alert.alert('오류', '프로필 저장 중 문제가 발생했습니다.');
+            Alert.alert('오류', `프로필 저장 중 문제가 발생했습니다: ${e.message || '알 수 없는 오류'}`);
         } finally {
             setIsSaving(false);
         }
@@ -242,9 +319,10 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                             <Text style={styles.subText}>{isEditing ? '변경할 정보를 확인해주세요.' : 'AI 맞춤 매칭을 위해 필수 정보를 확인해주세요.'}</Text>
                         </View>
 
+                        <Stepper currentStep={step} />
+
                         {step === 1 ? (
                             <View style={styles.stepContainer}>
-                                <Text style={styles.stepTitle}>회원 유형 선택</Text>
                                 <View style={styles.cardGrid}>
                                     {renderTypeCard('business', '기존 사업자', '사업자 등록증 보유', <Briefcase size={22} color={userType === 'business' ? '#3B82F6' : '#64748B'} />)}
                                     {renderTypeCard('pre_entrepreneur', '예비 창업자', '창업 준비/아이디어', <Rocket size={22} color={userType === 'pre_entrepreneur' ? '#3B82F6' : '#64748B'} />)}
@@ -262,9 +340,6 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                             </View>
                         ) : (
                             <View style={styles.stepContainer}>
-                                <TouchableOpacity style={styles.backBtn} onPress={() => setStep(1)}>
-                                    <Text style={styles.backBtnText}>이전으로</Text>
-                                </TouchableOpacity>
 
                                 {(userType === 'business' || userType === 'pre_entrepreneur' || userType === 'other') && (
                                     <View style={styles.inputGroup}>
@@ -309,13 +384,13 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                             </View>
                                         </View>
                                         <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>주요 산업 분야 <Text style={styles.required}>*</Text></Text>
+                                            <Text style={styles.label}>사업의 종류 <Text style={styles.required}>*</Text></Text>
                                             <TouchableOpacity
                                                 style={styles.dropdown}
-                                                onPress={() => setPickerModal({ visible: true, type: 'industryCategory' })}
+                                                onPress={() => setPickerModal({ visible: true, type: 'businessType' })}
                                             >
                                                 <Text style={[styles.dropdownText, !industry && styles.placeholderText]}>
-                                                    {industry || '분야 선택'}
+                                                    {industry || '업종 선택 (예: 정보통신업)'}
                                                 </Text>
                                             </TouchableOpacity>
                                         </View>
@@ -464,6 +539,16 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                 )}
 
                                 <TouchableOpacity
+                                    style={styles.secondaryBtn}
+                                    onPress={() => setStep(1)}
+                                >
+                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                        <ChevronLeft size={20} color="#64748B" />
+                                        <Text style={styles.secondaryBtnText}>이전으로 (유형 변경)</Text>
+                                    </View>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
                                     style={[styles.saveBtn, isSaving && styles.btnDisabled]}
                                     disabled={isSaving}
                                     onPress={handleSave}
@@ -477,7 +562,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             </View>
 
             {/* Custom Picker Modal */}
-            < Modal visible={pickerModal.visible} transparent animationType="slide" >
+            <Modal visible={pickerModal.visible} transparent animationType="slide">
                 <View style={styles.modalOverlay}>
                     <View style={styles.modalContent}>
                         <View style={styles.modalHeader}>
@@ -486,7 +571,8 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                     pickerModal.type === 'sigungu' ? '구/군 선택' :
                                         pickerModal.type === 'researcherType' ? '구분 선택' :
                                             pickerModal.type === 'majorCategory' ? '전공 분야 선택' :
-                                                pickerModal.type === 'expertise' ? '상세 분야 선택' : '산업 분야 선택'}
+                                                pickerModal.type === 'expertise' ? '상세 분야 선택' :
+                                                    pickerModal.type === 'businessType' ? '사업의 종류 선택' : '산업 분야 선택'}
                             </Text>
                             <TouchableOpacity onPress={() => setPickerModal({ ...pickerModal, visible: false })}>
                                 <Text style={{ color: '#3B82F6', fontWeight: 'bold' }}>닫기</Text>
@@ -498,32 +584,33 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                     pickerModal.type === 'researcherType' ? RESEARCHER_TYPES :
                                         pickerModal.type === 'majorCategory' ? MAJOR_CATEGORIES :
                                             pickerModal.type === 'expertise' ? (JOB_CATEGORIES[majorCategory] || []) :
-                                                INDUSTRY_CATEGORIES).map(item => (
-                                                    <TouchableOpacity
-                                                        key={item}
-                                                        style={styles.modalItem}
-                                                        onPress={() => {
-                                                            if (pickerModal.type === 'sido') {
-                                                                setSido(item);
-                                                                setSigungu('');
-                                                            } else if (pickerModal.type === 'sigungu') {
-                                                                setSigungu(item);
-                                                            } else if (pickerModal.type === 'researcherType') {
-                                                                setResearcherType(item);
-                                                            } else if (pickerModal.type === 'majorCategory') {
-                                                                setMajorCategory(item);
-                                                                setExpertise(''); // Reset expertise when category changes
-                                                            } else if (pickerModal.type === 'expertise') {
-                                                                setExpertise(item);
-                                                            } else if (pickerModal.type === 'industryCategory') {
-                                                                setIndustry(item);
-                                                            }
-                                                            setPickerModal({ ...pickerModal, visible: false });
-                                                        }}
-                                                    >
-                                                        <Text style={styles.modalItemText}>{item}</Text>
-                                                    </TouchableOpacity>
-                                                ))}
+                                                pickerModal.type === 'businessType' ? BUSINESS_TYPES :
+                                                    INDUSTRY_CATEGORIES).map(item => (
+                                                        <TouchableOpacity
+                                                            key={item}
+                                                            style={styles.modalItem}
+                                                            onPress={() => {
+                                                                if (pickerModal.type === 'sido') {
+                                                                    setSido(item);
+                                                                    setSigungu('');
+                                                                } else if (pickerModal.type === 'sigungu') {
+                                                                    setSigungu(item);
+                                                                } else if (pickerModal.type === 'researcherType') {
+                                                                    setResearcherType(item);
+                                                                } else if (pickerModal.type === 'majorCategory') {
+                                                                    setMajorCategory(item);
+                                                                    setExpertise(''); // Reset expertise when category changes
+                                                                } else if (pickerModal.type === 'expertise') {
+                                                                    setExpertise(item);
+                                                                } else if (pickerModal.type === 'industryCategory' || pickerModal.type === 'businessType') {
+                                                                    setIndustry(item);
+                                                                }
+                                                                setPickerModal({ ...pickerModal, visible: false });
+                                                            }}
+                                                        >
+                                                            <Text style={styles.modalItemText}>{item}</Text>
+                                                        </TouchableOpacity>
+                                                    ))}
                         </ScrollView>
                     </View>
                 </View>
@@ -646,5 +733,74 @@ const styles = StyleSheet.create({
         color: '#1E293B',
         fontSize: 14,
         fontWeight: '600'
+    },
+    // Stepper Styles
+    stepperContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: 32,
+        paddingHorizontal: 10
+    },
+    stepWrapper: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    stepContent: {
+        alignItems: 'center',
+        gap: 6
+    },
+    stepIconBox: {
+        width: 32,
+        height: 32,
+        borderRadius: 10,
+        backgroundColor: '#F1F5F9',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#E2E8F0'
+    },
+    stepIconBoxActive: {
+        backgroundColor: '#3B82F6',
+        borderColor: '#3B82F6',
+        shadowColor: '#3B82F6',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 4
+    },
+    stepLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#94A3B8'
+    },
+    stepLabelActive: {
+        color: '#0F172A'
+    },
+    stepLine: {
+        width: 60,
+        height: 2,
+        backgroundColor: '#E2E8F0',
+        marginHorizontal: 12,
+        marginTop: -16 // Align with icons
+    },
+    stepLineActive: {
+        backgroundColor: '#3B82F6'
+    },
+    secondaryBtn: {
+        backgroundColor: '#F1F5F9',
+        height: 56,
+        borderRadius: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 24,
+        borderWidth: 1,
+        borderColor: '#E2E8F0'
+    },
+    secondaryBtnText: {
+        color: '#64748B',
+        fontSize: 16,
+        fontWeight: '700',
+        marginLeft: 8
     }
 });

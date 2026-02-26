@@ -17,20 +17,20 @@ import { useAuth } from '../../contexts/AuthContext';
 import { usePosts } from '../../hooks/usePosts';
 import { MessageSquare, Bookmark, RefreshCw, X, ArrowLeft, Trash2, Edit2, Database } from 'lucide-react-native';
 import { ProfileEditPage } from '../ProfileEditPage';
+import { useProjectStore } from '../../store/useProjectStore';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
-    initialSession?: any;
 }
 
-export const WorkspaceLayout = ({ onClose, initialSession }: WorkspaceLayoutProps) => {
+export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     // Default to 'home'
     const [activeTab, setActiveTabState] = useState<WorkspaceTab>('home');
     const [isLoaded, setIsLoaded] = useState(false);
     const { user } = useAuth();
 
-    // Session Load State for Agent
-    const [sessionToLoad, setSessionToLoad] = useState<any>(null);
+    // Project Store Sync
+    const agentSession = useProjectStore(state => state.agentSession);
 
     // Chat states
     const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; name: string } | undefined>(undefined);
@@ -62,10 +62,9 @@ export const WorkspaceLayout = ({ onClose, initialSession }: WorkspaceLayoutProp
     useEffect(() => {
         const loadTab = async () => {
             try {
-                // If initialSession is provided, force agent tab
-                if (initialSession) {
-                    console.log("🚀 Workspace Init with Session:", initialSession);
-                    setSessionToLoad(initialSession);
+                // If agentSession is provided via store, force agent tab
+                if (agentSession) {
+                    console.log("🚀 Workspace Init with Store Session:", agentSession);
                     setActiveTabState('agent');
                     setIsLoaded(true);
                     return;
@@ -82,7 +81,7 @@ export const WorkspaceLayout = ({ onClose, initialSession }: WorkspaceLayoutProp
             }
         };
         loadTab();
-    }, [initialSession]);
+    }, [agentSession]);
 
     // Animate profile panel
     useEffect(() => {
@@ -115,7 +114,6 @@ export const WorkspaceLayout = ({ onClose, initialSession }: WorkspaceLayoutProp
         }
 
         setActiveTabState(tab);
-        if (tab !== 'agent') setSessionToLoad(null);
 
         // Close profile panel when switching tabs
         setShowProfilePanel(false);
@@ -129,7 +127,8 @@ export const WorkspaceLayout = ({ onClose, initialSession }: WorkspaceLayoutProp
     };
 
     const handleOpenProject = (session: any) => {
-        setSessionToLoad(session);
+        // Technically we should dispatch to ProjectStore here if they open from history
+        useProjectStore.getState().setProject(null, session);
         setActiveTab('agent');
     };
 
@@ -171,7 +170,7 @@ export const WorkspaceLayout = ({ onClose, initialSession }: WorkspaceLayoutProp
             case 'home':
                 return <WorkspaceDashboard onOpenCalendar={() => setCalendarVisible(true)} />;
             case 'agent':
-                return <AgentView initialSession={sessionToLoad} />;
+                return <AgentView initialSession={agentSession} />;
             case 'chat':
                 return (
                     <View className="flex-1 flex-row bg-[#020617]">

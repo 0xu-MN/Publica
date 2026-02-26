@@ -28,12 +28,6 @@ export const RootNavigator = () => {
 
     return (
         <NavigationContainer>
-            {/* 🌟 Emergency Bypass: Profile Check Disabled for Testing */}
-            {/* {session && !profileComplete ? (
-                <ProfileSetupScreen />
-            ) : (
-                <FeedScreen />
-            )} */}
             <FeedScreen />
         </NavigationContainer>
     );

@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, SafeAreaView, StatusBar, TouchableOpacity, useWindowDimensions, FlatList, TextInput, Animated, Easing, Alert } from 'react-native';
+import { View, Text, ScrollView, SafeAreaView, StatusBar, TouchableOpacity, useWindowDimensions, FlatList, TextInput, Animated, Easing, Alert, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { InsightCard } from '../components/InsightCard';
 import { fetchAICards, AICardNews, getScrappedIds, toggleScrap } from '../services/newsService';
 import { InsightDetailModal } from '../components/InsightDetailModal';
+import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { AuthModal } from '../components/AuthModal';
 import { RotatingText } from '../components/RotatingText';
 import { DashboardView } from '../components/DashboardView';
@@ -24,6 +25,7 @@ import { HotKeywords } from '../components/HotKeywords';
 import { InsightListItem } from '../components/InsightListItem';
 import { AnalysisResultScreen } from './AnalysisResultScreen';
 import { createProject } from '../services/projects';
+import { useProjectStore } from '../store/useProjectStore';
 
 // Filter categories
 const CATEGORIES = ['전체'];
@@ -52,7 +54,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     const { width } = useWindowDimensions();
     // Scrap State
     const [scrappedIds, setScrappedIds] = useState<Set<string>>(new Set());
-    const { user, signOut } = useAuth(); // Destructure signOut
+    const { user, profileComplete, authEvent, signOut } = useAuth(); // Destructure signOut & authEvent
 
     useEffect(() => {
         if (user) {
@@ -108,6 +110,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     // Notification & User Menu Logic
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [notifications, setNotifications] = useState<FeedNotification[]>(MOCK_NOTIFICATIONS);
     const hasNotification = notifications.some(n => !n.isRead);
     const rotateAnim = useRef(new Animated.Value(0)).current;
@@ -145,7 +148,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     const [targetUserId, setTargetUserId] = useState<string | null>(null);
     const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
     const [selectedAnalysisResult, setSelectedAnalysisResult] = useState<any | null>(null);
-    const [pendingSession, setPendingSession] = useState<any | null>(null); // For passing draft to workspace
+    const setProjectStore = useProjectStore(state => state.setProject); // For passing draft to workspace
 
     // Load saved state on mount and handle Auth State changes
     useEffect(() => {
@@ -158,9 +161,9 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     useEffect(() => {
         const loadSavedState = async () => {
             try {
-                // If user logs out, force Feed Mode and clear personal data
+                // If user logs out, force Connect Mode and clear personal data
                 if (!user) {
-                    setViewMode('feed');
+                    setViewMode('connect');
                     setNotifications([]); // Clear notifications
                     setActiveCategory('전체'); // Reset category
                     return;
@@ -169,20 +172,23 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 // If logged in, reload notifications (Mock flush)
                 setNotifications(MOCK_NOTIFICATIONS);
 
-                // Check Onboarding Status
-                const storedProfile = await AsyncStorage.getItem('user_profile');
-                if (!storedProfile) {
-                    // 🌟 Emergency Bypass: Disable Onboarding Modal for Testing
-                    // setOnboardingVisible(true);
+                // Check Onboarding Status - ONLY show modal on active SIGNED_IN event (fresh login/signup)
+                // This prevents the modal from popping up every time the app reloads for developers.
+                if (user && !profileComplete && authEvent === 'SIGNED_IN') {
+                    setIsProfileModalOpen(true);
+                } else if (profileComplete) {
+                    setIsProfileModalOpen(false);
                 }
 
                 const savedViewMode = await AsyncStorage.getItem('viewMode');
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
 
                 if (savedViewMode) {
-                    // PROTECT WORKSPACE: If saved mode is workspace but not logged in, default to feed
-                    if (savedViewMode === 'workspace' && !user) {
-                        setViewMode('feed');
+                    // Always land on Connect Hub ('connect') as the main page
+                    if (savedViewMode === 'feed') {
+                        setViewMode('connect');
+                    } else if (savedViewMode === 'workspace' && !user) {
+                        setViewMode('connect');
                     } else {
                         setViewMode(savedViewMode as any);
                     }
@@ -389,10 +395,11 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
 
             {
                 viewMode === 'workspace' ? (
-                    <Workspace
-                        onClose={() => setViewMode('connect')}
-                        initialSession={pendingSession}
-                    />
+                    <View className="flex-1 bg-black">
+                        <Workspace onClose={() => {
+                            setViewMode('connect');
+                        }} />
+                    </View>
                 ) : viewMode === 'settings' ? (
                     <SettingsScreen onBack={() => setViewMode('workspace')} />
                 ) : null
@@ -454,8 +461,8 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                                 auto_run_query: `Analyze this government grant program: ${program.title}.\n\nContext:\n- Agency: ${program.agency}\n- Target: ${program.target}\n- Tech Field: ${program.tech_field}\n\nTask: Provide a comprehensive strategy including Fit Analysis, Winning Strategy, and Action Plan.`
                             };
 
-                            // 3. Navigate to Workspace
-                            setPendingSession(autoSession);
+                            // 3. Navigate to Workspace (via store)
+                            setProjectStore(program, autoSession as any);
                             setViewMode('workspace');
                         }}
                     />
@@ -521,11 +528,14 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                                 setSelectedAnalysisResult(null);
                                 setSelectedProgram(null);
 
-                                // Set session data
-                                setPendingSession({
-                                    ...initialSession,
-                                    id: projectId
-                                });
+                                // Set session data via ProjectStore
+                                setProjectStore(
+                                    selectedProgram, // Even if it was nullified above, maybe we shouldn't nullify it first? Actually, let's keep it null for the grant, but valid for the session.
+                                    {
+                                        ...initialSession,
+                                        id: projectId
+                                    } as any
+                                );
 
                                 // Small delay to ensure React handles overlay unmounting before Workspace mounting
                                 setTimeout(() => {
@@ -624,10 +634,17 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 visible={authModalVisible}
                 onClose={() => setAuthModalVisible(false)}
             />
-            <OnboardingModal
-                visible={onboardingVisible}
-                onClose={() => setOnboardingVisible(false)}
-            />
+            <Modal
+                visible={isProfileModalOpen}
+                animationType="slide"
+                transparent={true}
+                onRequestClose={() => setIsProfileModalOpen(false)}
+            >
+                <ProfileSetupScreen
+                    isEditing={false}
+                    onClose={() => setIsProfileModalOpen(false)}
+                />
+            </Modal>
         </MainLayout>
     );
 }

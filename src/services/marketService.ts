@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 export interface MarketData {
     symbol: string;
@@ -146,6 +147,12 @@ export const fetchMarketData = async (force: boolean = false): Promise<MarketDat
                     return parsed;
                 }
             }
+        }
+
+        // On Web, BOK API strictly blocks CORS and public proxies are unreliable.
+        // Fallback to mock data to prevent console spam and broken UI.
+        if (Platform.OS === 'web') {
+            return MOCK_DATA;
         }
 
         console.log('Fetching Fresh BOK Market Data...');

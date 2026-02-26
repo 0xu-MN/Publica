@@ -86,7 +86,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 {/* Left: Logo */}
                 <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }}
+                    onPress={() => { setViewMode('connect'); setActiveCategory('전체'); }}
                     className="flex-row items-center z-10"
                 >
                     <View className="w-12 h-12 items-center justify-center bg-[#FDF8F3] rounded-[14px]">
@@ -163,7 +163,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             ) : (
                                 /* COLLAPSED HUB: (Globe Icon) */
                                 <TouchableOpacity
-                                    onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }}
+                                    onPress={() => { setViewMode('connect'); setActiveCategory('전체'); }}
                                     className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all hover:scale-105 active:scale-95"
                                 >
                                     <Icons.Globe size={20} color="#64748B" />

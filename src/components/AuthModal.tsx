@@ -96,7 +96,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     </View>
 
                     <Text className="text-[11px] text-slate-600 text-center px-4">
-                        계속 진행하면 Publica의 <Text className="underline">이용약관</Text> 및 <Text className="underline">개인정보처리방침</Text>에 동의하는 것으로 간주됩니다.
+                        로그인 시 PUBLICA의 <Text className="underline">서비스 이용약관</Text> 및 <Text className="underline">개인정보 처리방침</Text>에 동의하게 됩니다.
                     </Text>
                 </Animated.View>
             </View>

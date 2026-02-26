@@ -40,3 +40,14 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# scratch / temp scripts
+temp_check_rls.ts
+test_fetch.js
+fix-db-projects.js
+test_connection.js
+check-db.js
+inspect-documents.js
+*.json.tmp
+/server/saved_debug.pdf
+/server/test_paper.pdf

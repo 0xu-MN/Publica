@@ -21,7 +21,13 @@ export const fetchProjects = async (): Promise<Project[]> => {
             .select('*')
             .order('last_updated', { ascending: false });
 
-        if (error) throw error;
+        if (error) {
+            if (error.code === 'PGRST205') {
+                console.warn('Projects table not found (HTTP 404). Returning empty array.');
+                return [];
+            }
+            throw error;
+        }
 
         // Map status to progress/stages for UI
         return (data || []).map(p => {
