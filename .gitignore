@@ -51,3 +51,9 @@ inspect-documents.js
 *.json.tmp
 /server/saved_debug.pdf
 /server/test_paper.pdf
+
+# python environments
+venv/
+**/venv/
+__pycache__/
+*.pyc
