@@ -103,6 +103,25 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                     <View style={styles.divider} />
                     <Text style={styles.summaryText} numberOfLines={2}>{item.summary}</Text>
 
+                    {/* Budget & Period Info */}
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+                        {item.budget && (
+                            <View style={{ backgroundColor: 'rgba(16,185,129,0.1)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(16,185,129,0.15)' }}>
+                                <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '700' }}>💰 {item.budget}</Text>
+                            </View>
+                        )}
+                        {item.application_period && (
+                            <View style={{ backgroundColor: 'rgba(59,130,246,0.08)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(59,130,246,0.15)' }}>
+                                <Text style={{ color: '#60A5FA', fontSize: 11, fontWeight: '600' }}>📅 {item.application_period}</Text>
+                            </View>
+                        )}
+                        {item.region && item.region !== '전국' && (
+                            <View style={{ backgroundColor: 'rgba(168,85,247,0.08)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(168,85,247,0.15)' }}>
+                                <Text style={{ color: '#A855F7', fontSize: 11, fontWeight: '600' }}>📍 {item.region}</Text>
+                            </View>
+                        )}
+                    </View>
+
                     <View style={styles.footer}>
                         <View style={styles.tagContainer}>
                             <View style={styles.tag}><Text style={styles.tagText}>{item.tech_field}</Text></View>
@@ -133,6 +152,9 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                             <Text style={[styles.listDDay, item.d_day === 'D-3' && { color: '#EF4444' }]}>{item.d_day}</Text>
                         </View>
                         <Text style={styles.listTitle}>{item.title}</Text>
+                        {item.budget && (
+                            <Text style={{ color: '#10B981', fontSize: 13, fontWeight: '700', marginTop: 4 }}>💰 {item.budget}</Text>
+                        )}
                         <View style={styles.listFooter}>
                             <View style={[styles.typeTag, { backgroundColor: item.category === 'R&D' ? '#1E3A8A' : '#0F172A' }]}>
                                 <Text style={styles.typeTagText}>{item.category}</Text>

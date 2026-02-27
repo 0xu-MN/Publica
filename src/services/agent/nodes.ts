@@ -1,26 +1,7 @@
-import { ChatOpenAI } from "@langchain/openai";
-import { ChatAnthropic } from "@langchain/anthropic";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { HumanMessage, SystemMessage, AIMessage } from "@langchain/core/messages";
 import { AgentState } from "./state";
+import { getLLM, invokeLLMWithFallback } from "../llm-provider";
 import axios from "axios";
-
-// Models Configuration
-const getPerplexity = () => new ChatOpenAI({
-    modelName: "sonar-reasoning",
-    apiKey: process.env.PERPLEXITY_API_KEY,
-    configuration: { baseURL: "https://api.perplexity.ai" }
-});
-
-const getClaude = () => new ChatAnthropic({
-    modelName: "claude-3-5-sonnet-20240620",
-    apiKey: process.env.ANTHROPIC_API_KEY,
-});
-
-const getGemini = () => new ChatGoogleGenerativeAI({
-    model: "gemini-3-pro-preview",
-    apiKey: process.env.GOOGLE_API_KEY,
-});
 
 /**
  * Step 1: The Scout (Internal Smart Matcher)
@@ -73,9 +54,9 @@ export const scoutNode = async (state: AgentState): Promise<Partial<AgentState>>
 
         if (!grants || grants.length === 0) throw new Error("No internal grants found even after fallback");
 
-        // 2. AI Scoring via Gemini 3 Pro (Strict Mode)
-        const gemini = getGemini();
-        const res = await gemini.invoke([
+        // 2. AI Scoring via LLM (medium tier)
+        const model = getLLM('medium');
+        const res = await model.invoke([
             new SystemMessage(`Act as a strict government grant evaluator. 
   
   **CRITICAL RULE:**
@@ -154,7 +135,7 @@ export const strategistNode = async (state: AgentState): Promise<Partial<AgentSt
         return { outputs: { ...state.outputs, strategy: "No grant selected. Cannot proceed with strategy." } };
     }
 
-    const model = getGemini();
+    const model = getLLM('medium');
     const prompt = `
     You are an Elite R&D Strategy Consultant (Top 1% in Korea).
     Your goal is to create a winning strategy for the user to secure the "${state.selectedGrant.title}" grant.
@@ -215,8 +196,8 @@ export const writerNode = async (state: AgentState): Promise<Partial<AgentState>
     console.log("Maestro Writer: Writing professional Korean draft...");
 
     try {
-        const claude = getClaude();
-        const res = await claude.invoke([
+        // 'heavy' tier = Claude (with automatic Gemini fallback via llm-provider)
+        const res = await invokeLLMWithFallback('heavy', [
             new SystemMessage(`You write the most professional and natural business Korean. 
     Create a detailed business plan draft based on the provided Strategy.`),
             new HumanMessage(`Strategy: ${state.outputs.strategy}\nResearch: ${state.researchFindings}\nUser Profile: ${JSON.stringify(state.userProfile)}`)
@@ -226,25 +207,8 @@ export const writerNode = async (state: AgentState): Promise<Partial<AgentState>
             outputs: { ...state.outputs, writer: res.content.toString() }
         };
     } catch (e: any) {
-        console.error("Maestro Writer [Claude] Failed:", e.message || e);
-        console.log("⚠️ Attempting Fallback to Gemini 3 Pro Preview for Writing...");
-
-        try {
-            const gemini = getGemini();
-            const res = await gemini.invoke([
-                new SystemMessage(`You write the most professional and natural business Korean. 
-    Create a detailed business plan draft based on the provided Strategy.`),
-                new HumanMessage(`Strategy: ${state.outputs.strategy}\nResearch: ${state.researchFindings}\nUser Profile: ${JSON.stringify(state.userProfile)}`)
-            ]);
-
-            console.log("✅ Gemini Fallback Success.");
-            return {
-                outputs: { ...state.outputs, writer: res.content.toString() }
-            };
-        } catch (geminiError) {
-            console.error("Maestro Writer [Gemini Fallback] also Failed:", geminiError);
-            return { outputs: { ...state.outputs, writer: "Draft generation failed on all models." } };
-        }
+        console.error("Maestro Writer: All models failed:", e.message || e);
+        return { outputs: { ...state.outputs, writer: "Draft generation failed on all models." } };
     }
 };
 
@@ -255,7 +219,7 @@ export const writerNode = async (state: AgentState): Promise<Partial<AgentState>
 export const visualizerNode = async (state: AgentState): Promise<Partial<AgentState>> => {
     console.log("Maestro Visualizer: Generating Mermaid Mind-map...");
 
-    const model = getGemini();
+    const model = getLLM('light');  // 시각화는 경량 모델로 충분
     const res = await model.invoke([
         new SystemMessage("Extract the core hierarchy from the draft and generate Mermaid.js mindmap code. Only return the code block."),
         new HumanMessage(`Draft: ${state.outputs.writer}`)

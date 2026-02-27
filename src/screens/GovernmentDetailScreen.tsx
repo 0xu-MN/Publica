@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Linking, SafeAreaView, Platform, StatusBar, ActivityIndicator } from 'react-native';
-import { ArrowLeft, Share2, Calendar, Building, CheckCircle, ExternalLink, Globe, Zap } from 'lucide-react-native';
+import { ArrowLeft, Share2, Calendar, Building, CheckCircle, ExternalLink, Globe, Zap, AlertTriangle, XCircle, DollarSign, FileText, MapPin, Phone, Clock, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface GovernmentDetailScreenProps {
@@ -16,20 +16,23 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 
     if (!program) return null;
 
-    const handleOpenOriginal = () => {
-        if (program.original_url) {
-            Linking.openURL(program.original_url);
-        } else if (program.link) {
-            Linking.openURL(program.link);
+    const openUrl = (url: string) => {
+        if (Platform.OS === 'web') {
+            window.open(url, '_blank');
         } else {
-            Linking.openURL('https://www.mss.go.kr');
+            Linking.openURL(url);
         }
     };
 
+    const handleOpenOriginal = () => {
+        const url = program.application_url || program.original_url || program.link;
+        if (url) openUrl(url);
+    };
+
     const handleDownloadFile = () => {
-        if (program.file_url) {
-            Linking.openURL(program.file_url);
-        }
+        // Open the application page where official files/documents can be found
+        const url = program.application_url || program.original_url || program.link;
+        if (url) openUrl(url);
     };
 
     const handleShare = () => {
@@ -57,6 +60,29 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
         }, 4500);
     };
 
+    // Helper to render bullet-point text (supports newline-separated bullets)
+    const renderBulletList = (text: string, icon: 'check' | 'x' | 'dot' = 'check') => {
+        if (!text) return null;
+        const lines = text.split('\n').filter(l => l.trim());
+        return lines.map((line, i) => {
+            const cleanLine = line.replace(/^[•\-\s]+/, '').trim();
+            if (!cleanLine) return null;
+
+            const isBold = cleanLine.startsWith('**') && cleanLine.includes('**:');
+
+            return (
+                <View key={i} className="flex-row gap-3 mb-2.5">
+                    {icon === 'check' && <CheckCircle size={15} color="#3B82F6" style={{ marginTop: 3 }} />}
+                    {icon === 'x' && <XCircle size={15} color="#EF4444" style={{ marginTop: 3 }} />}
+                    {icon === 'dot' && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#64748B', marginTop: 7 }} />}
+                    <Text className="text-slate-300 leading-6 text-sm flex-1">
+                        {cleanLine.replace(/\*\*/g, '')}
+                    </Text>
+                </View>
+            );
+        });
+    };
+
     return (
         <SafeAreaView className="flex-1 bg-[#020617]">
             <StatusBar barStyle="light-content" />
@@ -80,7 +106,7 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                 </TouchableOpacity>
             </View>
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
                 {/* Hero Section */}
                 <View className="relative overflow-hidden">
                     <LinearGradient
@@ -93,17 +119,22 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                     <View className="px-6 pt-8 pb-10">
                         {/* Badges */}
                         <View className="flex-row gap-2 mb-4">
-                            {program.dDay && (
+                            {program.d_day && (
                                 <View className="bg-red-500/20 px-3 py-1 rounded-full border border-red-500/30">
-                                    <Text className="text-red-400 text-xs font-bold">{program.dDay}</Text>
+                                    <Text className="text-red-400 text-xs font-bold">{program.d_day}</Text>
                                 </View>
                             )}
                             <View className="bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                                <Text className="text-emerald-400 text-xs font-bold">{program.status}</Text>
+                                <Text className="text-emerald-400 text-xs font-bold">{program.status || '모집중'}</Text>
                             </View>
                             <View className="bg-white/10 px-3 py-1 rounded-full border border-white/10">
                                 <Text className="text-slate-300 text-xs">{program.category}</Text>
                             </View>
+                            {program.region && program.region !== '전국' && (
+                                <View className="bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
+                                    <Text className="text-purple-400 text-xs font-bold">{program.region}</Text>
+                                </View>
+                            )}
                         </View>
 
                         <Text className="text-white text-2xl font-bold leading-9 mb-6">
@@ -115,90 +146,190 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                             <Text className="text-slate-300 text-sm font-medium">{program.agency}</Text>
                         </View>
                         {program.department && (
-                            <Text className="text-slate-400 text-xs pl-6 mb-4">{program.department}</Text>
+                            <Text className="text-slate-400 text-xs pl-6 mb-2">{program.department}</Text>
                         )}
 
                         <View className="h-[1px] bg-white/10 my-4" />
 
-                        <View className="flex-row items-center gap-2">
-                            <Calendar size={16} color="#94A3B8" />
-                            <Text className="text-slate-300 text-sm">
-                                {program.period}
-                            </Text>
+                        {/* Quick Info Grid */}
+                        <View className="flex-row flex-wrap gap-4">
+                            {program.application_period && (
+                                <View className="flex-row items-center gap-2">
+                                    <Calendar size={16} color="#94A3B8" />
+                                    <Text className="text-slate-300 text-sm">
+                                        {program.application_period}
+                                    </Text>
+                                </View>
+                            )}
+                            {program.budget && (
+                                <View className="flex-row items-center gap-2">
+                                    <DollarSign size={16} color="#10B981" />
+                                    <Text className="text-emerald-400 text-sm font-bold">
+                                        {program.budget}
+                                    </Text>
+                                </View>
+                            )}
+                            {program.region && (
+                                <View className="flex-row items-center gap-2">
+                                    <MapPin size={16} color="#94A3B8" />
+                                    <Text className="text-slate-300 text-sm">{program.region}</Text>
+                                </View>
+                            )}
                         </View>
                     </View>
                 </View>
 
                 {/* Content Cards */}
-                <View className="px-5 -mt-6 gap-6 mb-24">
+                <View className="px-5 -mt-6 gap-5">
 
-                    {/* Summary */}
-                    {program.description && (
-                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                            <Text className="text-white text-lg font-bold mb-3">📋 사업 개요</Text>
-                            <Text className="text-slate-300 leading-6 text-sm">
+                    {/* 📋 사업 개요 */}
+                    <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
+                        <View className="flex-row items-center gap-2 mb-3">
+                            <Text className="text-lg">📋</Text>
+                            <Text className="text-white text-lg font-bold">사업 개요</Text>
+                        </View>
+                        {program.description && (
+                            <Text className="text-slate-300 leading-6 text-sm mb-4">
                                 {program.description}
+                            </Text>
+                        )}
+                        {/* Quick summary chips */}
+                        <View className="flex-row flex-wrap gap-2">
+                            {program.budget && (
+                                <View className="bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20">
+                                    <Text className="text-slate-500 text-[10px] mb-0.5">지원금액</Text>
+                                    <Text className="text-emerald-400 text-sm font-bold">{program.budget}</Text>
+                                </View>
+                            )}
+                            {program.application_period && (
+                                <View className="bg-blue-500/10 px-3 py-2 rounded-xl border border-blue-500/20">
+                                    <Text className="text-slate-500 text-[10px] mb-0.5">신청기간</Text>
+                                    <Text className="text-blue-400 text-sm font-bold">{program.application_period}</Text>
+                                </View>
+                            )}
+                            {program.target_audience && (
+                                <View className="bg-purple-500/10 px-3 py-2 rounded-xl border border-purple-500/20">
+                                    <Text className="text-slate-500 text-[10px] mb-0.5">지원대상</Text>
+                                    <Text className="text-purple-400 text-sm font-bold">{program.target_audience}</Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+
+                    {/* ⚠️ 자격 요건 */}
+                    {program.eligibility && (
+                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
+                            <View className="flex-row items-center gap-2 mb-4">
+                                <Text className="text-lg">⚠️</Text>
+                                <Text className="text-white text-lg font-bold">자격 요건</Text>
+                            </View>
+                            <View className="bg-amber-500/5 rounded-xl p-4 border border-amber-500/10 mb-3">
+                                <Text className="text-amber-400 text-xs font-bold mb-2">필수 요건</Text>
+                                {renderBulletList(program.eligibility, 'check')}
+                            </View>
+                        </View>
+                    )}
+
+                    {/* ❌ 제외 대상 */}
+                    {program.exclusions && (
+                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
+                            <View className="flex-row items-center gap-2 mb-4">
+                                <Text className="text-lg">❌</Text>
+                                <Text className="text-white text-lg font-bold">제외 대상</Text>
+                            </View>
+                            <View className="bg-red-500/5 rounded-xl p-4 border border-red-500/10">
+                                {renderBulletList(program.exclusions, 'x')}
+                            </View>
+                        </View>
+                    )}
+
+                    {/* 💰 지원 내용 */}
+                    {program.support_details && (
+                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
+                            <View className="flex-row items-center gap-2 mb-4">
+                                <Text className="text-lg">💰</Text>
+                                <Text className="text-white text-lg font-bold">지원 내용</Text>
+                            </View>
+                            {renderBulletList(program.support_details, 'dot')}
+                        </View>
+                    )}
+
+                    {/* 📝 신청 방법 */}
+                    {program.application_method && (
+                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
+                            <View className="flex-row items-center gap-2 mb-3">
+                                <Text className="text-lg">📝</Text>
+                                <Text className="text-white text-lg font-bold">신청 방법</Text>
+                            </View>
+                            <Text className="text-slate-300 leading-6 text-sm">
+                                {program.application_method}
                             </Text>
                         </View>
                     )}
 
-                    {/* Requirements */}
-                    {program.requirements && program.requirements.length > 0 && (
-                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                            <Text className="text-white text-lg font-bold mb-3">🎯 지원 대상</Text>
-                            {Array.isArray(program.requirements) ? (
-                                program.requirements.map((req: string, i: number) => (
-                                    <View key={i} className="flex-row gap-3 mb-2 last:mb-0">
-                                        <CheckCircle size={16} color="#3B82F6" className="mt-0.5" />
-                                        <Text className="text-slate-300 leading-6 text-sm flex-1">{req}</Text>
-                                    </View>
-                                ))
-                            ) : (
-                                <Text className="text-slate-300 leading-6 text-sm">{program.requirements}</Text>
-                            )}
-                        </View>
-                    )}
-
-                    {/* Additional Details */}
+                    {/* ℹ️ 세부 정보 */}
                     <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                        <Text className="text-white text-lg font-bold mb-4">ℹ️ 세부 정보</Text>
-
+                        <View className="flex-row items-center gap-2 mb-4">
+                            <Text className="text-lg">ℹ️</Text>
+                            <Text className="text-white text-lg font-bold">세부 정보</Text>
+                        </View>
                         <View className="gap-4">
-                            {program.budget && (
-                                <View>
-                                    <Text className="text-slate-500 text-xs mb-1">지원 예산</Text>
-                                    <Text className="text-slate-200 font-medium">{program.budget}</Text>
-                                </View>
-                            )}
-                            {program.target && (
-                                <View>
-                                    <Text className="text-slate-500 text-xs mb-1">타겟/분야</Text>
-                                    <Text className="text-slate-200 font-medium">{program.target}</Text>
-                                </View>
-                            )}
                             <View>
                                 <Text className="text-slate-500 text-xs mb-1">담당 기관</Text>
-                                <Text className="text-slate-200 font-medium">{program.original_agency || program.agency}</Text>
+                                <Text className="text-slate-200 font-medium">{program.agency}</Text>
                             </View>
+                            {program.department && (
+                                <View>
+                                    <Text className="text-slate-500 text-xs mb-1">담당부서</Text>
+                                    <Text className="text-slate-200 font-medium">{program.department}</Text>
+                                </View>
+                            )}
+                            {program.region && (
+                                <View>
+                                    <Text className="text-slate-500 text-xs mb-1">대상 지역</Text>
+                                    <Text className="text-slate-200 font-medium">{program.region}</Text>
+                                </View>
+                            )}
+                            {program.target_audience && (
+                                <View>
+                                    <Text className="text-slate-500 text-xs mb-1">지원 대상</Text>
+                                    <Text className="text-slate-200 font-medium">{program.target_audience}</Text>
+                                </View>
+                            )}
+                            {program.tech_field && (
+                                <View>
+                                    <Text className="text-slate-500 text-xs mb-1">기술 분야</Text>
+                                    <Text className="text-slate-200 font-medium">{program.tech_field}</Text>
+                                </View>
+                            )}
+                            {program.contact_info && (
+                                <View>
+                                    <Text className="text-slate-500 text-xs mb-1">문의처</Text>
+                                    <Text className="text-blue-400 font-medium">{program.contact_info}</Text>
+                                </View>
+                            )}
                         </View>
                     </View>
 
-                    {/* Submission Documents & Attachments */}
+                    {/* 📄 제출서류 및 첨부파일 */}
                     <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                        <Text className="text-white text-lg font-bold mb-4">📄 제출서류 및 첨부파일</Text>
+                        <View className="flex-row items-center gap-2 mb-4">
+                            <Text className="text-lg">📄</Text>
+                            <Text className="text-white text-lg font-bold">제출서류 및 첨부파일</Text>
+                        </View>
 
                         <View className="mb-4">
-                            <Text className="text-slate-500 text-xs mb-2">필수 제출 서류 (예시)</Text>
+                            <Text className="text-slate-500 text-xs mb-2">필수 제출 서류 (공고문에서 확인)</Text>
                             <View className="flex-row items-start gap-2 mb-1">
-                                <CheckCircle size={14} color="#64748B" className="mt-0.5" />
+                                <CheckCircle size={14} color="#64748B" style={{ marginTop: 2 }} />
                                 <Text className="text-slate-300 text-sm">사업계획서 (필수)</Text>
                             </View>
                             <View className="flex-row items-start gap-2 mb-1">
-                                <CheckCircle size={14} color="#64748B" className="mt-0.5" />
+                                <CheckCircle size={14} color="#64748B" style={{ marginTop: 2 }} />
                                 <Text className="text-slate-300 text-sm">사업자등록증 (해당 시)</Text>
                             </View>
                             <View className="flex-row items-start gap-2">
-                                <CheckCircle size={14} color="#64748B" className="mt-0.5" />
+                                <CheckCircle size={14} color="#64748B" style={{ marginTop: 2 }} />
                                 <Text className="text-slate-300 text-sm">국세/지방세 완납증명서</Text>
                             </View>
                         </View>
@@ -207,25 +338,22 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 
                         <TouchableOpacity
                             onPress={handleDownloadFile}
-                            className={`flex-row items-center justify-between bg-slate-800 p-3 rounded-xl border border-white/5 active:bg-slate-700 ${!program.file_url ? 'opacity-50' : ''}`}
-                            disabled={!program.file_url}
+                            className="flex-row items-center justify-between bg-slate-800 p-3 rounded-xl border border-white/5 active:bg-slate-700"
                         >
                             <View className="flex-row items-center gap-3">
                                 <View className="bg-blue-500/10 p-2 rounded-lg">
-                                    <Globe size={20} color={program.file_url ? "#3B82F6" : "#94A3B8"} />
+                                    <Globe size={20} color="#3B82F6" />
                                 </View>
                                 <View>
                                     <Text className="text-white font-medium">
-                                        {program.file_url ? '공고문 및 신청서식 내려받기' : '다운로드 가능한 파일 없음'}
+                                        공고문 및 신청서식 확인하기
                                     </Text>
                                     <Text className="text-slate-500 text-xs">
-                                        {program.file_url ? '원문 사이트에서 파일 다운로드' : '해당 공고는 첨부파일이 제공되지 않습니다.'}
+                                        원문 공고 사이트에서 서류를 다운로드 하세요
                                     </Text>
                                 </View>
                             </View>
-                            {program.file_url && (
-                                <ArrowLeft size={16} color="#94A3B8" style={{ transform: [{ rotate: '180deg' }] }} />
-                            )}
+                            <ChevronRight size={16} color="#94A3B8" />
                         </TouchableOpacity>
                     </View>
 
@@ -257,8 +385,8 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
             )}
 
             {/* Bottom Action Bar */}
-            <View className="absolute bottom-0 left-0 right-0 bg-[#020617]/90 px-6 py-4 border-t border-white/10 pb-10"
-                style={{ paddingBottom: Platform.OS === 'ios' ? 40 : 16 }}
+            <View className="absolute bottom-0 left-0 right-0 bg-[#020617]/95 px-6 py-4 border-t border-white/10"
+                style={{ paddingBottom: Platform.OS === 'web' ? 16 : Platform.OS === 'ios' ? 40 : 16 }}
             >
                 <View className="flex-row gap-3">
                     <TouchableOpacity

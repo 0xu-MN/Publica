@@ -3,6 +3,10 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 declare const Deno: any;
 
+// ─── LLM Configuration (change model here to switch) ───
+const LLM_MODEL = 'gemini-2.5-flash'; // Options: gemini-2.0-flash, gemini-2.5-pro, gemini-2.5-flash
+const LLM_TEMPERATURE = 0.7;
+
 // Define strict interface for Type Safety
 interface AgentResponse {
     chat_message: string;
@@ -112,9 +116,9 @@ Deno.serve(async (req: any) => {
     Generate the structured breakdown now.
     `;
 
-        // 2. Call Gemini 1.5 Pro (via fetch for Deno)
+        // 2. Call LLM (configurable via LLM_MODEL)
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -124,7 +128,7 @@ Deno.serve(async (req: any) => {
                         parts: [{ text: SYSTEM_PROMPT + "\n\n" + finalPrompt }]
                     }],
                     generationConfig: {
-                        temperature: 0.7,
+                        temperature: LLM_TEMPERATURE,
                         responseMimeType: "application/json"
                     }
                 })

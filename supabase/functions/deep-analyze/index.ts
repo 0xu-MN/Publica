@@ -3,6 +3,10 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 
 declare const Deno: any;
 
+// ─── LLM Configuration (change model here to switch) ───
+const LLM_MODEL = 'gemini-2.5-flash'; // Options: gemini-2.0-flash, gemini-2.5-pro, gemini-2.5-flash
+const LLM_TEMPERATURE = 0.3; // Fact-based analysis = low temperature
+
 const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -52,9 +56,9 @@ Deno.serve(async (req: Request) => {
 
         const userPrompt = `User Query: ${query}\nContext Node: ${context_node?.label || 'None'}\n\n(Simulated Retrieved Chunks would go here in RAG system)`;
 
-        // 2. Call Gemini 1.5 Pro
+        // 2. Call LLM (configurable via LLM_MODEL)
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/${LLM_MODEL}:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -64,7 +68,7 @@ Deno.serve(async (req: Request) => {
                         parts: [{ text: finalSystemPrompt + "\n\n" + userPrompt }]
                     }],
                     generationConfig: {
-                        temperature: 0.3, // Fact-based, low temp
+                        temperature: LLM_TEMPERATURE,
                         responseMimeType: "application/json"
                     }
                 })

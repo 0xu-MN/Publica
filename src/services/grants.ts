@@ -11,11 +11,23 @@ export interface Grant {
     summary: string;
     description: string;
     category: 'R&D' | 'Commercialization' | 'Voucher' | 'Policy Fund';
-    location?: string; // New field for strict filtering
+    location?: string;
     link?: string;
+    original_url?: string;
+    file_url?: string;
+    budget?: string;
+    eligibility?: string;
+    exclusions?: string;
+    support_details?: string;
+    application_period?: string;
+    application_method?: string;
+    region?: string;
+    department?: string;
+    contact_info?: string;
+    application_url?: string;
     matching_score?: number;
     matching_reason?: string;
-    created_at?: string; // For sorting
+    created_at?: string;
 }
 
 export const fetchGrants = async (): Promise<Grant[]> => {
