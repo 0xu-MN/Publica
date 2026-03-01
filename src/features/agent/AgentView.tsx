@@ -205,89 +205,41 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         }
     };
 
-    // 🧠 [핵심 변경] 백엔드 없이 클라이언트에서 바로 Gemini 호출
+    // 🧠 [핵심 변경] 문서 파싱 후 실제 AI 백엔드 호출
     const processWithBrain = async (markdown: string) => {
         try {
             setLoading(true);
             setShowWelcome(false); // Hide welcome
             setChatHistory(prev => [...prev, {
-                text: "AI가 공고문(30,000자)을 정밀 분석 중입니다... (시스템 우회 접속 중)",
+                text: "AI가 문서를 정밀 분석하여 맞춤형 인사이트를 추출합니다...",
                 sender: 'ai'
             }]);
 
-            // ⏱️ 2초 딜레이 (AI가 생각하는 척)
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // Call the real Agent with the document text as Context
+            const contextStr = 'Upload Document Markdown Payload:\n' + markdown.substring(0, 30000);
+            const res = await callAgent(
+                "내가 업로드한 문서를 분석하고, 이를 바탕으로 핵심 전략 프레임워크 4단계를 도출해줘.",
+                contextStr
+            );
 
-            // ✅ [Mock Data] 정부지원사업 분석 결과
-            const mockStrategyPlan = {
-                "strategyPlan": {
-                    "hypothesis": "2025 예비창업패키지: AI 기반 소셜 임팩트와 기술 독창성 강조 전략",
-                    "steps": [
-                        {
-                            "step_number": 1,
-                            "title": "지원 자격 및 제외 대상 검토",
-                            "description": "공고문 3페이지의 '신청 자격' 요건을 정밀 검토하였습니다. 현재 대표님의 이력은 '일반 분야' 지원에 적합하며, 기창업 이력이 없으므로 감점 요인은 없습니다.",
-                            "action_type": "research"
-                        },
-                        {
-                            "step_number": 2,
-                            "title": "가점 확보 전략 (최대 3점)",
-                            "description": "만 29세 이하 청년 가점(1점)과 지역 주력 산업 관련 가점(1점)을 확보할 수 있습니다. 사업계획서 5번 항목에 이를 명시하여 서류 평가 우위를 점해야 합니다.",
-                            "action_type": "research"
-                        },
-                        {
-                            "step_number": 3,
-                            "title": "PSST 사업계획서 차별화",
-                            "description": "'문제 인식(Problem)' 파트에서 기존 경쟁사 대비 기술적 진보성을 강조하고, 구체적인 시장 검증 데이터를 포함하여 '실현 가능성' 점수를 높여야 합니다.",
-                            "action_type": "research"
-                        },
-                        {
-                            "step_number": 4,
-                            "title": "제출 서류 체크리스트",
-                            "description": "사업자등록증명원, 국세/지방세 완납증명서 등 필수 서류 7종의 누락 없는 준비가 필요합니다. 특히 가점 관련 증빙을 잊지 마세요.",
-                            "action_type": "documentation"
-                        }
-                    ]
-                }
-            };
-
-            const data = mockStrategyPlan;
-
-            if (data?.strategyPlan) {
-                const workspaceData = {
-                    root_node: data.strategyPlan.hypothesis,
-                    branches: data.strategyPlan.steps.map((step: any, idx: number) => ({
-                        id: `step-${idx}-${Date.now()}`,
-                        label: step.title,
-                        description: step.description,
-                        type: step.action_type,
-                        step_number: step.step_number,
-                        references: []
-                    }))
-                };
-
+            if (res?.workspace_data) {
                 LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                setColumns([{ ...workspaceData, parentIndex: -1 }]);
+                setColumns([{ ...res.workspace_data, parentIndex: -1 }]);
                 setChatHistory(prev => [...prev, {
-                    text: "✅ 전략 수립이 완료되었습니다. [Page 1]의 개요와 [Page 3]의 자격 요건을 바탕으로 분석했습니다.",
+                    text: res.chat_message || "✅ 문서 기반 세부 전략 도출이 완료되었습니다.",
                     sender: 'ai'
                 }]);
 
-                setSuggestions([
-                    { label: "세부 실행 계획", type: "PLAN", "query": "Create detailed action items" },
-                    { label: "관련 자료 검색", type: "VERIFY", "query": "Find references" },
-                    { label: "위험 요소 분석", type: "EXPAND", "query": "Analyze risks" }
-                ]);
-
-                Alert.alert("완료", "문서 기반 합격 전략 수립이 완료되었습니다. (Mock Mode)");
+                if (res.suggested_actions) {
+                    setSuggestions(res.suggested_actions);
+                }
+            } else {
+                throw new Error("Invalid format");
             }
 
         } catch (error: any) {
-            console.error("❌ Mock Error:", error);
-            setChatHistory(prev => [...prev, {
-                text: `❌ 오류가 발생했습니다: ${error.message}`,
-                sender: 'ai'
-            }]);
+            console.error("Brain Processing Error:", error);
+            setChatHistory(prev => [...prev, { text: `❌ 문서 분석 중 오류가 발생했습니다: ${error.message}`, sender: 'ai' }]);
         } finally {
             setLoading(false);
         }
