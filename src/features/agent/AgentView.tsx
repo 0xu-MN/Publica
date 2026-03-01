@@ -152,9 +152,11 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         try {
             console.log("🚀 [Real AI] Calling insight-agent-gateway:", text.substring(0, 80));
 
+            const finalInput = context ? `${text}\n\n[Context Data]:\n${context}` : text;
+
             const { data, error } = await supabase.functions.invoke('insight-agent-gateway', {
                 body: {
-                    user_input: text,
+                    user_input: finalInput,
                     user_job: 'Strategist',
                     task_mode: 'Hypothesis Generator'
                 }
@@ -474,8 +476,10 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
         const title = columns[0]?.branches?.[0]?.label || columns[0]?.root_node || "Untitled Project";
         // Pass pdfUrl as 5th argument
-        await saveSession(title, agentMode, columns, chatHistory, pdfUrl || undefined);
-        Alert.alert("성공", "프로젝트가 저장되었습니다. 파일 관리자에서 확인하세요.");
+        const success = await saveSession(title, agentMode, columns, chatHistory, pdfUrl || undefined);
+        if (success) {
+            Alert.alert("성공", "프로젝트가 저장되었습니다. 파일 관리자에서 확인하세요.");
+        }
     };
 
     // 🌟 사업계획서 자동 생성 로직 (Phase 6)

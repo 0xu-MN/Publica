@@ -47,11 +47,20 @@ export const useSessionManager = (userId: string | undefined) => {
                 .select();
         }
 
-        if (result.data) {
+        if (result.error) {
+            console.error("Session Save Error:", result.error);
+            Alert.alert("저장 실패", result.error.message || "오류가 발생했습니다.");
+            return false;
+        }
+
+        if (result.data && result.data.length > 0) {
             setCurrentSessionId(result.data[0].id);
             fetchSessions(); // 목록 갱신
             console.log("Session Saved!");
+            return true;
         }
+
+        return false;
     };
 
     // 3. 불러오기
