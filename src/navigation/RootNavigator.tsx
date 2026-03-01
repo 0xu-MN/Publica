@@ -27,7 +27,7 @@ export const RootNavigator = () => {
     }
 
     return (
-        <NavigationContainer>
+        <NavigationContainer documentTitle={{ formatter: () => 'Publica' }}>
             <FeedScreen />
         </NavigationContainer>
     );

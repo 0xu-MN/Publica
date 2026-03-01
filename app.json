@@ -25,7 +25,11 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "name": "Publica",
+      "shortName": "Publica",
+      "description": "AI-powered Business Strategy Platform",
+      "themeColor": "#000000"
     }
   }
 }
