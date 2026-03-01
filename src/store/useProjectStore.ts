@@ -7,6 +7,7 @@ export interface AgentSession {
     workspace_data: any[];
     chat_history: any[];
     auto_run_query?: string;
+    grant_url?: string;
 }
 
 interface ProjectState {

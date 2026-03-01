@@ -455,8 +455,10 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                                     }
                                 ],
                                 chat_history: [
-                                    { sender: 'ai', text: `안녕하세요! '${program.title}' 공고를 기반으로 맞춤형 합격 전략을 수립하겠습니다. 3단계(적합성-전략-실행) 분석을 시작합니다.` }
+                                    { sender: 'ai', text: `안녕하세요! '${program.title}' 공고를 기반으로 맞춤형 합격 전략을 수립하겠습니다. 먼저 사업 아이디어에 대해 몇 가지 질문을 드리겠습니다.` }
                                 ],
+                                // 🌟 Grant URL for WebView (공고문 원문 보기)
+                                grant_url: program.application_url || program.original_url || program.link || '',
                                 // 🌟 Magic Query to Trigger Agent
                                 auto_run_query: `Analyze this government grant program: ${program.title}.\n\nContext:\n- Agency: ${program.agency}\n- Target: ${program.target}\n- Tech Field: ${program.tech_field}\n\nTask: Provide a comprehensive strategy including Fit Analysis, Winning Strategy, and Action Plan.`
                             };

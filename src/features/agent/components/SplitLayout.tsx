@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, StyleSheet, PanResponder, Dimensions, Platform } from 'react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { View, StyleSheet, Platform, Dimensions } from 'react-native';
 
 interface SplitLayoutProps {
     leftNode: React.ReactNode;
@@ -7,49 +7,89 @@ interface SplitLayoutProps {
     initialLeftWidth?: number;
     minLeftWidth?: number;
     maxLeftWidth?: number;
+    isLeftMinimized?: boolean;
 }
 
 export const SplitLayout = ({
     leftNode,
     rightNode,
-    initialLeftWidth = Dimensions.get('window').width * 0.5,
-    minLeftWidth = 300,
-    maxLeftWidth = Dimensions.get('window').width * 0.8
+    initialLeftWidth = Dimensions.get('window').width * 0.45,
+    minLeftWidth = 200,
+    maxLeftWidth = Dimensions.get('window').width * 0.75,
+    isLeftMinimized = false
 }: SplitLayoutProps) => {
     const [leftWidth, setLeftWidth] = useState(initialLeftWidth);
-    const screenWidth = Dimensions.get('window').width;
+    const containerRef = useRef<View>(null);
+    const isDragging = useRef(false);
+    const containerLeft = useRef(0);
 
-    const panResponder = useRef(
-        PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
-            onMoveShouldSetPanResponder: () => true,
-            onPanResponderMove: (_, gestureState) => {
-                // Determine new width
-                // Note: gestureState.moveX is the absolute X coordinate
-                // We just use moveX as the new width
-                const newWidth = Math.max(minLeftWidth, Math.min(gestureState.moveX, maxLeftWidth));
-                setLeftWidth(newWidth);
-            },
-            onPanResponderRelease: () => {
-                // Finalize width if needed (optional)
+    // Web: Use native mouse events for smooth, reliable resizing
+    useEffect(() => {
+        if (Platform.OS !== 'web') return;
+
+        const handleMouseMove = (e: MouseEvent) => {
+            if (!isDragging.current) return;
+            e.preventDefault();
+            // Calculate width relative to the container's left edge
+            const newWidth = e.clientX - containerLeft.current;
+            const clamped = Math.max(minLeftWidth, Math.min(newWidth, maxLeftWidth));
+            setLeftWidth(clamped);
+        };
+
+        const handleMouseUp = () => {
+            if (isDragging.current) {
+                isDragging.current = false;
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
             }
-        })
-    ).current;
+        };
+
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+
+        return () => {
+            window.removeEventListener('mousemove', handleMouseMove);
+            window.removeEventListener('mouseup', handleMouseUp);
+        };
+    }, [minLeftWidth, maxLeftWidth]);
+
+    const handleMouseDown = useCallback(() => {
+        if (Platform.OS !== 'web') return;
+        isDragging.current = true;
+        // @ts-ignore - web only
+        document.body.style.cursor = 'col-resize';
+        // @ts-ignore - web only
+        document.body.style.userSelect = 'none';
+
+        // Measure container offset
+        if (containerRef.current) {
+            // @ts-ignore - web DOM access
+            const el = containerRef.current as any;
+            if (el && typeof el.getBoundingClientRect === 'function') {
+                containerLeft.current = (el as any).getBoundingClientRect().left;
+            } else if (el && el.measure) {
+                el.measure((_x: number, _y: number, _w: number, _h: number, pageX: number) => {
+                    containerLeft.current = pageX;
+                });
+            }
+        }
+    }, []);
 
     return (
-        <View style={styles.container}>
+        <View ref={containerRef} style={styles.container}>
             {/* Left Panel */}
-            <View style={[styles.panel, { width: leftWidth }]}>
+            <View style={[styles.panel, { width: isLeftMinimized ? 56 : leftWidth }]}>
                 {leftNode}
             </View>
 
             {/* Resizer Handle */}
             <View
-                {...panResponder.panHandlers}
                 style={[
                     styles.resizer,
                     Platform.OS === 'web' && { cursor: 'col-resize' } as any
                 ]}
+                // @ts-ignore - web event
+                onMouseDown={handleMouseDown}
             >
                 <View style={styles.resizerLine} />
             </View>
@@ -73,19 +113,19 @@ const styles = StyleSheet.create({
         overflow: 'hidden'
     },
     resizer: {
-        width: 10,
-        backgroundColor: '#1E293B',
+        width: 6,
+        backgroundColor: '#0F172A',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 10,
         borderLeftWidth: 1,
         borderRightWidth: 1,
-        borderColor: '#000'
+        borderColor: '#1E293B',
     },
     resizerLine: {
-        width: 2,
-        height: 40,
-        backgroundColor: '#475569',
-        borderRadius: 1
+        width: 3,
+        height: 32,
+        backgroundColor: '#334155',
+        borderRadius: 2,
     }
 });
