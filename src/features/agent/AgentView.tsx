@@ -1,19 +1,21 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, LayoutAnimation, Dimensions, Platform, PanResponder, UIManager, Alert, ScrollView } from 'react-native';
 import { supabase } from '../../lib/supabase';
 // 아이콘 필수!
-import { RefreshCw, ZoomIn, ZoomOut, Folder, Save, X, Trash2, UploadCloud } from 'lucide-react-native';
+import { RefreshCw, ZoomIn, ZoomOut, Folder, Save, X, Trash2, UploadCloud, ExternalLink } from 'lucide-react-native';
 import { WelcomeScreen } from './components/WelcomeScreen';
 
 import { ModeDropdown } from './components/ModeDropdown';
 import { TowerCard } from './components/TowerCard';
-import { DetailPanel } from './components/DetailPanel';
-import { FloatingChat } from './components/FloatingChat';
+import { DetailPanel, DetailPanelRef } from './components/DetailPanel';
+// FloatingChat removed — chat is now inside DetailPanel (INSPECTOR)
 import { FileUploader } from './components/FileUploader';
 import { RootNodeCard } from './components/RootNodeCard';
 import { SplitLayout } from './components/SplitLayout';
 import { FloatingContextMenu } from './components/FloatingContextMenu';
 import { ExplanationPopover } from './components/ExplanationPopover';
+import { IdeaQuestionnaire } from './components/IdeaQuestionnaire';
+import { ContextDock } from './components/ContextDock';
 
 // import { PDFViewerPanel } from './components/PDFViewerPanel'; // Lazy load for safety
 const PDFViewerPanel = React.lazy(() => import('./components/PDFViewerPanel').then(module => ({ default: module.PDFViewerPanel }))) as any;
@@ -52,12 +54,17 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
     // 🌟 File Uploader Ref (For Programmatic Access)
     const fileUploaderRef = useRef<any>(null);
-    const floatingChatRef = useRef<any>(null);
+    const detailPanelRef = useRef<DetailPanelRef>(null);
 
-    // 🌟 Chat UI State (Parent Controlled)
-    const [isChatExpanded, setIsChatExpanded] = useState(false);
+
     const [pdfUrl, setPdfUrl] = useState<string | null>(null); // For Split View
     const [isDragging, setIsDragging] = useState(false);
+
+    // 🌟 Grant Analysis States
+    const [grantUrl, setGrantUrl] = useState<string | null>(null); // 공고문 원문 WebView URL
+    const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+    const [pendingGrantQuery, setPendingGrantQuery] = useState<string>('');
+    const [pendingGrantTitle, setPendingGrantTitle] = useState<string>('');
 
     // Removed debug PDF loading to prevent irrelevant files.
 
@@ -79,10 +86,20 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             setColumns(initialSession.workspace_data || []);
             setChatHistory(initialSession.chat_history || []);
             if (initialSession.pdf_url) setPdfUrl(initialSession.pdf_url);
-            setShowWelcome(false); // Hide welcome if loading session
+            setShowWelcome(false);
 
-            // 🚀 Auto-Run if query is present (for Connect Hub integration)
-            if (initialSession.auto_run_query) {
+            // 🌟 Grant Analysis: Show questionnaire for grant mode
+            if (initialSession.auto_run_query && initialSession.mode === 'Grant Strategist') {
+                console.log("📋 Grant detected — showing questionnaire first");
+                // Set grant URL if available (for WebView split)
+                if (initialSession.grant_url) {
+                    setGrantUrl(initialSession.grant_url);
+                }
+                setPendingGrantQuery(initialSession.auto_run_query);
+                setPendingGrantTitle(initialSession.title || '');
+                setShowQuestionnaire(true);
+            } else if (initialSession.auto_run_query) {
+                // Non-grant auto-run (legacy behavior)
                 console.log("🚀 Auto-Run Triggered:", initialSession.auto_run_query);
                 setTimeout(() => {
                     handleStart(initialSession.auto_run_query);
@@ -96,6 +113,11 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
     const scale = useRef(new Animated.Value(1)).current;
     const [scaleDisplay, setScaleDisplay] = useState(1);
     const canvasRef = useRef<View>(null);
+    const [isLeftPanelMinimized, setIsLeftPanelMinimized] = useState(false);
+
+    // 🌟 3.5 Active Path State for Ponder UI (Bug 5 Fix)
+    // Tracks { [absoluteColumnIndex]: branchId }
+    const [activePathNodes, setActivePathNodes] = useState<Record<number, string>>({});
 
     // --- 4. Web Zoom Fix (스크롤 방지) ---
     useEffect(() => {
@@ -279,17 +301,40 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
         if (res?.workspace_data) {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setColumns([{ ...res.workspace_data, parentIndex: -1 }]); // 맵 그리기
+            setColumns([{ ...res.workspace_data, parentIndex: -1 }]);
 
-            // 추천 칩 업데이트
             if (res.suggested_actions && res.suggested_actions.length > 0) {
                 setSuggestions(res.suggested_actions);
             } else {
-                // 백엔드가 추천 안 해주면 기본값이라도 띄움
                 setSuggestions([
                     { label: "🔍 심층 분석", type: "EXPAND", query: `Analyze '${text}' in depth` },
                     { label: "🗓️ 실행 계획 수립", type: "PLAN", query: "Create action plan" }
                 ]);
+            }
+        }
+        setLoading(false);
+    };
+
+    // 🌟 [Grant AI] 사업 아이디어 포함 분석 시작
+    const handleStartWithIdea = async (grantQuery: string, businessIdea: any) => {
+        setShowQuestionnaire(false);
+        setLoading(true); setColumns([]); setActiveNode(null); setSuggestions([]);
+
+        // 사업 아이디어를 포함한 강화된 프롬프트
+        const enhancedQuery = `${grantQuery}\n\n## 사용자 사업 아이디어 (User Business Idea)\n- 아이디어: ${businessIdea.description}\n- 팀 구성: ${businessIdea.teamComposition}\n- 현재 단계: ${businessIdea.currentStage}\n- 타겟 시장: ${businessIdea.targetMarket}\n- 차별점: ${businessIdea.differentiator}\n\nIMPORTANT: Incorporate the user's specific business idea into your strategy. Make the analysis personalized to THEIR idea, team, and market.`;
+
+        setChatHistory(prev => [...prev, {
+            text: `📝 사업 아이디어가 반영된 맞춤형 분석을 시작합니다...\n• 아이디어: ${businessIdea.description}\n• 팀: ${businessIdea.teamComposition}\n• 단계: ${businessIdea.currentStage}`,
+            sender: 'ai'
+        }]);
+
+        const res = await callAgent(enhancedQuery);
+
+        if (res?.workspace_data) {
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setColumns([{ ...res.workspace_data, parentIndex: -1 }]);
+            if (res.suggested_actions && res.suggested_actions.length > 0) {
+                setSuggestions(res.suggested_actions);
             }
         }
         setLoading(false);
@@ -309,8 +354,19 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
         if (res) {
             if (res.workspace_data) {
-                const pIdx = activeNode ? columns[columns.length - 1].branches.indexOf(activeNode) : 0;
-                setColumns(prev => [...prev, { ...res.workspace_data, parentIndex: pIdx }]); // 맵 확장
+                // Safely route the newly generated branch card to its proper parent in the tree (Bug 4 Fix)
+                const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === activeNode?.id));
+                const bIdx = colIdx !== -1 ? columns[colIdx].branches.findIndex((b: any) => b.id === activeNode?.id) : 0;
+
+                LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                setColumns(prev => [
+                    ...prev,
+                    {
+                        ...res.workspace_data,
+                        parentIndex: bIdx,
+                        sourceColumnIndex: colIdx !== -1 ? colIdx : 0
+                    }
+                ]);
             }
             if (res.chat_message) {
                 setChatHistory(prev => [...prev, { text: res.chat_message, sender: 'ai' }]);
@@ -322,41 +378,92 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         setLoading(false);
     };
 
-    const handleExpand = async (branch: any, idx: number, branchIndex: number) => {
-        // Toggle: if this card already has children, collapse them
-        const hasChildColumn = columns[idx + 1] && columns[idx + 1].parentIndex === branchIndex;
-        if (hasChildColumn) {
-            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setColumns(prev => prev.slice(0, idx + 1));
-            setActiveNode(activeNode === branch ? null : branch);
+    // 🌟 3.6 Visible Columns Logic (Bug 5 Fix)
+    // Computes which columns are actually visible based on the active path lineage
+    const { visibleColumns, absColIndices } = useMemo(() => {
+        if (!columns || columns.length === 0) return { visibleColumns: [], absColIndices: [] };
+        const result: any[] = [columns[0]];
+        const absIndices = [0];
+
+        let currentAbsColIdx = 0;
+        let visibleDepth = 0;
+
+        while (true) {
+            const activeNodeId = activePathNodes[currentAbsColIdx];
+            if (!activeNodeId) break;
+
+            const currentCol = columns[currentAbsColIdx];
+            const activeBIdx = currentCol?.branches?.findIndex((b: any) => b.id === activeNodeId);
+            if (activeBIdx === undefined || activeBIdx === -1) break;
+
+            const childAbsIdx = columns.findIndex(
+                (c, i) => i > currentAbsColIdx && c.parentIndex === activeBIdx && c.sourceColumnIndex === currentAbsColIdx
+            );
+
+            if (childAbsIdx !== -1) {
+                result.push(columns[childAbsIdx]);
+                absIndices.push(childAbsIdx);
+                currentAbsColIdx = childAbsIdx;
+                visibleDepth++;
+            } else {
+                break;
+            }
+        }
+        return { visibleColumns: result, absColIndices: absIndices };
+    }, [columns, activePathNodes]);
+
+    // Used by handleExpand, Deep Dive, and Branching
+    const handleSelectNode = (node: any, absoluteColIdx: number) => {
+        setActivePathNodes(prev => {
+            const newPath = { ...prev };
+            // If already active, toggle it off (collapse)
+            if (newPath[absoluteColIdx] === node.id) {
+                for (let k in newPath) {
+                    if (Number(k) >= absoluteColIdx) delete newPath[k];
+                }
+                setActiveNode(null);
+                return newPath;
+            }
+            // Otherwise activate it and prune deeper paths
+            for (let k in newPath) {
+                if (Number(k) >= absoluteColIdx) delete newPath[k];
+            }
+            newPath[absoluteColIdx] = node.id;
+            return newPath;
+        });
+        setActiveNode(node);
+    };
+
+    const handleExpand = async (branch: any, absColIdx: number, branchIndex: number) => {
+        const existingChildIdx = columns.findIndex(
+            (col, i) => i > absColIdx && col.parentIndex === branchIndex && col.sourceColumnIndex === absColIdx
+        );
+
+        if (existingChildIdx !== -1) {
+            // Already fetched, just toggle visibility
+            handleSelectNode(branch, absColIdx);
             return;
         }
 
-        setActiveNode(branch);
-
-        // Trim any deeper columns from a different branch
-        if (idx < columns.length - 1) {
-            setColumns(prev => prev.slice(0, idx + 1));
-        }
-
+        handleSelectNode(branch, absColIdx);
         setLoading(true);
         setSuggestions([]);
 
         const contextStr = `Expand on: ${branch.label}\nDescription: ${branch.description}`;
-        const res = await callAgent(
-            `Provide detailed next steps for: ${branch.label}`,
-            contextStr
-        );
+        const res = await callAgent(`Provide detailed next steps for: ${branch.label}`, contextStr);
 
         if (res?.workspace_data) {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setColumns(prev => [...prev, { ...res.workspace_data, parentIndex: branchIndex }]);
+            setColumns(prev => [
+                ...prev,
+                {
+                    ...res.workspace_data,
+                    parentIndex: branchIndex,
+                    sourceColumnIndex: absColIdx,
+                }
+            ]);
         }
-
-        if (res?.suggested_actions) {
-            setSuggestions(res.suggested_actions);
-        }
-
+        if (res?.suggested_actions) setSuggestions(res.suggested_actions);
         setLoading(false);
     };
 
@@ -401,35 +508,178 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             handleStart(`Create a detailed action plan for: ${node.label}`);
             setActiveNode(null);
         } else if (type === 'DEEP_DIVE') {
-            setChatHistory(prev => [...prev, { text: `🔍 '${node.label}' 항목에 대해 심층 분석을 시작합니다.`, sender: 'me' }]);
-            handleChatSend(`Deep dive analysis for: ${node.label}. Provide technical details and implementation risks.`);
-        } else if (type === 'BRANCH') {
-            // Find current column index to append children correctly
-            const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === node.id));
-            if (colIdx !== -1) {
-                const bIdx = columns[colIdx].branches.findIndex((b: any) => b.id === node.id);
-                handleExpand(node, colIdx, bIdx);
-            }
-        } else if (type === 'ASK') {
-            // Real AI call for Ask AI — deliver a direct AI answer in chat
-            setChatHistory(prev => [...prev, { text: `❓ '${node.label}'에 대해 분석 중...`, sender: 'me' }]);
+            // 🔍 Deep Dive — deep-analyze 호출 후 결과를 새 브랜치 플로우 카드로 생성
+            setChatHistory(prev => [...prev, { text: `🔍 '${node.label}' 심층 분석 중... 새 플로우가 생성됩니다.`, sender: 'ai' }]);
             setLoading(true);
+            setActiveNode(node);
+
             try {
-                const { data, error } = await supabase.functions.invoke('deep-analyze', {
-                    body: {
-                        query: `Explain in detail: ${node.label}. ${node.description || ''}`,
-                        context_node: { label: node.label, description: node.description },
-                        doc_type_hint: 'Research Paper'
+                const contextStr = `Deep dive analysis: Break down "${node.label}" into detailed sub-steps with technical specifics, risks, and implementation details. Description: ${node.description || ''}\nFocus heavily on making the output highly specific and actionable.`;
+                const res = await callAgent(
+                    `Perform a deep dive analysis on: ${node.label}`,
+                    contextStr
+                );
+
+                if (res?.workspace_data?.branches && res.workspace_data.branches.length > 0) {
+                    const deepDiveBranches = res.workspace_data.branches.map((b: any, i: number) => ({
+                        ...b,
+                        source: 'deep_dive',  // 🏷️ Blue badge
+                        id: `deep_${node.id}_${i}_${Date.now()}`
+                    }));
+
+                    const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === node.id));
+                    const bIdx = colIdx !== -1 ? columns[colIdx].branches.findIndex((b: any) => b.id === node.id) : 0;
+
+                    // 🔑 Check if a child column already exists for this node
+                    const existingChildColIdx = columns.findIndex(
+                        (col, i) => i > colIdx && col.parentIndex === bIdx && col.sourceColumnIndex === colIdx
+                    );
+
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    setColumns(prev => {
+                        if (existingChildColIdx !== -1) {
+                            // Append to existing child column
+                            const newCols = [...prev];
+                            newCols[existingChildColIdx] = {
+                                ...newCols[existingChildColIdx],
+                                branches: [...(newCols[existingChildColIdx].branches || []), ...deepDiveBranches]
+                            };
+                            return newCols;
+                        } else {
+                            // Create new child column
+                            return [
+                                ...prev,
+                                {
+                                    root_node: `🔍 ${node.label}`,
+                                    branches: deepDiveBranches,
+                                    parentIndex: bIdx,
+                                    sourceColumnIndex: colIdx,
+                                }
+                            ];
+                        }
+                    });
+
+                    setChatHistory(prev => [...prev, { text: `✅ '${node.label}' 심층 분석 완료! ${deepDiveBranches.length}개의 세부 항목이 추가되었습니다.`, sender: 'ai' }]);
+                } else {
+                    // Fallback: if parsing fails, use handleExpand only if child column doesn't exist
+                    const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === node.id));
+                    if (colIdx !== -1) {
+                        const bIdx = columns[colIdx].branches.findIndex((b: any) => b.id === node.id);
+                        const existingChildColIdx = columns.findIndex(col => col.parentIndex === bIdx && col.sourceColumnIndex === colIdx);
+                        if (existingChildColIdx === -1) handleExpand(node, colIdx, bIdx);
                     }
-                });
-                if (error) throw error;
-                const answer = data?.summary || '분석 결과를 가져오지 못했습니다.';
-                setChatHistory(prev => [...prev, { text: answer, sender: 'ai' }]);
+                }
             } catch (err: any) {
-                setChatHistory(prev => [...prev, { text: `❌ 오류: ${err.message}`, sender: 'ai' }]);
+                setChatHistory(prev => [...prev, { text: `❌ 심층 분석 오류: ${err.message}. 기본 분석으로 전환합니다.`, sender: 'ai' }]);
+                // Fallback to handleExpand on error
+                const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === node.id));
+                if (colIdx !== -1) {
+                    const bIdx = columns[colIdx].branches.findIndex((b: any) => b.id === node.id);
+                    const existingChildColIdx = columns.findIndex(col => col.parentIndex === bIdx && col.sourceColumnIndex === colIdx);
+                    if (existingChildColIdx === -1) handleExpand(node, colIdx, bIdx);
+                }
             } finally {
                 setLoading(false);
             }
+        } else if (type === 'BRANCH') {
+            setChatHistory(prev => [...prev, { text: `🌿 '${node.label}' 하위 실행 단계를 생성합니다...`, sender: 'ai' }]);
+            setLoading(true);
+            setActiveNode(node);
+
+            try {
+                const contextStr = `Expand on: ${node.label}\nDescription: ${node.description}`;
+                const res = await callAgent(
+                    `Provide detailed next steps for: ${node.label}. Generate distinct new steps that build upon the existing context.`,
+                    contextStr
+                );
+
+                if (res?.workspace_data?.branches && res.workspace_data.branches.length > 0) {
+                    const newBranches = res.workspace_data.branches.map((b: any, i: number) => ({
+                        ...b,
+                        source: 'branching', // 🏷️ Green badge
+                        id: `branch_${node.id}_${Date.now()}_${i}` // unique ID
+                    }));
+
+                    const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === node.id));
+                    const bIdx = colIdx !== -1 ? columns[colIdx].branches.findIndex((b: any) => b.id === node.id) : 0;
+                    const existingChildColIdx = columns.findIndex(col => col.parentIndex === bIdx && col.sourceColumnIndex === colIdx);
+
+                    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                    setColumns(prev => {
+                        if (existingChildColIdx !== -1) {
+                            const newCols = [...prev];
+                            newCols[existingChildColIdx] = {
+                                ...newCols[existingChildColIdx],
+                                branches: [...(newCols[existingChildColIdx].branches || []), ...newBranches]
+                            };
+                            return newCols;
+                        } else {
+                            return [
+                                ...prev,
+                                {
+                                    root_node: `🌿 ${node.label} 세부 단계`,
+                                    branches: newBranches,
+                                    parentIndex: bIdx,
+                                    sourceColumnIndex: colIdx,
+                                }
+                            ];
+                        }
+                    });
+                    setChatHistory(prev => [...prev, { text: `✅ '${node.label}' 하위 단계 생성이 완료되었습니다.`, sender: 'ai' }]);
+                } else {
+                    setChatHistory(prev => [...prev, { text: `❌ 하위 단계를 생성하지 못했습니다.`, sender: 'ai' }]);
+                }
+            } catch (err: any) {
+                setChatHistory(prev => [...prev, { text: `❌ 브랜치 생성 오류: ${err.message}`, sender: 'ai' }]);
+            } finally {
+                setLoading(false);
+            }
+        } else if (type === 'ASK') {
+            // Ask AI → open chat section inside INSPECTOR panel
+            if (detailPanelRef.current) {
+                detailPanelRef.current.setInput(`[${node.label}] 에 대해 질문: `);
+            }
+        } else if (type === 'CHAT_TO_BRANCH') {
+            // 💬 CHAT_TO_BRANCH — User clicked "Save this answer as a branch" inside the AI Chat bubble
+            // node.customQuery contains the AI's actual text response we want to branch off.
+            const chatResponseText = node.customQuery || "새로운 인사이트";
+
+            // Create a single branch off this answer
+            const newBranches = [{
+                id: `chat_${node.id}_${Date.now()}`,
+                label: chatResponseText.substring(0, 40) + (chatResponseText.length > 40 ? "..." : ""),
+                description: chatResponseText,
+                type: 'insight',
+                source: 'ask_ai', // 🏷️ Purple badge for Chat-based branches
+                completed: false
+            }];
+
+            const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === node.id));
+            const bIdx = colIdx !== -1 ? columns[colIdx].branches.findIndex((b: any) => b.id === node.id) : 0;
+            const existingChildColIdx = columns.findIndex(col => col.parentIndex === bIdx && col.sourceColumnIndex === colIdx);
+
+            LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+            setColumns(prev => {
+                if (existingChildColIdx !== -1) {
+                    const newCols = [...prev];
+                    newCols[existingChildColIdx] = {
+                        ...newCols[existingChildColIdx],
+                        branches: [...(newCols[existingChildColIdx].branches || []), ...newBranches]
+                    };
+                    return newCols;
+                } else {
+                    return [
+                        ...prev,
+                        {
+                            root_node: `💬 AI 인사이트`,
+                            branches: newBranches,
+                            parentIndex: bIdx,
+                            sourceColumnIndex: colIdx,
+                        }
+                    ];
+                }
+            });
+            setChatHistory(prev => [...prev, { text: `✅ 해당 채팅 답변이 대시보드 브랜치로 저장되었습니다!`, sender: 'system' }]);
         }
     };
 
@@ -483,14 +733,12 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
 
     // 🧠 Action: Ask AI (Deep Dive)
     const handleAskAI = (text: string) => {
-        floatingChatRef.current?.setInput(`"${text}"\n\n`);
-        setIsChatExpanded(true);
+        detailPanelRef.current?.setInput(`"${text}"\n\n`);
     };
 
     // 🧠 Action: Summarize
     const handleSummarize = (text: string) => {
-        floatingChatRef.current?.setInput(`Please summarize this section:\n"${text}"`);
-        setIsChatExpanded(true);
+        detailPanelRef.current?.setInput(`Please summarize this section:\n"${text}"`);
         // Optional: Auto-submit? handleChatSend(...)
     };
 
@@ -532,7 +780,6 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                     onStartChat={() => {
                         setAgentMode('Research Planner');
                         setShowWelcome(false);
-                        setIsChatExpanded(true); // 🌟 Auto-open Chat
                     }}
                     onUploadFile={() => {
                         setAgentMode('Literature Review');
@@ -565,40 +812,90 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                                         />
                                     </View>
                                 )}
-                                {columns.map((col, idx) => (
-                                    <View key={idx} style={styles.columnWrapper}>
-                                        <View style={styles.nodeList}>
-                                            {col.branches?.map((branch: any, bIdx: number) => (
-                                                <TowerCard
-                                                    key={branch.id}
-                                                    data={branch}
-                                                    idx={idx}
-                                                    myIndex={bIdx}
-                                                    parentIndex={col.parentIndex}
-                                                    selected={
-                                                        activeNode === branch ||
-                                                        (columns[idx + 1] && columns[idx + 1].parentIndex === bIdx)
-                                                    }
-                                                    onSelect={() => handleExpand(branch, idx, bIdx)}
-                                                />
-                                            ))}
+                                {visibleColumns.map((col, idx) => {
+                                    const absColIdx = absColIndices[idx];
+                                    const activeBranchIdInThisCol = activePathNodes[absColIdx];
 
-                                            {/* Loading Card inside column */}
-                                            {loading && idx === columns.length - 1 && (
-                                                <View style={{ marginTop: 20 }}>
-                                                    <View style={[styles.nodeList, { opacity: 0.5 }]}>
-                                                        <View style={styles.loadingCard}>
-                                                            <ActivityIndicator color="#3B82F6" />
-                                                            <Text style={styles.loadingText}>Analyzing...</Text>
+                                    return (
+                                        <View key={absColIdx} style={styles.columnWrapper}>
+                                            <View style={styles.nodeList}>
+                                                {col.branches?.map((branch: any, bIdx: number) => {
+                                                    const isSelected = activeBranchIdInThisCol === branch.id;
+                                                    const anySiblingSelected = !!activeBranchIdInThisCol;
+                                                    const isCollapsed = anySiblingSelected && !isSelected;
+
+                                                    // To draw the perfect bezier curve, we need the exact Y coordinate of both the parent and child card's center points.
+                                                    // Since cards can be either expanded (160px) or collapsed (48px), we must iterate through the column and sum up the exact heights and gaps to find the absolute Y position of any card's center relative to the top of its column.
+                                                    const getCardY = (targetColItem: any, targetAbsColIdx: number, targetItemIdx: number) => {
+                                                        if (!targetColItem || !targetColItem.branches) return 0;
+
+                                                        let totalY = 0;
+                                                        const targetActiveBranchId = activePathNodes[targetAbsColIdx];
+
+                                                        // Sum up the total space taken by all cards ABOVE the target card
+                                                        for (let i = 0; i < targetItemIdx; i++) {
+                                                            const iBranchId = targetColItem.branches[i]?.id;
+                                                            const iIsSelected = targetActiveBranchId === iBranchId;
+                                                            const iAnySibSelected = !!targetActiveBranchId;
+                                                            const iIsCollapsed = iAnySibSelected && !iIsSelected;
+
+                                                            const iHeight = iIsCollapsed ? 48 : 160;
+                                                            totalY += iHeight + 20; // 20px gap
+                                                        }
+
+                                                        // Now add HALF of the target card's own height to find its center
+                                                        const myBranchId = targetColItem.branches[targetItemIdx]?.id;
+                                                        const myIsSelected = targetActiveBranchId === myBranchId;
+                                                        const myAnySibSelected = !!targetActiveBranchId;
+                                                        const myIsCollapsed = myAnySibSelected && !myIsSelected;
+
+                                                        const myHeight = myIsCollapsed ? 48 : 160;
+                                                        totalY += myHeight / 2;
+
+                                                        return totalY;
+                                                    };
+
+                                                    const sourceAbsColIdx = col.sourceColumnIndex !== undefined ? col.sourceColumnIndex : -1;
+                                                    const sourceColItem = sourceAbsColIdx !== -1 ? columns[sourceAbsColIdx] : null;
+
+                                                    // We subtract the parent's absolute Y from our absolute Y.
+                                                    // Positive diff = parent is ABOVE us. Negative diff = parent is BELOW us.
+                                                    const verticalDiff = sourceColItem
+                                                        ? getCardY(sourceColItem, sourceAbsColIdx, col.parentIndex) - getCardY(col, absColIdx, bIdx)
+                                                        : 0;
+
+                                                    return (
+                                                        <TowerCard
+                                                            key={branch.id}
+                                                            data={branch}
+                                                            idx={absColIdx}
+                                                            myIndex={bIdx}
+                                                            parentIndex={col.parentIndex}
+                                                            selected={isSelected}
+                                                            collapsed={isCollapsed}
+                                                            verticalDiff={verticalDiff}
+                                                            onSelect={() => handleExpand(branch, absColIdx, bIdx)}
+                                                        />
+                                                    );
+                                                })}
+
+                                                {/* Loading Card inside column */}
+                                                {loading && idx === visibleColumns.length - 1 && (
+                                                    <View style={{ marginTop: 20 }}>
+                                                        <View style={[styles.nodeList, { opacity: 0.5 }]}>
+                                                            <View style={styles.loadingCard}>
+                                                                <ActivityIndicator color="#3B82F6" />
+                                                                <Text style={styles.loadingText}>Analyzing...</Text>
+                                                            </View>
                                                         </View>
                                                     </View>
-                                                </View>
-                                            )}
+                                                )}
+                                            </View>
                                         </View>
-                                    </View>
-                                ))}
+                                    );
+                                })}
 
-                                {loading && columns.length === 0 && (
+                                {loading && visibleColumns.length === 0 && (
                                     <View style={styles.loadingContainer}>
                                         <ActivityIndicator size="large" color="#3B82F6" />
                                         <Text style={styles.loadingText}>Thinking...</Text>
@@ -608,14 +905,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                         </Animated.View>
                     </View>
 
-                    {/* Zoom Controls */}
-                    {!showWelcome && columns.length > 0 && (
-                        <View style={styles.zoomContainer}>
-                            <TouchableOpacity onPress={() => manualZoom(-0.2)}><ZoomOut size={16} color="#94A3B8" /></TouchableOpacity>
-                            <Text style={styles.zoomText}>{Math.round(scaleDisplay * 100)}%</Text>
-                            <TouchableOpacity onPress={() => manualZoom(0.2)}><ZoomIn size={16} color="#94A3B8" /></TouchableOpacity>
-                        </View>
-                    )}
+
 
                 </View>
             )}
@@ -623,25 +913,18 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             {/* Panels & Chat */}
             {activeNode && (
                 <DetailPanel
+                    ref={detailPanelRef}
                     node={activeNode}
                     onClose={() => setActiveNode(null)}
                     onAction={handleSmartAction}
+                    chatHistory={chatHistory}
+                    onSend={handleChatSend}
+                    loading={loading}
+                    suggestions={suggestions}
+                    onFileUpload={() => fileUploaderRef.current?.pickDocument()}
+                    onCitationClick={handleCitationClick}
                 />
             )}
-
-            <FloatingChat
-                ref={floatingChatRef}
-                onSend={handleChatSend}
-                loading={loading}
-                chatHistory={chatHistory}
-                suggestions={suggestions}
-                activeNodeLabel={activeNode?.label}
-                onFileUpload={() => fileUploaderRef.current?.pickDocument()}
-                onCitationClick={handleCitationClick} // 🌟 Connect Citation Click
-                expanded={isChatExpanded}
-                onToggleExpand={() => setIsChatExpanded(!isChatExpanded)}
-                style={{ display: showWelcome ? 'none' : 'flex' }}
-            />
         </View>
     );
 
@@ -650,6 +933,32 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <Text style={styles.logo}>Publica NEXUS</Text>
+                    {/* 🌟 Zoom Slider — shadcn-inspired */}
+                    {!showWelcome && columns.length > 0 && Platform.OS === 'web' && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 16, backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#1E293B' }}>
+                            <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700' }}>🔍</Text>
+                            <input
+                                type="range"
+                                min="30"
+                                max="200"
+                                value={Math.round(scaleDisplay * 100)}
+                                onChange={(e: any) => {
+                                    const newScale = parseInt(e.target.value) / 100;
+                                    scale.setValue(newScale);
+                                    setScaleDisplay(newScale);
+                                }}
+                                style={{
+                                    width: 100, height: 4,
+                                    accentColor: '#10B981',
+                                    cursor: 'pointer',
+                                    appearance: 'auto',
+                                } as any}
+                            />
+                            <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '600', minWidth: 36, textAlign: 'center' }}>
+                                {Math.round(scaleDisplay * 100)}%
+                            </Text>
+                        </View>
+                    )}
                 </View>
                 <View style={{ flexDirection: 'row', gap: 15, marginRight: 10 }}>
                     <TouchableOpacity onPress={handleOpenHistory}><Folder size={22} color="#94A3B8" /></TouchableOpacity>
@@ -711,40 +1020,42 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             )}
 
             {/* 🌟 Split View Logic */}
-            {!showWelcome && pdfUrl ? (
+            {!showWelcome && (pdfUrl || grantUrl) ? (
                 <>
                     <SplitLayout
+                        isLeftMinimized={isLeftPanelMinimized}
                         leftNode={
-                            <ErrorBoundary compName="PDFViewer">
-                                <React.Suspense fallback={<View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color="#10B981" /></View>}>
-                                    <PDFViewerPanel
-                                        ref={pdfViewerRef}
-                                        url={pdfUrl}
-                                        onQuote={(text: string, x: number, y: number, type?: string, context?: any) => {
-                                            console.log("📝 Quote Received:", text.substring(0, 60), type, context?.sectionTitle);
-                                            const px = x || 400;
-                                            const py = y || 300;
-                                            setContextMenu({ visible: true, x: px, y: py, text, type, context });
-                                        }}
-                                        onExplainSection={(text: string, x: number, y: number, context?: any) => {
-                                            // ✨ Sparkle on section heading → directly open ExplanationPopover
-                                            console.log("✨ Section Explain:", context?.heading?.substring(0, 40));
-                                            setContextMenu({ visible: false, x: 0, y: 0, text: '', type: '', context: null });
-                                            setExplanation({
-                                                visible: true,
-                                                x: x || 400,
-                                                y: y || 300,
-                                                text,
-                                                mode: 'explain',
-                                                context
-                                            });
-                                        }}
-                                    />
-                                </React.Suspense>
-                            </ErrorBoundary>
+                            (pdfUrl || grantUrl) ? (
+                                <ContextDock
+                                    grantUrl={grantUrl}
+                                    grantTitle={pendingGrantTitle || ''}
+                                    pdfUrl={pdfUrl}
+                                    onClose={() => {
+                                        setPdfUrl(null);
+                                        setGrantUrl(null);
+                                    }}
+                                    onMinimizeToggle={(minimized) => setIsLeftPanelMinimized(minimized)}
+                                    onQuote={(text: string, x: number, y: number, type?: string, context?: any) => {
+                                        const px = x || 400;
+                                        const py = y || 300;
+                                        setContextMenu({ visible: true, x: px, y: py, text, type, context });
+                                    }}
+                                    onExplainSection={(text: string, x: number, y: number, context?: any) => {
+                                        setContextMenu({ visible: false, x: 0, y: 0, text: '', type: '', context: null });
+                                        setExplanation({
+                                            visible: true,
+                                            x: x || 400,
+                                            y: y || 300,
+                                            text,
+                                            mode: 'explain',
+                                            context
+                                        });
+                                    }}
+                                />
+                            ) : null
                         }
                         rightNode={renderWorkspace()}
-                        initialLeftWidth={Dimensions.get('window').width * 0.5}
+                        initialLeftWidth={Dimensions.get('window').width * 0.45}
                     />
 
                     {/* 🌟 Floating Context Menu (Lifted to Root for Z-Index) */}
@@ -790,7 +1101,40 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             ) : (
                 renderWorkspace()
             )}
-        </SafeAreaView>
+
+            <IdeaQuestionnaire
+                visible={showQuestionnaire}
+                grantTitle={pendingGrantTitle}
+                onComplete={(businessIdea) => {
+                    handleStartWithIdea(pendingGrantQuery, businessIdea);
+                }}
+                onSkip={() => {
+                    setShowQuestionnaire(false);
+                    handleStart(pendingGrantQuery);
+                }}
+                onClose={() => {
+                    setShowQuestionnaire(false);
+                    if (columns.length === 0) {
+                        const blankNode = {
+                            id: `root_${Date.now()}`,
+                            label: pendingGrantTitle ? `${pendingGrantTitle} 리서치` : '새로운 워크스페이스',
+                            description: '이 캔버스에서 초기 아이디어를 구상하거나 AI에게 자유롭게 질문을 던져보세요.',
+                            type: 'insight',
+                            source: 'system',
+                            completed: false
+                        };
+                        setColumns([{
+                            root_node: pendingGrantTitle || 'Workspace',
+                            branches: [blankNode],
+                            sourceColumnIndex: -1,
+                            parentIndex: -1
+                        }]);
+                        setActiveNode(blankNode);
+                        setActivePathNodes({ 0: blankNode.id });
+                    }
+                }}
+            />
+        </SafeAreaView >
     );
 };
 

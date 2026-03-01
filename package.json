@@ -8,6 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
+    "build": "npx expo export -p web",
     "generate-feed": "npx tsx scripts/auto_feed_generator.ts"
   },
   "dependencies": {

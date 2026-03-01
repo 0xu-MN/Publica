@@ -1,22 +1,63 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Animated, StyleSheet, Dimensions } from 'react-native';
-import { X, Zap, Search, GitBranch, MessageCircle, ChevronRight, Target, Layers } from 'lucide-react-native';
+import React, { useEffect, useRef, useState, forwardRef, useImperativeHandle } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, Animated, StyleSheet, ActivityIndicator } from 'react-native';
+import { X, Search, GitBranch, MessageCircle, ChevronRight, ChevronDown, Layers, Sparkles, Send, Paperclip, ArrowRight, Minimize2, Minus, PanelRightOpen } from 'lucide-react-native';
+
+export interface DetailPanelRef {
+    setInput: (text: string) => void;
+}
 
 interface DetailPanelProps {
     node: any;
     onClose: () => void;
     onAction: (type: string, node: any) => void;
+    // Chat props
+    chatHistory: any[];
+    onSend: (text: string) => void;
+    loading: boolean;
+    suggestions: any[];
+    onFileUpload?: () => void;
+    onCitationClick?: (page: number) => void;
 }
 
-export const DetailPanel = ({ node, onClose, onAction }: DetailPanelProps) => {
+export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
+    node,
+    onClose,
+    onAction,
+    chatHistory,
+    onSend,
+    loading,
+    suggestions,
+    onFileUpload,
+    onCitationClick,
+}, ref) => {
     const slideAnim = useRef(new Animated.Value(450)).current;
+    const [chatExpanded, setChatExpanded] = useState(false);
+    const [input, setInputState] = useState('');
+    const chatScrollRef = useRef<ScrollView>(null);
+    const [isMinimized, setIsMinimized] = useState(false);
+
+    useImperativeHandle(ref, () => ({
+        setInput: (text: string) => {
+            setIsMinimized(false);
+            setInputState(prev => prev + text);
+            setChatExpanded(true);
+        }
+    }));
 
     useEffect(() => {
         if (node) {
+            setIsMinimized(false);
             slideAnim.setValue(450);
             Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, friction: 8 }).start();
         }
     }, [node]);
+
+    // Auto-scroll chat when new messages arrive
+    useEffect(() => {
+        if (chatExpanded && chatScrollRef.current) {
+            setTimeout(() => chatScrollRef.current?.scrollToEnd({ animated: true }), 100);
+        }
+    }, [chatHistory, chatExpanded]);
 
     if (!node) return null;
 
@@ -32,6 +73,28 @@ export const DetailPanel = ({ node, onClose, onAction }: DetailPanelProps) => {
     const accentColor = getAccentColor();
     const typeName = (node.type || node.action_type || 'research').toUpperCase();
 
+    const handleSend = (text: string = input) => {
+        if (!text.trim()) return;
+        onSend(text);
+        setInputState('');
+    };
+
+    if (isMinimized) {
+        return (
+            <Animated.View style={[styles.panel, { width: 56, transform: [{ translateX: slideAnim }] }]}>
+                <View style={{ alignItems: 'center', paddingTop: 16, gap: 24 }}>
+                    <TouchableOpacity onPress={() => setIsMinimized(false)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                        <PanelRightOpen size={20} color="#94A3B8" />
+                    </TouchableOpacity>
+
+                    <View style={[{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: accentColor + '22' }]}>
+                        <Search size={16} color={accentColor} />
+                    </View>
+                </View>
+            </Animated.View>
+        );
+    }
+
     return (
         <Animated.View style={[styles.panel, { transform: [{ translateX: slideAnim }] }]}>
             {/* Header */}
@@ -40,45 +103,158 @@ export const DetailPanel = ({ node, onClose, onAction }: DetailPanelProps) => {
                     <View style={[styles.typeDot, { backgroundColor: accentColor }]} />
                     <Text style={styles.headerTitle}>INSPECTOR</Text>
                 </View>
-                <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <X size={20} color="#64748B" />
+                <TouchableOpacity onPress={() => setIsMinimized(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Minus size={20} color="#64748B" />
                 </TouchableOpacity>
             </View>
 
-            {/* Content */}
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
-                {/* Type Badge */}
-                <View style={[styles.typeBadge, { backgroundColor: accentColor + '22' }]}>
-                    <Text style={[styles.typeBadgeText, { color: accentColor }]}>{typeName}</Text>
-                </View>
+            {/* Card Info Section — Scrollable */}
+            {!chatExpanded && (
+                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
+                    {/* Type Badge */}
+                    <View style={[styles.typeBadge, { backgroundColor: accentColor + '22' }]}>
+                        <Text style={[styles.typeBadgeText, { color: accentColor }]}>{typeName}</Text>
+                    </View>
 
-                {/* Title */}
-                <Text style={styles.titleText}>{node.label}</Text>
+                    {/* Title */}
+                    <Text style={styles.titleText}>{node.label}</Text>
 
-                {/* Description */}
-                <Text style={styles.bodyText}>{node.description || "No description available."}</Text>
+                    {/* Description */}
+                    <Text style={styles.bodyText}>{node.description || "No description available."}</Text>
 
-                {/* References (if any) */}
-                {node.references && node.references.length > 0 && (
-                    <View style={styles.referencesSection}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
-                            <Layers size={12} color="#64748B" />
-                            <Text style={styles.sectionLabel}>{node.references.length} SOURCES</Text>
+                    {/* References (if any) */}
+                    {node.references && node.references.length > 0 && (
+                        <View style={styles.referencesSection}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                                <Layers size={12} color="#64748B" />
+                                <Text style={styles.sectionLabel}>{node.references.length} SOURCES</Text>
+                            </View>
+                            {node.references.map((refItem: string, i: number) => (
+                                <View key={i} style={styles.referenceItem}>
+                                    <Text style={styles.referenceText} numberOfLines={2}>{refItem}</Text>
+                                </View>
+                            ))}
                         </View>
-                        {node.references.map((ref: string, i: number) => (
-                            <View key={i} style={styles.referenceItem}>
-                                <Text style={styles.referenceText} numberOfLines={2}>{ref}</Text>
+                    )}
+                </ScrollView>
+            )}
+
+            {/* Chat Section — Expandable */}
+            {chatExpanded && (
+                <View style={styles.chatSection}>
+                    {/* Chat Header */}
+                    <View style={styles.chatHeader}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                            <Sparkles size={14} color="#10B981" style={{ marginRight: 6 }} />
+                            <Text style={styles.chatContext}>
+                                {node.label ? `분석 중: ${node.label}` : 'Publica Agent'}
+                            </Text>
+                        </View>
+                        <TouchableOpacity onPress={() => setChatExpanded(false)}>
+                            <Minimize2 size={16} color="#94A3B8" />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Chat History */}
+                    <ScrollView
+                        ref={chatScrollRef}
+                        style={styles.chatHistory}
+                        contentContainerStyle={{ paddingBottom: 10 }}
+                    >
+                        {chatHistory.map((msg: any, i: number) => (
+                            <View key={i} style={{ marginBottom: 12 }}>
+                                <View style={[styles.msgBubble, msg.sender === 'me' ? styles.msgMe : styles.msgAi]}>
+                                    <Text style={styles.msgText}>
+                                        {msg.text.split(/(\[Page \d+\])/g).map((part: string, index: number) => {
+                                            const match = part.match(/\[Page (\d+)\]/);
+                                            if (match) {
+                                                const pageNum = parseInt(match[1], 10);
+                                                return (
+                                                    <Text
+                                                        key={index}
+                                                        style={{ color: '#60A5FA', textDecorationLine: 'underline', fontWeight: 'bold' }}
+                                                        onPress={() => onCitationClick && onCitationClick(pageNum)}
+                                                    >
+                                                        {part}
+                                                    </Text>
+                                                );
+                                            }
+                                            return <Text key={index}>{part}</Text>;
+                                        })}
+                                    </Text>
+                                </View>
+                                {msg.sender === 'ai' && (
+                                    <TouchableOpacity
+                                        style={styles.inlineBranchBtn}
+                                        onPress={() => {
+                                            // Make sure node exists to branch off of
+                                            if (node) {
+                                                onAction('CHAT_TO_BRANCH', { ...node, customQuery: msg.text });
+                                                setChatExpanded(false);
+                                            }
+                                        }}
+                                    >
+                                        <GitBranch size={12} color="#10B981" />
+                                        <Text style={styles.inlineBranchBtnText}>이 답변을 하위 브랜치로 추가</Text>
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         ))}
-                    </View>
-                )}
-            </ScrollView>
 
-            {/* Smart Action Buttons */}
+                        {loading && (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
+                                <ActivityIndicator size="small" color="#10B981" />
+                                <Text style={{ color: '#64748B', fontSize: 12, marginLeft: 8 }}>Thinking...</Text>
+                            </View>
+                        )}
+
+                        {/* Suggested Next Steps */}
+                        {!loading && suggestions && suggestions.length > 0 && (
+                            <View style={styles.suggestionContainer}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginTop: 12 }}>
+                                    <Sparkles size={12} color="#10B981" style={{ marginRight: 6 }} />
+                                    <Text style={styles.suggestionTitle}>Suggested Next Steps</Text>
+                                </View>
+                                {suggestions.map((item: any, idx: number) => (
+                                    <TouchableOpacity
+                                        key={idx}
+                                        style={styles.suggestionChip}
+                                        onPress={() => onSend(item.query)}
+                                    >
+                                        <Text style={styles.suggestionLabel}>{item.label}</Text>
+                                        <ArrowRight size={14} color="#64748B" />
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
+                        )}
+                    </ScrollView>
+
+                    {/* Input Area */}
+                    <View style={styles.inputRow}>
+                        <TouchableOpacity style={styles.attachPill} onPress={onFileUpload}>
+                            <Paperclip size={14} color="#10B981" />
+                            <Text style={styles.attachText}>PDF</Text>
+                        </TouchableOpacity>
+                        <TextInput
+                            style={styles.chatInput}
+                            placeholder="이 항목에 대해 질문..."
+                            placeholderTextColor="#64748B"
+                            value={input}
+                            onChangeText={setInputState}
+                            onSubmitEditing={() => handleSend()}
+                        />
+                        <TouchableOpacity style={styles.sendFab} onPress={() => handleSend()}>
+                            <Send size={16} color="white" />
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
+
+            {/* Action Buttons — Always visible at bottom */}
             <View style={styles.actionBar}>
                 <Text style={styles.actionTitle}>심층 분석</Text>
 
-                {/* Deep Dive — re-analyze this node's content in depth */}
+                {/* Deep Dive */}
                 <TouchableOpacity
                     style={[styles.actionBtn, { borderColor: '#3B82F6' }]}
                     onPress={() => onAction('DEEP_DIVE', node)}
@@ -91,7 +267,7 @@ export const DetailPanel = ({ node, onClose, onAction }: DetailPanelProps) => {
                     <ChevronRight size={14} color="#3B82F6" />
                 </TouchableOpacity>
 
-                {/* Branching — spawn AI-generated sub-branches from this node */}
+                {/* Branching */}
                 <TouchableOpacity
                     style={[styles.actionBtn, { borderColor: '#10B981' }]}
                     onPress={() => onAction('BRANCH', node)}
@@ -104,26 +280,32 @@ export const DetailPanel = ({ node, onClose, onAction }: DetailPanelProps) => {
                     <ChevronRight size={14} color="#10B981" />
                 </TouchableOpacity>
 
-                {/* Ask AI — contextual question about this node */}
+                {/* Ask AI — Now toggles the chat section */}
                 <TouchableOpacity
-                    style={[styles.actionBtn, { borderColor: '#8B5CF6' }]}
-                    onPress={() => onAction('ASK', node)}
+                    style={[styles.actionBtn, { borderColor: '#8B5CF6' }, chatExpanded && { backgroundColor: '#8B5CF620', borderColor: '#8B5CF6' }]}
+                    onPress={() => setChatExpanded(!chatExpanded)}
                 >
                     <MessageCircle size={14} color="#8B5CF6" />
                     <View style={{ flex: 1, marginLeft: 10 }}>
                         <Text style={[styles.actionBtnTitle, { color: '#8B5CF6' }]}>Ask AI</Text>
-                        <Text style={styles.actionBtnDesc}>이 항목에 대해 질문합니다</Text>
+                        <Text style={styles.actionBtnDesc}>
+                            {chatExpanded ? '채팅 닫기' : '이 항목에 대해 질문합니다'}
+                        </Text>
                     </View>
-                    <ChevronRight size={14} color="#8B5CF6" />
+                    {chatExpanded ? (
+                        <ChevronDown size={14} color="#8B5CF6" />
+                    ) : (
+                        <ChevronRight size={14} color="#8B5CF6" />
+                    )}
                 </TouchableOpacity>
             </View>
         </Animated.View>
     );
-};
+});
 
 const styles = StyleSheet.create({
     panel: {
-        position: 'absolute', right: 0, top: 60, bottom: 0,
+        position: 'absolute', right: 0, top: 0, bottom: 0,
         width: 360,
         backgroundColor: '#020617',
         borderLeftWidth: 1, borderColor: '#1E293B',
@@ -149,15 +331,65 @@ const styles = StyleSheet.create({
     referenceItem: { backgroundColor: '#0F172A', borderRadius: 6, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: '#1E293B' },
     referenceText: { color: '#94A3B8', fontSize: 12, lineHeight: 16 },
 
-    actionBar: { padding: 16, borderTopWidth: 1, borderColor: '#1E293B', backgroundColor: '#020617', gap: 8 },
-    actionTitle: { color: '#64748B', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 4, textTransform: 'uppercase' },
+    // Chat Section
+    chatSection: { flex: 1 },
+    chatHeader: {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        padding: 12, borderBottomWidth: 1, borderColor: '#1E293B',
+        backgroundColor: '#0F172A',
+    },
+    chatContext: { color: '#10B981', fontSize: 12, fontWeight: '600' },
+    chatHistory: { flex: 1, padding: 12, backgroundColor: '#020617' },
+    msgBubble: { padding: 10, borderRadius: 8, marginBottom: 8, maxWidth: '85%' },
+    msgMe: { backgroundColor: '#2563EB', alignSelf: 'flex-end' },
+    msgAi: { backgroundColor: '#0F172A', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#1E293B' },
+    msgText: { color: '#E2E8F0', fontSize: 13, lineHeight: 18 },
+
+    inputRow: {
+        flexDirection: 'row', alignItems: 'center',
+        padding: 8, borderTopWidth: 1, borderColor: '#1E293B',
+        backgroundColor: '#0F172A',
+    },
+    chatInput: { flex: 1, color: 'white', height: 36, paddingHorizontal: 8, fontSize: 13 },
+    sendFab: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+
+    attachPill: {
+        flexDirection: 'row', alignItems: 'center',
+        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        paddingHorizontal: 10, paddingVertical: 4,
+        borderRadius: 12, marginRight: 6,
+        borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)',
+    },
+    attachText: { color: '#10B981', fontSize: 11, fontWeight: '700', marginLeft: 4 },
+
+    suggestionContainer: { marginTop: 12, paddingHorizontal: 4 },
+    suggestionTitle: { color: '#64748B', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+    suggestionChip: {
+        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        backgroundColor: '#0F172A', paddingVertical: 10, paddingHorizontal: 14,
+        borderRadius: 10, marginBottom: 6,
+        borderWidth: 1, borderColor: '#1E293B',
+    },
+    suggestionLabel: { color: '#E2E8F0', fontSize: 12, fontWeight: '500' },
+
+    // Action Bar
+    actionBar: { padding: 12, borderTopWidth: 1, borderColor: '#1E293B', backgroundColor: '#020617', gap: 6 },
+    actionTitle: { color: '#64748B', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 2, textTransform: 'uppercase' },
 
     actionBtn: {
         flexDirection: 'row', alignItems: 'center',
-        padding: 12,
+        padding: 10,
         borderRadius: 8, borderWidth: 1,
         backgroundColor: '#0F172A',
     },
     actionBtnTitle: { fontSize: 13, fontWeight: '700' },
-    actionBtnDesc: { color: '#64748B', fontSize: 10, marginTop: 2 },
+    actionBtnDesc: { color: '#64748B', fontSize: 10, marginTop: 1 },
+
+    // Inline Branch Button in Chat
+    inlineBranchBtn: {
+        flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
+        borderWidth: 1, borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, marginTop: 4,
+    },
+    inlineBranchBtnText: { color: '#10B981', fontSize: 11, fontWeight: '700', marginLeft: 6 },
 });
