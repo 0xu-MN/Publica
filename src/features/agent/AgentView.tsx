@@ -478,6 +478,57 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
         Alert.alert("성공", "프로젝트가 저장되었습니다. 파일 관리자에서 확인하세요.");
     };
 
+    // 🌟 사업계획서 자동 생성 로직 (Phase 6)
+    const handleGenerateBusinessPlan = async (): Promise<string | null> => {
+        if (!columns || columns.length === 0) {
+            Alert.alert("오류", "먼저 AI 브랜칭 분석을 진행해주세요.");
+            return null;
+        }
+
+        try {
+            // 1. 활성화된 노드 데이터 취합 (Active Path Nodes)
+            const selectedNodesContext = absColIndices.map((absColIdx) => {
+                const activeNodeId = activePathNodes[absColIdx];
+                if (!activeNodeId) return null;
+                const col = columns[absColIdx];
+                const node = col?.branches?.find((b: any) => b.id === activeNodeId);
+                return node ? {
+                    step: 'Column ' + (absColIdx + 1),
+                    label: node.label || '',
+                    insight: node.description || ''
+                } : null;
+            }).filter(Boolean);
+
+            if (selectedNodesContext.length === 0) {
+                Alert.alert("알림", "마인드맵에서 브랜치를 1개 이상 활성화(초록색/파란색 선택)해야 문서 작성이 가능합니다.");
+                return null;
+            }
+
+            const payload = {
+                business_idea: columns[0]?.root_node || "비즈니스 전략 제안",
+                selected_nodes_context: selectedNodesContext,
+                pdf_context: pdfUrl ? "첨부된 PDF(공고문)의 핵심 요건에 맞춘 전략" : "정부지원사업 표준 PSST 양식 적용"
+            };
+
+            const { data, error } = await supabase.functions.invoke('generate-business-plan', {
+                body: payload
+            });
+
+            if (error) {
+                console.error("Supabase Edge Function Error:", error);
+                throw error;
+            }
+            if (data?.markdown) return data.markdown;
+
+            return null;
+
+        } catch (error: any) {
+            console.error("문서 생성 오류:", error);
+            Alert.alert("생성 실패", "사업계획서 초안을 작성하는 데 실패했습니다.");
+            return null;
+        }
+    };
+
     // ... (omitted)
 
     const handleOpenHistory = () => setShowHistory(true);
@@ -1058,6 +1109,7 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                                             context
                                         });
                                     }}
+                                    onAIGenerate={handleGenerateBusinessPlan}
                                 />
                             ) : null
                         }

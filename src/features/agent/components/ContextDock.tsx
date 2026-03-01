@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Platform } from 'react-native';
 import { FileText, Edit3, FileIcon, X, ChevronLeft, ChevronRight, Settings2, Sparkles, FileDown, Copy, Bold, Italic, List, AlignLeft, Minus } from 'lucide-react-native';
 import { GrantContentPanel } from './GrantContentPanel';
+import { marked } from 'marked';
 
 // Lazy load PDFViewerPanel
 const PDFViewerPanel = React.lazy(() =>
@@ -18,6 +19,7 @@ interface ContextDockProps {
     onMinimizeToggle?: (minimized: boolean) => void;
     onQuote?: (text: string, x: number, y: number, type?: string, context?: any) => void;
     onExplainSection?: (text: string, x: number, y: number, context?: any) => void;
+    onAIGenerate?: () => Promise<string | null>;
 }
 
 /**
@@ -33,6 +35,7 @@ export const ContextDock: React.FC<ContextDockProps> = ({
     onMinimizeToggle,
     onQuote,
     onExplainSection,
+    onAIGenerate,
 }) => {
     const getInitialTab = (): DockTab => {
         if (grantUrl) return 'grant';
@@ -42,6 +45,7 @@ export const ContextDock: React.FC<ContextDockProps> = ({
 
     const [activeTab, setActiveTab] = useState<DockTab>(getInitialTab());
     const [minimized, setMinimized] = useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
 
     // Editor state
     const [editorContent, setEditorContent] = useState('');
@@ -108,10 +112,63 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                     ))}
                 </View>
                 <View style={{ flexDirection: 'row', gap: 4 }}>
-                    <TouchableOpacity style={styles.toolBtn}>
-                        <Copy size={12} color="#64748B" />
+                    <TouchableOpacity style={styles.toolBtn} onPress={async () => {
+                        if (!editorContent || Platform.OS !== 'web') return;
+                        try {
+                            const htmlContent = await marked.parse(editorContent);
+                            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Doc Export</title></head><body>";
+                            const footer = "</body></html>";
+                            const sourceHTML = header + htmlContent + footer;
+                            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
+                            const fileDownload = document.createElement("a");
+                            document.body.appendChild(fileDownload);
+                            fileDownload.href = source;
+                            fileDownload.download = 'business_plan_draft.doc';
+                            fileDownload.click();
+                            document.body.removeChild(fileDownload);
+                        } catch (e) {
+                            console.error("Export DOC failed", e);
+                        }
+                    }}>
+                        <Text style={{ fontSize: 12, marginRight: 4 }}>DOC</Text>
+                        <FileDown size={12} color="#64748B" />
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.toolBtn}>
+
+                    <TouchableOpacity style={styles.toolBtn} onPress={async () => {
+                        if (!editorContent || Platform.OS !== 'web') return;
+                        try {
+                            const htmlContent = await marked.parse(editorContent);
+                            const iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            document.body.appendChild(iframe);
+                            const doc = iframe.contentWindow?.document;
+                            if (doc) {
+                                doc.open();
+                                doc.write(`
+                                    <html>
+                                        <head>
+                                            <title>Business_Plan_Draft</title>
+                                            <style>
+                                                body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; line-height: 1.6; color: #000; padding: 40px; }
+                                                h1, h2, h3 { color: #111; }
+                                                hr { border: 0; border-top: 1px solid #ccc; margin: 20px 0; }
+                                            </style>
+                                        </head>
+                                        <body>${htmlContent}</body>
+                                    </html>
+                                `);
+                                doc.close();
+                                setTimeout(() => {
+                                    iframe.contentWindow?.focus();
+                                    iframe.contentWindow?.print();
+                                    setTimeout(() => document.body.removeChild(iframe), 1000);
+                                }, 250);
+                            }
+                        } catch (e) {
+                            console.error("PDF Export failed", e);
+                        }
+                    }}>
+                        <Text style={{ fontSize: 12, marginRight: 4 }}>PDF</Text>
                         <FileDown size={12} color="#64748B" />
                     </TouchableOpacity>
                 </View>
@@ -124,9 +181,23 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                 <TouchableOpacity style={styles.formatBtn}><List size={14} color="#94A3B8" /></TouchableOpacity>
                 <TouchableOpacity style={styles.formatBtn}><AlignLeft size={14} color="#94A3B8" /></TouchableOpacity>
                 <View style={styles.formatDivider} />
-                <TouchableOpacity style={[styles.formatBtn, styles.aiBtn]}>
-                    <Sparkles size={12} color="#8B5CF6" />
-                    <Text style={styles.aiBtnText}>AI 작성</Text>
+                <TouchableOpacity
+                    style={[styles.formatBtn, styles.aiBtn, isGenerating && { opacity: 0.5 }]}
+                    disabled={isGenerating}
+                    onPress={async () => {
+                        if (onAIGenerate) {
+                            setIsGenerating(true);
+                            try {
+                                const draft = await onAIGenerate();
+                                if (draft) setEditorContent(draft);
+                            } finally {
+                                setIsGenerating(false);
+                            }
+                        }
+                    }}
+                >
+                    {isGenerating ? <Text style={{ fontSize: 10, color: '#8B5CF6' }}>⏳</Text> : <Sparkles size={12} color="#8B5CF6" />}
+                    <Text style={styles.aiBtnText}>{isGenerating ? 'AI 작성 중...' : 'AI 작성'}</Text>
                 </TouchableOpacity>
             </View>
 
