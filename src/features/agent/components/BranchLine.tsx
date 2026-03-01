@@ -24,10 +24,10 @@ export const BranchLine = ({ isSelected, myIndex, parentIndex, verticalDiff }: B
     const svgHeight = Math.max(Math.abs(finalVerticalDiff), 2); // Minimum 2px height to avoid invisible SVG
 
     // 3. 내부 좌표 매핑
-    // `verticalDiff` is positive if parent is ABOVE us (we are lower).
-    // `verticalDiff` is negative if parent is BELOW us (we are higher).
+    // `verticalDiff` is negative if parent is ABOVE us (we are lower).
+    // `verticalDiff` is positive if parent is BELOW us (we are higher).
 
-    const isParentAbove = finalVerticalDiff > 0;
+    const isParentAbove = finalVerticalDiff < 0;
 
     // Parent dot is always on the left edge of this SVG connecting space.
     // Child dot is always on the right edge of this SVG connecting space.

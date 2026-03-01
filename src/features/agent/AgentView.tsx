@@ -659,6 +659,10 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
             const existingChildColIdx = columns.findIndex(col => col.parentIndex === bIdx && col.sourceColumnIndex === colIdx);
 
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+
+            // 🧠 Auto-Select Logic: Determine the absolute column index where this will go
+            const targetAbsColIdx = existingChildColIdx !== -1 ? existingChildColIdx : columns.length;
+
             setColumns(prev => {
                 if (existingChildColIdx !== -1) {
                     const newCols = [...prev];
@@ -679,6 +683,9 @@ export const AgentView = ({ initialSession }: { initialSession?: any }) => {
                     ];
                 }
             });
+
+            // 🔥 Auto-expand the newly created chat branch
+            handleSelectNode(newBranches[0], targetAbsColIdx);
             setChatHistory(prev => [...prev, { text: `✅ 해당 채팅 답변이 대시보드 브랜치로 저장되었습니다!`, sender: 'system' }]);
         }
     };
