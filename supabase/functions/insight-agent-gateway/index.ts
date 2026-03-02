@@ -4,7 +4,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts"
 declare const Deno: any;
 
 // ─── LLM Configuration (change model here to switch) ───
-const LLM_MODEL = 'gemini-1.5-flash'; // Options: gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash
+const LLM_MODEL = 'gemini-2.5-flash'; // Options: gemini-2.0-flash, gemini-1.5-pro, gemini-1.5-flash
 const LLM_TEMPERATURE = 0.7;
 
 // Define strict interface for Type Safety

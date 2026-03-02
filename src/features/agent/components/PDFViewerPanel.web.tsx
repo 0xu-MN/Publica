@@ -10,7 +10,7 @@ import { TableOfContents } from './TableOfContents';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 
-const PYTHON_PARSER_URL = 'http://127.0.0.1:8001/api/parse-pdf';
+const PYTHON_PARSER_URL = 'http://13.209.136.25:8001/api/parse-pdf';
 
 async function fetchPythonTOC(url: string) {
     try {
