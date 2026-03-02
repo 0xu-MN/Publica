@@ -10,7 +10,13 @@ import { TableOfContents } from './TableOfContents';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 
-const PYTHON_PARSER_URL = 'http://13.209.136.25:8001/api/parse-pdf';
+// ✅ FIX: Mixed Content(HTTPS 차단) 해결을 위한 동적 라우팅
+// Vercel 배포 환경(https)에서는 vercel.json 프록시(/api/parse-pdf)를 타고 EC2로 가고,
+// 로컬 개발 환경(http)에서는 현재 로컬에서 띄워진 파이썬 서버(localhost:8001)로 직결합니다.
+const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+const PYTHON_PARSER_URL = isHttps
+    ? '/api/parse-pdf'
+    : 'http://localhost:8001/api/parse-pdf';
 
 async function fetchPythonTOC(url: string) {
     try {
@@ -19,7 +25,17 @@ async function fetchPythonTOC(url: string) {
         const pdfBlob = await pdfRes.blob();
         const formData = new FormData();
         formData.append('file', pdfBlob, 'document.pdf');
-        const res = await fetch(PYTHON_PARSER_URL, { method: 'POST', body: formData });
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+        const res = await fetch(PYTHON_PARSER_URL, {
+            method: 'POST',
+            body: formData,
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
         if (!res.ok) throw new Error(`Server error: ${res.status}`);
         const data = await res.json();
         console.log("✅ Python 서버 완료:", data.toc?.length, "개 항목");
@@ -193,8 +209,8 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                 }
             }
 
-            // 서버 모드면 클라이언트 TOC 추가 건너뜀 (텍스트 누적은 위에서 진행함)
-            if (serverModeRef.current) return;
+            // 서버 데이터가 이미 로드완료된 상태라면 클라이언트 TOC 추가 건너뜀
+            if (serverDataLoadedRef.current) return;
 
             const rawItems = StructureEngine.buildTOC(blocks, pageNumber);
             const freshItems = rawItems.filter(item => {
