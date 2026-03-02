@@ -10,38 +10,63 @@ import { TableOfContents } from './TableOfContents';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 
-// ✅ FIX: Mixed Content(HTTPS 차단) 해결을 위한 동적 라우팅
-// Vercel 배포 환경(https)에서는 vercel.json 프록시(/api/parse-pdf)를 타고 EC2로 가고,
-// 로컬 개발 환경(http)에서는 현재 로컬에서 띄워진 파이썬 서버(localhost:8001)로 직결합니다.
-const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-const PYTHON_PARSER_URL = isHttps
-    ? '/api/parse-pdf'
-    : 'http://localhost:8001/api/parse-pdf';
+// ✅ FIX: 하이브리드 아키텍처 (Vercel Serverless -> AWS EC2 Fallback)
+// 내부 함수에서 두 곳을 순차적으로 찌릅니다.
 
 async function fetchPythonTOC(url: string) {
     try {
-        console.log("🚀 Python 서버로 PDF 분석 요청:", url);
+        console.log("🚀 [Hybrid] 1단계: 파싱 요청 시작 (URL 가독화 중...)");
         const pdfRes = await fetch(url);
         const pdfBlob = await pdfRes.blob();
+
         const formData = new FormData();
         formData.append('file', pdfBlob, 'document.pdf');
 
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+        // B안: Vercel 프록시 (또는 Vercel Serverless) 먼저 찌르기
+        const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+        const primaryUrl = isHttps ? '/api/parse-pdf' : 'http://localhost:8001/api/parse-pdf';
+        const fallbackUrl = 'http://13.209.136.25:8001/api/parse-pdf'; // A안: EC2 영구 서버 (최후의 보루)
 
-        const res = await fetch(PYTHON_PARSER_URL, {
-            method: 'POST',
-            body: formData,
-            signal: controller.signal
-        });
-        clearTimeout(timeoutId);
+        try {
+            console.log(`⚡ [Hybrid] 1차 시도 (B안 - 15초 제한 Vercel): ${primaryUrl}`);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 12000); // Vercel 한계치 직전인 12초에서 끊음
 
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
-        const data = await res.json();
-        console.log("✅ Python 서버 완료:", data.toc?.length, "개 항목");
-        return data;
-    } catch (e) {
-        console.error("❌ Python 파서 실패:", e);
+            const parseRes = await fetch(primaryUrl, {
+                method: 'POST',
+                body: formData,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!parseRes.ok) {
+                throw new Error(`1차 시도 실패 상태코드: ${parseRes.status}`);
+            }
+
+            const data = await parseRes.json();
+            console.log(`✅ [Hybrid] 1차(Vercel) 성공: ${data.toc?.length}개 항목`);
+            return data;
+
+        } catch (error) {
+            console.warn(`⚠️ [Hybrid] 1차 시도 실패(타임아웃/오류). 즉시 A안(EC2 소화기)으로 전환합니다!`, error);
+
+            // A안: EC2 서버로 재요청 (무제한 대기)
+            console.log(`🚒 [Hybrid] 2차 시도 (A안 - EC2 무적 서버): ${fallbackUrl}`);
+            const fallbackRes = await fetch(fallbackUrl, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!fallbackRes.ok) {
+                throw new Error(`2차 시도까지 모두 실패 상태코드: ${fallbackRes.status}`);
+            }
+
+            const data = await fallbackRes.json();
+            console.log(`🏆 [Hybrid] 2차(EC2) 구조대 성공: ${data.toc?.length}개 항목`);
+            return data;
+        }
+    } catch (error) {
+        console.error('❌ [Hybrid] 모든 파이썬 서버 파싱 완전 실패:', error);
         return null;
     }
 }
