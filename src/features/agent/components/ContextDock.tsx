@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Platform } from 'react-native';
 import { FileText, Edit3, FileIcon, X, ChevronLeft, ChevronRight, Settings2, Sparkles, FileDown, Copy, Bold, Italic, List, AlignLeft, Minus } from 'lucide-react-native';
 import { GrantContentPanel } from './GrantContentPanel';
@@ -46,6 +46,10 @@ export const ContextDock: React.FC<ContextDockProps> = ({
     const [activeTab, setActiveTab] = useState<DockTab>(getInitialTab());
     const [minimized, setMinimized] = useState(false);
     const [isGenerating, setIsGenerating] = useState(false);
+
+    useEffect(() => {
+        if (pdfUrl) setActiveTab('pdf');
+    }, [pdfUrl]);
 
     // Editor state
     const [editorContent, setEditorContent] = useState('');

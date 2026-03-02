@@ -1165,7 +1165,7 @@ const styles = StyleSheet.create({
     columnWrapper: { flexDirection: 'column', marginRight: 50, width: 220, justifyContent: 'flex-start' },
     loadingCard: { width: 220, height: LAYOUT.CARD_HEIGHT, backgroundColor: '#050505', borderRadius: 8, borderWidth: 1, borderColor: '#1E293B', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
     loadingText: { color: '#3B82F6', fontSize: 13, fontWeight: '600' },
-    nodeList: { gap: 20 },
+    nodeList: {},
     startBtn: { marginTop: 100, marginLeft: 50, backgroundColor: '#2563EB', padding: 15, borderRadius: 8 },
     startBtnText: { color: 'white', fontWeight: 'bold' },
 

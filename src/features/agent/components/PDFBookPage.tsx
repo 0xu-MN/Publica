@@ -45,9 +45,9 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
 
         page.getTextContent().then((content: any) => {
             const initialBlocks = SmartBlockEngine.processPage(content.items, viewport);
-            const extractedBlocks = StructureEngine.analyzeStructure(initialBlocks);
-            setBlocks(extractedBlocks);
-            onLoadSuccess?.({ ...page, blocks: extractedBlocks, height: viewport.height });
+            const analyzedBlocks = StructureEngine.analyzeStructure(initialBlocks);
+            setBlocks(analyzedBlocks);
+            onLoadSuccess?.({ ...page, blocks: analyzedBlocks, height: viewport.height });
         });
     };
 
@@ -116,40 +116,24 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                     );
                 })}
 
-                {/* ── 2. 서버 TOC ✨ 버튼 ── */}
-                {/* ✅ FIX: pageScale이 null이면 렌더하지 않음 (scale=1로 잘못 표시되는 것 방지) */}
-                {pageScale !== null && serverTOCItems.map((item, idx) => {
-                    const isHovered = hoveredTOC === item.id;
+                {/* ── 2. 제목 네비게이션(Sparkle) 버튼 ── */}
+                {pageScale !== null && blocks.filter(b => b.type === 'heading').map((block, idx) => {
+                    const isHovered = hoveredTOC === block.id;
 
-                    // ✅ FIX: 좌표 변환
-                    // Python pdfplumber의 item.y, item.x는 PDF 포인트 단위 (top 기준)
-                    // pageScale = 렌더된 픽셀 너비 / PDF 포인트 너비
-                    // → pixel_y = pdf_y * pageScale
-                    const pixelY = item.y * pageScale;
-                    const pixelX = item.x * pageScale;
-
-                    // ✨ 버튼을 제목 왼쪽에 배치 (최소 0, 최대 제목 x의 왼쪽)
-                    let btnLeft = Math.max(2, pixelX - 32);
-                    let btnTop = pixelY - 1;
-
-                    // 만약 PyMuPDF가 좌표를 찾지 못해 (0,0)을 반환했다면, 왼쪽 여백에 예쁘게 나열
-                    if (item.x === 0 && item.y === 0) {
-                        const itemsOnPage = serverTOCItems.filter(t => t.page === item.page);
-                        const indexOnPage = itemsOnPage.indexOf(item);
-                        btnLeft = 8;
-                        btnTop = 40 + (indexOnPage * 36);
-                    }
+                    // 클라이언트 파싱된 block 좌표는 이미 viewport scale이 적용되어 있음
+                    let btnLeft = Math.max(2, block.x - 32);
+                    let btnTop = Math.max(0, block.y - 1);
 
                     return (
                         <View
-                            key={`toc-btn-${item.id}-${idx}`}
+                            key={`toc-btn-${block.id}-${idx}`}
                             // @ts-ignore
-                            onMouseEnter={() => setHoveredTOC(item.id)}
+                            onMouseEnter={() => setHoveredTOC(block.id)}
                             onMouseLeave={() => setHoveredTOC(null)}
                             onClick={(e: any) => {
                                 e.stopPropagation();
                                 onSparkle?.(
-                                    { id: item.id, y: item.y, text: item.title, type: 'heading' },
+                                    { id: block.id, y: block.y, text: block.text, type: 'heading' },
                                     { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }
                                 );
                             }}

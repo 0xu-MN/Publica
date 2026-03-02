@@ -109,7 +109,16 @@ export class StructureEngine {
             return 0;
         }
 
-        if (/^[■○●◎◆◇▶▷→←↑↓※①②③④⑤⑥⑦⑧⑨⑩ㄱ-ㅎ]/.test(firstLine)) return 0;
+        // ✅ Level 2: 특수 기호 시작 (■, ○ 등 한국어 공고문에서 널리 쓰이는 헤딩)
+        if (/^[■○●◎◆◇▶▷※]/.test(firstLine)) {
+            const rest = firstLine.substring(1).trim();
+            if (rest.length >= 2 && rest.length <= 40 && !/않|가능$|불가$|있음$|없음$|됨$|경우$|이내$|한다$|합니다$|이행$/.test(rest)) {
+                return 2;
+            }
+        }
+
+        // ── 제외 조건 (기호 시작이나 불필요한 것들) ──
+        if (/^[→←↑↓ㄱ-ㅎ]/.test(firstLine)) return 0;
         if (/^[\[\(《「『<]/.test(firstLine)) return 0;
         if (/@/.test(firstLine) || /https?:\/\//.test(firstLine)) return 0;
         if (/[±μ%°~*;{}!=]/.test(firstLine.substring(0, 30))) return 0;
