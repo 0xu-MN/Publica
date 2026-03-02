@@ -81,6 +81,7 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
         const [tocItems, setTocItems] = useState<any[]>([]);
         const [showTOC] = useState(true);
         const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
+        const [parserError, setParserError] = useState(false);
 
         // 페이지별 높이 추적
         const pageHeightsRef = useRef<number[]>([]);
@@ -112,12 +113,14 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
             serverModeRef.current = false;
             serverDataLoadedRef.current = false;
             setServerMode(false);
+            setParserError(false);
             serverSectionsRef.current = {};
             serverTOCRef.current = [];
 
             fetchPythonTOC(url).then(res => {
                 if (res && res.toc && res.toc.length > 0) {
                     console.log(`✅ 서버 TOC 로드: ${res.toc.length}개`);
+                    console.log(`🔍 서버 TOC 첫 15개:`, res.toc.slice(0, 15).map((t: any) => `${t.id}: ${t.title}`));
                     serverModeRef.current = true;
                     serverDataLoadedRef.current = true;
                     setServerMode(true);
@@ -127,6 +130,9 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                     setTocItems(res.toc);
                 } else {
                     console.log("⚠️ Python 서버 결과 없음 → 클라이언트 파싱으로 전환");
+                    if (!res) {
+                        setParserError(true); // 통신 실패 또는 에러 시
+                    }
                     serverModeRef.current = false;
                     serverDataLoadedRef.current = false;
                     setServerMode(false);
@@ -266,6 +272,13 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                 style={[styles.container, Platform.OS === 'web' && { userSelect: 'text', overflow: 'hidden' } as any]}
                 onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}
             >
+                {parserError && (
+                    <View style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, backgroundColor: 'rgba(239, 68, 68, 0.9)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, flexDirection: 'row', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 6 }}>
+                        <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 13 }}>⚠️ AI 문서 분석 서버 접속 실패</Text>
+                        <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginLeft: 8 }}>기본 클라이언트 파싱 모드로 작동 중입니다.</Text>
+                    </View>
+                )}
+
                 {showTOC && (
                     <TableOfContents
                         items={tocItems}
