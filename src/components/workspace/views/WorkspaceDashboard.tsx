@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '../../../lib/supabase';
 import { Briefcase, AlertCircle, CheckCircle, Zap, Layers, ChevronRight } from 'lucide-react-native';
 import { ProjectPipelineCard } from '../components/ProjectPipelineCard';
 import { ActiveProjectCard } from '../components/ActiveProjectCard';
@@ -10,6 +11,8 @@ import { RecommendedBusinessCard } from '../components/RecommendedBusinessCard';
 
 interface WorkspaceDashboardProps {
     onOpenCalendar: () => void;
+    onLoadSession?: (session: any) => void;
+    onNavigateToPortfolio?: () => void;
 }
 
 import { fetchProjects, Project } from '../../../services/projects';
@@ -19,13 +22,14 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 // ... (imports)
 
-export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) => {
+export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateToPortfolio }: WorkspaceDashboardProps) => {
     const { user, profile } = useAuth();
     const [nickname, setNickname] = useState('연구원');
 
     // Real Data State
     const [pipelineProjects, setPipelineProjects] = useState<Project[]>([]);
     const [recommendedBusinesses, setRecommendedBusinesses] = useState<any[]>([]);
+    const [savedSessions, setSavedSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -64,6 +68,17 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
             // Take Top 3
             setRecommendedBusinesses(scoredGrants.slice(0, 3));
 
+            // 4. Fetch Saved Agent Sessions (workspace_sessions)
+            if (user) {
+                const { data: sessions } = await supabase
+                    .from('workspace_sessions')
+                    .select('id, title, mode, updated_at')
+                    .eq('user_id', user.id)
+                    .order('updated_at', { ascending: false })
+                    .limit(4);
+                if (sessions) setSavedSessions(sessions);
+            }
+
         } catch (e) {
             console.error("Failed to load workspace data", e);
         } finally {
@@ -92,24 +107,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
     // OR map the pipeline projects to "Active Projects". 
     // Let's use mock for bottom "Active Projects" to avoid scope creep, 
     // unless user explicitly asked. User asked for "Pipeline" and "Recommendations".
-    const activeProjectsMock = [
-        {
-            id: '1',
-            name: 'InsightFlow MVP 개발',
-            description: 'React Native + Supabase 기반 앱',
-            progress: 75,
-            icon: 'folder' as const,
-            progressColor: '#3B82F6',
-        },
-        {
-            id: '2',
-            name: '원본 투자 탐피리즘 고도화',
-            description: 'Transformer 모델 리팩토링',
-            progress: 30,
-            icon: 'code' as const,
-            progressColor: '#10B981',
-        },
-    ];
+
 
     const handleToggleSchedule = (id: string) => {
         setScheduleItems(items =>
@@ -225,9 +223,9 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
                             <StatsCard
                                 icon={Briefcase}
                                 iconColor="#3B82F6"
-                                title="진행중 프로젝트"
-                                value={pipelineProjects.length.toString()}
-                                subtitle="+1개 이번 주 시작"
+                                title="저장된 AI 세션"
+                                value={savedSessions.length.toString()}
+                                subtitle="최근 저장된 작업"
                                 valueColor="#3B82F6"
                             />
                             <StatsCard
@@ -256,24 +254,47 @@ export const WorkspaceDashboard = ({ onOpenCalendar }: WorkspaceDashboardProps) 
                         <Text className="text-white font-bold text-lg">
                             진행 중인 프로젝트
                         </Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => onNavigateToPortfolio?.()}>
                             <Text className="text-blue-400 text-sm font-semibold">
                                 전체보기
                             </Text>
                         </TouchableOpacity>
                     </View>
 
-                    {/* Horizontal Layout for Projects */}
+                    {/* Horizontal Layout for Saved Sessions */}
                     <View className="flex-row gap-4">
-                        {activeProjectsMock.map(project => (
-                            <View key={project.id} className="flex-1">
-                                <ActiveProjectCard
-                                    {...project}
-                                    onContinue={() => handleContinueProject(project.id)}
-                                    onViewFiles={() => handleViewFiles(project.id)}
-                                />
+                        {savedSessions.length > 0 ? (
+                            savedSessions.slice(0, 3).map(session => {
+                                const branchCount = session.workspace_data?.reduce((acc: number, col: any) => acc + (col.nodes?.length || 0), 0) || 0;
+                                const hasEditor = !!session.editor_content && session.editor_content.length > 50;
+                                const hasChat = (session.chat_history?.length || 0) > 2;
+                                let progress = 10;
+                                let progressColor = '#64748B';
+                                let stage = '시작됨';
+                                if (hasEditor && branchCount > 0) { progress = 75; progressColor = '#10B981'; stage = '서류 작성 중'; }
+                                else if (branchCount > 0 && hasChat) { progress = 50; progressColor = '#3B82F6'; stage = '브레인스톰 완료'; }
+                                else if (branchCount > 0) { progress = 30; progressColor = '#F59E0B'; stage = '분석 진행 중'; }
+
+                                return (
+                                    <View key={session.id} className="flex-1">
+                                        <ActiveProjectCard
+                                            id={session.id}
+                                            name={session.title || 'Untitled'}
+                                            description={`${stage} · ${new Date(session.updated_at).toLocaleDateString('ko-KR')}`}
+                                            progress={progress}
+                                            icon={'folder' as const}
+                                            progressColor={progressColor}
+                                            onContinue={() => onLoadSession?.(session)}
+                                            onViewFiles={() => onLoadSession?.(session)}
+                                        />
+                                    </View>
+                                );
+                            })
+                        ) : (
+                            <View className="flex-1 py-8 items-center">
+                                <Text className="text-slate-500 text-sm">저장된 AI 세션이 없습니다</Text>
                             </View>
-                        ))}
+                        )}
                     </View>
                 </View>
             </View>

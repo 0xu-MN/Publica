@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, ScrollView } from 'react-native';
-import { Home, Zap, MessageSquare, Bookmark, Settings, User } from 'lucide-react-native';
+import { Home, Zap, MessageSquare, Bookmark, Settings, User, ClipboardList, FileEdit, FolderKanban } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
-export type WorkspaceTab = 'home' | 'agent' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge';
+export type WorkspaceTab = 'home' | 'agent' | 'nexus-edit' | 'projects' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge' | 'grants';
 
 interface SidebarProps {
     activeTab: WorkspaceTab;
@@ -12,8 +12,14 @@ interface SidebarProps {
 
 export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
-    const homeItems = [
-        { id: 'agent', icon: Zap, label: '에이전트' },
+    const workflowItems = [
+        { id: 'grants', icon: ClipboardList, label: '공고' },
+        { id: 'agent', icon: Zap, label: 'Flow' },
+        { id: 'nexus-edit', icon: FileEdit, label: 'Edit' },
+        { id: 'projects', icon: FolderKanban, label: 'Portfolio' },
+    ];
+
+    const utilItems = [
         { id: 'chat', icon: MessageSquare, label: '채팅' },
         { id: 'scraps', icon: Bookmark, label: '스크랩' },
     ];
@@ -23,13 +29,16 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     React.useEffect(() => {
         const fetchProjects = async () => {
             try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+
                 const { data, error } = await supabase
-                    .from('projects')
-                    .select('id, grant_title, status')
-                    .order('last_updated', { ascending: false });
+                    .from('workspace_sessions')
+                    .select('id, title')
+                    .eq('user_id', user.id)
+                    .order('updated_at', { ascending: false });
 
                 if (error) {
-                    // Ignore 404 if the table hasn't been created yet
                     if (error.code !== 'PGRST205') {
                         console.log("Failed to fetch sidebar projects", error);
                     }
@@ -128,28 +137,12 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 {/* Divider */}
                 <View className="w-8 h-[1px] bg-white/10 mb-4" />
 
-                {/* Main Navigation */}
+                {/* Main Navigation — Workflow */}
                 <View className="flex-1 gap-3">
-                    {homeItems.map(renderItem)}
-
-                    {/* My Projects Section */}
-                    {projects.length > 0 && (
-                        <View className="mt-4 mb-2 w-full h-[1px] bg-white/10" />
-                    )}
-
-                    <ScrollView className="flex-1 w-full" showsVerticalScrollIndicator={false}>
-                        {projects.map((p, i) => (
-                            <TouchableOpacity
-                                key={p.id}
-                                onPress={() => onTabChange('agent')}
-                                className="w-[48px] h-[48px] rounded-[16px] bg-slate-800/50 mb-2 items-center justify-center border border-white/5 active:bg-blue-500/20"
-                            >
-                                <Text className="text-[10px] text-slate-400 font-bold text-center leading-3 px-1" numberOfLines={2}>
-                                    {p.grant_title.slice(0, 4)}..
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
+                    {workflowItems.map(renderItem)}
+                    {/* Divider after Portfolio */}
+                    <View className="w-8 h-[1px] bg-white/10 self-center" />
+                    {utilItems.map(renderItem)}
                 </View>
 
                 {/* Bottom Actions - Settings */}

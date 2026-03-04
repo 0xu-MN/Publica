@@ -31,13 +31,25 @@ export interface Grant {
 }
 
 export const fetchGrants = async (): Promise<Grant[]> => {
-    const { data, error } = await supabase
+    // Try with is_active filter first (requires migration 20260304)
+    let { data, error } = await supabase
         .from('grants')
-        .select('*');
+        .select('*')
+        .neq('is_active', false)
+        .order('deadline_date', { ascending: true, nullsFirst: false });
 
+    // Fallback: if is_active column doesn't exist yet, query without filter
     if (error) {
-        console.error('Error fetching grants:', error);
-        return [];
+        console.warn('Grants query with is_active filter failed, using fallback:', error.message);
+        const fallback = await supabase
+            .from('grants')
+            .select('*');
+
+        if (fallback.error) {
+            console.error('Error fetching grants:', fallback.error);
+            return [];
+        }
+        return fallback.data as Grant[];
     }
 
     return data as Grant[];

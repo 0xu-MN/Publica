@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Platform } from 'react-native';
-import { FileText, Edit3, FileIcon, X, ChevronLeft, ChevronRight, Settings2, Sparkles, FileDown, Copy, Bold, Italic, List, AlignLeft, Minus } from 'lucide-react-native';
+import { FileText, Edit3, FileIcon, X, ChevronLeft, ChevronRight, Settings2, Sparkles, FileDown, Copy, Minus } from 'lucide-react-native';
 import { GrantContentPanel } from './GrantContentPanel';
-import { marked } from 'marked';
+import { NotionEditor } from './NotionEditor';
 
 // Lazy load PDFViewerPanel
 const PDFViewerPanel = React.lazy(() =>
@@ -53,6 +53,7 @@ export const ContextDock: React.FC<ContextDockProps> = ({
 
     // Editor state
     const [editorContent, setEditorContent] = useState('');
+    const [editorHtml, setEditorHtml] = useState('');
     const [editorMode, setEditorMode] = useState<'사업계획서' | '제안서' | '자유형식'>('사업계획서');
 
     const tabs: { key: DockTab; label: string; emoji: string; available: boolean }[] = [
@@ -103,7 +104,7 @@ export const ContextDock: React.FC<ContextDockProps> = ({
             {/* Editor Toolbar — shadcn playground style */}
             <View style={styles.editorToolbar}>
                 <View style={styles.modeSelector}>
-                    {(['사업계획서', '제안서', '자유형식'] as const).map(mode => (
+                    {(['\uc0ac\uc5c5\uacc4\ud68d\uc11c', '\uc81c\uc548\uc11c', '\uc790\uc720\ud615\uc2dd'] as const).map(mode => (
                         <TouchableOpacity
                             key={mode}
                             style={[styles.modeBtn, editorMode === mode && styles.modeBtnActive]}
@@ -116,13 +117,12 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                     ))}
                 </View>
                 <View style={{ flexDirection: 'row', gap: 4 }}>
-                    <TouchableOpacity style={styles.toolBtn} onPress={async () => {
-                        if (!editorContent || Platform.OS !== 'web') return;
+                    <TouchableOpacity style={styles.toolBtn} onPress={() => {
+                        if (!editorHtml || Platform.OS !== 'web') return;
                         try {
-                            const htmlContent = await marked.parse(editorContent);
                             const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Doc Export</title></head><body>";
                             const footer = "</body></html>";
-                            const sourceHTML = header + htmlContent + footer;
+                            const sourceHTML = header + editorHtml + footer;
                             const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
                             const fileDownload = document.createElement("a");
                             document.body.appendChild(fileDownload);
@@ -138,10 +138,9 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                         <FileDown size={12} color="#64748B" />
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.toolBtn} onPress={async () => {
-                        if (!editorContent || Platform.OS !== 'web') return;
+                    <TouchableOpacity style={styles.toolBtn} onPress={() => {
+                        if (!editorHtml || Platform.OS !== 'web') return;
                         try {
-                            const htmlContent = await marked.parse(editorContent);
                             const iframe = document.createElement('iframe');
                             iframe.style.display = 'none';
                             document.body.appendChild(iframe);
@@ -158,7 +157,7 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                                                 hr { border: 0; border-top: 1px solid #ccc; margin: 20px 0; }
                                             </style>
                                         </head>
-                                        <body>${htmlContent}</body>
+                                        <body>${editorHtml}</body>
                                     </html>
                                 `);
                                 doc.close();
@@ -178,13 +177,8 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                 </View>
             </View>
 
-            {/* Format Bar */}
+            {/* Compact AI Bar */}
             <View style={styles.formatBar}>
-                <TouchableOpacity style={styles.formatBtn}><Bold size={14} color="#94A3B8" /></TouchableOpacity>
-                <TouchableOpacity style={styles.formatBtn}><Italic size={14} color="#94A3B8" /></TouchableOpacity>
-                <TouchableOpacity style={styles.formatBtn}><List size={14} color="#94A3B8" /></TouchableOpacity>
-                <TouchableOpacity style={styles.formatBtn}><AlignLeft size={14} color="#94A3B8" /></TouchableOpacity>
-                <View style={styles.formatDivider} />
                 <TouchableOpacity
                     style={[styles.formatBtn, styles.aiBtn, isGenerating && { opacity: 0.5 }]}
                     disabled={isGenerating}
@@ -200,52 +194,26 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                         }
                     }}
                 >
-                    {isGenerating ? <Text style={{ fontSize: 10, color: '#8B5CF6' }}>⏳</Text> : <Sparkles size={12} color="#8B5CF6" />}
-                    <Text style={styles.aiBtnText}>{isGenerating ? 'AI 작성 중...' : 'AI 작성'}</Text>
+                    {isGenerating ? <Text style={{ fontSize: 10, color: '#8B5CF6' }}>{'\u23f3'}</Text> : <Sparkles size={12} color="#8B5CF6" />}
+                    <Text style={styles.aiBtnText}>{isGenerating ? 'AI \uc791\uc131 \uc911...' : 'AI \uc791\uc131'}</Text>
                 </TouchableOpacity>
+                <View style={{ flex: 1 }} />
+                <Text style={{ color: '#334155', fontSize: 10 }}>{editorMode}</Text>
             </View>
 
-            {/* Editor Content Area */}
-            <ScrollView style={styles.editorArea} contentContainerStyle={{ flexGrow: 1 }}>
-                {Platform.OS === 'web' ? (
-                    <textarea
-                        value={editorContent}
-                        onChange={(e: any) => setEditorContent(e.target.value)}
-                        placeholder={editorMode === '사업계획서'
-                            ? '1. 사업 개요\n\n사업 목표:\n\n\n2. 시장 분석\n\n\n3. 사업 추진 계획\n\n\n4. 예상 성과'
-                            : editorMode === '제안서'
-                                ? '제안 제목:\n\n제안 배경:\n\n핵심 제안 내용:\n\n기대 효과:'
-                                : '여기에 자유롭게 작성하세요...'}
-                        style={{
-                            width: '100%', minHeight: 400, flex: 1,
-                            backgroundColor: 'transparent', color: '#E2E8F0',
-                            border: 'none', outline: 'none', resize: 'none',
-                            fontSize: 14, lineHeight: '24px', fontFamily: 'inherit',
-                            padding: 0,
-                        } as any}
-                    />
-                ) : (
-                    <TextInput
-                        value={editorContent}
-                        onChangeText={setEditorContent}
-                        placeholder="여기에 작성하세요..."
-                        placeholderTextColor="#475569"
-                        multiline
-                        style={styles.editorInput}
-                    />
-                )}
-            </ScrollView>
-
-            {/* Editor Footer — word count + status */}
-            <View style={styles.editorFooter}>
-                <Text style={styles.footerText}>
-                    {editorContent.length > 0 ? `${editorContent.length}자` : '0자'} · {editorMode}
-                </Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <View style={[styles.statusDot, editorContent.length > 0 ? { backgroundColor: '#10B981' } : { backgroundColor: '#475569' }]} />
-                    <Text style={styles.footerText}>{editorContent.length > 0 ? '작성 중' : '대기 중'}</Text>
-                </View>
-            </View>
+            {/* Notion-Style Editor */}
+            <NotionEditor
+                initialContent={editorHtml}
+                placeholder={editorMode === '\uc0ac\uc5c5\uacc4\ud68d\uc11c'
+                    ? '/ \ub97c \uc785\ub825\ud558\uc5ec \uc0ac\uc5c5\uacc4\ud68d\uc11c \uc791\uc131\uc744 \uc2dc\uc791\ud558\uc138\uc694...'
+                    : editorMode === '\uc81c\uc548\uc11c'
+                        ? '/ \ub97c \uc785\ub825\ud558\uc5ec \uc81c\uc548\uc11c \uc791\uc131\uc744 \uc2dc\uc791\ud558\uc138\uc694...'
+                        : '/ \ub97c \uc785\ub825\ud558\uc5ec \ube14\ub85d \ud0c0\uc785\uc744 \uc120\ud0dd\ud558\uc138\uc694...'}
+                onChange={(html, markdown) => {
+                    setEditorHtml(html);
+                    setEditorContent(markdown);
+                }}
+            />
         </View>
     );
 

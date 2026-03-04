@@ -1,5 +1,5 @@
 import React, { useState, useRef, useImperativeHandle, forwardRef, useCallback, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { Document, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
@@ -104,7 +104,7 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
         const [containerWidth, setContainerWidth] = useState<number>(0);
         const scrollViewRef = useRef<ScrollView>(null);
         const [tocItems, setTocItems] = useState<any[]>([]);
-        const [showTOC] = useState(true);
+        const [showTOC, setShowTOC] = useState(true);
         const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
         const [parserError, setParserError] = useState(false);
 
@@ -303,6 +303,18 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                         <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 11, marginLeft: 8 }}>기본 클라이언트 파싱 모드로 작동 중입니다.</Text>
                     </View>
                 )}
+
+                {/* TOC Toggle Button */}
+                <View style={{ position: 'absolute', top: 8, left: 8, zIndex: 1001 } as any}>
+                    <TouchableOpacity
+                        onPress={() => setShowTOC(!showTOC)}
+                        style={{ backgroundColor: showTOC ? '#1E293B' : '#0F172A', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, borderWidth: 1, borderColor: '#334155', flexDirection: 'row', alignItems: 'center', gap: 4 }}
+                    >
+                        <Text style={{ color: showTOC ? '#10B981' : '#64748B', fontSize: 11, fontWeight: '700' }}>
+                            {showTOC ? '📑 목차 닫기' : '📑 목차'}
+                        </Text>
+                    </TouchableOpacity>
+                </View>
 
                 {showTOC && (
                     <TableOfContents

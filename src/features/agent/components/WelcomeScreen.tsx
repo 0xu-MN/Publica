@@ -1,14 +1,15 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Animated, Linking } from 'react-native';
-import { MessageSquare, FileText, Sparkles, ArrowRight } from 'lucide-react-native';
+import { MessageSquare, FileText, Sparkles, ArrowRight, Folder } from 'lucide-react-native';
 
 interface WelcomeScreenProps {
     onStartChat: () => void;
     onUploadFile: () => void;
+    onResumeWorks?: () => void;
     onViewRecommendations?: () => void;
 }
 
-export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartChat, onUploadFile, onViewRecommendations }) => {
+export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartChat, onUploadFile, onResumeWorks, onViewRecommendations }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
 
     // Simple Entrance Animation
@@ -89,6 +90,26 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartChat, onUpl
                         </View>
                         <ArrowRight size={20} color="#64748B" />
                     </TouchableOpacity>
+
+                    {/* Tertiary: Resume Previous Work */}
+                    {onResumeWorks && (
+                        <TouchableOpacity
+                            onPress={onResumeWorks}
+                            activeOpacity={0.8}
+                            className="w-full bg-[#0F172A] hover:bg-slate-800 py-5 px-6 rounded-2xl flex-row items-center justify-between border border-white/10 shadow-sm"
+                        >
+                            <View className="flex-row items-center gap-4 flex-1">
+                                <View className="p-2.5 bg-slate-800/50 rounded-xl border border-white/5">
+                                    <Folder size={24} color="#818CF8" />
+                                </View>
+                                <View>
+                                    <Text className="text-slate-200 text-lg font-semibold">이전 작업 이어서 하기</Text>
+                                    <Text className="text-slate-500 text-sm mt-0.5">최근에 진행하던 워크스페이스를 불러옵니다</Text>
+                                </View>
+                            </View>
+                            <ArrowRight size={20} color="#64748B" />
+                        </TouchableOpacity>
+                    )}
                 </View>
 
                 {/* 5. Tertiary Link */}

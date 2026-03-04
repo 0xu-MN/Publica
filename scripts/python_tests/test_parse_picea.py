@@ -1,31 +1,25 @@
-import asyncio
+import sys
 import os
+import json
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
+
 from server.main import parse_pdf
+import asyncio
 
-class MockUploadFile:
-    def __init__(self, path):
-        self.filename = os.path.basename(path)
-        with open(path, "rb") as f:
-            self.content = f.read()
+async def test():
+    class DummyFile:
+        async def read(self):
+            with open("/Users/admin/Desktop/insightflow/server/test_paper.pdf", "rb") as f:
+                return f.read()
 
-    async def read(self):
-        return self.content
-
-async def run():
-    try:
-        mock_file = MockUploadFile("/Users/admin/Downloads/ilovepdf_merged.pdf")
-        res = await parse_pdf(mock_file)
-        
-        zero_count = 0
-        for item in res.toc:
-            print(f"L{item.level} | {item.title} (page={item.page}, x={item.x}, y={item.y})")
-            if item.x == 0: zero_count += 1
-            
-        print(f"TOC count: {len(res.toc)}, Zero Coords: {zero_count}")
-        
-    except Exception as e:
-        import traceback
-        traceback.print_exc()
+    res = await parse_pdf(DummyFile())
+    print(f"Num Pages: {res.numPages}")
+    print(f"TOC count: {len(res.toc)}")
+    
+    # Print the first 30 TOC items clearly
+    for item in res.toc[:30]:
+        print(f"L{item.level} | {item.title} (page={item.page}, x={item.x}, y={item.y})")
 
 if __name__ == "__main__":
-    asyncio.run(run())
+    asyncio.run(test())

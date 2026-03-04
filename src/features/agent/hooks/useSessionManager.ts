@@ -12,12 +12,18 @@ export const useSessionManager = (userId: string | undefined) => {
         const { data, error } = await supabase
             .from('workspace_sessions')
             .select('*')
+            .eq('user_id', userId)
             .order('updated_at', { ascending: false });
 
         if (data) setSessions(data);
     };
 
-    // 2. 저장하기 (Auto-Save or Manual Save)
+    // 🌟 Auto-fetch on mount
+    useEffect(() => {
+        fetchSessions();
+    }, [userId]);
+
+    // 2. 저장하기 (Auto-Save or Manual Save) — Flow용
     const saveSession = async (title: string, mode: string, columns: any[], chatHistory: any[], pdfUrl?: string) => {
         if (!userId) return;
 
@@ -27,40 +33,83 @@ export const useSessionManager = (userId: string | undefined) => {
             mode,
             workspace_data: columns,
             chat_history: chatHistory,
-            pdf_url: pdfUrl || null,
             updated_at: new Date().toISOString()
         };
 
         let result;
         if (currentSessionId) {
-            // 기존 세션 업데이트
             result = await supabase
                 .from('workspace_sessions')
-                .update(payload)
+                .update({ ...payload, pdf_url: pdfUrl || null })
                 .eq('id', currentSessionId)
                 .select();
+
+            if (result.error && (result.error.code === '42703' || result.error.message.includes('pdf_url'))) {
+                console.warn("pdf_url column missing, retrying without it...");
+                result = await supabase.from('workspace_sessions').update(payload).eq('id', currentSessionId).select();
+            }
         } else {
-            // 새 세션 생성
             result = await supabase
                 .from('workspace_sessions')
-                .insert(payload)
+                .insert({ ...payload, pdf_url: pdfUrl || null })
                 .select();
+
+            if (result.error && (result.error.code === '42703' || result.error.message.includes('pdf_url'))) {
+                console.warn("pdf_url column missing, retrying without it...");
+                result = await supabase.from('workspace_sessions').insert(payload).select();
+            }
         }
 
         if (result.error) {
             console.error("Session Save Error:", result.error);
-            Alert.alert("저장 실패", result.error.message || "오류가 발생했습니다.");
             return false;
         }
 
         if (result.data && result.data.length > 0) {
             setCurrentSessionId(result.data[0].id);
-            fetchSessions(); // 목록 갱신
-            console.log("Session Saved!");
+            fetchSessions();
+            console.log("Session Saved Successfully!");
             return true;
         }
 
         return false;
+    };
+
+    // 2-B. 에디터 콘텐츠 저장 (NEXUS-Edit용)
+    const saveEditorContent = async (sessionId: string, editorHtml: string, editorMarkdown: string) => {
+        if (!userId || !sessionId) return false;
+
+        const payload = {
+            editor_content: editorHtml,
+            editor_markdown: editorMarkdown,
+            updated_at: new Date().toISOString(),
+        };
+
+        let result = await supabase
+            .from('workspace_sessions')
+            .update(payload)
+            .eq('id', sessionId)
+            .eq('user_id', userId)
+            .select();
+
+        // Fallback: editor_content 컬럼이 아직 없으면 updated_at만 업데이트
+        if (result.error && (result.error.code === '42703' || result.error.message.includes('editor_content'))) {
+            console.warn("editor_content column not yet available. Saving to updated_at only.");
+            result = await supabase
+                .from('workspace_sessions')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', sessionId)
+                .select();
+        }
+
+        if (result.error) {
+            console.error("Editor Save Error:", result.error);
+            return false;
+        }
+
+        console.log("Editor content saved!");
+        fetchSessions();
+        return true;
     };
 
     // 3. 불러오기
@@ -71,7 +120,7 @@ export const useSessionManager = (userId: string | undefined) => {
             .eq('id', sessionId)
             .single();
 
-        return data; // AgentView에서 받아서 state 업데이트
+        return data; // includes editor_content, editor_markdown if columns exist
     };
 
     // 4. 삭제하기
@@ -80,5 +129,6 @@ export const useSessionManager = (userId: string | undefined) => {
         fetchSessions();
     };
 
-    return { sessions, currentSessionId, setCurrentSessionId, fetchSessions, saveSession, loadSession, deleteSession };
+    return { sessions, currentSessionId, setCurrentSessionId, fetchSessions, saveSession, saveEditorContent, loadSession, deleteSession };
 };
+

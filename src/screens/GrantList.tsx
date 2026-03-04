@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, StyleSheet, FlatList, Platform } from 'react-native';
-import { ChevronLeft, Info, Zap, Filter, Search, ArrowRight, Share2, Bookmark, Sparkles } from 'lucide-react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, StyleSheet, FlatList, Platform, Animated, Linking } from 'react-native';
+import { ChevronLeft, Info, Zap, Filter, Search, ArrowRight, Share2, Bookmark, Sparkles, ExternalLink, FileText, X } from 'lucide-react-native';
 import { fetchGrants, Grant } from '../services/grants';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateGrantScore } from '../utils/scoring';
@@ -17,7 +17,30 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
     const [activeTab, setActiveTab] = useState<'Rec' | 'All'>('Rec');
     const [sortOption, setSortOption] = useState<'match' | 'deadline' | 'recent'>('match');
     const [filter, setFilter] = useState<'All' | 'R&D' | 'Commercialization' | 'Voucher' | 'Policy Fund'>('All');
+    const [regionFilter, setRegionFilter] = useState<string>('All');
+    const [selectedGrant, setSelectedGrant] = useState<Grant | null>(null);
+    const detailPanelWidth = useRef(new Animated.Value(0)).current;
     const { user, profile } = useAuth();
+
+    // Animate detail panel
+    const openDetail = (grant: Grant) => {
+        setSelectedGrant(grant);
+        Animated.spring(detailPanelWidth, {
+            toValue: 420,
+            useNativeDriver: false,
+            friction: 12,
+            tension: 65,
+        }).start();
+    };
+
+    const closeDetail = () => {
+        Animated.spring(detailPanelWidth, {
+            toValue: 0,
+            useNativeDriver: false,
+            friction: 12,
+            tension: 65,
+        }).start(() => setSelectedGrant(null));
+    };
 
     useEffect(() => {
         loadData();
@@ -42,6 +65,23 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
 
     const getSortedGrants = () => {
         let filtered = grants.filter(g => filter === 'All' || g.category === filter);
+
+        // Region filter
+        if (regionFilter !== 'All') {
+            filtered = filtered.filter(g => {
+                const gRegion = g.region || '전국';
+                if (regionFilter === '전국') return gRegion === '전국';
+                return gRegion === regionFilter || gRegion === '전국';
+            });
+        }
+
+        // Exclude expired grants (D-Day past)
+        filtered = filtered.filter(g => {
+            if (!g.d_day) return true;
+            const match = g.d_day.match(/D-(-?\d+)/);
+            if (!match) return true;
+            return parseInt(match[1]) >= 0;
+        });
 
         const parseDDay = (d: string) => {
             if (!d) return 999;
@@ -76,7 +116,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
             return (
                 <TouchableOpacity
                     style={styles.card}
-                    onPress={() => onSelectGrant(item)}
+                    onPress={() => openDetail(item)}
                     activeOpacity={0.7}
                 >
                     <View style={styles.cardHeader}>
@@ -143,7 +183,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
             return (
                 <TouchableOpacity
                     style={styles.listItem}
-                    onPress={() => onSelectGrant(item)}
+                    onPress={() => openDetail(item)}
                     activeOpacity={0.7}
                 >
                     <View style={styles.listMain}>
@@ -180,80 +220,218 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                 </TouchableOpacity>
             </View>
 
-            {/* Tab System */}
-            <View style={styles.tabContainer}>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'Rec' && styles.tabActive]}
-                    onPress={() => { setActiveTab('Rec'); setSortOption('match'); }}
-                >
-                    <Sparkles size={16} color={activeTab === 'Rec' ? '#3B82F6' : '#64748B'} />
-                    <Text style={[styles.tabText, activeTab === 'Rec' && styles.tabTextActive]}>AI Recommendation</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tab, activeTab === 'All' && styles.tabActive]}
-                    onPress={() => { setActiveTab('All'); setSortOption('deadline'); }}
-                >
-                    <Filter size={16} color={activeTab === 'All' ? '#3B82F6' : '#64748B'} />
-                    <Text style={[styles.tabText, activeTab === 'All' && styles.tabTextActive]}>All Grants</Text>
-                </TouchableOpacity>
-            </View>
-
-            {/* Sorting & Filter Bar */}
-            <View style={styles.filterContainer}>
-                {/* Sort Options */}
-                <View style={styles.sortRow}>
-                    <TouchableOpacity onPress={() => setSortOption('match')} style={[styles.sortChip, sortOption === 'match' && styles.sortChipActive]}>
-                        <Text style={[styles.sortText, sortOption === 'match' && styles.sortTextActive]}>매칭률 높은순</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setSortOption('deadline')} style={[styles.sortChip, sortOption === 'deadline' && styles.sortChipActive]}>
-                        <Text style={[styles.sortText, sortOption === 'deadline' && styles.sortTextActive]}>마감 임박순</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity onPress={() => setSortOption('recent')} style={[styles.sortChip, sortOption === 'recent' && styles.sortChipActive]}>
-                        <Text style={[styles.sortText, sortOption === 'recent' && styles.sortTextActive]}>최근 공고순</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Category Filters */}
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
-                    {['All', 'R&D', 'Commercialization', 'Voucher', 'Policy Fund'].map((cat) => (
+            <View style={styles.mainLayout}>
+                {/* ─── Left: Grant List (max-width constrained) ─── */}
+                <View style={styles.listSection}>
+                    {/* Tab System */}
+                    <View style={styles.tabContainer}>
                         <TouchableOpacity
-                            key={cat}
-                            style={[styles.filterChip, filter === cat && styles.filterChipActive]}
-                            onPress={() => setFilter(cat as any)}
+                            style={[styles.tab, activeTab === 'Rec' && styles.tabActive]}
+                            onPress={() => { setActiveTab('Rec'); setSortOption('match'); }}
                         >
-                            <Text style={[styles.filterChipText, filter === cat && styles.filterChipTextActive]}>
-                                {cat === 'Commercialization' ? '사업화' : cat === 'Voucher' ? '바우처' : cat === 'Policy Fund' ? '정책자금' : cat}
-                            </Text>
+                            <Sparkles size={16} color={activeTab === 'Rec' ? '#3B82F6' : '#64748B'} />
+                            <Text style={[styles.tabText, activeTab === 'Rec' && styles.tabTextActive]}>AI 추천</Text>
                         </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>
+                        <TouchableOpacity
+                            style={[styles.tab, activeTab === 'All' && styles.tabActive]}
+                            onPress={() => { setActiveTab('All'); setSortOption('deadline'); }}
+                        >
+                            <Filter size={16} color={activeTab === 'All' ? '#3B82F6' : '#64748B'} />
+                            <Text style={[styles.tabText, activeTab === 'All' && styles.tabTextActive]}>전체 공고</Text>
+                        </TouchableOpacity>
+                    </View>
 
-            {loading ? (
-                <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#3B82F6" />
-                    <Text style={styles.loadingText}>데이터를 불러오는 중입니다...</Text>
-                </View>
-            ) : (
-                <FlatList
-                    data={getSortedGrants()}
-                    renderItem={renderGrantCard}
-                    keyExtractor={item => item.id}
-                    contentContainerStyle={styles.listContent}
-                    ListEmptyComponent={
-                        <View style={styles.center}>
-                            <Text style={styles.emptyText}>해당 카테고리의 공고가 없습니다.</Text>
+                    {/* Sorting & Filter Bar */}
+                    <View style={styles.filterContainer}>
+                        <View style={styles.sortRow}>
+                            <TouchableOpacity onPress={() => setSortOption('match')} style={[styles.sortChip, sortOption === 'match' && styles.sortChipActive]}>
+                                <Text style={[styles.sortText, sortOption === 'match' && styles.sortTextActive]}>매칭률 높은순</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setSortOption('deadline')} style={[styles.sortChip, sortOption === 'deadline' && styles.sortChipActive]}>
+                                <Text style={[styles.sortText, sortOption === 'deadline' && styles.sortTextActive]}>마감 임박순</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity onPress={() => setSortOption('recent')} style={[styles.sortChip, sortOption === 'recent' && styles.sortChipActive]}>
+                                <Text style={[styles.sortText, sortOption === 'recent' && styles.sortTextActive]}>최근 공고순</Text>
+                            </TouchableOpacity>
                         </View>
-                    }
-                />
-            )}
+
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
+                            {['All', 'R&D', 'Commercialization', 'Voucher', 'Policy Fund'].map((cat) => (
+                                <TouchableOpacity
+                                    key={cat}
+                                    style={[styles.filterChip, filter === cat && styles.filterChipActive]}
+                                    onPress={() => setFilter(cat as any)}
+                                >
+                                    <Text style={[styles.filterChipText, filter === cat && styles.filterChipTextActive]}>
+                                        {cat === 'Commercialization' ? '사업화' : cat === 'Voucher' ? '바우처' : cat === 'Policy Fund' ? '정책자금' : cat}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
+                            {['All', '전국', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map((reg) => (
+                                <TouchableOpacity
+                                    key={reg}
+                                    style={[styles.filterChip, regionFilter === reg && { backgroundColor: '#581C87', borderColor: '#A855F7' }]}
+                                    onPress={() => setRegionFilter(reg)}
+                                >
+                                    <Text style={[styles.filterChipText, regionFilter === reg && styles.filterChipTextActive]}>
+                                        {reg === 'All' ? '📍 전체 지역' : reg}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                    </View>
+
+                    {loading ? (
+                        <View style={styles.center}>
+                            <ActivityIndicator size="large" color="#3B82F6" />
+                            <Text style={styles.loadingText}>데이터를 불러오는 중입니다...</Text>
+                        </View>
+                    ) : (
+                        <FlatList
+                            data={getSortedGrants()}
+                            renderItem={renderGrantCard}
+                            keyExtractor={item => item.id}
+                            contentContainerStyle={styles.listContent}
+                            ListEmptyComponent={
+                                <View style={styles.center}>
+                                    <Text style={styles.emptyText}>해당 카테고리의 공고가 없습니다.</Text>
+                                </View>
+                            }
+                        />
+                    )}
+                </View>
+
+                {/* ─── Right: Detail Slide Panel ─── */}
+                <Animated.View style={[styles.detailPanel, { width: detailPanelWidth }]}>
+                    {selectedGrant && (
+                        <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
+                            {/* Detail Header */}
+                            <View style={styles.detailHeader}>
+                                <Text style={styles.detailHeaderTitle}>공고 상세</Text>
+                                <TouchableOpacity onPress={closeDetail} style={styles.detailCloseBtn}>
+                                    <X size={18} color="#94A3B8" />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Category Badge */}
+                            <View style={styles.detailBadgeRow}>
+                                <View style={styles.detailBadge}>
+                                    <Text style={styles.detailBadgeText}>{selectedGrant.category}</Text>
+                                </View>
+                                <View style={[styles.detailBadge, { borderColor: '#EF4444' }]}>
+                                    <Text style={[styles.detailBadgeText, { color: '#EF4444' }]}>{selectedGrant.d_day}</Text>
+                                </View>
+                                {selectedGrant.region && selectedGrant.region !== '전국' && (
+                                    <View style={[styles.detailBadge, { borderColor: '#A855F7' }]}>
+                                        <Text style={[styles.detailBadgeText, { color: '#A855F7' }]}>📍 {selectedGrant.region}</Text>
+                                    </View>
+                                )}
+                            </View>
+
+                            {/* Title */}
+                            <Text style={styles.detailTitle}>{selectedGrant.title}</Text>
+
+                            {/* Meta Info */}
+                            <View style={styles.detailMeta}>
+                                <View style={styles.detailMetaItem}>
+                                    <Text style={styles.detailMetaLabel}>주관기관</Text>
+                                    <Text style={styles.detailMetaValue}>{selectedGrant.agency}</Text>
+                                </View>
+                                {selectedGrant.department && (
+                                    <View style={styles.detailMetaItem}>
+                                        <Text style={styles.detailMetaLabel}>소관부서</Text>
+                                        <Text style={styles.detailMetaValue}>{selectedGrant.department}</Text>
+                                    </View>
+                                )}
+                                {selectedGrant.application_period && (
+                                    <View style={styles.detailMetaItem}>
+                                        <Text style={styles.detailMetaLabel}>접수기간</Text>
+                                        <Text style={styles.detailMetaValue}>{selectedGrant.application_period}</Text>
+                                    </View>
+                                )}
+                                {selectedGrant.budget && (
+                                    <View style={styles.detailMetaItem}>
+                                        <Text style={styles.detailMetaLabel}>지원규모</Text>
+                                        <Text style={[styles.detailMetaValue, { color: '#10B981' }]}>{selectedGrant.budget}</Text>
+                                    </View>
+                                )}
+                                <View style={styles.detailMetaItem}>
+                                    <Text style={styles.detailMetaLabel}>대상</Text>
+                                    <Text style={styles.detailMetaValue}>{selectedGrant.target_audience}</Text>
+                                </View>
+                                <View style={styles.detailMetaItem}>
+                                    <Text style={styles.detailMetaLabel}>분야</Text>
+                                    <Text style={styles.detailMetaValue}>{selectedGrant.tech_field}</Text>
+                                </View>
+                            </View>
+
+                            {/* Divider */}
+                            <View style={{ height: 1, backgroundColor: '#1E293B', marginVertical: 16 }} />
+
+                            {/* Description */}
+                            <Text style={styles.detailSectionLabel}>공고 개요</Text>
+                            <Text style={styles.detailDescription}>{selectedGrant.description || selectedGrant.summary}</Text>
+
+                            {/* Eligibility */}
+                            {selectedGrant.eligibility && (
+                                <>
+                                    <Text style={[styles.detailSectionLabel, { marginTop: 16 }]}>지원자격</Text>
+                                    <Text style={styles.detailDescription}>{selectedGrant.eligibility}</Text>
+                                </>
+                            )}
+
+                            {/* Matching Score */}
+                            {selectedGrant.matching_score != null && selectedGrant.matching_score > 0 && (
+                                <View style={styles.detailMatchBox}>
+                                    <Zap size={16} color="#F59E0B" />
+                                    <Text style={styles.detailMatchText}>AI 매칭률: {selectedGrant.matching_score}%</Text>
+                                </View>
+                            )}
+
+                            {/* Action Buttons */}
+                            <View style={styles.detailActions}>
+                                <TouchableOpacity
+                                    style={styles.detailActionPrimary}
+                                    onPress={() => {
+                                        onSelectGrant(selectedGrant);
+                                        closeDetail();
+                                    }}
+                                >
+                                    <FileText size={16} color="#FFF" />
+                                    <Text style={styles.detailActionPrimaryText}>이 공고로 사업계획서 작성</Text>
+                                </TouchableOpacity>
+
+                                {(selectedGrant.original_url || selectedGrant.link) && (
+                                    <TouchableOpacity
+                                        style={styles.detailActionSecondary}
+                                        onPress={() => {
+                                            const url = selectedGrant.original_url || selectedGrant.link || '';
+                                            if (Platform.OS === 'web') {
+                                                window.open(url, '_blank');
+                                            } else {
+                                                Linking.openURL(url);
+                                            }
+                                        }}
+                                    >
+                                        <ExternalLink size={16} color="#60A5FA" />
+                                        <Text style={styles.detailActionSecondaryText}>원문 보기</Text>
+                                    </TouchableOpacity>
+                                )}
+                            </View>
+                        </ScrollView>
+                    )}
+                </Animated.View>
+            </View>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#020617' },
-    header: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, borderBottomWidth: 1, borderColor: '#1E293B' },
+    container: { flex: 1, backgroundColor: '#020617', alignItems: 'center' as const },
+    header: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, borderBottomWidth: 1, borderColor: '#1E293B', width: '100%', maxWidth: 1200, alignSelf: 'center' as const },
     backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { color: 'white', fontSize: 18, fontWeight: '800', letterSpacing: -0.5 },
     iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
@@ -311,5 +489,33 @@ const styles = StyleSheet.create({
 
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
     loadingText: { color: '#64748B', marginTop: 15, fontSize: 14, fontWeight: '500' },
-    emptyText: { color: '#64748B', fontSize: 14, textAlign: 'center' }
+    emptyText: { color: '#64748B', fontSize: 14, textAlign: 'center' },
+
+    // Main Layout (list + detail side by side)
+    mainLayout: { flex: 1, flexDirection: 'row' as const, width: '100%', maxWidth: 1200, alignSelf: 'center' as const },
+    listSection: { flex: 1 },
+
+    // Detail Slide Panel
+    detailPanel: { overflow: 'hidden' as const, borderLeftWidth: 1, borderColor: '#1E293B', backgroundColor: '#0B1120' },
+    detailScroll: { flex: 1, padding: 20 },
+    detailHeader: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const, marginBottom: 16 },
+    detailHeaderTitle: { color: '#E2E8F0', fontSize: 16, fontWeight: '800' as const },
+    detailCloseBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: '#1E293B' },
+    detailBadgeRow: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, marginBottom: 16 },
+    detailBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#3B82F6' },
+    detailBadgeText: { color: '#60A5FA', fontSize: 11, fontWeight: '700' as const },
+    detailTitle: { color: '#F1F5F9', fontSize: 18, fontWeight: '800' as const, lineHeight: 26, marginBottom: 20 },
+    detailMeta: { gap: 12 },
+    detailMetaItem: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'flex-start' as const },
+    detailMetaLabel: { color: '#64748B', fontSize: 12, fontWeight: '700' as const, width: 70 },
+    detailMetaValue: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' as const, flex: 1, textAlign: 'right' as const },
+    detailSectionLabel: { color: '#E2E8F0', fontSize: 14, fontWeight: '800' as const, marginBottom: 8 },
+    detailDescription: { color: '#94A3B8', fontSize: 13, lineHeight: 22 },
+    detailMatchBox: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 8, backgroundColor: 'rgba(245,158,11,0.08)', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.15)', marginTop: 16 },
+    detailMatchText: { color: '#F59E0B', fontSize: 13, fontWeight: '700' as const },
+    detailActions: { gap: 10, marginTop: 24, paddingBottom: 40 },
+    detailActionPrimary: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8, height: 48, borderRadius: 14, backgroundColor: '#4F46E5' },
+    detailActionPrimaryText: { color: '#FFF', fontSize: 14, fontWeight: '800' as const },
+    detailActionSecondary: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8, height: 44, borderRadius: 12, backgroundColor: '#111827', borderWidth: 1, borderColor: '#1E293B' },
+    detailActionSecondaryText: { color: '#60A5FA', fontSize: 13, fontWeight: '700' as const },
 });

@@ -18,6 +18,9 @@ import { usePosts } from '../../hooks/usePosts';
 import { MessageSquare, Bookmark, RefreshCw, X, ArrowLeft, Trash2, Edit2, Database } from 'lucide-react-native';
 import { ProfileEditPage } from '../ProfileEditPage';
 import { useProjectStore } from '../../store/useProjectStore';
+import { GrantList } from '../../screens/GrantList';
+import { NexusEditView } from '../../features/agent/NexusEditView';
+import { MyProjectsView } from './views/MyProjectsView';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
@@ -168,9 +171,40 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
 
         switch (activeTab) {
             case 'home':
-                return <WorkspaceDashboard onOpenCalendar={() => setCalendarVisible(true)} />;
+                return <WorkspaceDashboard onOpenCalendar={() => setCalendarVisible(true)} onNavigateToPortfolio={() => setActiveTab('projects')} />;
+            case 'grants':
+                return (
+                    <GrantList
+                        onBack={() => setActiveTab('home')}
+                        onSelectGrant={(grant) => {
+                            // Navigate to Agent with this grant loaded
+                            useProjectStore.getState().setProject(null, {
+                                title: grant.title,
+                                mode: 'Grant Strategist',
+                                workspace_data: [],
+                                auto_run_query: `"${grant.title}" 공고에 대한 전략 분석을 시작합니다.`,
+                                grant_url: grant.original_url || grant.link || '',
+                                grant_title: grant.title,
+                                pdf_url: grant.file_url || '',
+                            });
+                            setActiveTab('agent');
+                        }}
+                    />
+                );
+            case 'nexus-edit':
+                return <NexusEditView />;
+            case 'projects':
+                return (
+                    <MyProjectsView
+                        onNavigateToFlow={(sessionId) => {
+                            useProjectStore.getState().setProject(null, { title: '', workspace_data: [], grant_url: '', grant_title: '', pdf_url: '' });
+                            setActiveTab('agent');
+                        }}
+                        onNavigateToEdit={() => setActiveTab('nexus-edit')}
+                    />
+                );
             case 'agent':
-                return <AgentView initialSession={agentSession} />;
+                return <AgentView initialSession={agentSession} onNavigateToEdit={() => setActiveTab('nexus-edit')} />;
             case 'chat':
                 return (
                     <View className="flex-1 flex-row bg-[#020617]">

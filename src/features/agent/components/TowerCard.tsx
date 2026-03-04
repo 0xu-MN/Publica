@@ -42,6 +42,8 @@ export const TowerCard = ({ data, selected, collapsed = false, verticalDiff, onS
                 return { label: '🌿 Branch', color: '#10B981', bg: '#10B98122' };
             case 'user':
                 return { label: '✏️ User', color: '#8B5CF6', bg: '#8B5CF622' };
+            case 'ask_ai':
+                return { label: '💬 Ask AI', color: '#A78BFA', bg: '#A78BFA22' };
             default:
                 return null; // AI-generated, no badge
         }
@@ -166,7 +168,7 @@ export const TowerCard = ({ data, selected, collapsed = false, verticalDiff, onS
 };
 
 const styles = StyleSheet.create({
-    nodeWrapper: { position: 'relative', alignItems: 'center', height: LAYOUT.CARD_HEIGHT },
+    nodeWrapper: { position: 'relative', alignItems: 'center', height: LAYOUT.CARD_HEIGHT, marginBottom: 20 },
 
     // Full card
     card: { width: 220, height: LAYOUT.CARD_HEIGHT, backgroundColor: '#050505', borderRadius: 4, padding: 16, borderWidth: 1, borderColor: '#222', justifyContent: 'flex-start' },

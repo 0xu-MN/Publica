@@ -58,9 +58,10 @@ export class StructureEngine {
 
             const isTopArea = block.y < pageHeight * 0.08;
             const isBottomArea = block.y > pageHeight * 0.92;
-            if ((isTopArea || isBottomArea) && firstLine.split(/\s+/).length <= 10
-                && !/^\d+[\.\s]\s*[가-힣A-Z]{2}/.test(firstLine)) {
-                return { ...block, headingLevel: 0, type: block.type };
+            if ((isTopArea || isBottomArea)) {
+                if (firstLine.split(/\s+/).length <= 10 && !/^\d+[\.\s]\s*[가-힣A-Z]{2}/.test(firstLine)) {
+                    return { ...block, headingLevel: 0, type: block.type };
+                }
             }
 
             if (denseZones.some(([min, max]) => block.y >= min && block.y <= max)) {
@@ -122,7 +123,6 @@ export class StructureEngine {
         if (/^[\[\(《「『<]/.test(firstLine)) return 0;
         if (/@/.test(firstLine) || /https?:\/\//.test(firstLine)) return 0;
         if (/[±μ%°~*;{}!=]/.test(firstLine.substring(0, 30))) return 0;
-        if (/^[A-Z][a-z]?\.\s+[A-Z][a-z]/.test(firstLine)) return 0;
         if (/^[：:·]/.test(firstLine)) return 0;
         if (/^(및|의|에|을|를|이|가|과|와|도|는|은|로|으로|에서|에게|부터|까지)\s/.test(firstLine)) return 0;
 
@@ -131,6 +131,17 @@ export class StructureEngine {
         if (/하지\s*(않|못)/.test(firstLine) && firstLine.length < 30) return 0;
         if (/^\d{2}\.\d{1,2}\.\d{1,2}/.test(firstLine)) return 0;
         if (/^\d+[명팀개억만원]$/.test(firstLine)) return 0;
+
+        // ✅ 로마자/알파벳 주요 목차 (논문용: I. Introduction, A. Background 등)
+        if (/^(I{1,3}|IV|V|VI{1,3}|IX|X|[A-Z])\.\s+/.test(firstLine)) {
+            const match = firstLine.match(/^(I{1,3}|IV|V|VI{1,3}|IX|X|[A-Z])\.\s+(.*)/);
+            if (match) {
+                const rest = match[2].trim();
+                console.log("MATCHED ALPHABET ROMAN:", firstLine, "Rest:", rest);
+                // 너무 많은 특수기호나 단어가 없으면 유효
+                if (rest.split(/\s+/).length >= 1 && rest.split(/\s+/).length <= 10) return 1;
+            }
+        }
 
         // ✅ 중첩 번호: 2.7 / 2.11 / 1.2.3
         if (/^\d{1,2}(\.\d{1,2}){1,3}/.test(firstLine)) {
@@ -171,7 +182,7 @@ export class StructureEngine {
         }
 
         if (firstLine.split(/\s+/).length <= 5 && lineCount <= 2
-            && /^(Abstract|Introduction|Conclusion[s]?|Results?|Discussion|Material[s]?|Method[s]?|Background|References?|Acknowledgment[s]?)/i.test(firstLine)
+            && /^(Abstract|Introduction|Conclusion[s]?|Results?|Discussion|Material[s]?|Method(s|ology)?|Background|References?|Acknowledgment[s]?|Related Work|Literature Review)/i.test(firstLine)
         ) return 1;
 
         return 0;
@@ -222,13 +233,13 @@ export class StructureEngine {
             return { number: undefined, displayTitle: words.length > 4 ? words.slice(0, 4).join(' ') : rest };
         }
 
-        const numMatch = firstLine.match(/^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2})([.\s]+)(.*)/);
+        const numMatch = firstLine.match(/^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2}|(I{1,3}|IV|V|VI{1,3}|IX|X|[A-Z]))([.\s]+)(.*)/);
         let number: string | undefined;
         let titlePart: string;
 
         if (numMatch) {
             number = numMatch[1].replace(/\.$/, '').trim();
-            titlePart = numMatch[4].trim();
+            titlePart = numMatch[5].trim();
         } else {
             titlePart = firstLine;
         }

@@ -30,7 +30,22 @@ const FONT_WEIGHT: Record<number, '700' | '600' | '400'> = { 1: '700', 2: '600',
 const DOT_COLOR: Record<number, string> = { 1: '#3B82F6', 2: '#94A3B8', 3: '#CBD5E1' };
 
 export const TableOfContents = ({ items, onItemClick, activeId }: TableOfContentsProps) => {
-    if (!items || items.length === 0) return null;
+    if (!items || items.length === 0) {
+        return (
+            <View style={styles.container}>
+                <View style={styles.header}>
+                    <List size={14} color="#475569" />
+                    <Text style={styles.headerText}>목차</Text>
+                    <Text style={styles.itemCount}>0</Text>
+                </View>
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 }}>
+                    <Text style={{ color: '#94A3B8', fontSize: 13, textAlign: 'center', lineHeight: 20 }}>
+                        스캔된 이미지 파일이거나{'\n'}구조를 인식할 수 없는{'\n'}문서입니다.
+                    </Text>
+                </View>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>

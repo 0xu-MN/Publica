@@ -1,13 +1,15 @@
 import { create } from 'zustand';
 
 export interface AgentSession {
-    id: string;
+    id?: string;
     title: string;
-    mode: string;
+    mode?: string;
     workspace_data: any[];
-    chat_history: any[];
+    chat_history?: any[];
     auto_run_query?: string;
     grant_url?: string;
+    grant_title?: string;
+    pdf_url?: string;
 }
 
 interface ProjectState {

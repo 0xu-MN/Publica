@@ -17,6 +17,7 @@ interface DetailPanelProps {
     suggestions: any[];
     onFileUpload?: () => void;
     onCitationClick?: (page: number) => void;
+    embedded?: boolean; // When true, skip wrapper/header (used inside UnifiedPanel)
 }
 
 export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
@@ -29,6 +30,7 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
     suggestions,
     onFileUpload,
     onCitationClick,
+    embedded = false,
 }, ref) => {
     const slideAnim = useRef(new Animated.Value(450)).current;
     const [chatExpanded, setChatExpanded] = useState(false);
@@ -59,11 +61,19 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
         }
     }, [chatHistory, chatExpanded]);
 
-    if (!node) return null;
+    // In standalone mode, hide when no node. In embedded mode, always show.
+    if (!node && !embedded) return null;
+
+    // Default placeholder node for embedded mode when nothing is selected
+    const displayNode = node || {
+        label: 'Publica Agent',
+        description: '브랜치 카드를 클릭하면 상세 분석이 여기에 표시됩니다.\n채팅으로 자유롭게 질문할 수 있습니다.',
+        type: 'research'
+    };
 
     // Type-based accent color (matches TowerCard)
     const getAccentColor = () => {
-        switch (node.type || node.action_type) {
+        switch (displayNode.type || displayNode.action_type) {
             case 'documentation': return '#8B5CF6';
             case 'action': return '#F59E0B';
             case 'research':
@@ -71,7 +81,7 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
         }
     };
     const accentColor = getAccentColor();
-    const typeName = (node.type || node.action_type || 'research').toUpperCase();
+    const typeName = (displayNode.type || displayNode.action_type || 'research').toUpperCase();
 
     const handleSend = (text: string = input) => {
         if (!text.trim()) return;
@@ -94,42 +104,31 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
             </Animated.View>
         );
     }
-
-    return (
-        <Animated.View style={[styles.panel, { transform: [{ translateX: slideAnim }] }]}>
-            {/* Header */}
-            <View style={styles.header}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <View style={[styles.typeDot, { backgroundColor: accentColor }]} />
-                    <Text style={styles.headerTitle}>INSPECTOR</Text>
-                </View>
-                <TouchableOpacity onPress={() => setIsMinimized(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-                    <Minus size={20} color="#64748B" />
-                </TouchableOpacity>
-            </View>
-
-            {/* Card Info Section — Scrollable */}
-            {!chatExpanded && (
-                <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 24 }}>
+    // When embedded inside UnifiedPanel, render content directly (no wrapper, no header, no minimize)
+    const innerContent = (
+        <>
+            {/* Card Info Section — Always visible (embedded: always show, standalone: hide when chat open) */}
+            {(embedded || !chatExpanded) && (
+                <ScrollView style={{ flex: chatExpanded && embedded ? undefined : 1, maxHeight: chatExpanded && embedded ? 300 : undefined }} contentContainerStyle={{ padding: embedded ? 20 : 24 }}>
                     {/* Type Badge */}
                     <View style={[styles.typeBadge, { backgroundColor: accentColor + '22' }]}>
                         <Text style={[styles.typeBadgeText, { color: accentColor }]}>{typeName}</Text>
                     </View>
 
                     {/* Title */}
-                    <Text style={styles.titleText}>{node.label}</Text>
+                    <Text style={styles.titleText}>{displayNode.label}</Text>
 
                     {/* Description */}
-                    <Text style={styles.bodyText}>{node.description || "No description available."}</Text>
+                    <Text style={styles.bodyText}>{displayNode.description || "No description available."}</Text>
 
                     {/* References (if any) */}
-                    {node.references && node.references.length > 0 && (
+                    {displayNode.references && displayNode.references.length > 0 && (
                         <View style={styles.referencesSection}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
                                 <Layers size={12} color="#64748B" />
-                                <Text style={styles.sectionLabel}>{node.references.length} SOURCES</Text>
+                                <Text style={styles.sectionLabel}>{displayNode.references.length} SOURCES</Text>
                             </View>
-                            {node.references.map((refItem: string, i: number) => (
+                            {displayNode.references.map((refItem: string, i: number) => (
                                 <View key={i} style={styles.referenceItem}>
                                     <Text style={styles.referenceText} numberOfLines={2}>{refItem}</Text>
                                 </View>
@@ -147,7 +146,7 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                             <Sparkles size={14} color="#10B981" style={{ marginRight: 6 }} />
                             <Text style={styles.chatContext}>
-                                {node.label ? `분석 중: ${node.label}` : 'Publica Agent'}
+                                {displayNode.label ? `분석 중: ${displayNode.label}` : 'Publica Agent'}
                             </Text>
                         </View>
                         <TouchableOpacity onPress={() => setChatExpanded(false)}>
@@ -267,18 +266,6 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                     <ChevronRight size={14} color="#3B82F6" />
                 </TouchableOpacity>
 
-                {/* Branching */}
-                <TouchableOpacity
-                    style={[styles.actionBtn, { borderColor: '#10B981' }]}
-                    onPress={() => onAction('BRANCH', node)}
-                >
-                    <GitBranch size={14} color="#10B981" />
-                    <View style={{ flex: 1, marginLeft: 10 }}>
-                        <Text style={[styles.actionBtnTitle, { color: '#10B981' }]}>Branching</Text>
-                        <Text style={styles.actionBtnDesc}>하위 실행 단계를 생성합니다</Text>
-                    </View>
-                    <ChevronRight size={14} color="#10B981" />
-                </TouchableOpacity>
 
                 {/* Ask AI — Now toggles the chat section */}
                 <TouchableOpacity
@@ -299,6 +286,28 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                     )}
                 </TouchableOpacity>
             </View>
+        </>
+    );
+
+    // When embedded in UnifiedPanel, return content directly without wrapper
+    if (embedded) {
+        return <View style={{ flex: 1 }}>{innerContent}</View>;
+    }
+
+    // Standalone mode: full animated panel with header
+    return (
+        <Animated.View style={[styles.panel, { transform: [{ translateX: slideAnim }] }]}>
+            {/* Header */}
+            <View style={styles.header}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <View style={[styles.typeDot, { backgroundColor: accentColor }]} />
+                    <Text style={styles.headerTitle}>INSPECTOR</Text>
+                </View>
+                <TouchableOpacity onPress={() => setIsMinimized(true)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
+                    <Minus size={20} color="#64748B" />
+                </TouchableOpacity>
+            </View>
+            {innerContent}
         </Animated.View>
     );
 });

@@ -138,7 +138,7 @@ export const FileUploader = forwardRef<FileUploaderRef, FileUploaderProps>(({ on
 
             console.log(`⏳ Check Status: ${checkData.status}`);
 
-            if (checkData.status === 'COMPLETED') {
+            if (checkData.status === 'COMPLETED' || checkData.status === 'SUCCESS') {
                 clearInterval(pollInterval);
                 setUploading(false);
                 setStatusMessage("분석 완료!");

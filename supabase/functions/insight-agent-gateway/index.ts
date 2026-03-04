@@ -50,49 +50,56 @@ Your goal is to guide the user through a 3-step workflow: 1. Hypothesis (Expand)
 
 ## 🚨 CRITICAL RULES
 1. **LANGUAGE:** ALWAYS reply in **KOREAN** (한국어).
-2. **QUALITY OVER QUANTITY:** The \`description\` field MUST BE HIGHLY DETAILED. Do not write simple 1-2 sentence summaries. You must write like a top-tier management consultant. Use markdown formatting (bullet points, bold text, numbered lists) inside the description string to make it highly structured and readable. Emphasize the **PSST Framework** (Problem, Solution, Scale-up, Team) wherever applicable.
-3. **PROACTIVE SUGGESTIONS:** You MUST return a \`suggested_actions\` array with 3 distinct options based on the context:
-   - **Option 1 (Deep Dive):** Suggest digging deeper into the current topic (e.g., "Analyze Competitors").
-   - **Option 2 (Verification):** Suggest finding evidence (e.g., "Search for Academic Papers", "Upload Financial Report").
-   - **Option 3 (Planning):** Suggest moving to the execution phase (e.g., "Create Action Plan", "Design Experiments").
+2. **READABLE DESCRIPTION FORMAT:** The \`description\` field MUST be easy to read on a mobile card. Follow this exact structure:
+   - Line 1-3: Bold executive summary (**문제 핵심**, **시장 기회**, **전략 방향**)
+   - Line 4+: Numbered Action Steps (1. 2. 3.) with specific metrics
+   - FORBIDDEN: Never use "--" dashes as bullet points. Use "1." "2." "3." numbered lists separated by \\n.
+   - FORBIDDEN: Never write wall-of-text paragraphs. Every sentence must be on its own line separated by \\n.
+   - Each action step must include a concrete number or percentage target.
+3. **STRICT JSON FORMATTING & ESCAPING:** You must output perfectly valid, parsable JSON. ALL double quotes inside strings must be escaped as \\". ALL newlines inside strings must be escaped as \\n. NEVER use unescaped newlines or quotes inside JSON values.
+4. **FORCED PSST ROOTS (INITIAL IDEATION):** If the user is providing their initial business idea (no prior context), output EXACTLY 4 branches:
+   - Branch 1: "문제인식 (Problem)" - Market problems and target customer pain points.
+   - Branch 2: "해결방안 (Solution)" - Product/service details and differentiators.
+   - Branch 3: "성장전략 (Scale-up)" - Target market, go-to-market, business model.
+   - Branch 4: "팀구성 (Team)" - Required expertise and hiring plan.
+5. **SUGGESTED ACTIONS:** Return a \`suggested_actions\` array. ALL labels AND queries MUST be in Korean. The query must include the parent node's label for context:
+   - Option 1 (Deep Dive): e.g., label: "타겟 고객 페인 포인트 심층 분석", query: "[문제인식] 브랜치의 타겟 고객 페인 포인트를 정량화하고 경쟁사 대비 차별점을 분석해줘"
+   - Option 2 (Verify): e.g., label: "시장 규모 근거 찾기", query: "[해결방안] 브랜치의 TAM/SAM/SOM 시장 규모를 리서치해줘"
+   - Option 3 (Plan): e.g., label: "실행 계획 수립", query: "[성장전략] 브랜치의 3개월 단기 실행 로드맵을 수립해줘"
+
+## 💬 CHAT MODE (When user asks a QUESTION about a specific node)
+When the user is asking a question rather than requesting analysis, the \`chat_message\` MUST be a **detailed, substantive answer** (minimum 200 characters, no maximum).
+- Answer the user's SPECIFIC question with expert-level analysis
+- Include concrete examples, data points, and actionable recommendations
+- Structure the answer with numbered points or bullet points for readability
+- Reference the context of the current node
+- Do NOT just repeat the question or give a generic one-liner
+- Still output workspace_data branches if the answer suggests actionable sub-topics
 
 ## JSON Output Structure (Strict)
 Return a SINGLE JSON object:
 {
-  "chat_message": "Short summary of the analysis.",
+  "chat_message": "사용자의 질문에 대한 상세하고 실질적인 답변 (최소 200자 이상). 질문이 아닌 초기 분석 요청인 경우에만 한 줄 요약 가능. 항상 구체적이고 전문적인 답변을 제공할 것.",
   "workspace_data": {
-    "root_node": "Context Header",
+    "root_node": "컨텍스트 헤더 (한국어)",
     "branches": [
       {
         "id": "uuid",
-        "label": "Short Keyword",
-        "description": "HIGHLY DETAILED analysis. Minimum 300 chars. Use Markdown (--, **, 1.) to structure the consultant-level advice. Address PSST (Problem, Solution, Scale-up, Team) metrics in depth.",
-        "type": "Insight" | "Risk" | "Opportunity",
+        "label": "짧은 키워드 (한국어)",
+        "description": "**핵심 요약 3줄**\\n\\n1. 첫 번째 액션 (수치 포함)\\n2. 두 번째 액션 (수치 포함)\\n3. 세 번째 액션 (수치 포함)",
+        "type": "research",
         "references": []
       }
     ]
   },
-  
-  // 🌟 Proactive Suggestions
   "suggested_actions": [
-    {
-      "label": "Button Label (e.g. 경쟁사 분석 심화)",
-      "type": "EXPAND", 
-      "query": "Detailed prompt to execute this action..."
-    },
-    {
-      "label": "Button Label (e.g. 객관적 지표/근거 찾기)",
-      "type": "VERIFY", 
-      "query": "Find external evidence and references for this node..."
-    },
-    {
-      "label": "Button Label (e.g. 세부 실행 계획 수립)",
-      "type": "PLAN", 
-      "query": "Create a step-by-step action plan based on this hypothesis..."
-    }
+    { "label": "한국어 레이블", "type": "EXPAND", "query": "[부모 브랜치명] 한국어 지시문" },
+    { "label": "한국어 레이블", "type": "VERIFY", "query": "[부모 브랜치명] 한국어 지시문" },
+    { "label": "한국어 레이블", "type": "PLAN", "query": "[부모 브랜치명] 한국어 지시문" }
   ]
 }
 `;
+
 
 Deno.serve(async (req: any) => {
     if (req.method === 'OPTIONS') {
@@ -108,13 +115,17 @@ Deno.serve(async (req: any) => {
             throw new Error("Server Misconfiguration: GEMINI_API_KEY is missing");
         }
 
-        // 1. Prompt Engineering
+        // Detect if this is a chat question vs analysis request
+        const isQuestion = /\?|어떻게|무엇|왜|얼마나|구체적|설명|알려|어디|뭘|뭐|어떤|인지|할까|할지|인가|건지|건가/.test(user_input);
+
+        // 1. Prompt Engineering — include context and mode hint
         const finalPrompt = `
     [User Profile]: ${user_job || 'General Strategist'}
     [Task Mode]: ${task_mode || 'Hypothesis Generator'}
+    [Interaction Type]: ${isQuestion ? 'CHAT_QUESTION — 사용자가 구체적인 질문을 했습니다. chat_message에 최소 200자 이상의 상세하고 전문적인 답변을 작성하세요. 단순 요약 금지.' : 'ANALYSIS_REQUEST — 분석 요청입니다. 브랜치 생성에 집중하세요.'}
     [Input]: ${user_input}
     
-    Generate the structured breakdown now.
+    ${isQuestion ? '중요: 사용자가 질문을 했으므로, chat_message 필드에 반드시 구체적이고 실질적인 답변을 200자 이상 작성하세요. 예시, 데이터, 구체적 방법론을 포함하세요.' : 'Generate the structured breakdown now.'}
     `;
 
         // 2. Call LLM (configurable via LLM_MODEL)
@@ -148,7 +159,30 @@ Deno.serve(async (req: any) => {
         let parsedData: AgentResponse;
 
         try {
-            parsedData = JSON.parse(rawText);
+            // Pre-process raw text to strip markdown formatting
+            let cleanText = rawText.trim();
+            if (cleanText.startsWith('```json')) {
+                cleanText = cleanText.substring(7);
+            } else if (cleanText.startsWith('```')) {
+                cleanText = cleanText.substring(3);
+            }
+            if (cleanText.endsWith('```')) {
+                cleanText = cleanText.substring(0, cleanText.length - 3);
+            }
+            cleanText = cleanText.trim();
+
+            parsedData = JSON.parse(cleanText);
+
+            // 🌟 Quality guard: if chat_message is too short for a question, enhance it
+            if (isQuestion && parsedData.chat_message && parsedData.chat_message.length < 80) {
+                // Append branch descriptions as extended answer
+                const branchDetails = (parsedData.workspace_data?.branches || [])
+                    .map((b: any, i: number) => `${i + 1}. **${b.label}**: ${b.description}`)
+                    .join('\n\n');
+                if (branchDetails) {
+                    parsedData.chat_message = parsedData.chat_message + '\n\n' + branchDetails;
+                }
+            }
         } catch (e) {
             console.error("JSON Parse Error:", rawText);
             return new Response(JSON.stringify({ error: "Failed to parse AI response" }), {
