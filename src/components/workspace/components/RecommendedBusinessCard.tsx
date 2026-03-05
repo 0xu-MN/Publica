@@ -12,9 +12,10 @@ interface BusinessItem {
 interface RecommendedBusinessCardProps {
     items: BusinessItem[];
     onExploreAll: () => void;
+    onApply?: (item: BusinessItem) => void;
 }
 
-export const RecommendedBusinessCard = ({ items, onExploreAll }: RecommendedBusinessCardProps) => {
+export const RecommendedBusinessCard = ({ items, onExploreAll, onApply }: RecommendedBusinessCardProps) => {
     return (
         <View className="bg-[#0F172A]/80 rounded-2xl p-5 border border-white/5 flex-1">
             {/* Header */}
@@ -48,7 +49,7 @@ export const RecommendedBusinessCard = ({ items, onExploreAll }: RecommendedBusi
                                     MATCHING {item.matchingRate}%
                                 </Text>
                             </View>
-                            <TouchableOpacity className="bg-blue-600 px-4 py-2 rounded-lg border border-blue-500/50">
+                            <TouchableOpacity className="bg-blue-600 px-4 py-2 rounded-lg border border-blue-500/50" onPress={() => onApply?.(item)}>
                                 <Text className="text-white text-xs font-bold">지원하기</Text>
                             </TouchableOpacity>
                         </View>

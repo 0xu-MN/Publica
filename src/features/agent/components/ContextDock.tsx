@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView, Platform } from 'react-native';
-import { FileText, Edit3, FileIcon, X, ChevronLeft, ChevronRight, Settings2, Sparkles, FileDown, Copy, Minus } from 'lucide-react-native';
+import { FileText, Edit3, FileIcon, X, ChevronLeft, ChevronRight, Settings2, Sparkles, FileDown, Copy, Minus, Send } from 'lucide-react-native';
 import { GrantContentPanel } from './GrantContentPanel';
-import { NotionEditor } from './NotionEditor';
 
 // Lazy load PDFViewerPanel
 const PDFViewerPanel = React.lazy(() =>
@@ -20,6 +19,9 @@ interface ContextDockProps {
     onQuote?: (text: string, x: number, y: number, type?: string, context?: any) => void;
     onExplainSection?: (text: string, x: number, y: number, context?: any) => void;
     onAIGenerate?: () => Promise<string | null>;
+    brainstormContent?: string;
+    onBrainstormChange?: (text: string) => void;
+    onSendToEdit?: () => void;
 }
 
 /**
@@ -36,6 +38,9 @@ export const ContextDock: React.FC<ContextDockProps> = ({
     onQuote,
     onExplainSection,
     onAIGenerate,
+    brainstormContent: externalBrainstorm,
+    onBrainstormChange,
+    onSendToEdit,
 }) => {
     const getInitialTab = (): DockTab => {
         if (grantUrl) return 'grant';
@@ -51,14 +56,27 @@ export const ContextDock: React.FC<ContextDockProps> = ({
         if (pdfUrl) setActiveTab('pdf');
     }, [pdfUrl]);
 
-    // Editor state
-    const [editorContent, setEditorContent] = useState('');
-    const [editorHtml, setEditorHtml] = useState('');
-    const [editorMode, setEditorMode] = useState<'사업계획서' | '제안서' | '자유형식'>('사업계획서');
+    // Brainstorm memo state
+    const [memoText, setMemoText] = useState(externalBrainstorm || '');
+    const [isSaved, setIsSaved] = useState(true);
+
+    useEffect(() => {
+        if (externalBrainstorm !== undefined && externalBrainstorm !== memoText) {
+            setMemoText(externalBrainstorm);
+        }
+    }, [externalBrainstorm]);
+
+    const handleMemoChange = (text: string) => {
+        setMemoText(text);
+        setIsSaved(false);
+        onBrainstormChange?.(text);
+        // Auto-mark as saved after debounce
+        setTimeout(() => setIsSaved(true), 1500);
+    };
 
     const tabs: { key: DockTab; label: string; emoji: string; available: boolean }[] = [
         { key: 'grant', label: '원문', emoji: '📄', available: !!grantUrl },
-        { key: 'editor', label: '작성', emoji: '✏️', available: true },
+        { key: 'editor', label: '메모', emoji: '📝', available: true },
         { key: 'pdf', label: 'PDF', emoji: '📎', available: !!pdfUrl },
     ];
     const availableTabs = tabs.filter(t => t.available);
@@ -99,121 +117,49 @@ export const ContextDock: React.FC<ContextDockProps> = ({
         );
     }
 
-    const renderEditorPlayground = () => (
+    const renderBrainstormMemo = () => (
         <View style={styles.editorContainer}>
-            {/* Editor Toolbar — shadcn playground style */}
+            {/* Brainstorm Header */}
             <View style={styles.editorToolbar}>
-                <View style={styles.modeSelector}>
-                    {(['\uc0ac\uc5c5\uacc4\ud68d\uc11c', '\uc81c\uc548\uc11c', '\uc790\uc720\ud615\uc2dd'] as const).map(mode => (
-                        <TouchableOpacity
-                            key={mode}
-                            style={[styles.modeBtn, editorMode === mode && styles.modeBtnActive]}
-                            onPress={() => setEditorMode(mode)}
-                        >
-                            <Text style={[styles.modeBtnText, editorMode === mode && styles.modeBtnTextActive]}>
-                                {mode}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Sparkles size={14} color="#F59E0B" />
+                    <Text style={{ color: '#F59E0B', fontSize: 12, fontWeight: '700' }}>브레인스퇰 메모</Text>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 4 }}>
-                    <TouchableOpacity style={styles.toolBtn} onPress={() => {
-                        if (!editorHtml || Platform.OS !== 'web') return;
-                        try {
-                            const header = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Doc Export</title></head><body>";
-                            const footer = "</body></html>";
-                            const sourceHTML = header + editorHtml + footer;
-                            const source = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(sourceHTML);
-                            const fileDownload = document.createElement("a");
-                            document.body.appendChild(fileDownload);
-                            fileDownload.href = source;
-                            fileDownload.download = 'business_plan_draft.doc';
-                            fileDownload.click();
-                            document.body.removeChild(fileDownload);
-                        } catch (e) {
-                            console.error("Export DOC failed", e);
-                        }
-                    }}>
-                        <Text style={{ fontSize: 12, marginRight: 4 }}>DOC</Text>
-                        <FileDown size={12} color="#64748B" />
-                    </TouchableOpacity>
-
-                    <TouchableOpacity style={styles.toolBtn} onPress={() => {
-                        if (!editorHtml || Platform.OS !== 'web') return;
-                        try {
-                            const iframe = document.createElement('iframe');
-                            iframe.style.display = 'none';
-                            document.body.appendChild(iframe);
-                            const doc = iframe.contentWindow?.document;
-                            if (doc) {
-                                doc.open();
-                                doc.write(`
-                                    <html>
-                                        <head>
-                                            <title>Business_Plan_Draft</title>
-                                            <style>
-                                                body { font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; line-height: 1.6; color: #000; padding: 40px; }
-                                                h1, h2, h3 { color: #111; }
-                                                hr { border: 0; border-top: 1px solid #ccc; margin: 20px 0; }
-                                            </style>
-                                        </head>
-                                        <body>${editorHtml}</body>
-                                    </html>
-                                `);
-                                doc.close();
-                                setTimeout(() => {
-                                    iframe.contentWindow?.focus();
-                                    iframe.contentWindow?.print();
-                                    setTimeout(() => document.body.removeChild(iframe), 1000);
-                                }, 250);
-                            }
-                        } catch (e) {
-                            console.error("PDF Export failed", e);
-                        }
-                    }}>
-                        <Text style={{ fontSize: 12, marginRight: 4 }}>PDF</Text>
-                        <FileDown size={12} color="#64748B" />
-                    </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <View style={[styles.statusDot, { backgroundColor: isSaved ? '#10B981' : '#F59E0B' }]} />
+                    <Text style={{ color: '#475569', fontSize: 10 }}>{isSaved ? '저장됨' : '저장 중...'}</Text>
                 </View>
             </View>
 
-            {/* Compact AI Bar */}
-            <View style={styles.formatBar}>
-                <TouchableOpacity
-                    style={[styles.formatBtn, styles.aiBtn, isGenerating && { opacity: 0.5 }]}
-                    disabled={isGenerating}
-                    onPress={async () => {
-                        if (onAIGenerate) {
-                            setIsGenerating(true);
-                            try {
-                                const draft = await onAIGenerate();
-                                if (draft) setEditorContent(draft);
-                            } finally {
-                                setIsGenerating(false);
-                            }
-                        }
+            {/* Memo Text Area */}
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+                <TextInput
+                    style={{
+                        color: '#E2E8F0', fontSize: 14, lineHeight: 24,
+                        textAlignVertical: 'top', minHeight: 300,
                     }}
-                >
-                    {isGenerating ? <Text style={{ fontSize: 10, color: '#8B5CF6' }}>{'\u23f3'}</Text> : <Sparkles size={12} color="#8B5CF6" />}
-                    <Text style={styles.aiBtnText}>{isGenerating ? 'AI \uc791\uc131 \uc911...' : 'AI \uc791\uc131'}</Text>
-                </TouchableOpacity>
-                <View style={{ flex: 1 }} />
-                <Text style={{ color: '#334155', fontSize: 10 }}>{editorMode}</Text>
-            </View>
+                    placeholder={'브레인스퇰 내용을 자유롭게 정리하세요...\n\n• 핵심 아이디어\n• 참고할 브랜치 내용\n• 중요 포인트\n\n이 메모는 자동 저장되며,\n"서류 작성하러 가기" 시 Edit으로 전달됩니다.'}
+                    placeholderTextColor="#334155"
+                    value={memoText}
+                    onChangeText={handleMemoChange}
+                    multiline={true}
+                    numberOfLines={15}
+                />
+            </ScrollView>
 
-            {/* Notion-Style Editor */}
-            <NotionEditor
-                initialContent={editorHtml}
-                placeholder={editorMode === '\uc0ac\uc5c5\uacc4\ud68d\uc11c'
-                    ? '/ \ub97c \uc785\ub825\ud558\uc5ec \uc0ac\uc5c5\uacc4\ud68d\uc11c \uc791\uc131\uc744 \uc2dc\uc791\ud558\uc138\uc694...'
-                    : editorMode === '\uc81c\uc548\uc11c'
-                        ? '/ \ub97c \uc785\ub825\ud558\uc5ec \uc81c\uc548\uc11c \uc791\uc131\uc744 \uc2dc\uc791\ud558\uc138\uc694...'
-                        : '/ \ub97c \uc785\ub825\ud558\uc5ec \ube14\ub85d \ud0c0\uc785\uc744 \uc120\ud0dd\ud558\uc138\uc694...'}
-                onChange={(html, markdown) => {
-                    setEditorHtml(html);
-                    setEditorContent(markdown);
-                }}
-            />
+            {/* Bottom Bar: Send to Edit */}
+            {onSendToEdit && (
+                <View style={styles.editorFooter}>
+                    <Text style={styles.footerText}>{memoText.length}자</Text>
+                    <TouchableOpacity
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#4F46E5', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
+                        onPress={onSendToEdit}
+                    >
+                        <Send size={12} color="#FFF" />
+                        <Text style={{ color: '#FFF', fontSize: 11, fontWeight: '700' }}>Edit으로 보내기</Text>
+                    </TouchableOpacity>
+                </View>
+            )}
         </View>
     );
 
@@ -224,7 +170,7 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                 return <GrantContentPanel grantUrl={grantUrl} grantTitle={grantTitle} />;
 
             case 'editor':
-                return renderEditorPlayground();
+                return renderBrainstormMemo();
 
             case 'pdf':
                 if (!pdfUrl) return null;

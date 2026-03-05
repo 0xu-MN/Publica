@@ -21,20 +21,11 @@ export const GrantContentPanel: React.FC<GrantContentPanelProps> = ({ grantUrl, 
         setError(null);
 
         try {
-            // Use a CORS proxy approach — fetch via our own server or directly
-            // K-Startup pages are public, so we try a direct approach first
-            const response = await fetch(grantUrl);
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-
-            const html = await response.text();
-
-            // Extract the main content from the HTML
-            const cleanedContent = extractMainContent(html);
-            setContent(cleanedContent);
-        } catch (err: any) {
-            // If direct fetch fails (CORS), show a helpful message
+            // K-Startup pages have complex HTML that doesn't parse cleanly
+            // Always use the clean fallback UI with 'open in new tab' button
             setError('direct_fail');
-            // Still show a useful panel with the URL
+        } catch (err: any) {
+            setError('direct_fail');
         } finally {
             setLoading(false);
         }

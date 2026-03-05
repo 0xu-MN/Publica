@@ -22,6 +22,7 @@ import { ContextDock } from './components/ContextDock';
 const PDFViewerPanel = React.lazy(() => import('./components/PDFViewerPanel').then(module => ({ default: module.PDFViewerPanel }))) as any;
 import { LAYOUT } from './AgentLayout';
 import { useSessionManager } from './hooks/useSessionManager';
+import { useProjectStore } from '../../store/useProjectStore';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 
@@ -67,6 +68,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     const [pendingGrantQuery, setPendingGrantQuery] = useState<string>('');
     const [pendingGrantTitle, setPendingGrantTitle] = useState<string>('');
     const [showGrantConfirm, setShowGrantConfirm] = useState(false);
+    const [brainstormContent, setBrainstormContent] = useState('');
 
     // Removed debug PDF loading to prevent irrelevant files.
 
@@ -572,6 +574,8 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             setChatHistory(data.chat_history || []);
             if (data.pdf_url) setPdfUrl(data.pdf_url);
             setShowHistory(false);
+            setShowWelcome(false);
+            setIsLeftPanelMinimized(false);
         }
     };
 
@@ -1079,6 +1083,13 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                             style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10, backgroundColor: '#4F46E5', borderWidth: 1, borderColor: '#6366F1' }}
                             onPress={async () => {
                                 await handleSave();
+                                useProjectStore.getState().setProject(null, {
+                                    title: pendingGrantTitle || columns[0]?.root_node || 'Untitled',
+                                    workspace_data: columns,
+                                    chat_history: chatHistory,
+                                    brainstorm_content: brainstormContent,
+                                    pdf_url: pdfUrl || '',
+                                });
                                 onNavigateToEdit();
                             }}
                         >
@@ -1194,6 +1205,19 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                             });
                                         }}
                                         onAIGenerate={handleGenerateBusinessPlan}
+                                        brainstormContent={brainstormContent}
+                                        onBrainstormChange={(text) => setBrainstormContent(text)}
+                                        onSendToEdit={onNavigateToEdit ? async () => {
+                                            await handleSave();
+                                            useProjectStore.getState().setProject(null, {
+                                                title: pendingGrantTitle || columns[0]?.root_node || 'Untitled',
+                                                workspace_data: columns,
+                                                chat_history: chatHistory,
+                                                brainstorm_content: brainstormContent,
+                                                pdf_url: pdfUrl || '',
+                                            });
+                                            onNavigateToEdit();
+                                        } : undefined}
                                     />
                                 }
                             />

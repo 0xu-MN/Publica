@@ -171,7 +171,23 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
 
         switch (activeTab) {
             case 'home':
-                return <WorkspaceDashboard onOpenCalendar={() => setCalendarVisible(true)} onNavigateToPortfolio={() => setActiveTab('projects')} />;
+                return <WorkspaceDashboard
+                    onOpenCalendar={() => setCalendarVisible(true)}
+                    onNavigateToPortfolio={() => setActiveTab('projects')}
+                    onLoadSession={(session: any) => {
+                        useProjectStore.getState().setProject(null, {
+                            title: session.title || '',
+                            mode: session.mode || 'Grant Strategist',
+                            workspace_data: session.workspace_data || [],
+                            chat_history: session.chat_history || [],
+                            grant_url: '',
+                            grant_title: '',
+                            pdf_url: session.pdf_url || '',
+                        });
+                        setActiveTab('agent');
+                    }}
+                    onNavigateToGrants={() => setActiveTab('grants')}
+                />;
             case 'grants':
                 return (
                     <GrantList

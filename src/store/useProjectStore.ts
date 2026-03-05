@@ -10,6 +10,7 @@ export interface AgentSession {
     grant_url?: string;
     grant_title?: string;
     pdf_url?: string;
+    brainstorm_content?: string;
 }
 
 interface ProjectState {

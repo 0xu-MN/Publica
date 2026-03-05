@@ -241,6 +241,8 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                             value={input}
                             onChangeText={setInputState}
                             onSubmitEditing={() => handleSend()}
+                            multiline={true}
+                            numberOfLines={3}
                         />
                         <TouchableOpacity style={styles.sendFab} onPress={() => handleSend()}>
                             <Send size={16} color="white" />
@@ -359,7 +361,7 @@ const styles = StyleSheet.create({
         padding: 8, borderTopWidth: 1, borderColor: '#1E293B',
         backgroundColor: '#0F172A',
     },
-    chatInput: { flex: 1, color: 'white', height: 36, paddingHorizontal: 8, fontSize: 13 },
+    chatInput: { flex: 1, color: 'white', minHeight: 36, maxHeight: 80, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, textAlignVertical: 'top' },
     sendFab: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
 
     attachPill: {

@@ -13,6 +13,7 @@ interface WorkspaceDashboardProps {
     onOpenCalendar: () => void;
     onLoadSession?: (session: any) => void;
     onNavigateToPortfolio?: () => void;
+    onNavigateToGrants?: () => void;
 }
 
 import { fetchProjects, Project } from '../../../services/projects';
@@ -22,7 +23,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 // ... (imports)
 
-export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateToPortfolio }: WorkspaceDashboardProps) => {
+export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateToPortfolio, onNavigateToGrants }: WorkspaceDashboardProps) => {
     const { user, profile } = useAuth();
     const [nickname, setNickname] = useState('연구원');
 
@@ -72,7 +73,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
             if (user) {
                 const { data: sessions } = await supabase
                     .from('workspace_sessions')
-                    .select('id, title, mode, updated_at')
+                    .select('id, title, mode, updated_at, workspace_data, chat_history, pdf_url, editor_content')
                     .eq('user_id', user.id)
                     .order('updated_at', { ascending: false })
                     .limit(4);
@@ -206,7 +207,17 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                     <View className="w-[400px]">
                         <RecommendedBusinessCard
                             items={recommendedBusinesses}
-                            onExploreAll={() => console.log('Explore all')}
+                            onExploreAll={() => onNavigateToGrants?.()}
+                            onApply={(item: any) => {
+                                onLoadSession?.({
+                                    title: item.title,
+                                    mode: 'Grant Strategist',
+                                    workspace_data: [],
+                                    auto_run_query: `"${item.title}" 공고에 대한 전략 분석을 시작합니다.`,
+                                    grant_url: item.original_url || item.link || '',
+                                    pdf_url: item.file_url || '',
+                                });
+                            }}
                         />
                     </View>
 

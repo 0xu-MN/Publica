@@ -45,7 +45,7 @@ export const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
     isInspectorOpen,
     onInspectorOpenChange,
 }) => {
-    const [inspectorWidth, setInspectorWidth] = React.useState(360);
+    const [inspectorWidth, setInspectorWidth] = React.useState(480);
     const isDragging = useRef(false);
     const containerRef = useRef<View>(null);
     const containerWidthRef = useRef(0);
