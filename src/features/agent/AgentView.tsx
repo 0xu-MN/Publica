@@ -66,6 +66,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     const [showQuestionnaire, setShowQuestionnaire] = useState(false);
     const [pendingGrantQuery, setPendingGrantQuery] = useState<string>('');
     const [pendingGrantTitle, setPendingGrantTitle] = useState<string>('');
+    const [showGrantConfirm, setShowGrantConfirm] = useState(false);
 
     // Removed debug PDF loading to prevent irrelevant files.
 
@@ -98,25 +99,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                 }
                 setPendingGrantQuery(initialSession.auto_run_query);
                 setPendingGrantTitle(initialSession.title || '');
-                Alert.alert(
-                    "공고문 작성 확인",
-                    `'${initialSession.title}' 공고문 작성을 하시겠습니까?`,
-                    [
-                        {
-                            text: "취소",
-                            style: "cancel",
-                            onPress: () => {
-                                setShowWelcome(true);
-                                setPendingGrantQuery('');
-                                setPendingGrantTitle('');
-                            }
-                        },
-                        {
-                            text: "확인",
-                            onPress: () => setShowQuestionnaire(true)
-                        }
-                    ]
-                );
+                setShowGrantConfirm(true);
             } else if (initialSession.auto_run_query) {
                 // Non-grant auto-run (legacy behavior)
                 console.log("🚀 Auto-Run Triggered:", initialSession.auto_run_query);
@@ -1030,7 +1013,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                         <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '600' }}>— Flow</Text>
                     </View>
                     {/* 🌟 Panel Toggle Buttons — In header for easy access */}
-                    {!showWelcome && columns.length > 0 && (
+                    {!showWelcome && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}>
                             <TouchableOpacity
                                 style={[
@@ -1063,7 +1046,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                         </View>
                     )}
                     {/* 🌟 Zoom Slider — shadcn-inspired */}
-                    {!showWelcome && columns.length > 0 && Platform.OS === 'web' && (
+                    {!showWelcome && Platform.OS === 'web' && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 16, backgroundColor: '#111827', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: '#1E293B' }}>
                             <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '700' }}>🔍</Text>
                             <input
@@ -1261,6 +1244,49 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                 </>
             ) : (
                 renderWorkspace()
+            )}
+
+            {/* 🌟 Grant Confirmation Modal */}
+            {showGrantConfirm && (
+                <View style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', zIndex: 9999
+                }}>
+                    <View style={{
+                        backgroundColor: '#1E293B', borderRadius: 16, padding: 32, maxWidth: 420, width: '90%',
+                        borderWidth: 1, borderColor: '#334155', shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
+                        shadowOpacity: 0.5, shadowRadius: 24
+                    }}>
+                        <Text style={{ color: '#E2E8F0', fontSize: 18, fontWeight: '800', marginBottom: 12, textAlign: 'center' }}>
+                            공고문 작성 확인
+                        </Text>
+                        <Text style={{ color: '#94A3B8', fontSize: 14, lineHeight: 22, textAlign: 'center', marginBottom: 24 }}>
+                            '{pendingGrantTitle}'{'\n'}공고문 작성을 하시겠습니까?
+                        </Text>
+                        <View style={{ flexDirection: 'row', gap: 12 }}>
+                            <TouchableOpacity
+                                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#334155', alignItems: 'center' }}
+                                onPress={() => {
+                                    setShowGrantConfirm(false);
+                                    setShowWelcome(true);
+                                    setPendingGrantQuery('');
+                                    setPendingGrantTitle('');
+                                }}
+                            >
+                                <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700' }}>취소</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#4F46E5', alignItems: 'center' }}
+                                onPress={() => {
+                                    setShowGrantConfirm(false);
+                                    setShowQuestionnaire(true);
+                                }}
+                            >
+                                <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '700' }}>확인</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
             )}
 
             <IdeaQuestionnaire
