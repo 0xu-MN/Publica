@@ -4,6 +4,7 @@ import { FileText, MessageCircle, ChevronLeft, ChevronRight, Save, FolderOpen, S
 import { supabase } from '../../lib/supabase';
 import { useSessionManager } from './hooks/useSessionManager';
 import { useProjectStore } from '../../store/useProjectStore';
+import { fetchTemplate, templateToEditorHtml, getDefaultPSSTTemplate, TemplateSection, GrantTemplate } from '../../services/templateService';
 import { NotionEditor } from './components/NotionEditor';
 
 // ═══════════════════════════════════════════════════
@@ -38,6 +39,8 @@ export const NexusEditView = () => {
     const leftPanelWidth = useRef(new Animated.Value(420)).current;
     const chatScrollRef = useRef<ScrollView>(null);
     const autoSaveTimerRef = useRef<any>(null);
+    const [activeTemplate, setActiveTemplate] = useState<GrantTemplate | null>(null);
+    const [templateLoading, setTemplateLoading] = useState(false);
 
     // --- Load last session from localStorage on mount ---
     useEffect(() => {
@@ -68,7 +71,7 @@ export const NexusEditView = () => {
                         return `<p>${line}</p>`;
                     })
                     .join('');
-                setEditorContent(`<h1>${session.title || '브레인스톰 메모'}</h1>${brainstormHtml.includes('<li>') ? '<ul>' + brainstormHtml + '</ul>' : brainstormHtml}`);
+                setEditorContent(`<h1>${session.title || '브레인스퇰 메모'}</h1>${brainstormHtml.includes('<li>') ? '<ul>' + brainstormHtml + '</ul>' : brainstormHtml}`);
             } else if (session.workspace_data && session.workspace_data.length > 0) {
                 const content = buildEditorContentFromBranches(session.workspace_data);
                 setEditorContent(content);
@@ -78,10 +81,44 @@ export const NexusEditView = () => {
             }
             setShowSessionList(false);
             setShowResumePrompt(false);
+
+            // Try to load grant template if we have grant info  
+            if (session.grant_url || session.grant_title) {
+                loadTemplateForSession(session);
+            }
+
             // Clear the store to prevent re-loading on re-renders
             useProjectStore.getState().clearProject();
         }
     }, []);
+
+    // --- Load template for a session ---
+    const loadTemplateForSession = async (session: any) => {
+        setTemplateLoading(true);
+        try {
+            // If we have brainstorm content, use it as the base
+            // and append template sections as a guide below
+            const defaultSections = getDefaultPSSTTemplate();
+            const mockTemplate: GrantTemplate = {
+                id: 'default',
+                grant_id: 'default',
+                sections: defaultSections,
+                source_markdown: null,
+                parsed_at: new Date().toISOString(),
+            };
+            setActiveTemplate(mockTemplate);
+
+            // If we don't have editor content yet, use the template
+            if (!editorContent || editorContent.length < 20) {
+                const html = templateToEditorHtml(mockTemplate, session.title || session.grant_title);
+                setEditorContent(html);
+            }
+        } catch (err) {
+            console.error('Template load failed:', err);
+        } finally {
+            setTemplateLoading(false);
+        }
+    };
 
     // --- Toggle Left Panel ---
     const toggleLeftPanel = () => {

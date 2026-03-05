@@ -45,7 +45,7 @@ Deno.serve(async (req: any) => {
   }
 
   try {
-    const { business_idea, selected_nodes_context, pdf_context } = await req.json();
+    const { business_idea, selected_nodes_context, pdf_context, template_sections, section_index, brainstorm_content } = await req.json();
     const apiKey = Deno.env.get('GEMINI_API_KEY');
 
     if (!apiKey) {
@@ -53,8 +53,81 @@ Deno.serve(async (req: any) => {
       throw new Error("Server Misconfiguration: GEMINI_API_KEY is missing");
     }
 
-    // 1. Compile User Input Payload
-    const finalPrompt = `
+    // Determine if we're doing template-based or PSST-based generation
+    let systemPrompt = SYSTEM_PROMPT;
+    let finalPrompt = '';
+
+    if (template_sections && template_sections.length > 0) {
+      // ═══ TEMPLATE MODE ═══
+      if (section_index !== undefined && section_index !== null) {
+        // Per-section generation
+        const section = template_sections[section_index];
+        systemPrompt = `
+You are an elite Korean Startup Consultant writing a specific section of a government grant application.
+## RULES
+1. LANGUAGE: ALWAYS reply in KOREAN (한국어). Use formal business Korean (하십시오체).
+2. FORMAT: Output ONLY valid Markdown for this ONE section. No conversational text.
+3. Write 500-1500 words for this section.
+4. Be specific, data-driven, and persuasive.
+`;
+        finalPrompt = `
+[작성할 섹션]
+제목: ${section.title}
+설명: ${section.description}
+${section.hints ? `힌트: ${section.hints}` : ''}
+${section.max_length ? `최대 글자수: ${section.max_length}자` : ''}
+
+[사용자 사업 아이디어]
+${business_idea || '제공되지 않음'}
+
+[브레인스톰 메모]
+${brainstorm_content || '없음'}
+
+[마인드맵 전략 데이터]
+${JSON.stringify(selected_nodes_context || [], null, 2)}
+
+[참고 공고문/PDF]
+${pdf_context || '제공되지 않음'}
+
+위 섹션의 내용만 마크다운으로 출력하십시오. 섹션 제목(##)을 포함하세요.
+`;
+      } else {
+        // Full document with custom template sections
+        const sectionList = template_sections.map((s: any, i: number) =>
+          `   - ## ${i + 1}. ${s.title}\n     - ${s.description}`
+        ).join('\n');
+
+        systemPrompt = `
+You are an elite Korean Startup Consultant and Government Grant Evaluator.
+Your task is to write a complete government grant application following the SPECIFIC template sections provided.
+
+## RULES
+1. LANGUAGE: ALWAYS reply in KOREAN. Use formal business Korean.
+2. FORMAT: Output ONLY valid Markdown.
+3. Follow these exact sections in order:
+${sectionList}
+4. NO FLUFF. Output ONLY the document.
+5. Be extremely specific, data-driven, and persuasive.
+`;
+        finalPrompt = `
+[사업 아이디어]
+${business_idea || '제공되지 않음'}
+
+[브레인스톰 메모]
+${brainstorm_content || '없음'}
+
+[마인드맵 전략 데이터]
+${JSON.stringify(selected_nodes_context || [], null, 2)}
+
+[참고 공고문/PDF]
+${pdf_context || '제공되지 않음'}
+
+위 양식에 맞는 완전한 지원서를 마크다운으로 출력하십시오.
+`;
+      }
+    } else {
+      // ═══ ORIGINAL PSST MODE ═══
+      finalPrompt = `
         다음 정보를 바탕으로 최고 수준의 PSST 정부지원사업 사업계획서를 마크다운 형식으로 작성해주세요.
         
         [사용자 사업 아이디어 개요]
@@ -63,11 +136,15 @@ Deno.serve(async (req: any) => {
         [사용자가 마인드맵에서 채택한 핵심 전략/근거 데이터 (JSON)]
         ${JSON.stringify(selected_nodes_context, null, 2)}
         
+        [브레인스톰 메모]
+        ${brainstorm_content || '없음'}
+        
         [참고용 공고문/PDF 요약 데이터]
         ${pdf_context || '제공되지 않음'}
         
         지금 바로 마크다운 형태의 사업계획서를 출력하십시오.
         `;
+    }
 
     // 2. Call LLM
     const response = await fetch(
@@ -78,7 +155,7 @@ Deno.serve(async (req: any) => {
         body: JSON.stringify({
           contents: [{
             role: "user",
-            parts: [{ text: SYSTEM_PROMPT + "\n\n" + finalPrompt }]
+            parts: [{ text: systemPrompt + "\n\n" + finalPrompt }]
           }],
           generationConfig: {
             temperature: LLM_TEMPERATURE
