@@ -21,6 +21,7 @@ import { useProjectStore } from '../../store/useProjectStore';
 import { GrantList } from '../../screens/GrantList';
 import { NexusEditView } from '../../features/agent/NexusEditView';
 import { MyProjectsView } from './views/MyProjectsView';
+import { PricingPage } from './views/PricingPage';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
@@ -302,6 +303,18 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                     <View className="flex-1">
                         <SettingsModal visible={true} onClose={() => setActiveTab('home')} />
                     </View>
+                );
+            case 'pricing':
+                return (
+                    <PricingPage
+                        currentPlan="free"
+                        onSelectPlan={(plan) => {
+                            if (plan === 'pro') {
+                                // TODO: Open Toss Payments checkout
+                                console.log('Pro plan selected — Toss Payments flow');
+                            }
+                        }}
+                    />
                 );
             default:
                 return <HomeView />;

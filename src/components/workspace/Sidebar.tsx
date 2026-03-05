@@ -1,9 +1,9 @@
 import React from 'react';
 import { View, TouchableOpacity, Text, ScrollView } from 'react-native';
-import { Home, Zap, MessageSquare, Bookmark, Settings, User, ClipboardList, FileEdit, FolderKanban } from 'lucide-react-native';
+import { Home, Zap, MessageSquare, Bookmark, Settings, User, ClipboardList, FileEdit, FolderKanban, Crown } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
-export type WorkspaceTab = 'home' | 'agent' | 'nexus-edit' | 'projects' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge' | 'grants';
+export type WorkspaceTab = 'home' | 'agent' | 'nexus-edit' | 'projects' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge' | 'grants' | 'pricing';
 
 interface SidebarProps {
     activeTab: WorkspaceTab;
@@ -147,6 +147,26 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
                 {/* Bottom Actions - Settings */}
                 <View className="w-8 h-[1px] bg-white/10 mb-4" />
+
+                <TouchableOpacity
+                    onPress={() => onTabChange('pricing')}
+                    className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center mb-3 ${activeTab === 'pricing'
+                        ? 'bg-amber-500/20 border border-amber-400/30'
+                        : 'bg-slate-800/30'
+                        }`}
+                    style={{
+                        shadowColor: activeTab === 'pricing' ? '#F59E0B' : 'transparent',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: 0.3,
+                        shadowRadius: 8,
+                    }}
+                >
+                    <Crown
+                        size={22}
+                        color={activeTab === 'pricing' ? '#FBBF24' : '#94A3B8'}
+                        strokeWidth={2.5}
+                    />
+                </TouchableOpacity>
 
                 <TouchableOpacity
                     onPress={() => onTabChange('settings')}
