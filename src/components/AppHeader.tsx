@@ -5,6 +5,7 @@ import { Icons } from '../utils/icons';
 import { AnimatedPillNav } from './AnimatedPillNav';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { useAuth } from '../contexts/AuthContext';
+import { useProjectStore } from '../store/useProjectStore';
 
 const CATEGORIES = ['전체', '과학', '경제'];
 
@@ -206,6 +207,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     </TouchableOpacity>
                                 )
                             )}
+
+                            {/* Pro Upgrade Button */}
+                            <TouchableOpacity
+                                onPress={() => {
+                                    setViewMode('workspace');
+                                    useProjectStore.getState().setGlobalTabRequest('pricing');
+                                }}
+                                className="ml-5 flex-row items-center bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/30 hover:bg-amber-500/20 transition-all"
+                            >
+                                <Icons.Crown color="#FBBF24" size={16} />
+                                <Text className="text-amber-400 text-xs font-bold ml-1.5">PUBLICA PRO</Text>
+                            </TouchableOpacity>
 
                             {/* Notification Bell Area */}
                             <View className="relative z-50">

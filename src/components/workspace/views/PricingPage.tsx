@@ -204,7 +204,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                 <View style={styles.faqCard}>
                     <Text style={styles.faqQ}>Q. 환불 정책은 어떻게 되나요?</Text>
                     <Text style={styles.faqA}>
-                        결제일로부터 7일 이내 환불 요청 시 전액 환불이 가능합니다. 7일 경과 후에는 남은 기간에 대한 부분 환불이 적용됩니다.
+                        결제 후 환불은 불가합니다. 단, 구독을 취소하시면 이미 결제된 주기의 남은 기간 동안은 Pro 플랜을 그대로 이용하실 수 있으며, 다음 결제일부터는 요금이 청구되지 않고 Free 플랜으로 자동 전환됩니다.
                     </Text>
                 </View>
                 <View style={styles.faqCard}>

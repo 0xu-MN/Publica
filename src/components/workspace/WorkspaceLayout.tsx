@@ -35,6 +35,8 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
 
     // Project Store Sync
     const agentSession = useProjectStore(state => state.agentSession);
+    const globalTabRequest = useProjectStore(state => state.globalTabRequest);
+    const setGlobalTabRequest = useProjectStore(state => state.setGlobalTabRequest);
 
     // Chat states
     const [selectedChatUser, setSelectedChatUser] = useState<{ id: string; name: string } | undefined>(undefined);
@@ -49,6 +51,14 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
 
     // Profile panel state
     const [showProfilePanel, setShowProfilePanel] = useState(false);
+
+    // Global Tab Routing (e.g. from AppHeader Pro button)
+    useEffect(() => {
+        if (globalTabRequest) {
+            setActiveTabState(globalTabRequest as WorkspaceTab);
+            setGlobalTabRequest(null);
+        }
+    }, [globalTabRequest, setGlobalTabRequest]);
     const profilePanelWidth = useRef(new Animated.Value(0)).current;
 
     // Calendar state

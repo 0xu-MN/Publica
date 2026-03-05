@@ -20,14 +20,19 @@ interface ProjectState {
     // The specific pre-configured context to launch the Agent with
     agentSession: AgentSession | null;
 
+    // Cross-component tab routing request
+    globalTabRequest: string | null;
+
     // Actions
     setProject: (project: any, sessionConfiguration: AgentSession) => void;
     clearProject: () => void;
+    setGlobalTabRequest: (tab: string | null) => void;
 }
 
 export const useProjectStore = create<ProjectState>((set) => ({
     activeProject: null,
     agentSession: null,
+    globalTabRequest: null,
 
     // Sets both the metadata AND the session context ready for the agent
     setProject: (project, sessionConfiguration) => set({
@@ -38,5 +43,9 @@ export const useProjectStore = create<ProjectState>((set) => ({
     clearProject: () => set({
         activeProject: null,
         agentSession: null
+    }),
+
+    setGlobalTabRequest: (tab) => set({
+        globalTabRequest: tab
     })
 }));
