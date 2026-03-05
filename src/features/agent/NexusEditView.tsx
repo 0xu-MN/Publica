@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, Activi
 import { FileText, MessageCircle, ChevronLeft, ChevronRight, Save, FolderOpen, Sparkles, Send, Bot, User as UserIcon, ArrowLeft, Zap, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useSessionManager } from './hooks/useSessionManager';
+import { useProjectStore } from '../../store/useProjectStore';
 import { NotionEditor } from './components/NotionEditor';
 
 // ═══════════════════════════════════════════════════
@@ -46,6 +47,39 @@ export const NexusEditView = () => {
                 setLastSessionId(lastId);
                 setShowResumePrompt(true);
             }
+        }
+    }, []);
+
+    // --- Auto-load brainstorm content from Flow (via useProjectStore) ---
+    useEffect(() => {
+        const session = useProjectStore.getState().agentSession;
+        if (session) {
+            console.log('📝 Edit: Loading data from Flow session:', session.title);
+            // Priority: brainstorm_content > workspace branches
+            if (session.brainstorm_content && session.brainstorm_content.length > 0) {
+                const brainstormHtml = session.brainstorm_content
+                    .split('\n')
+                    .map(line => line.trim())
+                    .filter(line => line.length > 0)
+                    .map(line => {
+                        if (line.startsWith('•') || line.startsWith('-')) {
+                            return `<li>${line.replace(/^[•\-]\s*/, '')}</li>`;
+                        }
+                        return `<p>${line}</p>`;
+                    })
+                    .join('');
+                setEditorContent(`<h1>${session.title || '브레인스톰 메모'}</h1>${brainstormHtml.includes('<li>') ? '<ul>' + brainstormHtml + '</ul>' : brainstormHtml}`);
+            } else if (session.workspace_data && session.workspace_data.length > 0) {
+                const content = buildEditorContentFromBranches(session.workspace_data);
+                setEditorContent(content);
+            }
+            if (session.chat_history) {
+                setChatMessages(session.chat_history.map((m: any) => ({ role: m.sender === 'me' ? 'user' : 'assistant', content: m.text })));
+            }
+            setShowSessionList(false);
+            setShowResumePrompt(false);
+            // Clear the store to prevent re-loading on re-renders
+            useProjectStore.getState().clearProject();
         }
     }, []);
 
