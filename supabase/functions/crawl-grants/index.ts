@@ -57,7 +57,7 @@ function extractRegion(text: string): string {
     return '전국';
 }
 
-// ─── Main: Fetch from data.go.kr API ───
+// ─── Main: Fetch from data.go.kr (K-Startup) API ───
 async function fetchFromDataGoKr(apiKey: string): Promise<any[]> {
     const baseUrl = 'https://apis.data.go.kr/B552735/k-startup/bizAnnouncementList';
     const grants: any[] = [];
@@ -138,6 +138,79 @@ async function fetchFromDataGoKr(apiKey: string): Promise<any[]> {
             page++;
         } catch (e) {
             console.error(`❌ Fetch error on page ${page}:`, e);
+            break;
+        }
+    }
+
+    return grants;
+}
+
+// ─── Main: Fetch from Bizinfo API (기업마당 지원사업정보) ───
+async function fetchFromBizinfo(apiKey: string): Promise<any[]> {
+    const baseUrl = 'https://api.odcloud.kr/api/3034791/v1/uddi:f76639a7-27ea-48da-a4f4-c7dca8032a49_201710261128';
+    const grants: any[] = [];
+    let page = 1;
+    const perPage = 100;
+    let totalCount = 999;
+
+    while ((page - 1) * perPage < totalCount) {
+        const url = `${baseUrl}?page=${page}&perPage=${perPage}&serviceKey=${encodeURIComponent(apiKey)}`;
+
+        console.log(`📡 [Bizinfo] Fetching page ${page}...`);
+
+        try {
+            const res = await fetch(url);
+            if (!res.ok) {
+                console.error(`❌ [Bizinfo] API Error: ${res.status} ${await res.text()}`);
+                break;
+            }
+
+            const data = await res.json();
+            const items = data?.data || [];
+
+            totalCount = data?.totalCount || items.length;
+
+            if (!Array.isArray(items) || items.length === 0) {
+                console.log(`📭 [Bizinfo] No more items on page ${page}`);
+                break;
+            }
+
+            for (const item of items) {
+                const title = item['사업명'] || '';
+                const category = mapCategory(item['분야'] || '');
+                const deadlineStr = item['종료일'] || null;
+                const originalUrl = item['주소(세부사항 확인가능)'] || item['주소(세부사항확인가능)'] || '';
+                const externalId = `bizinfo_${item['NO'] || item['연번'] || item['번호'] || title.substring(0, 30)}`;
+                const agency = item['수행기관'] || '';
+                const department = item['소관기관'] || '';
+                const region = extractRegion(title + ' ' + department + ' ' + agency);
+                const applicationPeriod = (item['시작일'] || item['신청시작일자'] || '') + ' ~ ' + (deadlineStr || item['신청종료일자'] || '');
+
+                grants.push({
+                    title,
+                    agency,
+                    summary: `${department} - ${title}`,
+                    description: `분야: ${item['분야'] || ''}\n소관기관: ${department}\n수행기관: ${agency}`,
+                    target_audience: '상세내용 참고',
+                    tech_field: '전분야',
+                    category,
+                    d_day: calculateDDay(deadlineStr),
+                    deadline_date: deadlineStr || null,
+                    link: originalUrl,
+                    original_url: originalUrl,
+                    file_url: null,
+                    external_id: externalId,
+                    department,
+                    region,
+                    application_period: applicationPeriod,
+                    source: 'bizinfo',
+                    is_active: true,
+                });
+            }
+
+            page++;
+        } catch (e) {
+            console.error(`❌ [Bizinfo] Fetch error on page ${page}:`, e);
             break;
         }
     }
@@ -241,29 +314,37 @@ Deno.serve(async (req: any) => {
             });
         }
 
-        console.log('🚀 Starting grant crawl...');
+        console.log('🚀 Starting grant crawl for K-Startup and Bizinfo...');
 
-        // 1. Fetch from data.go.kr
-        const grants = await fetchFromDataGoKr(apiKey);
-        console.log(`📊 Fetched ${grants.length} grants from API`);
+        // 1. Fetch from K-Startup
+        const kStartupGrants = await fetchFromDataGoKr(apiKey);
+        console.log(`📊 Fetched ${kStartupGrants.length} grants from K-Startup`);
 
-        if (grants.length === 0) {
+        // 2. Fetch from Bizinfo
+        const bizinfoGrants = await fetchFromBizinfo(apiKey);
+        console.log(`📊 Fetched ${bizinfoGrants.length} grants from Bizinfo`);
+
+        const allGrants = [...kStartupGrants, ...bizinfoGrants];
+
+        if (allGrants.length === 0) {
             return new Response(JSON.stringify({
                 status: 'warning',
-                message: 'API returned 0 grants. API key may be invalid or service may be down.',
+                message: 'API returned 0 grants from both sources. API key may be invalid or service may be down.',
                 grants_fetched: 0,
             }), {
                 headers: { ...corsHeaders, 'Content-Type': 'application/json' },
             });
         }
 
-        // 2. Upsert into Supabase
-        const result = await upsertGrants(grants);
+        // 3. Upsert into Supabase
+        const result = await upsertGrants(allGrants);
         console.log(`✅ Crawl complete: ${result.inserted} inserted, ${result.updated} updated, ${result.deactivated} deactivated`);
 
         return new Response(JSON.stringify({
             status: 'success',
-            grants_fetched: grants.length,
+            grants_fetched: allGrants.length,
+            k_startup_count: kStartupGrants.length,
+            bizinfo_count: bizinfoGrants.length,
             inserted: result.inserted,
             updated: result.updated,
             deactivated: result.deactivated,
