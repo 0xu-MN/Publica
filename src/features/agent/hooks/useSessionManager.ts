@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabase';
-import { Alert } from 'react-native';
 
 export const useSessionManager = (userId: string | undefined) => {
     const [sessions, setSessions] = useState<any[]>([]);
@@ -95,7 +94,6 @@ export const useSessionManager = (userId: string | undefined) => {
             .from('workspace_sessions')
             .update(payload)
             .eq('id', sessionId)
-            .eq('user_id', userId)
             .select();
 
         // Fallback: editor_content 컬럼이 아직 없으면 updated_at만 업데이트
@@ -137,4 +135,3 @@ export const useSessionManager = (userId: string | undefined) => {
 
     return { sessions, currentSessionId, setCurrentSessionId, fetchSessions, saveSession, saveEditorContent, loadSession, deleteSession };
 };
-

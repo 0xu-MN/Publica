@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, LayoutAnimation, Dimensions, Platform, PanResponder, UIManager, Alert, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, LayoutAnimation, Dimensions, Platform, PanResponder, UIManager, Alert, ScrollView, TextInput } from 'react-native';
 import { supabase } from '../../lib/supabase';
 // 아이콘 필수!
 import { RefreshCw, ZoomIn, ZoomOut, Folder, Save, X, Trash2, UploadCloud, ExternalLink, FileEdit, Zap } from 'lucide-react-native';
@@ -54,6 +54,8 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     // 🌟 Welcome Screen State
     const [showWelcome, setShowWelcome] = useState(true);
 
+    const [projectTitle, setProjectTitle] = useState<string>(''); // 🌟 FIX: 전용 타이틀 상태 도입
+
     // 🌟 File Uploader Ref (For Programmatic Access)
     const fileUploaderRef = useRef<any>(null);
     const detailPanelRef = useRef<DetailPanelRef>(null);
@@ -92,6 +94,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             setChatHistory(initialSession.chat_history || []);
             if (initialSession.pdf_url) setPdfUrl(initialSession.pdf_url);
             if (initialSession.brainstorm_content) setBrainstormContent(initialSession.brainstorm_content);
+            if (initialSession.title) setProjectTitle(initialSession.title); // 🌟 FIX: 타이틀 복원
             setShowWelcome(false);
 
             // 🌟 Grant Analysis: Show questionnaire for grant mode
@@ -149,12 +152,14 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     useEffect(() => {
         if (columns.length > 0 && user && currentSessionId) {
             const timer = setTimeout(() => {
-                const title = columns[0]?.branches?.[0]?.label || columns[0]?.root_node || "Untitled Project";
-                saveSession(title, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent);
+                // 🌟 FIX: projectTitle이 있으면 그것을 최우선으로 사용, 없을 때만 root_node 사용 (오버라이트 방지)
+                const derivedTitle = columns[0]?.root_node || "Untitled Project";
+                const titleToSave = projectTitle.trim() || derivedTitle;
+                saveSession(titleToSave, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent);
             }, 5000);
             return () => clearTimeout(timer);
         }
-    }, [columns, chatHistory, currentSessionId, brainstormContent, pdfUrl, agentMode]);
+    }, [columns, chatHistory, currentSessionId, brainstormContent, pdfUrl, agentMode, projectTitle]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -561,16 +566,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
         if (columns.length === 0) { Alert.alert("알림", "빈 화면은 저장할 수 없습니다."); return; }
 
         const defaultTitle = pendingGrantTitle || columns[0]?.root_node || "Untitled Project";
-
-        // 🌟 UX FIX: 사용자에게 프로젝트 제목을 직접 입력하게 함 (신규 저장 시에만)
-        let finalTitle = defaultTitle;
-        if (Platform.OS === 'web' && !currentSessionId) {
-            const userInput = window.prompt("저장할 프로젝트(파일) 이름을 입력해주세요:", defaultTitle);
-            if (userInput === null) return; // 취소 누르면 저장 중단
-            finalTitle = userInput.trim() || defaultTitle;
-        } else if (currentSessionId) {
-            finalTitle = columns[0]?.root_node || defaultTitle;
-        }
+        const finalTitle = projectTitle.trim() || defaultTitle; // 🌟 FIX: window.prompt 제거, UI 입력된 projectTitle 우선 적용
 
         // Pass pdfUrl as 5th argument, brainstormContent as 6th
         const success = await saveSession(finalTitle, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent);
@@ -646,6 +642,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             setChatHistory(data.chat_history || []);
             if (data.pdf_url) setPdfUrl(data.pdf_url);
             if (data.brainstorm_content) setBrainstormContent(data.brainstorm_content);
+            if (data.title) setProjectTitle(data.title); // 🌟 FIX: 타이틀 복원
             setShowHistory(false);
             setShowWelcome(false);
             setIsLeftPanelMinimized(false);
@@ -1089,6 +1086,32 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                         <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '800', letterSpacing: -0.3 }}>Publica NEXUS</Text>
                         <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '600' }}>— Flow</Text>
                     </View>
+                    
+                    {/* 🌟 FIX: 방해되는 window.prompt 대신 네이티브 헤더 UI에 이름 입력창 배치 */}
+                    {!showWelcome && columns.length > 0 && (
+                        <View style={{ marginLeft: 8 }}>
+                            <TextInput 
+                                value={projectTitle}
+                                onChangeText={setProjectTitle}
+                                placeholder="프로젝트 이름 설정..."
+                                placeholderTextColor="#94A3B8"
+                                style={{
+                                    backgroundColor: '#1E293B',
+                                    color: '#FFF',
+                                    borderWidth: 1,
+                                    borderColor: '#334155',
+                                    borderRadius: 6,
+                                    paddingHorizontal: 10,
+                                    paddingVertical: 4,
+                                    fontSize: 13,
+                                    fontWeight: '600',
+                                    minWidth: 180,
+                                    outlineStyle: 'none'
+                                } as any}
+                            />
+                        </View>
+                    )}
+
                     {/* 🌟 Panel Toggle Buttons — In header for easy access */}
                     {!showWelcome && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}>
@@ -1165,7 +1188,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                 await handleSave();
                                 useProjectStore.getState().setProject(null, {
                                     id: currentSessionId || undefined, // 🌟 FIX: 세션 ID 전달하여 에디터 내용 유지
-                                    title: pendingGrantTitle || columns[0]?.root_node || 'Untitled',
+                                    title: projectTitle.trim() || pendingGrantTitle || columns[0]?.root_node || 'Untitled',
                                     workspace_data: columns,
                                     chat_history: chatHistory,
                                     brainstorm_content: compiledContent,
@@ -1297,7 +1320,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                             await handleSave();
                                             useProjectStore.getState().setProject(null, {
                                                 id: currentSessionId || undefined,
-                                                title: pendingGrantTitle || columns[0]?.root_node || 'Untitled',
+                                                title: projectTitle.trim() || pendingGrantTitle || columns[0]?.root_node || 'Untitled',
                                                 workspace_data: columns,
                                                 chat_history: chatHistory,
                                                 brainstorm_content: brainstormContent,
