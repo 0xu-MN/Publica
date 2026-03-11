@@ -26,6 +26,7 @@ import { InsightListItem } from '../components/InsightListItem';
 import { AnalysisResultScreen } from './AnalysisResultScreen';
 import { createProject } from '../services/projects';
 import { useProjectStore } from '../store/useProjectStore';
+import { PricingPage } from '../components/workspace/views/PricingPage';
 
 // Filter categories
 const CATEGORIES = ['전체'];
@@ -144,7 +145,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
-    const [viewMode, setViewMode] = useState<'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants'>('connect');
+    const [viewMode, setViewMode] = useState<'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing'>('connect');
     const [targetUserId, setTargetUserId] = useState<string | null>(null);
     const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
     const [selectedAnalysisResult, setSelectedAnalysisResult] = useState<any | null>(null);
@@ -402,6 +403,13 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                     </View>
                 ) : viewMode === 'settings' ? (
                     <SettingsScreen onBack={() => setViewMode('workspace')} />
+                ) : viewMode === 'pricing' ? (
+                    <View className="flex-1 w-full bg-[#050B14]">
+                        <PricingPage 
+                            currentPlan="free" 
+                            onRequireAuth={() => setAuthModalVisible(true)} 
+                        />
+                    </View>
                 ) : null
             }
             {viewMode === 'connect' && (

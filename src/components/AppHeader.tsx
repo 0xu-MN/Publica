@@ -19,8 +19,8 @@ interface FeedNotification {
 }
 
 interface AppHeaderProps {
-    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants';
-    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants') => void;
+    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing';
+    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing') => void;
     activeCategory: string;
     setActiveCategory: (category: string) => void;
     user: any;
@@ -176,6 +176,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 )}
 
                 <View className="flex-row items-center z-10">
+                    <TouchableOpacity
+                        onPress={() => {
+                            if (user) {
+                                setViewMode('workspace');
+                                useProjectStore.getState().setGlobalTabRequest('pricing');
+                            } else {
+                                setViewMode('pricing');
+                            }
+                        }}
+                        className="mr-5 flex-row items-center bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/30 hover:bg-amber-500/20 transition-all"
+                    >
+                        <Icons.Crown color="#FBBF24" size={16} />
+                        <Text className="text-amber-400 text-xs font-bold ml-1.5">PUBLICA PRO</Text>
+                    </TouchableOpacity>
+
                     {!user ? (
                         <TouchableOpacity
                             onPress={onAuthModalOpen}
@@ -208,17 +223,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 )
                             )}
 
-                            {/* Pro Upgrade Button */}
-                            <TouchableOpacity
-                                onPress={() => {
-                                    setViewMode('workspace');
-                                    useProjectStore.getState().setGlobalTabRequest('pricing');
-                                }}
-                                className="ml-5 flex-row items-center bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/30 hover:bg-amber-500/20 transition-all"
-                            >
-                                <Icons.Crown color="#FBBF24" size={16} />
-                                <Text className="text-amber-400 text-xs font-bold ml-1.5">PUBLICA PRO</Text>
-                            </TouchableOpacity>
+                            {/* Pro Upgrade Button moved to global header space */}
 
                             {/* Notification Bell Area */}
                             <View className="relative z-50">

@@ -7,12 +7,13 @@ const { width } = Dimensions.get('window');
 interface PricingPageProps {
     onSelectPlan?: (plan: 'free' | 'pro') => void;
     currentPlan?: 'free' | 'pro' | 'trial';
+    onRequireAuth?: () => void;
 }
 
 import { useAuth } from '../../../contexts/AuthContext';
 import { TossPaymentModal } from './TossPaymentModal';
 
-export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentPlan = 'free' }) => {
+export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentPlan = 'free', onRequireAuth }) => {
     const { user } = useAuth();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [isPaymentModalVisible, setPaymentModalVisible] = useState(false);
@@ -156,7 +157,13 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                     {/* Trial CTA */}
                     <TouchableOpacity
                         style={[styles.planBtn, styles.planBtnPro]}
-                        onPress={() => setPaymentModalVisible(true)}
+                        onPress={() => {
+                            if (!user) {
+                                if (onRequireAuth) onRequireAuth();
+                                return;
+                            }
+                            setPaymentModalVisible(true);
+                        }}
                     >
                         <Gift size={14} color="#FFF" />
                         <Text style={styles.planBtnProText}>7일 무료 체험 시작 (결제 진행)</Text>
