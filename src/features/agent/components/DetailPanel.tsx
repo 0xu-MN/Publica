@@ -17,6 +17,7 @@ interface DetailPanelProps {
     suggestions: any[];
     onFileUpload?: () => void;
     onCitationClick?: (page: number) => void;
+    onAppendToMemo?: (text: string) => void;
     embedded?: boolean; // When true, skip wrapper/header (used inside UnifiedPanel)
 }
 
@@ -30,6 +31,7 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
     suggestions,
     onFileUpload,
     onCitationClick,
+    onAppendToMemo,
     embedded = false,
 }, ref) => {
     const slideAnim = useRef(new Animated.Value(450)).current;
@@ -267,6 +269,24 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                     </View>
                     <ChevronRight size={14} color="#3B82F6" />
                 </TouchableOpacity>
+
+                {/* Add to Memo */}
+                {onAppendToMemo && (
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { borderColor: '#10B981' }]}
+                        onPress={() => {
+                            const memoText = `[${displayNode.label}]\n${displayNode.description || ''}`;
+                            onAppendToMemo(memoText);
+                        }}
+                    >
+                        <Sparkles size={14} color="#10B981" />
+                        <View style={{ flex: 1, marginLeft: 10 }}>
+                            <Text style={[styles.actionBtnTitle, { color: '#10B981' }]}>메모장에 추가</Text>
+                            <Text style={styles.actionBtnDesc}>이 내용을 브레인스톰 메모로 복사합니다</Text>
+                        </View>
+                        <ChevronRight size={14} color="#10B981" />
+                    </TouchableOpacity>
+                )}
 
 
                 {/* Ask AI — Now toggles the chat section */}

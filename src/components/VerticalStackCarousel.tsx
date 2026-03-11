@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable, Text } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -79,6 +79,12 @@ export function VerticalStackCarousel<T>({
                     </CardItem>
                 );
             })}
+
+            {data.length === 0 && (
+                <View style={[styles.cardContainer, { height: itemHeight, justifyContent: 'center', alignItems: 'center', opacity: 0.5 }]} className="bg-white/5 border border-white/10">
+                    <Text style={{ color: '#fff', fontSize: 16 }}>현재 조건에 맞는 지원금이 없습니다.</Text>
+                </View>
+            )}
         </Pressable>
     );
 }

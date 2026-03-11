@@ -2,16 +2,10 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { SharedValue } from 'react-native-reanimated';
+import { Grant } from '../services/grants';
 
 interface GovernmentCardProps {
-    item: {
-        title: string;
-        agency: string;
-        period: string;
-        status: string;
-        dDay: string;
-        category: string;
-    };
+    item: Grant;
     index: number;
     progress: SharedValue<number>;
     totalItems: number;
@@ -38,9 +32,9 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
                     1. Header / Collapsed Pill View (Height 60px) 
                     This section is always visible and perfectly centered vertically in the collapsed state.
                 */}
-                <View className="flex-row items-center justify-between h-[60px]">
+                <View className="flex-row items-center justify-between h-[60px] w-full px-2">
                     {/* Left: Agency | Title */}
-                    <View className="flex-row items-center flex-1 mr-4 overflow-hidden">
+                    <View className="flex-row items-center flex-[0.85] overflow-hidden">
                         <Text className="text-purple-200 text-[12px] font-medium mr-2" numberOfLines={1}>
                             {item.agency}
                         </Text>
@@ -51,8 +45,8 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
                     </View>
 
                     {/* Right: D-Day Badge (Oval) */}
-                    <View className="px-3 py-1 rounded-full border border-white/30 bg-white/10">
-                        <Text className="text-white text-[11px] font-bold">{item.dDay}</Text>
+                    <View className="px-3 py-1 rounded-full border border-white/30 bg-white/10 flex-shrink-0">
+                        <Text className="text-white text-[11px] font-bold">{item.d_day || '상시'}</Text>
                     </View>
                 </View>
 
@@ -65,10 +59,10 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
                     {/* Row 1: Tags/Category */}
                     <View className="flex-row justify-start items-center mb-2 gap-2">
                         <View className="bg-white/10 px-3 py-1 rounded-lg border border-white/5">
-                            <Text className="text-emerald-400 text-[11px] font-bold">{item.category}</Text>
+                            <Text className="text-emerald-400 text-[11px] font-bold">{item.category || (item.grant_type === 'subsidy' ? '정부지원금' : '지원사업')}</Text>
                         </View>
                         <View className="bg-white/10 px-3 py-1 rounded-lg border border-white/5">
-                            <Text className="text-slate-300 text-[11px]">{item.status}</Text>
+                            <Text className="text-slate-300 text-[11px]">모집중</Text>
                         </View>
                     </View>
 
@@ -83,14 +77,14 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
                     <View className="flex-row gap-3 h-[100px]">
                         {/* Info Box */}
                         <View className="flex-[1.6] bg-slate-900/50 rounded-2xl p-4 justify-center border border-white/5 gap-1.5">
-                            <Text className="text-purple-200 text-[12px]">📅 접수기간: {item.period}</Text>
-                            <Text className="text-purple-200 text-[12px]">🏛️ {item.agency}</Text>
+                            <Text className="text-purple-200 text-[12px]" numberOfLines={1}>📅 접수: {item.application_period || '별도 공지시까지'}</Text>
+                            <Text className="text-purple-200 text-[12px]" numberOfLines={1}>🏛️ {item.department || item.agency}</Text>
                         </View>
 
                         {/* Status Box */}
                         <View className="flex-1 bg-slate-900/50 rounded-2xl p-4 justify-center items-center border border-white/5">
                             <Text className="text-slate-400 text-[11px] mb-1">마감일</Text>
-                            <Text className="text-emerald-400 text-lg font-bold">{(item.period || '').split('~')[1]?.trim() || '2026.12.31'}</Text>
+                            <Text className="text-emerald-400 text-lg font-bold">{item.deadline_date || '상시접수'}</Text>
                         </View>
                     </View>
                 </View>

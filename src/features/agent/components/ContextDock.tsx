@@ -132,7 +132,7 @@ export const ContextDock: React.FC<ContextDockProps> = ({
             </View>
 
             {/* Memo Text Area */}
-            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
                 <TextInput
                     style={{
                         color: '#E2E8F0', fontSize: 14, lineHeight: 24,

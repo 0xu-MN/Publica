@@ -78,15 +78,21 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
             // Sort by Score DESC
             scoredGrants.sort((a, b) => b.score - a.score);
 
+            // Removed strict year filtering that was accidentally wiping out crawled API data due to format parsing issues.
+            const activeGrants = scoredGrants;
+
             // Set Top 2 for the Main Cards
-            setTopGrants(scoredGrants.slice(0, 2));
+            let topTwo = activeGrants.slice(0, 2);
+            setTopGrants(topTwo);
 
-            // Set Carousel items (Filter for R&D / Commercialization)
-            const rndApps = scoredGrants.filter(g => g.category === 'R&D' || g.category === 'Commercialization').slice(0, 5);
-            setGovPrograms(rndApps.length > 0 ? rndApps : []); // Fallback handled in UI if empty?
+            // Set Carousel items (Projects)
+            let rndApps = activeGrants.filter(g => g.grant_type === 'project' || !g.grant_type);
+            rndApps = rndApps.slice(0, 5);
+            setGovPrograms(rndApps);
 
-            // Set Funding items (Filter for Policy Fund / Voucher)
-            const fundApps = scoredGrants.filter(g => g.category === 'Policy Fund' || g.category === 'Voucher' || g.category === 'Commercialization').slice(0, 5);
+            // Set Funding items (Strictly Subsidies)
+            let fundApps = activeGrants.filter(g => g.grant_type === 'subsidy');
+            fundApps = fundApps.slice(0, 5);
             setFundingPrograms(fundApps);
 
 
@@ -147,8 +153,9 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
         <ScrollView
             ref={scrollRef}
             className="flex-1 w-full bg-[#020617]"
-            contentContainerStyle={{ paddingBottom: 0 }}
+            contentContainerStyle={{ paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
         >
             <View className="max-w-[1400px] mx-auto w-full p-6">
                 {/* Header */}
@@ -250,90 +257,114 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                     {/* Top 2 Recommendations (Visible for both, but blurred for guests) */}
                     <View className="relative">
                         <View className="flex-row gap-8">
-                            {/* Card 1 */}
-                            {topGrants[0] && (
+                            {topGrants.length === 0 ? (
                                 <ElectricBorder
-                                    color="#3B82F6"
-                                    speed={0.5}
-                                    chaos={0.05}
+                                    color="#1E293B"
+                                    speed={0.2}
+                                    chaos={0.02}
                                     borderRadius={48}
                                     style={{ flex: 1, display: 'flex' }}
                                 >
-                                    <TouchableOpacity
-                                        onPress={() => onProgramSelect?.(topGrants[0])}
-                                        className="bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
-                                    >
-                                        <View className="absolute top-0 right-0 p-8">
-                                            <View className="items-end">
-                                                <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
-                                                <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[0].score}<Text className="text-2xl">%</Text></Text>
-                                            </View>
-                                        </View>
-                                        <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[0].agency}</Text>
-                                        <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={2}>{topGrants[0].title}</Text>
-
-                                        <View className="flex-row gap-3 mb-10">
-                                            <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[0].category}</Text></View>
-                                            <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[0].d_day}</Text></View>
-                                        </View>
-
-                                        <View className="flex-row items-center justify-between">
-                                            <View>
-                                                <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
-                                                <Text className="text-[#34D399] text-xl font-bold">{topGrants[0].tech_field}</Text>
-                                            </View>
-                                            <View
-                                                className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
-                                            >
-                                                <Sparkles size={18} color="white" />
-                                                <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
+                                    <View className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-slate-800/50 relative overflow-hidden items-center justify-center min-h-[340px] w-full">
+                                        <Search size={48} color="#475569" className="mb-6 opacity-50" />
+                                        <Text className="text-white text-3xl font-black mb-4">최적의 맞춤 지원사업 탐색 중</Text>
+                                        <Text className="text-slate-400 text-lg text-center leading-relaxed max-w-2xl">
+                                            현재 DB에서 연구원님의 활동 지역(<Text className="text-blue-400 font-bold">{profile?.sido || profile?.location || '전국'}</Text>)과 산업 분야(<Text className="text-[#34D399] font-bold">{field}</Text>)에 일치하는 신규 공고를 AI가 분석하고 있습니다. 새로운 공고가 수집되면 가장 먼저 안내해 드립니다.
+                                        </Text>
+                                    </View>
                                 </ElectricBorder>
-                            )}
-
-                            {/* Card 2 */}
-                            {topGrants[1] && (
-                                <ElectricBorder
-                                    color="#10B981"
-                                    speed={0.5}
-                                    chaos={0.05}
-                                    borderRadius={48}
-                                    style={{ flex: 1, display: 'flex' }}
-                                >
-                                    <TouchableOpacity
-                                        onPress={() => onProgramSelect?.(topGrants[1])}
-                                        className="bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
-                                    >
-                                        <View className="absolute top-0 right-0 p-8">
-                                            <View className="items-end">
-                                                <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
-                                                <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[1].score}<Text className="text-2xl">%</Text></Text>
-                                            </View>
-                                        </View>
-                                        <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[1].agency}</Text>
-                                        <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={2}>{topGrants[1].title}</Text>
-
-                                        <View className="flex-row gap-3 mb-10">
-                                            <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[1].category}</Text></View>
-                                            <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[1].d_day}</Text></View>
-                                        </View>
-
-                                        <View className="flex-row items-center justify-between">
-                                            <View>
-                                                <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
-                                                <Text className="text-[#34D399] text-xl font-bold">{topGrants[1].tech_field}</Text>
-                                            </View>
-                                            <View
-                                                className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
+                            ) : (
+                                <>
+                                    {/* Card 1 */}
+                                    {topGrants[0] && (
+                                        <ElectricBorder
+                                            color="#3B82F6"
+                                            speed={0.5}
+                                            chaos={0.05}
+                                            borderRadius={48}
+                                            style={{ flex: 1, display: 'flex' }}
+                                        >
+                                            <TouchableOpacity
+                                                onPress={() => onProgramSelect?.(topGrants[0])}
+                                                className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
                                             >
-                                                <Sparkles size={18} color="white" />
-                                                <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
-                                            </View>
-                                        </View>
-                                    </TouchableOpacity>
-                                </ElectricBorder>
+                                                <View className="absolute top-0 right-0 p-8 z-10">
+                                                    <View className="items-end">
+                                                        <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
+                                                        <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[0].score}<Text className="text-2xl">%</Text></Text>
+                                                    </View>
+                                                </View>
+                                                <View className="w-[65%]">
+                                                    <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[0].agency}</Text>
+                                                    <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={3}>{topGrants[0].title}</Text>
+                                                </View>
+
+                                                <View className="flex-row gap-3 mb-10">
+                                                    <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[0].category}</Text></View>
+                                                    <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[0].d_day}</Text></View>
+                                                </View>
+
+                                                <View className="mt-auto flex-row items-center justify-between">
+                                                    <View>
+                                                        <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
+                                                        <Text className="text-[#34D399] text-xl font-bold">{topGrants[0].tech_field}</Text>
+                                                    </View>
+                                                    <View
+                                                        className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
+                                                    >
+                                                        <Sparkles size={18} color="white" />
+                                                        <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </ElectricBorder>
+                                    )}
+
+                                    {/* Card 2 */}
+                                    {topGrants[1] && (
+                                        <ElectricBorder
+                                            color="#10B981"
+                                            speed={0.5}
+                                            chaos={0.05}
+                                            borderRadius={48}
+                                            style={{ flex: 1, display: 'flex' }}
+                                        >
+                                            <TouchableOpacity
+                                                onPress={() => onProgramSelect?.(topGrants[1])}
+                                                className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
+                                            >
+                                                <View className="absolute top-0 right-0 p-8 z-10">
+                                                    <View className="items-end">
+                                                        <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
+                                                        <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[1].score}<Text className="text-2xl">%</Text></Text>
+                                                    </View>
+                                                </View>
+                                                <View className="w-[65%]">
+                                                    <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[1].agency}</Text>
+                                                    <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={3}>{topGrants[1].title}</Text>
+                                                </View>
+
+                                                <View className="flex-row gap-3 mb-10">
+                                                    <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[1].category}</Text></View>
+                                                    <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[1].d_day}</Text></View>
+                                                </View>
+
+                                                <View className="mt-auto flex-row items-center justify-between">
+                                                    <View>
+                                                        <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
+                                                        <Text className="text-[#34D399] text-xl font-bold">{topGrants[1].tech_field}</Text>
+                                                    </View>
+                                                    <View
+                                                        className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
+                                                    >
+                                                        <Sparkles size={18} color="white" />
+                                                        <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                        </ElectricBorder>
+                                    )}
+                                </>
                             )}
                         </View>
 

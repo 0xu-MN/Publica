@@ -1,0 +1,8 @@
+INFO:     Started server process [91512]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+🌟 SUCCESS: Found native embedded TOC with 34 items!
+INFO:     127.0.0.1:51144 - "POST /api/parse-pdf HTTP/1.1" 200 OK
+🌟 SUCCESS: Found native embedded TOC with 34 items!
+INFO:     127.0.0.1:51153 - "POST /api/parse-pdf HTTP/1.1" 200 OK

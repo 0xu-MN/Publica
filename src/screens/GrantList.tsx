@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, StyleSheet, FlatList, Platform, Animated, Linking } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, StyleSheet, FlatList, Platform, Animated, Linking, TextInput } from 'react-native';
 import { ChevronLeft, Info, Zap, Filter, Search, ArrowRight, Share2, Bookmark, Sparkles, ExternalLink, FileText, X } from 'lucide-react-native';
 import { fetchGrants, Grant } from '../services/grants';
 import { useAuth } from '../contexts/AuthContext';
@@ -18,6 +18,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
     const [sortOption, setSortOption] = useState<'match' | 'deadline' | 'recent'>('match');
     const [filter, setFilter] = useState<'All' | 'R&D' | 'Commercialization' | 'Voucher' | 'Policy Fund'>('All');
     const [regionFilter, setRegionFilter] = useState<string>('All');
+    const [searchQuery, setSearchQuery] = useState<string>('');
     const [selectedGrant, setSelectedGrant] = useState<Grant | null>(null);
     const detailPanelWidth = useRef(new Animated.Value(0)).current;
     const { user, profile } = useAuth();
@@ -70,9 +71,22 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
         if (regionFilter !== 'All') {
             filtered = filtered.filter(g => {
                 const gRegion = g.region || '전국';
+                // If the user selected '전국', show only national grants
                 if (regionFilter === '전국') return gRegion === '전국';
-                return gRegion === regionFilter || gRegion === '전국';
+
+                // Otherwise, show exactly what the user selected (if user selected '서울', show '서울' only)
+                return gRegion === regionFilter;
             });
+        }
+
+        // Search query filter
+        if (searchQuery.trim() !== '') {
+            const lowerQuery = searchQuery.toLowerCase();
+            filtered = filtered.filter(g =>
+                (g.title && g.title.toLowerCase().includes(lowerQuery)) ||
+                (g.agency && g.agency.toLowerCase().includes(lowerQuery)) ||
+                (g.tech_field && g.tech_field.toLowerCase().includes(lowerQuery))
+            );
         }
 
         // Exclude expired grants (D-Day past)
@@ -243,6 +257,23 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
 
                     {/* Sorting & Filter Bar */}
                     <View style={styles.filterContainer}>
+                        {/* Search Bar */}
+                        <View style={styles.searchContainer}>
+                            <Search size={18} color="#94A3B8" style={styles.searchIcon} />
+                            <TextInput
+                                style={styles.searchInput}
+                                placeholder="공고명, 주관기관, 분야 등 검색..."
+                                placeholderTextColor="#64748B"
+                                value={searchQuery}
+                                onChangeText={setSearchQuery}
+                            />
+                            {searchQuery.length > 0 && (
+                                <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearSearchBtn}>
+                                    <X size={16} color="#94A3B8" />
+                                </TouchableOpacity>
+                            )}
+                        </View>
+
                         <View style={styles.sortRow}>
                             <TouchableOpacity onPress={() => setSortOption('match')} style={[styles.sortChip, sortOption === 'match' && styles.sortChipActive]}>
                                 <Text style={[styles.sortText, sortOption === 'match' && styles.sortTextActive]}>매칭률 높은순</Text>
@@ -263,17 +294,22 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                                     onPress={() => setFilter(cat as any)}
                                 >
                                     <Text style={[styles.filterChipText, filter === cat && styles.filterChipTextActive]}>
-                                        {cat === 'Commercialization' ? '사업화' : cat === 'Voucher' ? '바우처' : cat === 'Policy Fund' ? '정책자금' : cat}
+                                        {cat === 'All' ? '전체' : cat === 'Commercialization' ? '사업화' : cat === 'Voucher' ? '바우처' : cat === 'Policy Fund' ? '정책자금' : cat}
                                     </Text>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
 
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
+                        {/* Region Filter (Wrapped Grid instead of Horizontal Scroll) */}
+                        <View style={styles.regionGrid}>
                             {['All', '전국', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map((reg) => (
                                 <TouchableOpacity
                                     key={reg}
-                                    style={[styles.filterChip, regionFilter === reg && { backgroundColor: '#581C87', borderColor: '#A855F7' }]}
+                                    style={[
+                                        styles.filterChip,
+                                        { marginBottom: 8 },
+                                        regionFilter === reg && { backgroundColor: '#581C87', borderColor: '#A855F7' }
+                                    ]}
                                     onPress={() => setRegionFilter(reg)}
                                 >
                                     <Text style={[styles.filterChipText, regionFilter === reg && styles.filterChipTextActive]}>
@@ -281,7 +317,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                                     </Text>
                                 </TouchableOpacity>
                             ))}
-                        </ScrollView>
+                        </View>
                     </View>
 
                     {loading ? (
@@ -448,6 +484,13 @@ const styles = StyleSheet.create({
     sortChipActive: { backgroundColor: '#1E293B', borderColor: '#3B82F6' },
     sortText: { color: '#64748B', fontSize: 12, fontWeight: '600' },
     sortTextActive: { color: '#3B82F6' },
+
+    searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F172A', borderRadius: 14, borderWidth: 1, borderColor: '#1E293B', paddingHorizontal: 12, height: 44, marginBottom: 4 },
+    searchIcon: { marginRight: 8 },
+    searchInput: { flex: 1, color: 'white', fontSize: 14, height: '100%' },
+    clearSearchBtn: { padding: 4 },
+
+    regionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, paddingBottom: 10 },
 
     filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#1E293B' },
     filterChipActive: { backgroundColor: '#1E3A8A', borderColor: '#3B82F6' },

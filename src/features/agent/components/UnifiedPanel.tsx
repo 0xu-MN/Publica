@@ -19,6 +19,7 @@ interface UnifiedPanelProps {
     suggestions: any[];
     onFileUpload?: () => void;
     onCitationClick?: (page: number) => void;
+    onAppendToMemo?: (text: string) => void;
     detailPanelRef?: React.RefObject<DetailPanelRef | null>;
     editorNode: React.ReactNode;
     // Lifted state from AgentView
@@ -38,6 +39,7 @@ export const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
     suggestions,
     onFileUpload,
     onCitationClick,
+    onAppendToMemo,
     detailPanelRef,
     editorNode,
     isEditorMinimized,
@@ -61,7 +63,9 @@ export const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
             if (el && typeof el.getBoundingClientRect === 'function') {
                 const rect = el.getBoundingClientRect();
                 const newInspectorWidth = rect.right - e.clientX;
-                const clamped = Math.max(200, Math.min(newInspectorWidth, containerWidthRef.current * 0.7));
+                // Minimum inspector width is 200, maximum is container width minus editor minimum width (180) minus some padding
+                const maxAllowedWidth = containerWidthRef.current - 200; // Leave 200px for Editor
+                const clamped = Math.max(200, Math.min(newInspectorWidth, maxAllowedWidth > 200 ? maxAllowedWidth : 400));
                 setInspectorWidth(clamped);
             }
         };
@@ -155,6 +159,7 @@ export const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
                         suggestions={suggestions}
                         onFileUpload={onFileUpload}
                         onCitationClick={onCitationClick}
+                        onAppendToMemo={onAppendToMemo}
                         embedded={true}
                     />
                 </View>

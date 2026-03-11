@@ -41,6 +41,7 @@ export const NexusEditView = () => {
     const autoSaveTimerRef = useRef<any>(null);
     const [activeTemplate, setActiveTemplate] = useState<GrantTemplate | null>(null);
     const [templateLoading, setTemplateLoading] = useState(false);
+    const [draftGenerating, setDraftGenerating] = useState(false);
 
     // --- Load last session from localStorage on mount ---
     useEffect(() => {
@@ -58,33 +59,26 @@ export const NexusEditView = () => {
         const session = useProjectStore.getState().agentSession;
         if (session) {
             console.log('📝 Edit: Loading data from Flow session:', session.title);
-            // Priority: brainstorm_content > workspace branches
-            if (session.brainstorm_content && session.brainstorm_content.length > 0) {
-                const brainstormHtml = session.brainstorm_content
-                    .split('\n')
-                    .map(line => line.trim())
-                    .filter(line => line.length > 0)
-                    .map(line => {
-                        if (line.startsWith('•') || line.startsWith('-')) {
-                            return `<li>${line.replace(/^[•\-]\s*/, '')}</li>`;
-                        }
-                        return `<p>${line}</p>`;
-                    })
-                    .join('');
-                setEditorContent(`<h1>${session.title || '브레인스퇰 메모'}</h1>${brainstormHtml.includes('<li>') ? '<ul>' + brainstormHtml + '</ul>' : brainstormHtml}`);
-            } else if (session.workspace_data && session.workspace_data.length > 0) {
-                const content = buildEditorContentFromBranches(session.workspace_data);
-                setEditorContent(content);
-            }
+
+            // Set the active session so the Editor and Left Panel render correctly
+            setSelectedSession(session);
+
             if (session.chat_history) {
                 setChatMessages(session.chat_history.map((m: any) => ({ role: m.sender === 'me' ? 'user' : 'assistant', content: m.text })));
             }
             setShowSessionList(false);
             setShowResumePrompt(false);
 
-            // Try to load grant template if we have grant info  
-            if (session.grant_url || session.grant_title) {
-                loadTemplateForSession(session);
+            // Load Editor Content (Template OR Saved Content)
+            if (session.editor_content && session.editor_content.length > 20) {
+                setEditorContent(session.editor_content);
+                loadTemplateForSession(session, true); // Load template meta only
+            } else if (session.brainstorm_content || (session.workspace_data && session.workspace_data.length > 0)) {
+                // 🔥 Auto Draft Generation: Flow에서 넘어왔는데 에디터 내용이 없으면 초안 자동 생성
+                generateAutoDraft(session);
+            } else {
+                // FORCE Load PSST Template as the default Bowl
+                loadTemplateForSession(session, false);
             }
 
             // Clear the store to prevent re-loading on re-renders
@@ -92,12 +86,63 @@ export const NexusEditView = () => {
         }
     }, []);
 
+    // --- AI Auto Draft Generation ---
+    const generateAutoDraft = async (session: any) => {
+        setDraftGenerating(true);
+        try {
+            // 1. Load Background Template Structure
+            const defaultSections = getDefaultPSSTTemplate();
+            const mockTemplate: GrantTemplate = {
+                id: 'default', grant_id: 'default', sections: defaultSections, source_markdown: null, parsed_at: new Date().toISOString()
+            };
+            setActiveTemplate(mockTemplate);
+
+            // 2. Format Context for LLM
+            let context = `【브레인스톰 메모】\n${session.brainstorm_content || '내용 없음'}\n\n【마인드맵 구조】\n`;
+            if (session.workspace_data) {
+                session.workspace_data.forEach((col: any) => {
+                    col.branches?.forEach((node: any) => {
+                        context += `- ${node.label}: ${node.description || ''}\n`;
+                    });
+                });
+            }
+
+            // 3. Request Draft from Gateway
+            const res = await supabase.functions.invoke('insight-agent-gateway', {
+                body: {
+                    userMessage: "위의 브레인스톰 메모와 마인드맵 구조를 바탕으로, PSST 기반 정부지원사업계획서 초안을 작성해주세요. 각 섹션(문제인식, 해결방안, 성장전략, 팀구성 등)별로 나누어 구체적으로 작성하며, 반드시 HTML 태그(<h1>, <h2>, <p>) 형식으로 포맷팅하여 반환해주세요. 마크다운 기호(```html) 등은 포함하지 마세요.",
+                    branchLabel: session.title || '새 문서 초안',
+                    branchDescription: context,
+                    chatHistory: [],
+                    mode: 'editor-assist',
+                },
+            });
+
+            let aiResponse = res.data?.response || res.data?.analysis?.summary || '';
+
+            // 4. Sanitize HTML
+            aiResponse = aiResponse.replace(/```html/g, '').replace(/```/g, '').trim();
+            if (!aiResponse.startsWith('<')) {
+                // Fallback to basic template if LLM didn't return HTML
+                aiResponse = templateToEditorHtml(mockTemplate, session.title || "맞춤형 사업계획서");
+            }
+
+            setEditorContent(aiResponse);
+            setEditorMarkdown(aiResponse); // Very basic fallback for markdown
+            setHasUnsavedChanges(true); // Trigger auto-save immediately
+
+        } catch (err) {
+            console.error('Draft generation failed:', err);
+            loadTemplateForSession(session, false); // Fallback
+        } finally {
+            setDraftGenerating(false);
+        }
+    };
+
     // --- Load template for a session ---
-    const loadTemplateForSession = async (session: any) => {
+    const loadTemplateForSession = async (session: any, isBackgroundLoad: boolean = false) => {
         setTemplateLoading(true);
         try {
-            // If we have brainstorm content, use it as the base
-            // and append template sections as a guide below
             const defaultSections = getDefaultPSSTTemplate();
             const mockTemplate: GrantTemplate = {
                 id: 'default',
@@ -108,9 +153,8 @@ export const NexusEditView = () => {
             };
             setActiveTemplate(mockTemplate);
 
-            // If we don't have editor content yet, use the template
-            if (!editorContent || editorContent.length < 20) {
-                const html = templateToEditorHtml(mockTemplate, session.title || session.grant_title);
+            if (!isBackgroundLoad) {
+                const html = templateToEditorHtml(mockTemplate, session.title || session.grant_title || "맞춤형 사업계획서");
                 setEditorContent(html);
             }
         } catch (err) {
@@ -162,8 +206,8 @@ export const NexusEditView = () => {
     const buildEditorContentFromBranches = (columns: any[]): string => {
         let html = '';
         for (const col of columns) {
-            if (!col.nodes) continue;
-            for (const node of col.nodes) {
+            if (!col.branches) continue;
+            for (const node of col.branches) {
                 if (node.type === 'root') {
                     html += `<h1>${node.label || 'Untitled'}</h1>`;
                     if (node.description) html += `<p>${node.description}</p>`;
@@ -327,7 +371,7 @@ export const NexusEditView = () => {
                                                     <View style={{ flex: 1, marginLeft: 10 }}>
                                                         <Text style={styles.sessionItemTitle} numberOfLines={1}>{s.title}</Text>
                                                         <Text style={styles.sessionItemMeta}>
-                                                            {s.workspace_data?.reduce((acc: number, col: any) => acc + (col.nodes?.length || 0), 0) || 0} 브랜치 · {new Date(s.updated_at).toLocaleDateString('ko-KR')}
+                                                            {s.workspace_data?.reduce((acc: number, col: any) => acc + (col.branches?.length || 0), 0) || 0} 브랜치 · {new Date(s.updated_at).toLocaleDateString('ko-KR')}
                                                         </Text>
                                                     </View>
                                                     <ChevronRight size={16} color="#475569" />
@@ -355,7 +399,7 @@ export const NexusEditView = () => {
                                     <ScrollView style={styles.branchScroll}>
                                         {(selectedSession?.workspace_data || []).map((col: any, ci: number) => (
                                             <View key={ci}>
-                                                {(col.nodes || []).map((node: any, ni: number) => (
+                                                {(col.branches || []).map((node: any, ni: number) => (
                                                     <TouchableOpacity
                                                         key={node.id || ni}
                                                         style={[styles.branchCard, node.type === 'root' && styles.branchCardRoot]}
@@ -431,12 +475,21 @@ export const NexusEditView = () => {
                     {selectedSession ? (
                         <View style={{ flex: 1, flexDirection: 'row' as any }}>
                             {/* Editor */}
-                            <View style={{ flex: 1 }}>
+                            <View style={{ flex: 1, position: 'relative' }}>
                                 <NotionEditor
                                     initialContent={editorContent}
                                     onChange={handleEditorChange}
                                     placeholder="/ 를 입력하여 블록 타입을 선택하세요..."
                                 />
+
+                                {/* Loading Overlay during Auto Draft Generation */}
+                                {draftGenerating && (
+                                    <View style={styles.draftLoadingOverlay as any}>
+                                        <ActivityIndicator size="large" color="#818CF8" />
+                                        <Text style={styles.draftLoadingText}>✨ AI 통합 초안 작성 중...</Text>
+                                        <Text style={styles.draftLoadingSubtext}>브레인스톰 메모와 마인드맵을 바탕으로{'\n'}사업계획서를 구성하고 있습니다.</Text>
+                                    </View>
+                                )}
                             </View>
                             {/* Progress Tracker Strip */}
                             <View style={styles.progressStrip}>
@@ -818,6 +871,27 @@ const styles = StyleSheet.create({
     rightPanel: {
         flex: 1,
         backgroundColor: '#020617',
+    },
+    draftLoadingOverlay: {
+        position: 'absolute',
+        top: 0, left: 0, right: 0, bottom: 0,
+        backgroundColor: 'rgba(2, 6, 23, 0.85)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 100,
+    },
+    draftLoadingText: {
+        color: '#E2E8F0',
+        fontSize: 18,
+        fontWeight: '700',
+        marginTop: 16,
+    },
+    draftLoadingSubtext: {
+        color: '#94A3B8',
+        fontSize: 13,
+        textAlign: 'center',
+        marginTop: 8,
+        lineHeight: 20,
     },
 
     // Editor Placeholder

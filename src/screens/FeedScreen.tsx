@@ -172,9 +172,9 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 // If logged in, reload notifications (Mock flush)
                 setNotifications(MOCK_NOTIFICATIONS);
 
-                // Check Onboarding Status - ONLY show modal on active SIGNED_IN event (fresh login/signup)
-                // This prevents the modal from popping up every time the app reloads for developers.
-                if (user && !profileComplete && authEvent === 'SIGNED_IN') {
+                // Check Onboarding Status - Show modal if profile is incomplete
+                // Removed the authEvent === 'SIGNED_IN' strict check because OAuth logs in trigger 'INITIAL_SESSION' after the redirect.
+                if (user && !profileComplete) {
                     setIsProfileModalOpen(true);
                 } else if (profileComplete) {
                     setIsProfileModalOpen(false);

@@ -122,10 +122,13 @@ Deno.serve(async (req: any) => {
         const finalPrompt = `
     [User Profile]: ${user_job || 'General Strategist'}
     [Task Mode]: ${task_mode || 'Hypothesis Generator'}
-    [Interaction Type]: ${isQuestion ? 'CHAT_QUESTION — 사용자가 구체적인 질문을 했습니다. chat_message에 최소 200자 이상의 상세하고 전문적인 답변을 작성하세요. 단순 요약 금지.' : 'ANALYSIS_REQUEST — 분석 요청입니다. 브랜치 생성에 집중하세요.'}
+    [Interaction Type]: ${isQuestion ? 'CHAT_QUESTION' : 'ANALYSIS_REQUEST'}
     [Input]: ${user_input}
     
-    ${isQuestion ? '중요: 사용자가 질문을 했으므로, chat_message 필드에 반드시 구체적이고 실질적인 답변을 200자 이상 작성하세요. 예시, 데이터, 구체적 방법론을 포함하세요.' : 'Generate the structured breakdown now.'}
+    INSTRUCTION:
+    ${isQuestion ? '1. 사용자가 질문을 했으므로, chat_message 필드에 반드시 구체적이고 실질적인 답변을 200자 이상 작성하세요.' : '1. Generate the structured breakdown now in chat_message.'}
+    2. 추가로, 사용자의 입력 내용(답변이나 아이디어)을 분석하여 "1.문제인식(Problem)", "2.해결방안(Solution)", "3.성장전략(Scale-up)", "4.팀구성(Team)" 중 가장 적합한 카테고리로 분류하세요.
+    3. 분류된 내용을 바탕으로 구조화된 JSON 노드(branches)를 작성하여 workspace_data 배열에 실시간 추가가 가능하도록 리턴하세요. (아이디어가 없다면 빈 배열 반환)
     `;
 
         // 2. Call LLM (configurable via LLM_MODEL)

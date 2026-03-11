@@ -24,7 +24,7 @@ export const useSessionManager = (userId: string | undefined) => {
     }, [userId]);
 
     // 2. 저장하기 (Auto-Save or Manual Save) — Flow용
-    const saveSession = async (title: string, mode: string, columns: any[], chatHistory: any[], pdfUrl?: string) => {
+    const saveSession = async (title: string, mode: string, columns: any[], chatHistory: any[], pdfUrl?: string, brainstormContent?: string) => {
         if (!userId) return;
 
         const payload = {
@@ -36,26 +36,32 @@ export const useSessionManager = (userId: string | undefined) => {
             updated_at: new Date().toISOString()
         };
 
+        const extendedPayload = {
+            ...payload,
+            pdf_url: pdfUrl || null,
+            brainstorm_content: brainstormContent || ''
+        };
+
         let result;
         if (currentSessionId) {
             result = await supabase
                 .from('workspace_sessions')
-                .update({ ...payload, pdf_url: pdfUrl || null })
+                .update(extendedPayload)
                 .eq('id', currentSessionId)
                 .select();
 
-            if (result.error && (result.error.code === '42703' || result.error.message.includes('pdf_url'))) {
-                console.warn("pdf_url column missing, retrying without it...");
+            if (result.error) {
+                console.warn("Extended payload failed, retrying with core payload...", result.error);
                 result = await supabase.from('workspace_sessions').update(payload).eq('id', currentSessionId).select();
             }
         } else {
             result = await supabase
                 .from('workspace_sessions')
-                .insert({ ...payload, pdf_url: pdfUrl || null })
+                .insert(extendedPayload)
                 .select();
 
-            if (result.error && (result.error.code === '42703' || result.error.message.includes('pdf_url'))) {
-                console.warn("pdf_url column missing, retrying without it...");
+            if (result.error) {
+                console.warn("Extended payload failed, retrying with core payload...", result.error);
                 result = await supabase.from('workspace_sessions').insert(payload).select();
             }
         }

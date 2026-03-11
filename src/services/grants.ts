@@ -6,6 +6,7 @@ export interface Grant {
     title: string;
     agency: string;
     d_day: string;
+    deadline_date?: string;
     target_audience: string;
     tech_field: string;
     summary: string;
@@ -27,15 +28,20 @@ export interface Grant {
     application_url?: string;
     matching_score?: number;
     matching_reason?: string;
+    grant_type?: 'project' | 'subsidy';
     created_at?: string;
 }
 
 export const fetchGrants = async (): Promise<Grant[]> => {
+    // Filter out old grants: only fetch grants with deadline >= 2024-01-01 or NULL deadline
+    const cutoffDate = '2024-01-01';
+
     // Try with is_active filter first (requires migration 20260304)
     let { data, error } = await supabase
         .from('grants')
         .select('*')
         .neq('is_active', false)
+        .or(`deadline_date.gte.${cutoffDate},deadline_date.is.null`)
         .order('deadline_date', { ascending: true, nullsFirst: false });
 
     // Fallback: if is_active column doesn't exist yet, query without filter
@@ -43,7 +49,9 @@ export const fetchGrants = async (): Promise<Grant[]> => {
         console.warn('Grants query with is_active filter failed, using fallback:', error.message);
         const fallback = await supabase
             .from('grants')
-            .select('*');
+            .select('*')
+            .or(`deadline_date.gte.${cutoffDate},deadline_date.is.null`)
+            .order('deadline_date', { ascending: true, nullsFirst: false });
 
         if (fallback.error) {
             console.error('Error fetching grants:', fallback.error);

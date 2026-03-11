@@ -534,7 +534,7 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                         lineHeight: '28px',
                         fontFamily: "'Pretendard', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif",
                         padding: '0 40px',
-                        maxWidth: 800,
+                        maxWidth: '100%', // 🌟 FIX: widened editor width
                         margin: '0 auto',
                         caretColor: '#818CF8',
                         position: 'relative' as const,
@@ -550,7 +550,7 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                         lineHeight: '28px',
                         pointerEvents: 'none' as const,
                         fontFamily: "'Pretendard', 'Apple SD Gothic Neo', sans-serif",
-                        maxWidth: 800,
+                        maxWidth: '100%',
                     }}>
                         {placeholder}
                     </div>

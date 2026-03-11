@@ -40,7 +40,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     }, []);
 
     // 세션 매니저 (저장/불러오기 담당)
-    const { sessions, currentSessionId, saveSession, loadSession, fetchSessions, deleteSession } = useSessionManager(user?.id);
+    const { sessions, currentSessionId, setCurrentSessionId, saveSession, loadSession, fetchSessions, deleteSession } = useSessionManager(user?.id);
 
     // --- 2. UI States ---
     const [agentMode, setAgentMode] = useState('Literature Review');
@@ -69,6 +69,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     const [pendingGrantTitle, setPendingGrantTitle] = useState<string>('');
     const [showGrantConfirm, setShowGrantConfirm] = useState(false);
     const [brainstormContent, setBrainstormContent] = useState('');
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     // Removed debug PDF loading to prevent irrelevant files.
 
@@ -90,6 +91,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             setColumns(initialSession.workspace_data || []);
             setChatHistory(initialSession.chat_history || []);
             if (initialSession.pdf_url) setPdfUrl(initialSession.pdf_url);
+            if (initialSession.brainstorm_content) setBrainstormContent(initialSession.brainstorm_content);
             setShowWelcome(false);
 
             // 🌟 Grant Analysis: Show questionnaire for grant mode
@@ -148,11 +150,11 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
         if (columns.length > 0 && user && currentSessionId) {
             const timer = setTimeout(() => {
                 const title = columns[0]?.branches?.[0]?.label || columns[0]?.root_node || "Untitled Project";
-                saveSession(title, agentMode, columns, chatHistory, pdfUrl || undefined);
+                saveSession(title, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent);
             }, 5000);
             return () => clearTimeout(timer);
         }
-    }, [columns, chatHistory, currentSessionId]);
+    }, [columns, chatHistory, currentSessionId, brainstormContent, pdfUrl, agentMode]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -317,7 +319,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
         setLoading(true); setColumns([]); setActiveNode(null); setSuggestions([]);
 
         // 사업 아이디어를 포함한 강화된 프롬프트
-        const enhancedQuery = `${grantQuery}\n\n## 사용자 사업 아이디어 (User Business Idea)\n- 아이디어: ${businessIdea.description}\n- 팀 구성: ${businessIdea.teamComposition}\n- 현재 단계: ${businessIdea.currentStage}\n- 타겟 시장: ${businessIdea.targetMarket}\n- 차별점: ${businessIdea.differentiator}\n\nIMPORTANT: Incorporate the user's specific business idea into your strategy. Make the analysis personalized to THEIR idea, team, and market.`;
+        const enhancedQuery = `${grantQuery}\n\n## 사용자 사업 아이디어 (User Business Idea)\n- 아이디어: ${businessIdea.description}\n- 팀 구성: ${businessIdea.teamComposition}\n- 현재 단계: ${businessIdea.currentStage}\n- 타겟 시장: ${businessIdea.targetMarket}\n- 차별점: ${businessIdea.differentiator}\n\nIMPORTANT: Incorporate the user's specific business idea into your strategy. Make the analysis personalized to THEIR idea, team, and market. 각 브랜치의 description은 할루시네이션(거짓 정보) 없이 구체적이고 실질적인 3~4문장의 실행 계획으로 작성하세요.`;
 
         setChatHistory(prev => [...prev, {
             text: `📝 사업 아이디어가 반영된 맞춤형 분석을 시작합니다...\n• 아이디어: ${businessIdea.description}\n• 팀: ${businessIdea.teamComposition}\n• 단계: ${businessIdea.currentStage}`,
@@ -328,7 +330,11 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
 
         if (res?.workspace_data) {
             LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-            setColumns([{ ...res.workspace_data, parentIndex: -1 }]);
+
+            // 🔥 UX FIX: 명시적으로 공고명을 뿌리 노드에 박아넣음
+            const rootTitle = pendingGrantTitle ? `[공고명: ${pendingGrantTitle}] 맞춤형 사업 전략` : res.workspace_data.root_node;
+
+            setColumns([{ ...res.workspace_data, root_node: rootTitle, parentIndex: -1 }]);
             if (res.suggested_actions && res.suggested_actions.length > 0) {
                 setSuggestions(res.suggested_actions);
             }
@@ -350,10 +356,6 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
 
         if (res) {
             if (res.workspace_data?.branches && res.workspace_data.branches.length > 0) {
-                // Safely route the newly generated branch card to its proper parent in the tree
-                const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === activeNode?.id));
-                const bIdx = colIdx !== -1 ? columns[colIdx].branches.findIndex((b: any) => b.id === activeNode?.id) : 0;
-
                 // Tag branches with unique IDs
                 const chatBranches = res.workspace_data.branches.map((b: any, i: number) => ({
                     ...b,
@@ -362,33 +364,56 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                 }));
 
                 LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-                setColumns(prev => {
-                    const existingChildIdx = prev.findIndex(c =>
-                        c.sourceColumnIndex === (colIdx !== -1 ? colIdx : 0) && c.parentIndex === bIdx
-                    );
-                    if (existingChildIdx !== -1) {
-                        // MERGE: append chat branches to existing child column
+
+                if (!activeNode) {
+                    // 🌟 ROOT LEVEL INJECTION: append directly to main brainstorm panel
+                    setColumns(prev => {
+                        if (prev.length === 0) {
+                            return [{
+                                root_node: "맞춤형 전략 브레인스톰",
+                                branches: chatBranches,
+                            }];
+                        }
                         const updated = [...prev];
-                        updated[existingChildIdx] = {
-                            ...updated[existingChildIdx],
-                            branches: [...(updated[existingChildIdx].branches || []), ...chatBranches],
+                        updated[0] = {
+                            ...updated[0],
+                            branches: [...(updated[0].branches || []), ...chatBranches]
                         };
                         return updated;
-                    }
-                    return [
-                        ...prev,
-                        {
-                            ...res.workspace_data,
-                            branches: chatBranches,
-                            parentIndex: bIdx,
-                            sourceColumnIndex: colIdx !== -1 ? colIdx : 0
-                        }
-                    ];
-                });
+                    });
+                } else {
+                    // 🌟 NESTED COLUMN INJECTION: User is chatting within a specific node
+                    const colIdx = columns.findIndex(col => col.branches?.some((b: any) => b.id === activeNode.id));
+                    const bIdx = colIdx !== -1 ? columns[colIdx].branches.findIndex((b: any) => b.id === activeNode.id) : 0;
 
-                // Force-set parent node active so visibleColumns includes new child
-                if (activeNode && colIdx !== -1) {
-                    setActivePathNodes(prev => ({ ...prev, [colIdx]: activeNode.id }));
+                    setColumns(prev => {
+                        const existingChildIdx = prev.findIndex(c =>
+                            c.sourceColumnIndex === (colIdx !== -1 ? colIdx : 0) && c.parentIndex === bIdx
+                        );
+                        if (existingChildIdx !== -1) {
+                            // MERGE: append chat branches to existing child column
+                            const updated = [...prev];
+                            updated[existingChildIdx] = {
+                                ...updated[existingChildIdx],
+                                branches: [...(updated[existingChildIdx].branches || []), ...chatBranches],
+                            };
+                            return updated;
+                        }
+                        return [
+                            ...prev,
+                            {
+                                ...res.workspace_data,
+                                branches: chatBranches,
+                                parentIndex: bIdx,
+                                sourceColumnIndex: colIdx !== -1 ? colIdx : 0
+                            }
+                        ];
+                    });
+
+                    // Force-set parent node active so visibleColumns includes new child
+                    if (colIdx !== -1) {
+                        setActivePathNodes(prev => ({ ...prev, [colIdx]: activeNode.id }));
+                    }
                 }
             }
             // Chat message response
@@ -445,10 +470,11 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     }, [columns, activePathNodes]);
 
     // Used by handleExpand, Deep Dive, and Branching
-    const handleSelectNode = (node: any, absoluteColIdx: number) => {
+    // 🌟 FIX: Auto-restore child path when revisiting a previously-expanded node
+    const handleSelectNode = (node: any, absoluteColIdx: number, parentIndex?: number) => {
         setActivePathNodes(prev => {
             const newPath = { ...prev };
-            // If already active, toggle it off (collapse)
+            // If already active, toggle it off (collapse) and prune deeper
             if (newPath[absoluteColIdx] === node.id) {
                 for (let k in newPath) {
                     if (Number(k) >= absoluteColIdx) delete newPath[k];
@@ -456,11 +482,41 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                 setActiveNode(null);
                 return newPath;
             }
-            // Otherwise activate it and prune deeper paths
+            // Prune deeper paths when switching to a different node
             for (let k in newPath) {
                 if (Number(k) >= absoluteColIdx) delete newPath[k];
             }
             newPath[absoluteColIdx] = node.id;
+
+            // 🌟 Auto-restore FIX: Re-activate existing child paths recursively
+            let currentAbsIdx = absoluteColIdx;
+            let currentParentNodeId = node.id;
+            let activeBIdx = parentIndex !== undefined ? parentIndex : columns[currentAbsIdx]?.branches?.findIndex((b: any) => b.id === node.id);
+
+            while (activeBIdx !== undefined && activeBIdx !== -1) {
+                const childAbsIdx = columns.findIndex(
+                    (c, i) => i > currentAbsIdx && c.parentIndex === activeBIdx && c.sourceColumnIndex === currentAbsIdx
+                );
+                
+                if (childAbsIdx !== -1) {
+                    const childCol = columns[childAbsIdx];
+                    if (childCol?.branches?.length > 0) {
+                        // Restore the first branch of the child column by default or previously selected
+                        const childBranchId = childCol.branches[0].id; // Simple auto-restore to first child
+                        newPath[childAbsIdx] = childBranchId;
+                        
+                        // Move pointers down the tree
+                        currentAbsIdx = childAbsIdx;
+                        currentParentNodeId = childBranchId;
+                        activeBIdx = 0; // Since we picked the first branch
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
             return newPath;
         });
         setActiveNode(node);
@@ -472,12 +528,12 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
         );
 
         if (existingChildIdx !== -1) {
-            // Already fetched, just toggle visibility
-            handleSelectNode(branch, absColIdx);
+            // Already fetched, just toggle visibility AND restore its children
+            handleSelectNode(branch, absColIdx, branchIndex);
             return;
         }
 
-        handleSelectNode(branch, absColIdx);
+        handleSelectNode(branch, absColIdx, branchIndex);
         setLoading(true);
         setSuggestions([]);
 
@@ -504,11 +560,26 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
         if (!user) { Alert.alert("오류", "로그인이 필요합니다."); return; }
         if (columns.length === 0) { Alert.alert("알림", "빈 화면은 저장할 수 없습니다."); return; }
 
-        const title = columns[0]?.branches?.[0]?.label || columns[0]?.root_node || "Untitled Project";
-        // Pass pdfUrl as 5th argument
-        const success = await saveSession(title, agentMode, columns, chatHistory, pdfUrl || undefined);
+        const defaultTitle = pendingGrantTitle || columns[0]?.root_node || "Untitled Project";
+
+        // 🌟 UX FIX: 사용자에게 프로젝트 제목을 직접 입력하게 함 (신규 저장 시에만)
+        let finalTitle = defaultTitle;
+        if (Platform.OS === 'web' && !currentSessionId) {
+            const userInput = window.prompt("저장할 프로젝트(파일) 이름을 입력해주세요:", defaultTitle);
+            if (userInput === null) return; // 취소 누르면 저장 중단
+            finalTitle = userInput.trim() || defaultTitle;
+        } else if (currentSessionId) {
+            finalTitle = columns[0]?.root_node || defaultTitle;
+        }
+
+        // Pass pdfUrl as 5th argument, brainstormContent as 6th
+        const success = await saveSession(finalTitle, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent);
+
         if (success) {
-            Alert.alert("성공", "프로젝트가 저장되었습니다. 파일 관리자에서 확인하세요.");
+            setToastMessage("성공적으로 저장되었습니다.");
+            setTimeout(() => setToastMessage(null), 3000);
+        } else {
+            Alert.alert("오류", "저장에 실패했습니다.");
         }
     };
 
@@ -569,10 +640,12 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     const handleLoad = async (sessionId: string) => {
         const data = await loadSession(sessionId);
         if (data) {
+            setCurrentSessionId(sessionId); // 🌟 FIX: 현재 세션 ID 유지 (덮어쓰기 위해)
             setAgentMode(data.mode);
             setColumns(data.workspace_data);
             setChatHistory(data.chat_history || []);
             if (data.pdf_url) setPdfUrl(data.pdf_url);
+            if (data.brainstorm_content) setBrainstormContent(data.brainstorm_content);
             setShowHistory(false);
             setShowWelcome(false);
             setIsLeftPanelMinimized(false);
@@ -1082,12 +1155,20 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                         <TouchableOpacity
                             style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10, backgroundColor: '#4F46E5', borderWidth: 1, borderColor: '#6366F1' }}
                             onPress={async () => {
+                                let compiledContent = brainstormContent || '';
+                                if (!compiledContent) {
+                                    compiledContent = columns.map(col => {
+                                        return col.branches?.map((b: any) => `### ${b.label}\n${b.description || ''}`).join('\n\n') || '';
+                                    }).join('\n\n');
+                                }
+
                                 await handleSave();
                                 useProjectStore.getState().setProject(null, {
+                                    id: currentSessionId || undefined, // 🌟 FIX: 세션 ID 전달하여 에디터 내용 유지
                                     title: pendingGrantTitle || columns[0]?.root_node || 'Untitled',
                                     workspace_data: columns,
                                     chat_history: chatHistory,
-                                    brainstorm_content: brainstormContent,
+                                    brainstorm_content: compiledContent,
                                     pdf_url: pdfUrl || '',
                                 });
                                 onNavigateToEdit();
@@ -1177,6 +1258,11 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                 onEditorMinimizeChange={(minimized) => setIsLeftPanelMinimized(minimized)}
                                 isInspectorOpen={isInspectorOpen}
                                 onInspectorOpenChange={(open) => setIsInspectorOpen(open)}
+                                onAppendToMemo={(text) => {
+                                    setBrainstormContent(prev => prev ? prev + '\n\n' + text : text);
+                                    // Make sure memo panel is open to visibly show the text dropping in
+                                    setIsLeftPanelMinimized(false);
+                                }}
                                 editorNode={
                                     <ContextDock
                                         grantUrl={grantUrl}
@@ -1210,6 +1296,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                         onSendToEdit={onNavigateToEdit ? async () => {
                                             await handleSave();
                                             useProjectStore.getState().setProject(null, {
+                                                id: currentSessionId || undefined,
                                                 title: pendingGrantTitle || columns[0]?.root_node || 'Untitled',
                                                 workspace_data: columns,
                                                 chat_history: chatHistory,
@@ -1310,6 +1397,20 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                             </TouchableOpacity>
                         </View>
                     </View>
+                </View>
+            )}
+
+            {/* 🌟 Save Success Toast */}
+            {toastMessage && (
+                <View style={{
+                    position: 'absolute', bottom: 40, alignSelf: 'center', left: 0, right: 0,
+                    backgroundColor: '#10B981', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24,
+                    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
+                    zIndex: 9999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    maxWidth: 300, marginHorizontal: 'auto'
+                }}>
+                    <Save size={16} color="#FFF" />
+                    <Text style={{ color: '#FFF', fontWeight: 'bold' }}>{toastMessage}</Text>
                 </View>
             )}
 

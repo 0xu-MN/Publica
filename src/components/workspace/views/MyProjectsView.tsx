@@ -57,7 +57,7 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
     };
 
     const getProgress = (p: ProjectSession): { stage: string; percent: number; color: string } => {
-        const hasBranches = (p.workspace_data?.reduce((acc: number, col: any) => acc + (col.nodes?.length || 0), 0) || 0) > 0;
+        const hasBranches = (p.workspace_data?.reduce((acc: number, col: any) => acc + (col.branches?.length || 0), 0) || 0) > 0;
         const hasEditor = !!p.editor_content && p.editor_content.length > 50;
         const hasChat = (p.chat_history?.length || 0) > 2;
 
@@ -72,7 +72,7 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
     };
 
     const getBranchCount = (p: ProjectSession): number => {
-        return p.workspace_data?.reduce((acc: number, col: any) => acc + (col.nodes?.length || 0), 0) || 0;
+        return p.workspace_data?.reduce((acc: number, col: any) => acc + (col.branches?.length || 0), 0) || 0;
     };
 
     const formatDate = (dateStr: string) => {

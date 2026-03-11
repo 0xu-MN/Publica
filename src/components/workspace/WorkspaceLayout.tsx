@@ -95,7 +95,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
             }
         };
         loadTab();
-    }, [agentSession]);
+    }, []);
 
     // Animate profile panel
     useEffect(() => {
@@ -187,12 +187,14 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                     onNavigateToPortfolio={() => setActiveTab('projects')}
                     onLoadSession={(session: any) => {
                         useProjectStore.getState().setProject(null, {
+                            id: session.id,
                             title: session.title || '',
                             mode: session.mode || 'Grant Strategist',
                             workspace_data: session.workspace_data || [],
                             chat_history: session.chat_history || [],
-                            grant_url: '',
-                            grant_title: '',
+                            auto_run_query: session.auto_run_query || '',
+                            grant_url: session.grant_url || session.original_url || '',
+                            grant_title: session.title || '',
                             pdf_url: session.pdf_url || '',
                         });
                         setActiveTab('agent');

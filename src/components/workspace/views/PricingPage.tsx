@@ -9,8 +9,13 @@ interface PricingPageProps {
     currentPlan?: 'free' | 'pro' | 'trial';
 }
 
+import { useAuth } from '../../../contexts/AuthContext';
+import { TossPaymentModal } from './TossPaymentModal';
+
 export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentPlan = 'free' }) => {
+    const { user } = useAuth();
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+    const [isPaymentModalVisible, setPaymentModalVisible] = useState(false);
 
     const monthlyPrice = 29900;
     const yearlyPrice = 299000;
@@ -151,10 +156,10 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                     {/* Trial CTA */}
                     <TouchableOpacity
                         style={[styles.planBtn, styles.planBtnPro]}
-                        onPress={() => onSelectPlan?.('pro')}
+                        onPress={() => setPaymentModalVisible(true)}
                     >
                         <Gift size={14} color="#FFF" />
-                        <Text style={styles.planBtnProText}>7일 무료 체험 시작</Text>
+                        <Text style={styles.planBtnProText}>7일 무료 체험 시작 (결제 진행)</Text>
                         <ArrowRight size={14} color="#FFF" />
                     </TouchableOpacity>
                     <Text style={styles.trialNote}>
@@ -229,6 +234,16 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
 
             {/* Spacer */}
             <View style={{ height: 60 }} />
+
+            {/* Toss Payments Modal */}
+            <TossPaymentModal
+                visible={isPaymentModalVisible}
+                onClose={() => setPaymentModalVisible(false)}
+                planType={billingCycle}
+                price={price}
+                userEmail={user?.email || 'test@example.com'}
+                userName={user?.user_metadata?.nickname || user?.user_metadata?.full_name || '테스트 유저'}
+            />
         </ScrollView>
     );
 };

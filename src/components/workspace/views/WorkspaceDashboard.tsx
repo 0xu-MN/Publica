@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../../lib/supabase';
+import Toast from 'react-native-toast-message';
+import { useProjectStore } from '../../../store/useProjectStore';
 import { Briefcase, AlertCircle, CheckCircle, Zap, Layers, ChevronRight } from 'lucide-react-native';
 import { ProjectPipelineCard } from '../components/ProjectPipelineCard';
 import { ActiveProjectCard } from '../components/ActiveProjectCard';
@@ -18,7 +20,7 @@ interface WorkspaceDashboardProps {
 
 import { fetchProjects, Project } from '../../../services/projects';
 import { fetchGrants } from '../../../services/grants';
-import { calculateGrantScore } from '../../../utils/scoring';
+import { calculateGrantScore, normalizeRegion } from '../../../utils/scoring';
 import { useAuth } from '../../../contexts/AuthContext';
 
 // ... (imports)
@@ -66,8 +68,41 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
             // Sort by Score DESC
             scoredGrants.sort((a, b) => b.matchingRate - a.matchingRate);
 
-            // Take Top 3
-            setRecommendedBusinesses(scoredGrants.slice(0, 3));
+            // Filter out old historical data
+            const currentYear = new Date().getFullYear();
+            const activeGrants = scoredGrants.filter(g => {
+                if (!g.deadline_date) return true;
+                const deadlineYear = parseInt(g.deadline_date.split('-')[0], 10);
+                return deadlineYear >= currentYear;
+            });
+
+            // Sort active grants based on regional and industry affinity
+            activeGrants.sort((a, b) => {
+                let scoreA = a.matchingRate || 0;
+                let scoreB = b.matchingRate || 0;
+
+                // Priority: Region Match using normalized comparison
+                const userRegion = normalizeRegion(profile?.location || profile?.sido || '');
+                const regionA = normalizeRegion(a.region || '');
+                const regionB = normalizeRegion(b.region || '');
+
+                if (regionA === userRegion && userRegion) scoreA += 500;
+                else if (regionA === '전국') scoreA += 100;
+
+                if (regionB === userRegion && userRegion) scoreB += 500;
+                else if (regionB === '전국') scoreB += 100;
+
+                // Priority: Industry/Category Match
+                const userIndustry = profile?.industry || profile?.major_category || '';
+                if (userIndustry && a.category && a.category.includes(userIndustry)) scoreA += 300;
+                if (userIndustry && b.category && b.category.includes(userIndustry)) scoreB += 300;
+
+                return scoreB - scoreA;
+            });
+
+            // Take Top 3 (Without injecting mock data)
+            let recommended = activeGrants.slice(0, 3);
+            setRecommendedBusinesses(recommended);
 
             // 4. Fetch Saved Agent Sessions (workspace_sessions)
             if (user) {
@@ -209,14 +244,26 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                             items={recommendedBusinesses}
                             onExploreAll={() => onNavigateToGrants?.()}
                             onApply={(item: any) => {
-                                onLoadSession?.({
+                                // 🌟 Restored the correct flow logic for AI Idea Collection Toast 🌟
+                                useProjectStore.getState().setProject(item, {
                                     title: item.title,
                                     mode: 'Grant Strategist',
                                     workspace_data: [],
-                                    auto_run_query: `"${item.title}" 공고에 대한 전략 분석을 시작합니다.`,
+                                    auto_run_query: `"${item.title}" 공고에 대한 맞춤형 전략 분석을 시작합니다.`,
                                     grant_url: item.original_url || item.link || '',
-                                    pdf_url: item.file_url || '',
+                                    pdf_url: item.file_url || ''
                                 });
+
+                                Toast.show({
+                                    type: 'success',
+                                    text1: '지원 준비 완료',
+                                    text2: 'NEXUS-Flow에서 사업 아이디어 수집을 시작합니다.',
+                                });
+
+                                // Navigate to Flow
+                                if (onLoadSession) {
+                                    onLoadSession(useProjectStore.getState().agentSession);
+                                }
                             }}
                         />
                     </View>
@@ -276,7 +323,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                     <View className="flex-row gap-4">
                         {savedSessions.length > 0 ? (
                             savedSessions.slice(0, 3).map(session => {
-                                const branchCount = session.workspace_data?.reduce((acc: number, col: any) => acc + (col.nodes?.length || 0), 0) || 0;
+                                const branchCount = session.workspace_data?.reduce((acc: number, col: any) => acc + (col.branches?.length || 0), 0) || 0;
                                 const hasEditor = !!session.editor_content && session.editor_content.length > 50;
                                 const hasChat = (session.chat_history?.length || 0) > 2;
                                 let progress = 10;

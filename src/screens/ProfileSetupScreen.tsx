@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Alert, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Alert, Modal, ActivityIndicator } from 'react-native';
 import { Briefcase, Rocket, Beaker, User as UserIcon, Check, ChevronRight, ChevronLeft, Search, FileText, X } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 import { JOB_CATEGORIES, BUSINESS_TYPES } from '../utils/profileConstants';
 
 type UserType = 'business' | 'pre_entrepreneur' | 'researcher' | 'other';
@@ -104,14 +105,22 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     const [majorCategory, setMajorCategory] = useState('');
     const [expertise, setExpertise] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [isAutoFilling, setIsAutoFilling] = useState(false);
     const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'expertise' | 'industryCategory' | 'businessType' }>({ visible: false, type: 'sido' });
 
     // Populate data if editing or existing profile
     useEffect(() => {
         if (profile) {
             if (profile.user_type) setUserType(profile.user_type as UserType);
-            if (profile.sido) setSido(profile.sido);
-            if (profile.sigungu) setSigungu(profile.sigungu);
+            // Parse location from DB (stored as 'sido sigungu' in profiles.location)
+            if (profile.location) {
+                const parts = profile.location.split(' ');
+                if (parts.length >= 1) setSido(parts[0]);
+                if (parts.length >= 2) setSigungu(parts.slice(1).join(' '));
+            } else {
+                if (profile.sido) setSido(profile.sido);
+                if (profile.sigungu) setSigungu(profile.sigungu);
+            }
             if (profile.industry) setIndustry(profile.industry);
             if (profile.business_years) setBusinessYears(profile.business_years);
             if (profile.birth_year) setBirthYear(profile.birth_year.toString());
@@ -128,6 +137,39 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             if (isEditing) setStep(2);
         }
     }, [profile, isEditing]);
+
+    const performAutoFill = async (payload: any) => {
+        try {
+            setIsAutoFilling(true);
+            const { data, error } = await supabase.functions.invoke('validate-business', {
+                body: payload
+            });
+
+            if (error) throw new Error(error.message);
+            if (data?.success && data?.data) {
+                if (data.data.businessNumber) setBusinessRegNo(data.data.businessNumber);
+                if (data.data.sido) setSido(data.data.sido);
+                if (data.data.sigungu) setSigungu(data.data.sigungu);
+                if (data.data.industry) setIndustry(data.data.industry);
+                Toast.show({
+                    type: 'success',
+                    text1: '정보 자동 입력 성공',
+                    text2: '주소와 업종 정보를 불러왔습니다.',
+                });
+            }
+        } catch (e: any) {
+            console.error("AutoFill Error:", e);
+            Alert.alert('알림', '정보를 자동으로 불러오는 데 실패했습니다. 직접 입력해주세요.');
+        } finally {
+            setIsAutoFilling(false);
+        }
+    };
+
+    const fetchBusinessInfoByNumber = () => {
+        if (!businessRegNo || businessRegNo.length < 10) return;
+        performAutoFill({ businessNumber: businessRegNo });
+    };
+
 
     const isFormValid = () => {
         if (!userType) return false;
@@ -194,35 +236,18 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                 id: user.id,
                 user_type: userType,
                 updated_at: new Date().toISOString(),
-                sido,
-                sigungu,
+                location: fullLocation, // DB column is 'location', not 'sido'
                 industry: (userType === 'business' || userType === 'pre_entrepreneur') ? industry : null,
                 research_keywords: keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
             };
 
-            // ⚠️ TEMPORARY: Optional columns that might be missing in DB
-            // These will be added back once migrations are successfully applied
             if (userType === 'business') {
                 updates.business_years = businessYears;
-                updates.business_reg_no = businessRegNo;
             }
 
             if (userType === 'pre_entrepreneur') {
                 updates.birth_year = birthYear ? parseInt(birthYear) : null;
             }
-
-            // Researcher fields are commented out for now to avoid the 'expertise column missing' error
-            /*
-            if (userType === 'researcher') {
-                updates.major_category = majorCategory;
-                updates.expertise = expertise;
-                updates.researcher_type = researcherType;
-                updates.affiliation = affiliation;
-                updates.student_id = studentId;
-                updates.researcher_id = researcherId;
-                updates.has_startup_intent = hasStartupIntent;
-            }
-            */
 
             if (userType === 'other') {
                 updates.affiliation = affiliation;
@@ -342,29 +367,50 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                             <View style={styles.stepContainer}>
 
                                 {(userType === 'business' || userType === 'pre_entrepreneur' || userType === 'other') && (
-                                    <View style={styles.inputGroup}>
-                                        <Text style={styles.label}>활동 지역 <Text style={styles.required}>*</Text></Text>
-                                        <View style={styles.row}>
-                                            <TouchableOpacity
-                                                style={[styles.dropdown, { flex: 1 }]}
-                                                onPress={() => setPickerModal({ visible: true, type: 'sido' })}
-                                            >
-                                                <Text style={[styles.dropdownText, !sido && styles.placeholderText]}>{sido || '시/도'}</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                style={[styles.dropdown, { flex: 1 }]}
-                                                onPress={() => {
-                                                    if (!sido) {
-                                                        Alert.alert('알림', '시/도를 먼저 선택해주세요.');
-                                                        return;
-                                                    }
-                                                    setPickerModal({ visible: true, type: 'sigungu' })
-                                                }}
-                                            >
-                                                <Text style={[styles.dropdownText, !sigungu && styles.placeholderText]}>{sigungu || '구/군'}</Text>
-                                            </TouchableOpacity>
+                                    <>
+                                        {userType === 'business' && (
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>사업자 정보 등록 (빠른 인증 & 신뢰도 +5)</Text>
+                                                <View style={styles.inputWrapper}>
+                                                    <TouchableOpacity onPress={fetchBusinessInfoByNumber} style={styles.inputIcon}>
+                                                        {isAutoFilling ? <ActivityIndicator size="small" color="#3B82F6" /> : <Search size={18} color="#94A3B8" />}
+                                                    </TouchableOpacity>
+                                                    <TextInput
+                                                        style={styles.inputWithIcon}
+                                                        placeholder="사업자등록번호 입력"
+                                                        placeholderTextColor="#94A3B8"
+                                                        value={businessRegNo}
+                                                        onChangeText={setBusinessRegNo}
+                                                        onEndEditing={fetchBusinessInfoByNumber}
+                                                        keyboardType="numeric"
+                                                    />
+                                                </View>
+                                            </View>
+                                        )}
+                                        <View style={styles.inputGroup}>
+                                            <Text style={styles.label}>활동 지역 <Text style={styles.required}>*</Text></Text>
+                                            <View style={styles.row}>
+                                                <TouchableOpacity
+                                                    style={[styles.dropdown, { flex: 1 }]}
+                                                    onPress={() => setPickerModal({ visible: true, type: 'sido' })}
+                                                >
+                                                    <Text style={[styles.dropdownText, !sido && styles.placeholderText]}>{sido || '시/도'}</Text>
+                                                </TouchableOpacity>
+                                                <TouchableOpacity
+                                                    style={[styles.dropdown, { flex: 1 }]}
+                                                    onPress={() => {
+                                                        if (!sido) {
+                                                            Alert.alert('알림', '시/도를 먼저 선택해주세요.');
+                                                            return;
+                                                        }
+                                                        setPickerModal({ visible: true, type: 'sigungu' })
+                                                    }}
+                                                >
+                                                    <Text style={[styles.dropdownText, !sigungu && styles.placeholderText]}>{sigungu || '구/군'}</Text>
+                                                </TouchableOpacity>
+                                            </View>
                                         </View>
-                                    </View>
+                                    </>
                                 )}
 
                                 {userType === 'business' && (
@@ -392,28 +438,6 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                                 <Text style={[styles.dropdownText, !industry && styles.placeholderText]}>
                                                     {industry || '업종 선택 (예: 정보통신업)'}
                                                 </Text>
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>사업자 정보 등록 (신뢰도 +5)</Text>
-                                            <View style={styles.inputWrapper}>
-                                                <Search size={18} color="#94A3B8" style={styles.inputIcon} />
-                                                <TextInput
-                                                    style={styles.inputWithIcon}
-                                                    placeholder="사업자등록번호 입력"
-                                                    placeholderTextColor="#94A3B8"
-                                                    value={businessRegNo}
-                                                    onChangeText={setBusinessRegNo}
-                                                    keyboardType="numeric"
-                                                />
-                                            </View>
-                                            <TouchableOpacity style={styles.uploadBox}>
-                                                <View style={styles.uploadIconBox}>
-                                                    <FileText size={20} color="#3B82F6" />
-                                                </View>
-                                                <Text style={styles.uploadText}>사업자등록증 업로드 (빠른 인증)</Text>
-                                                <ChevronRight size={16} color="#94A3B8" />
                                             </TouchableOpacity>
                                         </View>
                                     </>

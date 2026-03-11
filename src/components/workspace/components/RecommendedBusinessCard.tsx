@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { Sparkles, ChevronRight } from 'lucide-react-native';
+import { Sparkles, ChevronRight, Search } from 'lucide-react-native';
 
 interface BusinessItem {
     id: string;
@@ -28,34 +28,48 @@ export const RecommendedBusinessCard = ({ items, onExploreAll, onApply }: Recomm
             </TouchableOpacity>
 
             {/* List of Recommended Businesses */}
-            <View className="gap-5 mb-4">
-                {items.map((item) => (
-                    <View
-                        key={item.id}
-                        className="bg-black/20 rounded-xl p-6 border border-white/5"
-                    >
-                        <View className="flex-row items-center justify-between mb-3">
-                            <Text className="text-white font-bold text-lg flex-1 mr-3" numberOfLines={2}>
-                                {item.title}
-                            </Text>
-                            <View className="bg-pink-500/10 px-3 py-1 rounded-lg border border-pink-500/20 shadow-sm shadow-pink-500/10">
-                                <Text className="text-pink-500 text-xs font-bold">D-{item.dDay}</Text>
-                            </View>
-                        </View>
-                        <View className="flex-row items-center justify-between">
-                            <View className="flex-row items-center gap-2">
-                                <Sparkles size={16} color="#6366F1" />
-                                <Text className="text-[#6366F1] text-sm font-black uppercase tracking-[0.1em]">
-                                    MATCHING {item.matchingRate}%
+            {items.length > 0 ? (
+                <View className="gap-5 mb-4">
+                    {items.map((item) => (
+                        <View
+                            key={item.id}
+                            className="bg-black/20 rounded-xl p-6 border border-white/5"
+                        >
+                            <View className="flex-row items-center justify-between mb-3">
+                                <Text className="text-white font-bold text-lg flex-1 mr-3" numberOfLines={2}>
+                                    {item.title}
                                 </Text>
+                                <View className="bg-pink-500/10 px-3 py-1 rounded-lg border border-pink-500/20 shadow-sm shadow-pink-500/10">
+                                    <Text className="text-pink-500 text-xs font-bold">D-{item.dDay}</Text>
+                                </View>
                             </View>
-                            <TouchableOpacity className="bg-blue-600 px-4 py-2 rounded-lg border border-blue-500/50" onPress={() => onApply?.(item)}>
-                                <Text className="text-white text-xs font-bold">지원하기</Text>
-                            </TouchableOpacity>
+                            <View className="flex-row items-center justify-between">
+                                <View className="flex-row items-center gap-2">
+                                    <Sparkles size={16} color="#6366F1" />
+                                    <Text className="text-[#6366F1] text-sm font-black uppercase tracking-[0.1em]">
+                                        MATCHING {item.matchingRate}%
+                                    </Text>
+                                </View>
+                                <TouchableOpacity className="bg-blue-600 px-4 py-2 rounded-lg border border-blue-500/50" onPress={() => onApply?.(item)}>
+                                    <Text className="text-white text-xs font-bold">지원하기</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
+                    ))}
+                </View>
+            ) : (
+                <View className="bg-black/20 rounded-xl p-8 border border-white/5 items-center justify-center min-h-[220px] mb-4">
+                    <View className="w-16 h-16 rounded-full bg-blue-500/10 items-center justify-center mb-6">
+                        <Search size={28} color="#3B82F6" />
                     </View>
-                ))}
-            </View>
+                    <Text className="text-white text-lg font-bold text-center mb-3">
+                        맞춤 공고 분석 중...
+                    </Text>
+                    <Text className="text-slate-400 text-sm text-center leading-relaxed max-w-[80%]">
+                        현재 DB에서 연구원님의 활동 지역과 산업 분야에 일치하는 신규 공고를 AI가 분석하고 있습니다
+                    </Text>
+                </View>
+            )}
 
             {/* Footer Button */}
             <TouchableOpacity
