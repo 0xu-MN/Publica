@@ -135,3 +135,15 @@ URIError: URI malformed
     at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
     at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
     at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 70ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15

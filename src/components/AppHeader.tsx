@@ -185,7 +185,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 setViewMode('pricing');
                             }
                         }}
-                        className="mr-5 flex-row items-center bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/30 hover:bg-amber-500/20 transition-all"
+                        className="mr-3 flex-row items-center bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/30 hover:bg-amber-500/20 transition-all"
                     >
                         <Icons.Crown color="#FBBF24" size={16} />
                         <Text className="text-amber-400 text-xs font-bold ml-1.5">PUBLICA PRO</Text>
