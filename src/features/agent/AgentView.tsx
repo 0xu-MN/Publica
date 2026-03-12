@@ -1355,42 +1355,6 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                         onAIGenerate={handleGenerateBusinessPlan}
                                         brainstormContent={brainstormContent}
                                         onBrainstormChange={(text) => setBrainstormContent(text)}
-                                        onSendToEdit={onNavigateToEdit ? async () => {
-                                            if (isTransitioning) return;
-                                            setIsTransitioning(true);
-                                            setTransitionStep('AI 초안 생성 중...');
-                                            try {
-                                                // Reuse same logic
-                                                const draftRes = await supabase.functions.invoke('insight-agent-gateway', {
-                                                    body: {
-                                                        userMessage: "PSST 기반 사업계획서 초안 작성 요청.",
-                                                        branchLabel: projectTitle || '새 프로젝트',
-                                                        branchDescription: brainstormContent,
-                                                        mode: 'editor-assist',
-                                                    },
-                                                });
-                                                let aiDraftHtml = draftRes.data?.response || '';
-                                                aiDraftHtml = aiDraftHtml.replace(/```html/g, '').replace(/```/g, '').trim();
-
-                                                const finalTitle = projectTitle.trim() || pendingGrantTitle || columns[0]?.root_node || 'Untitled';
-                                                await saveSession(finalTitle, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent, aiDraftHtml, aiDraftHtml);
-                                                
-                                                useProjectStore.getState().setProject(null, {
-                                                    id: currentSessionId || undefined,
-                                                    title: finalTitle,
-                                                    workspace_data: columns,
-                                                    chat_history: chatHistory,
-                                                    brainstorm_content: brainstormContent,
-                                                    editor_content: aiDraftHtml,
-                                                    pdf_url: pdfUrl || '',
-                                                });
-                                                onNavigateToEdit();
-                                            } catch (e) {
-                                                onNavigateToEdit();
-                                            } finally {
-                                                setIsTransitioning(false);
-                                            }
-                                        } : undefined}
                                     />
                                 }
                             />

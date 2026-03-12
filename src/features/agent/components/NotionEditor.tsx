@@ -65,11 +65,16 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
     // Initialize with content
     useEffect(() => {
         if (editorRef.current && initialContent) {
-            editorRef.current.innerHTML = initialContent;
-            setIsEmpty(false);
-            handleContentChange();
+            // Only update if current editor is empty or basically empty
+            // This prevents overwriting user's active typing
+            const currentHtml = editorRef.current.innerHTML;
+            if (!currentHtml || currentHtml === '<p><br></p>' || currentHtml === '<p><br/></p>' || initialContent.length > currentHtml.length + 10) {
+                editorRef.current.innerHTML = initialContent;
+                setIsEmpty(false);
+                handleContentChange();
+            }
         }
-    }, []);
+    }, [initialContent]);
 
     const handleContentChange = useCallback(() => {
         if (!editorRef.current) return;

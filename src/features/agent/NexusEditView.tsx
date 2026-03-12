@@ -229,19 +229,28 @@ export const NexusEditView = () => {
     };
 
     // --- AI Chat ---
-    const handleSendChat = async () => {
+    const handleChatSend = async () => {
         if (!chatInput.trim() || chatLoading) return;
 
-        const userMsg = { role: 'user', content: chatInput };
-        setChatMessages(prev => [...prev, userMsg]);
+        const userMsg = chatInput.trim();
+        setChatMessages(prev => [...prev, { role: 'user', content: userMsg }]);
         setChatInput('');
         setChatLoading(true);
+
+        // 🌟 Feature: Detect "Write" or "Draft" request to trigger auto-drafting
+        const draftingKeywords = ['작성', '초안', '써줘', '만들어줘', 'write', 'draft', 'generate'];
+        if (draftingKeywords.some(kw => userMsg.includes(kw)) && (!editorContent || editorContent.length < 50)) {
+            setChatMessages(prev => [...prev, { role: 'assistant', content: '알겠습니다. 브레인스톰 데이터를 분석하여 사업계획서 초안을 작성하겠습니다...' }]);
+            await generateAutoDraft(selectedSession);
+            setChatLoading(false);
+            return;
+        }
 
         try {
             const context = editorMarkdown || editorContent;
             const res = await supabase.functions.invoke('insight-agent-gateway', {
                 body: {
-                    userMessage: `[문서 작성 도움 요청] ${chatInput}`,
+                    userMessage: `[문서 작성 도움 요청] ${userMsg}`,
                     branchLabel: selectedSession?.title || '새 문서',
                     branchDescription: context.substring(0, 500),
                     chatHistory: chatMessages.slice(-6),
@@ -401,7 +410,25 @@ export const NexusEditView = () => {
 
                                     <View style={styles.sectionHeader}>
                                         <Sparkles size={16} color="#F59E0B" />
-                                        <Text style={styles.sectionTitle}>브레인스톰 데이터</Text>
+                                        {/* 🌟 New: Action Bar for drafting */}
+                            {(!editorContent || editorContent.length < 50) && (
+                                <View style={{ padding: 20, backgroundColor: 'rgba(79, 70, 229, 0.05)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(79, 70, 229, 0.2)', marginBottom: 20 }}>
+                                    <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>AI가 초안을 작성해 드릴까요?</Text>
+                                    <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 16, lineHeight: 18 }}>현재 저장된 브레인스톰 메모와 마인드맵 데이터를 분석하여 PSST 양식의 기초 서류를 완성합니다.</Text>
+                                    <TouchableOpacity
+                                        style={{ backgroundColor: '#4F46E5', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                                        onPress={() => generateAutoDraft(selectedSession)}
+                                        disabled={draftGenerating}
+                                    >
+                                        <Sparkles size={16} color="#FFF" />
+                                        <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>
+                                            {draftGenerating ? '작성 중...' : 'AI 초안 작성 시작'}
+                                        </Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+
+                            <Text style={styles.sectionTitle}>브레인스톰 데이터</Text>
                                     </View>
 
                                     <ScrollView style={styles.branchScroll}>
@@ -462,12 +489,12 @@ export const NexusEditView = () => {
                                         onChangeText={setChatInput}
                                         placeholder="문서 작성 도움 요청..."
                                         placeholderTextColor="#475569"
-                                        onSubmitEditing={handleSendChat}
+                                        onSubmitEditing={handleChatSend}
                                         returnKeyType="send"
                                     />
                                     <TouchableOpacity
                                         style={[styles.chatSendBtn, chatInput.trim() && styles.chatSendBtnActive]}
-                                        onPress={handleSendChat}
+                                        onPress={handleChatSend}
                                         disabled={!chatInput.trim() || chatLoading}
                                     >
                                         <Send size={16} color={chatInput.trim() ? '#818CF8' : '#475569'} />
