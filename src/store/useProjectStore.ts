@@ -12,6 +12,7 @@ export interface AgentSession {
     pdf_url?: string;
     brainstorm_content?: string;
     editor_content?: string;
+    editor_markdown?: string;
 }
 
 interface ProjectState {

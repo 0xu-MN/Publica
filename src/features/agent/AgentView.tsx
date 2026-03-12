@@ -55,6 +55,8 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     const [showWelcome, setShowWelcome] = useState(true);
 
     const [projectTitle, setProjectTitle] = useState<string>(''); // 🌟 FIX: 전용 타이틀 상태 도입
+    const [isTransitioning, setIsTransitioning] = useState(false); // 🌟 NEW: 에디터 진입 로딩 상태
+    const [transitionStep, setTransitionStep] = useState(''); // 🌟 NEW: 로딩 단계 메시지
 
     // 🌟 File Uploader Ref (For Programmatic Access)
     const fileUploaderRef = useRef<any>(null);
@@ -1177,24 +1179,61 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                     {columns.length >= 2 && onNavigateToEdit && (
                         <TouchableOpacity
                             style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 7, borderRadius: 10, backgroundColor: '#4F46E5', borderWidth: 1, borderColor: '#6366F1' }}
+                            disabled={isTransitioning}
                             onPress={async () => {
-                                let compiledContent = brainstormContent || '';
-                                if (!compiledContent) {
-                                    compiledContent = columns.map(col => {
-                                        return col.branches?.map((b: any) => `### ${b.label}\n${b.description || ''}`).join('\n\n') || '';
-                                    }).join('\n\n');
-                                }
+                                if (isTransitioning) return;
+                                setIsTransitioning(true);
+                                setTransitionStep('브레인스톰 데이터를 수합하고 있습니다...');
 
-                                await handleSave();
-                                useProjectStore.getState().setProject(null, {
-                                    id: currentSessionId || undefined, // 🌟 FIX: 세션 ID 전달하여 에디터 내용 유지
-                                    title: projectTitle.trim() || pendingGrantTitle || columns[0]?.root_node || 'Untitled',
-                                    workspace_data: columns,
-                                    chat_history: chatHistory,
-                                    brainstorm_content: compiledContent,
-                                    pdf_url: pdfUrl || '',
-                                });
-                                onNavigateToEdit();
+                                try {
+                                    // 1. 수합된 마크다운 데이터 준비
+                                    let compiledMarkdown = brainstormContent || '';
+                                    if (!compiledMarkdown) {
+                                        compiledMarkdown = columns.map(col => {
+                                            return col.branches?.map((b: any) => `### ${b.label}\n${b.description || ''}`).join('\n\n') || '';
+                                        }).join('\n\n');
+                                    }
+
+                                    // 2. AI 초안 생성 호출 (PSST 포맷)
+                                    setTransitionStep('AI가 정교한 사업계획서 초완을 작성 중입니다 (약 10초)...');
+                                    const draftRes = await supabase.functions.invoke('insight-agent-gateway', {
+                                        body: {
+                                            userMessage: "위의 브레인스톰 데이터를 바탕으로, PSST 기반 정부지원사업계획서 초안을 작성해주세요. 각 섹션(문제인식, 해결방안, 성장전략, 팀구성 등)별로 나누어 구체적으로 작성하며, 반드시 HTML 태그(<h1>, <h2>, <p>) 형식으로 포맷팅하여 반환해주세요.",
+                                            branchLabel: projectTitle || '새 프로젝트',
+                                            branchDescription: compiledMarkdown,
+                                            chatHistory: [],
+                                            mode: 'editor-assist',
+                                        },
+                                    });
+
+                                    let aiDraftHtml = draftRes.data?.response || draftRes.data?.analysis?.summary || '';
+                                    aiDraftHtml = aiDraftHtml.replace(/```html/g, '').replace(/```/g, '').trim();
+
+                                    // 3. 현재 세션 저장 (초안 포함)
+                                    setTransitionStep('에디터 세션을 동기화하고 있습니다...');
+                                    const finalTitle = projectTitle.trim() || pendingGrantTitle || columns[0]?.root_node || 'Untitled';
+                                    
+                                    await saveSession(finalTitle, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent, aiDraftHtml, aiDraftHtml);
+
+                                    // 4. 스토어 설정 및 이동
+                                    useProjectStore.getState().setProject(null, {
+                                        id: currentSessionId || undefined,
+                                        title: finalTitle,
+                                        workspace_data: columns,
+                                        chat_history: chatHistory,
+                                        brainstorm_content: compiledMarkdown,
+                                        editor_content: aiDraftHtml, // 🌟 핵심: 생성된 초안을 넘김
+                                        pdf_url: pdfUrl || '',
+                                    });
+
+                                    onNavigateToEdit();
+                                } catch (err) {
+                                    console.error('Transition failed:', err);
+                                    Alert.alert("알림", "AI 초안 생성 중 오류가 발생했습니다. 기본 양식으로 이동합니다.");
+                                    onNavigateToEdit();
+                                } finally {
+                                    setIsTransitioning(false);
+                                }
                             }}
                         >
                             <FileEdit size={14} color="#FFF" />
@@ -1317,16 +1356,40 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                         brainstormContent={brainstormContent}
                                         onBrainstormChange={(text) => setBrainstormContent(text)}
                                         onSendToEdit={onNavigateToEdit ? async () => {
-                                            await handleSave();
-                                            useProjectStore.getState().setProject(null, {
-                                                id: currentSessionId || undefined,
-                                                title: projectTitle.trim() || pendingGrantTitle || columns[0]?.root_node || 'Untitled',
-                                                workspace_data: columns,
-                                                chat_history: chatHistory,
-                                                brainstorm_content: brainstormContent,
-                                                pdf_url: pdfUrl || '',
-                                            });
-                                            onNavigateToEdit();
+                                            if (isTransitioning) return;
+                                            setIsTransitioning(true);
+                                            setTransitionStep('AI 초안 생성 중...');
+                                            try {
+                                                // Reuse same logic
+                                                const draftRes = await supabase.functions.invoke('insight-agent-gateway', {
+                                                    body: {
+                                                        userMessage: "PSST 기반 사업계획서 초안 작성 요청.",
+                                                        branchLabel: projectTitle || '새 프로젝트',
+                                                        branchDescription: brainstormContent,
+                                                        mode: 'editor-assist',
+                                                    },
+                                                });
+                                                let aiDraftHtml = draftRes.data?.response || '';
+                                                aiDraftHtml = aiDraftHtml.replace(/```html/g, '').replace(/```/g, '').trim();
+
+                                                const finalTitle = projectTitle.trim() || pendingGrantTitle || columns[0]?.root_node || 'Untitled';
+                                                await saveSession(finalTitle, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent, aiDraftHtml, aiDraftHtml);
+                                                
+                                                useProjectStore.getState().setProject(null, {
+                                                    id: currentSessionId || undefined,
+                                                    title: finalTitle,
+                                                    workspace_data: columns,
+                                                    chat_history: chatHistory,
+                                                    brainstorm_content: brainstormContent,
+                                                    editor_content: aiDraftHtml,
+                                                    pdf_url: pdfUrl || '',
+                                                });
+                                                onNavigateToEdit();
+                                            } catch (e) {
+                                                onNavigateToEdit();
+                                            } finally {
+                                                setIsTransitioning(false);
+                                            }
                                         } : undefined}
                                     />
                                 }
@@ -1469,6 +1532,30 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                     }
                 }}
             />
+
+            {/* 🌟 Transition Overlay */}
+            {isTransitioning && (
+                <View style={{
+                    position: 'absolute',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    backgroundColor: 'rgba(2, 6, 23, 0.9)',
+                    zIndex: 9999,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: 40
+                }}>
+                    <ActivityIndicator size="large" color="#FFF" />
+                    <Text style={{ color: '#FFF', fontSize: 18, fontWeight: '800', marginTop: 24, textAlign: 'center' }}>
+                        Publica AI
+                    </Text>
+                    <Text style={{ color: '#818CF8', fontSize: 15, fontWeight: '600', marginTop: 8, textAlign: 'center' }}>
+                        {transitionStep}
+                    </Text>
+                    <Text style={{ color: '#475569', fontSize: 12, marginTop: 20, textAlign: 'center', lineHeight: 20 }}>
+                        브레인스톰 데이터를 통합하여{'\n'}전문적인 사업계획서 본문을 구성하고 있습니다.
+                    </Text>
+                </View>
+            )}
         </SafeAreaView >
     );
 };

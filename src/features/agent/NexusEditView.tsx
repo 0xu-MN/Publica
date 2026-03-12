@@ -69,21 +69,29 @@ export const NexusEditView = () => {
             setShowSessionList(false);
             setShowResumePrompt(false);
 
-            // Load Editor Content (Template OR Saved Content)
+            // 🌟 Sync Logic: Prioritize editor_content if it exists (meaning AI draft was already created)
             if (session.editor_content && session.editor_content.length > 20) {
                 setEditorContent(session.editor_content);
+                setEditorMarkdown(session.editor_markdown || session.editor_content);
                 loadTemplateForSession(session, true); // Load template meta only
             } else if (session.brainstorm_content || (session.workspace_data && session.workspace_data.length > 0)) {
-                // 🔥 Auto Draft Generation: Flow에서 넘어왔는데 에디터 내용이 없으면 초안 자동 생성
+                // 🔥 Auto Draft Generation: Only if editor_content is missing
                 generateAutoDraft(session);
             } else {
                 // FORCE Load PSST Template as the default Bowl
                 loadTemplateForSession(session, false);
             }
 
-            // Clear the store to prevent re-loading on re-renders
-            useProjectStore.getState().clearProject();
+            // 🌟 FIX: Don't clear immediately, or clear only after successful mount
+            // setTimeout(() => useProjectStore.getState().clearProject(), 1000);
         }
+    }, []);
+
+    // 🌟 Cleanup Store on Unmount to prevent phantom loading next time
+    useEffect(() => {
+        return () => {
+            useProjectStore.getState().clearProject();
+        };
     }, []);
 
     // --- AI Auto Draft Generation ---

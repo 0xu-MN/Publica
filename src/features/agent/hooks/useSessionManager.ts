@@ -23,10 +23,20 @@ export const useSessionManager = (userId: string | undefined) => {
     }, [userId]);
 
     // 2. 저장하기 (Auto-Save or Manual Save) — Flow용
-    const saveSession = async (title: string, mode: string, columns: any[], chatHistory: any[], pdfUrl?: string, brainstormContent?: string) => {
+    // 🌟 editorContent, editorMarkdown 파라미터 추가
+    const saveSession = async (
+        title: string, 
+        mode: string, 
+        columns: any[], 
+        chatHistory: any[], 
+        pdfUrl?: string, 
+        brainstormContent?: string,
+        editorContent?: string,
+        editorMarkdown?: string
+    ) => {
         if (!userId) return;
 
-        const payload = {
+        const payload: any = {
             user_id: userId,
             title: title || "Untitled Project",
             mode,
@@ -38,7 +48,9 @@ export const useSessionManager = (userId: string | undefined) => {
         const extendedPayload = {
             ...payload,
             pdf_url: pdfUrl || null,
-            brainstorm_content: brainstormContent || ''
+            brainstorm_content: brainstormContent || '',
+            editor_content: editorContent || null,
+            editor_markdown: editorMarkdown || null
         };
 
         let result;
