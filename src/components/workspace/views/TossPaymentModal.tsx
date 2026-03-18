@@ -12,7 +12,7 @@ interface TossPaymentModalProps {
     userName: string;
 }
 
-const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY || 'test_ck_26DlbXAaV0PkqJvL7EYnVqY50Q9R';
+const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY || 'test_gck_QbgMGZzorzjJAkvZvRo7rl5E1em4';
 
 export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onClose, planType, price, userEmail, userName }) => {
     const [widgets, setWidgets] = useState<TossPaymentsWidgets | null>(null);
