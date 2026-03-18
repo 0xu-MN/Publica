@@ -43,12 +43,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     useEffect(() => {
+        let isTestMode = false;
+
+        // --- TEMPORARY TEST LOGIN LOGIC (TOSS PAYMENTS) ---
+        // ⚠️ 이 코드는 토스페이먼츠 심사/테스트 종료 후 반드시 삭제/주석처리 해야 합니다.
+        if (Platform.OS === 'web') {
+            const urlParams = new URLSearchParams(window.location.search);
+            const mode = urlParams.get('mode');
+            if (mode === 'toss_test' || mode === 'test') {
+                isTestMode = true;
+                console.log('⚡ Toss Test Mode Detected: Auto-logging in...');
+                setLoading(true); // 로딩 유지
+                
+                // 미리 Supabase에 생성해둔 테스트 계정 정보
+                supabase.auth.signInWithPassword({
+                    email: 'toss_test@publica.ai',
+                    password: 'tosstestpassword123!'
+                }).then(({ error }) => {
+                    if (error) {
+                        console.error("Toss Auto Login Error:", error);
+                        alert(`토스 테스트 계정 로그인 실패: ${error.message}\n(대표님: Supabase에서 해당 계정의 이메일 인증을 완료해주세요)`);
+                        setLoading(false); // 실패 시 로딩 해제
+                    }
+                    // URL에서 파라미터 숨기기 (깔끔한 테스터 경험)
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                });
+            }
+        }
+        // --------------------------------------------------
+
         // Initial session check
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
             if (session?.user) {
                 fetchProfile(session.user.id);
-            } else {
+            } else if (!isTestMode) {
+                // 테스트 모드 자동 로그인이 진행 중이 아닐 때만 로딩 해제
                 setLoading(false);
             }
         });
