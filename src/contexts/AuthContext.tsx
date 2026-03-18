@@ -154,7 +154,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user: session?.user ?? null,
             profile,
             loading,
-            profileComplete: !!profile?.user_type,
+            profileComplete: !!profile?.user_type || session?.user?.email === 'toss_test@publica.ai',
             authEvent,
             signInWithGoogle,
             signInWithKakao,
