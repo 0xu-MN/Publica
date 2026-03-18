@@ -135,18 +135,20 @@ export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onC
                 </View>
 
                 <View style={styles.content}>
-                    {loading && (
-                        <View style={styles.loadingBox}>
-                            <ActivityIndicator size="large" color="#4F46E5" />
-                            <Text style={styles.loadingText}>결제 모듈을 불러오는 중...</Text>
+                    <View style={{ flex: 1, position: 'relative' }}>
+                        {loading && (
+                            <View style={[styles.loadingBox, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10, backgroundColor: '#0F172A' }]}>
+                                <ActivityIndicator size="large" color="#4F46E5" />
+                                <Text style={styles.loadingText}>결제 모듈을 불러오는 중...</Text>
+                            </View>
+                        )}
+                        
+                        {/* DOM Nodes for Toss Widgets Native Web mapping */}
+                        <View style={{ flex: 1, backgroundColor: '#FFF', borderRadius: 12, padding: 12, minHeight: 400 }}>
+                            {/* React Native Web maps nativeID to standard HTML ID props */}
+                            <View nativeID="payment-method" style={{ minHeight: 400, width: '100%' }} />
+                            <View nativeID="agreement" style={{ minHeight: 140, width: '100%' }} />
                         </View>
-                    )}
-                    
-                    {/* DOM Nodes for Toss Widgets Native Web mapping */}
-                    <View style={loading ? { display: 'none' } : { flex: 1, backgroundColor: '#FFF', borderRadius: 12, padding: 12 }}>
-                        {/* React Native Web maps nativeID to standard HTML ID props */}
-                        <View nativeID="payment-method" style={{ minHeight: 400 }} />
-                        <View nativeID="agreement" style={{ minHeight: 140 }} />
                     </View>
 
                 </View>
