@@ -3,10 +3,19 @@ import fitz
 import pdfplumber
 import re
 import math
-from fastapi import FastAPI, UploadFile, File
+import os
+import tempfile
+import zipfile
+import shutil
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 from typing import List, Optional
+try:
+    from lxml import etree
+except ImportError:
+    pass
 
 app = FastAPI(title="InsightFlow PDF Parser")
 
@@ -491,3 +500,60 @@ async def parse_pdf(file: UploadFile = File(...)):
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.post("/api/upload-hwpx")
+async def process_hwpx(
+    file: UploadFile = File(...),
+    payload: str = Form("{}")
+):
+    """
+    1. Receives a .hwpx file and AI generated payload.
+    2. Unzips the .hwpx (which is just a zip of XMLs).
+    3. Parses Contents/section0.xml.
+    4. (Future) Maps payload into the XML tables.
+    5. Zips it back and returns the file.
+    """
+    if not file.filename.endswith('.hwpx'):
+        return JSONResponse(status_code=400, content={"error": "Only .hwpx files are supported"})
+
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, "input.hwpx")
+    extract_dir = os.path.join(temp_dir, "extracted")
+    output_path = os.path.join(temp_dir, "output.hwpx")
+
+    try:
+        content = await file.read()
+        with open(input_path, "wb") as f:
+            f.write(content)
+
+        with zipfile.ZipFile(input_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+        
+        section0_path = os.path.join(extract_dir, 'Contents', 'section0.xml')
+        has_section0 = os.path.exists(section0_path)
+        
+        preview_text = "No section0.xml found"
+        if has_section0:
+            with open(section0_path, 'r', encoding='utf-8') as f:
+                xml_content = f.read()
+            preview_text = xml_content[:200]
+
+        # For PoC: Just re-zip it exactly as is
+        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zip_out:
+            for root, _, files in os.walk(extract_dir):
+                for f_name in files:
+                    file_path = os.path.join(root, f_name)
+                    arcname = os.path.relpath(file_path, extract_dir)
+                    zip_out.write(file_path, arcname)
+
+        return {
+            "status": "success",
+            "message": "HWPX successfully extracted and inspected in Primary Server",
+            "section0_preview": preview_text,
+            "payload_received": payload
+        }
+        
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+    finally:
+        shutil.rmtree(temp_dir)

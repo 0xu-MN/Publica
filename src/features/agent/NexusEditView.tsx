@@ -435,7 +435,7 @@ ${fullContext.substring(0, 800)}
             formData.append("file", file);
             formData.append("payload", editorContent);
 
-            const response = await fetch("http://localhost:8000/upload-hwpx", {
+            const response = await fetch("http://localhost:8000/api/upload-hwpx", {
                 method: "POST",
                 body: formData,
             });
