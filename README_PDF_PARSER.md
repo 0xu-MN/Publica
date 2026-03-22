@@ -52,12 +52,18 @@
 **원인:** 프론트엔드의 하이브리드 요청(Vercel 1차, EC2 2차)이 모두 처참하게 실패하여 멍청한 클라이언트 파서로 강제 전환된 상태입니다.
 **AI가 취해야 할 대처법:**
 1.  **EC2 서버 생존 확인:** 즉시 AWS EC2(`13.209.136.25`)에 SSH로 접속하거나, 터미널에서 `curl http://13.209.136.25:8001/api/parse-pdf -I` 명령어로 서버 응답을 확인.
-2.  **사망 포착 시 복구:** 서버가 죽어 있다면 EC2 폴더(`server/`)로 이동 후 아래 명령어로 백그라운드 서버를 영구 재가동.
+2.  **사망 포착 시 복구:** 서버가 죽어 있다면 EC2 폴더(`server/`)로 이동 후, **반드시 최신 라이브러리를 먼저 설치(`pip install`)** 한 뒤에 서버를 가동해야 합니다.
     ```bash
+    # 1. 기존에 죽었거나 좀비 상태인 파이썬 포트 정리
     lsof -ti:8001 | xargs kill -9
-    nohup /프로젝트절대경로/server/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001 > uvicorn.log 2>&1 &
+    
+    # 2. (신규 추가 필수사항) 최신 파이썬 부품(docx, bs4 등) 설치
+    ./venv/bin/pip install -r requirements.txt
+    
+    # 3. 백그라운드 서버 영구 재가동
+    nohup ./venv/bin/uvicorn main:app --host 0.0.0.0 --port 8001 > uvicorn.log 2>&1 &
     ```
-3.  **로그 확인:** `cat uvicorn.log`를 통해 서버가 왜 죽었는지(메모리 부족, 라이브러리 충돌 등) 원인을 파악하고 `main.py`를 방어코딩(try-except)으로 보강.
+3.  **로그 확인:** `cat uvicorn.log`를 통해 서버가 언제 죽었는지 기록을 파악합니다.
 
 ### Case 2. 에러 배지는 안 뜨는데, 특정 문서의 특정 목차 텍스트만 좌표(✨ 버튼)가 이상한 곳에 찍힐 때
 **원인:** 파이썬 서버는 정상 구동 중이나, 해당 PDF의 특이한 폰트 깨짐(Ligature)이나 숨겨진 유령 텍스트 때문에 PyMuPDF의 `search_for` 좌표 추적 기능이 실패한 경우입니다.
