@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text, ScrollView } from 'react-native';
 import { Home, Zap, MessageSquare, Bookmark, Settings, User, ClipboardList, FileEdit, FolderKanban, Crown } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
-export type WorkspaceTab = 'home' | 'agent' | 'nexus-edit' | 'projects' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge' | 'grants' | 'pricing';
+export type WorkspaceTab = 'home' | 'agent' | 'nexus-edit' | 'projects' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge' | 'grants' | 'pricing' | 'admin';
 
 interface SidebarProps {
     activeTab: WorkspaceTab;
@@ -170,10 +170,11 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
                 <TouchableOpacity
                     onPress={() => onTabChange('settings')}
-                    className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center ${activeTab === 'settings'
+                    className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center ${
+                        activeTab === 'settings'
                         ? 'bg-slate-500/20 border border-slate-400/30'
                         : 'bg-slate-800/30'
-                        }`}
+                    }`}
                 >
                     <Settings
                         size={22}

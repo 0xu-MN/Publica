@@ -1,107 +1,160 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { X, Bookmark, Bell, Moon, Settings as SettingsIcon, Crown, ChevronRight, Plus, User } from 'lucide-react-native';
+import { X, Bookmark, Bell, Moon, ChevronRight, User, Shield } from 'lucide-react-native';
+
+// 🔐 Add any admin emails here (case-insensitive check)
+const ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com'];
 
 interface SettingsModalProps {
     visible: boolean;
     onClose: () => void;
+    onNavigateAdmin?: () => void;
 }
 
-export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
+export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsModalProps) => {
     const { user, signOut } = useAuth();
     const [notifications, setNotifications] = useState(true);
     const [darkMode, setDarkMode] = useState(true);
 
+    // Sync check — no async, no Supabase call needed
+    const email = user?.email?.toLowerCase() || '';
+    const name = user?.user_metadata?.name || user?.user_metadata?.full_name || '';
+    
+    const isAdmin = ADMIN_EMAILS.some(e => e.toLowerCase() === email) 
+                    || email.includes('hong56800') 
+                    || name.includes('hong56800');
+
+    // Debug log on every render when visible
+    useEffect(() => {
+        if (visible) {
+            console.log('🔒 SettingsModal: user email =', user?.email, '| name =', name, '| isAdmin =', isAdmin);
+        }
+    }, [visible]);
+
     if (!visible) return null;
 
     return (
-        <View className="absolute inset-0 bg-black/60 justify-center items-center p-6 z-50">
-            <View className="w-full max-w-md bg-[#0F172A] rounded-3xl border border-white/10 overflow-hidden">
-
+        <View style={{
+            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.7)',
+            justifyContent: 'center', alignItems: 'center',
+            padding: 24, zIndex: 9999,
+        }}>
+            <View style={{
+                width: '100%', maxWidth: 420,
+                backgroundColor: '#0F172A',
+                borderRadius: 24,
+                borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
+                overflow: 'hidden',
+            }}>
                 {/* Header */}
-                <View className="px-6 py-4 bg-[#1E293B] border-b border-white/5 flex-row items-center justify-between">
+                <View style={{
+                    paddingHorizontal: 24, paddingVertical: 16,
+                    backgroundColor: '#1E293B',
+                    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
+                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+                }}>
                     <View>
-                        <Text className="text-white font-bold text-xl">설정</Text>
-                        <Text className="text-slate-400 text-xs">앱 설정 및 계정 관리</Text>
+                        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 20 }}>설정</Text>
+                        <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>앱 설정 및 계정 관리</Text>
                     </View>
-                    <TouchableOpacity onPress={onClose} className="p-2 bg-white/5 rounded-full">
+                    <TouchableOpacity onPress={onClose}
+                        style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 999 }}>
                         <X size={20} color="#fff" />
                     </TouchableOpacity>
                 </View>
 
-                <ScrollView className="flex-1 max-h-[500px]">
-                    {/* Profile Redirect */}
-                    <View className="px-6 py-5 border-b border-white/5">
-                        <View className="bg-blue-500/5 p-4 rounded-2xl border border-blue-500/10 flex-row items-center gap-3">
-                            <View className="w-10 h-10 rounded-full bg-blue-500/20 items-center justify-center">
+                <ScrollView style={{ maxHeight: 480 }}>
+                    {/* Profile Info */}
+                    <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
+                        <View style={{
+                            backgroundColor: 'rgba(59,130,246,0.07)',
+                            padding: 16, borderRadius: 16,
+                            borderWidth: 1, borderColor: 'rgba(59,130,246,0.12)',
+                            flexDirection: 'row', alignItems: 'center', gap: 12,
+                        }}>
+                            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59,130,246,0.2)', alignItems: 'center', justifyContent: 'center' }}>
                                 <User size={20} color="#3B82F6" />
                             </View>
-                            <View className="flex-1">
-                                <Text className="text-white font-bold text-sm">프로필 수정</Text>
-                                <Text className="text-blue-400 text-xs mt-0.5">My Workspace → 프로필 버튼에서 수정하세요</Text>
+                            <View style={{ flex: 1 }}>
+                                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>프로필 수정</Text>
+                                <Text style={{ color: '#60A5FA', fontSize: 12, marginTop: 2 }}>My Workspace → 프로필 버튼에서 수정하세요</Text>
                             </View>
                             <ChevronRight size={16} color="#3B82F6" />
                         </View>
                     </View>
 
-                    {/* Menu Items */}
-                    <View className="px-4 py-2">
+                    {/* Settings */}
+                    <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
                         {/* Saved Insights */}
-                        <TouchableOpacity className="flex-row items-center justify-between px-4 py-3 rounded-xl hover:bg-white/5">
-                            <View className="flex-row items-center gap-3">
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                 <Bookmark size={18} color="#94A3B8" />
-                                <Text className="text-white font-medium">Saved Insights</Text>
+                                <Text style={{ color: '#fff', fontWeight: '500' }}>Saved Insights</Text>
                             </View>
-                            <View className="flex-row items-center gap-2">
-                                <Text className="text-slate-500 text-sm">0</Text>
-                                <ChevronRight size={16} color="#64748B" />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Text style={{ color: '#475569', fontSize: 14 }}>0</Text>
+                                <ChevronRight size={16} color="#475569" />
                             </View>
-                        </TouchableOpacity>
+                        </View>
 
                         {/* Notifications */}
-                        <View className="flex-row items-center justify-between px-4 py-3">
-                            <View className="flex-row items-center gap-3">
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                 <Bell size={18} color="#94A3B8" />
-                                <Text className="text-white font-medium">알림</Text>
+                                <Text style={{ color: '#fff', fontWeight: '500' }}>알림</Text>
                             </View>
-                            <View className="flex-row items-center gap-2">
-                                <Text className="text-slate-500 text-sm">{notifications ? 'On' : 'Off'}</Text>
-                                <Switch
-                                    value={notifications}
-                                    onValueChange={setNotifications}
-                                    trackColor={{ false: '#334155', true: '#3B82F6' }}
-                                    thumbColor="#fff"
-                                />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Text style={{ color: '#475569', fontSize: 13 }}>{notifications ? 'On' : 'Off'}</Text>
+                                <Switch value={notifications} onValueChange={setNotifications}
+                                    trackColor={{ false: '#334155', true: '#3B82F6' }} thumbColor="#fff" />
                             </View>
                         </View>
 
                         {/* Dark Mode */}
-                        <View className="flex-row items-center justify-between px-4 py-3">
-                            <View className="flex-row items-center gap-3">
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                                 <Moon size={18} color="#94A3B8" />
-                                <Text className="text-white font-medium">다크 모드</Text>
+                                <Text style={{ color: '#fff', fontWeight: '500' }}>다크 모드</Text>
                             </View>
-                            <View className="flex-row items-center gap-2">
-                                <Text className="text-slate-500 text-sm">{darkMode ? 'On' : 'Off'}</Text>
-                                <Switch
-                                    value={darkMode}
-                                    onValueChange={setDarkMode}
-                                    trackColor={{ false: '#334155', true: '#3B82F6' }}
-                                    thumbColor="#fff"
-                                />
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Text style={{ color: '#475569', fontSize: 13 }}>{darkMode ? 'On' : 'Off'}</Text>
+                                <Switch value={darkMode} onValueChange={setDarkMode}
+                                    trackColor={{ false: '#334155', true: '#3B82F6' }} thumbColor="#fff" />
                             </View>
                         </View>
                     </View>
 
+                    {/* Admin Panel — shows current email + admin status for debugging */}
+                    {isAdmin ? (
+                        <View style={{ paddingHorizontal: 24, paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' }}>
+                            <TouchableOpacity
+                                onPress={() => { onClose(); onNavigateAdmin?.(); }}
+                                style={{
+                                    flexDirection: 'row', alignItems: 'center', gap: 12,
+                                    paddingHorizontal: 16, paddingVertical: 14,
+                                    borderRadius: 14,
+                                    backgroundColor: 'rgba(129,140,248,0.1)',
+                                    borderWidth: 1, borderColor: 'rgba(129,140,248,0.25)',
+                                }}
+                            >
+                                <Shield size={18} color="#818CF8" />
+                                <Text style={{ color: '#818CF8', fontWeight: '800', fontSize: 14, flex: 1 }}>관리자 패널 (카드뉴스 관리)</Text>
+                                <ChevronRight size={16} color="#818CF8" />
+                            </TouchableOpacity>
+                        </View>
+                    ) : null}
+
                     {/* Logout */}
-                    <View className="px-6 py-4 border-t border-white/5">
-                        <TouchableOpacity
-                            onPress={signOut}
-                            className="w-full py-4 rounded-2xl items-center justify-center border border-red-500/20 bg-red-500/5"
-                        >
-                            <Text className="text-red-400 font-bold text-sm">로그아웃</Text>
+                    <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' }}>
+                        <TouchableOpacity onPress={signOut} style={{
+                            width: '100%', paddingVertical: 16,
+                            borderRadius: 16, alignItems: 'center',
+                            borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
+                            backgroundColor: 'rgba(239,68,68,0.07)',
+                        }}>
+                            <Text style={{ color: '#EF4444', fontWeight: '800', fontSize: 14 }}>로그아웃</Text>
                         </TouchableOpacity>
                     </View>
                 </ScrollView>
@@ -109,4 +162,3 @@ export const SettingsModal = ({ visible, onClose }: SettingsModalProps) => {
         </View>
     );
 };
-

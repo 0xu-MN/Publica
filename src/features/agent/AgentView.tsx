@@ -1194,20 +1194,67 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                         }).join('\n\n');
                                     }
 
-                                    // 2. AI 초안 생성 호출 (PSST 포맷)
-                                    setTransitionStep('AI가 정교한 사업계획서 초완을 작성 중입니다 (약 10초)...');
-                                    const draftRes = await supabase.functions.invoke('insight-agent-gateway', {
-                                        body: {
-                                            userMessage: "위의 브레인스톰 데이터를 바탕으로, PSST 기반 정부지원사업계획서 초안을 작성해주세요. 각 섹션(문제인식, 해결방안, 성장전략, 팀구성 등)별로 나누어 구체적으로 작성하며, 반드시 HTML 태그(<h1>, <h2>, <p>) 형식으로 포맷팅하여 반환해주세요.",
-                                            branchLabel: projectTitle || '새 프로젝트',
-                                            branchDescription: compiledMarkdown,
-                                            chatHistory: [],
-                                            mode: 'editor-assist',
-                                        },
+                                    // 2. Build draft HTML using AI (Gemini Direct REST API)
+                                    setTransitionStep('AI가 브레인스톰 데이터를 바탕으로 사업계획서 초안을 작성하고 있습니다... (약 10초)');
+                                    
+                                    const docTitle = projectTitle.trim() || pendingGrantTitle || '사업계획서';
+                                    let aiDraftHtml = `<h1>${docTitle}</h1><p>초안 생성에 실패했습니다. 내용을 직접 작성해주세요.</p>`;
+                                    
+                                    let branchCount = 0;
+                                    const allBranches: any[] = [];
+                                    columns.forEach((col: any) => {
+                                        if (col.branches) {
+                                            allBranches.push(...col.branches.filter((b: any) => b.type !== 'root'));
+                                            branchCount += col.branches.length;
+                                        }
                                     });
 
-                                    let aiDraftHtml = draftRes.data?.response || draftRes.data?.analysis?.summary || '';
-                                    aiDraftHtml = aiDraftHtml.replace(/```html/g, '').replace(/```/g, '').trim();
+                                    if (allBranches.length > 0) {
+                                        try {
+                                            const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+                                            if (!geminiKey) throw new Error("GEMINI_API_KEY가 없습니다.");
+
+                                            const brainstormText = allBranches.map(b => `[${b.label}]\n${b.description || '내용 없음'}`).join('\n\n');
+                                            
+                                            const systemPrompt = `당신은 대한민국 최고 수준의 공공/정부지원사업 사업계획서 대필 전문가(AI 에이전트)입니다.
+사용자가 제공한 [브레인스톰 내용]을 바탕으로, 각 항목에 전문적인 살을 붙여 정식 사업계획서 본문(초안)을 작성해주세요.
+
+**[매우 중요한 지시사항]**
+1. 반드시 HTML 형식으로만 출력하세요. (Markdown 불가) 허용 태그: <h1>, <h2>, <h3>, <p>, <strong>, <ul>, <ol>, <li>, <table>, <thead>, <tbody>, <tr>, <th>, <td>.
+2. 경쟁사와 비교, 일정, 예산 계획, 기대효과 등 구조화가 필요한 부분은 **반드시 <table> 태그를 사용하여 깔끔한 표(Table)로 시각화** 하세요. (예: 추진 일정표, 예산 소요 계획표 등)
+3. 문체는 '명사형 맺음(~함, ~임, ~구축 계획임)' 또는 '정중한 비즈니스 경어(~합니다)'로 일관성 있게 작성하세요.
+4. 내용이 부실한 브레인스톰 항목이 있더라도, 주제를 추론하여 그럴듯한 기대효과나 전략을 **스스로 창작하여 덧붙여주세요**.
+5. 내용 없이 "작성해주세요"만 있는 부분도 AI가 직접 가상의(하지만 논리적인) 사업 내용을 지어내서라도 풍성하게 작성하세요.
+\n\n[브레인스톰 내용]\n${brainstormText}`;
+
+                                            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+                                                    generationConfig: { temperature: 0.7 }
+                                                })
+                                            });
+
+                                            const data = await response.json();
+                                            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                                                let text = data.candidates[0].content.parts[0].text;
+                                                text = text.replace(/```html\s*/g, '').replace(/```\s*$/g, '').trim();
+                                                aiDraftHtml = text;
+                                            } else {
+                                                throw new Error("Gemini API error");
+                                            }
+                                        } catch (apiError) {
+                                            console.error("AgentView Gemini API Error:", apiError);
+                                            // Fallback
+                                            aiDraftHtml = `<h1>${docTitle}</h1><p>AI 초안 작성 중 오류가 발생했습니다. 브레인스톰 내용만 단순 복사했습니다.</p>`;
+                                            allBranches.forEach(b => {
+                                                aiDraftHtml += `<h2>${b.label}</h2><p>${b.description || ''}</p>`;
+                                            });
+                                        }
+                                    }
+                                    
+                                    console.log('📝 Flow→Edit: Built draft from', branchCount, 'branches, HTML length:', aiDraftHtml.length);
 
                                     // 3. 현재 세션 저장 (초안 포함)
                                     setTransitionStep('에디터 세션을 동기화하고 있습니다...');

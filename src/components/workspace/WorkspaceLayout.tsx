@@ -22,6 +22,7 @@ import { GrantList } from '../../screens/GrantList';
 import { NexusEditView } from '../../features/agent/NexusEditView';
 import { MyProjectsView } from './views/MyProjectsView';
 import { PricingPage } from './views/PricingPage';
+import { AdminScreen } from '../../screens/AdminScreen';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
@@ -313,9 +314,11 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
             case 'settings':
                 return (
                     <View className="flex-1">
-                        <SettingsModal visible={true} onClose={() => setActiveTab('home')} />
+                        <SettingsModal visible={true} onClose={() => setActiveTab('home')} onNavigateAdmin={() => setActiveTab('admin')} />
                     </View>
                 );
+            case 'admin':
+                return <AdminScreen />;
             case 'pricing':
                 return (
                     <PricingPage

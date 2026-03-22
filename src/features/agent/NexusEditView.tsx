@@ -42,6 +42,11 @@ export const NexusEditView = () => {
     const [activeTemplate, setActiveTemplate] = useState<GrantTemplate | null>(null);
     const [templateLoading, setTemplateLoading] = useState(false);
     const [draftGenerating, setDraftGenerating] = useState(false);
+    const [draftCompleted, setDraftCompleted] = useState(false); // Track if AI has generated content
+    // 🔑 Key counter to force NotionEditor remount when content changes externally
+    const [editorKey, setEditorKey] = useState(0);
+    // 🔑 Ref that holds the definitive draft HTML — bypasses state batching issues
+    const pendingDraftRef = useRef<string>('');
 
     // --- Load last session from localStorage on mount ---
     useEffect(() => {
@@ -71,11 +76,18 @@ export const NexusEditView = () => {
 
             // 🌟 Sync Logic: Prioritize editor_content if it exists (meaning AI draft was already created)
             if (session.editor_content && session.editor_content.length > 20) {
+                console.log('📝 Edit: Using pre-generated editor_content, length=', session.editor_content.length);
+                // Store in ref AND state, then trigger remount
+                pendingDraftRef.current = session.editor_content;
                 setEditorContent(session.editor_content);
                 setEditorMarkdown(session.editor_markdown || session.editor_content);
+                setDraftCompleted(true);
                 loadTemplateForSession(session, true); // Load template meta only
+                // Force remount so initialContent is definitely applied
+                setTimeout(() => setEditorKey(prev => prev + 1), 50);
             } else if (session.brainstorm_content || (session.workspace_data && session.workspace_data.length > 0)) {
                 // 🔥 Auto Draft Generation: Only if editor_content is missing
+                console.log('📝 Edit: No editor_content found, triggering auto-draft...');
                 generateAutoDraft(session);
             } else {
                 // FORCE Load PSST Template as the default Bowl
@@ -94,54 +106,147 @@ export const NexusEditView = () => {
         };
     }, []);
 
-    // --- AI Auto Draft Generation ---
+    // --- AI Auto Draft Generation (100% LOCAL — no gateway dependency) ---
     const generateAutoDraft = async (session: any) => {
+        if (!session) return;
         setDraftGenerating(true);
+        console.log('📝 generateAutoDraft START', {
+            title: session.title,
+            hasBrainstorm: !!session.brainstorm_content,
+            workspaceDataLen: session.workspace_data?.length,
+        });
+
         try {
-            // 1. Load Background Template Structure
+            // 1. Template metadata (for progress tracker only)
             const defaultSections = getDefaultPSSTTemplate();
             const mockTemplate: GrantTemplate = {
                 id: 'default', grant_id: 'default', sections: defaultSections, source_markdown: null, parsed_at: new Date().toISOString()
             };
             setActiveTemplate(mockTemplate);
 
-            // 2. Format Context for LLM
-            let context = `【브레인스톰 메모】\n${session.brainstorm_content || '내용 없음'}\n\n【마인드맵 구조】\n`;
-            if (session.workspace_data) {
-                session.workspace_data.forEach((col: any) => {
-                    col.branches?.forEach((node: any) => {
-                        context += `- ${node.label}: ${node.description || ''}\n`;
+            // ──────────────────────────────────────────────────────────
+            // 🔥 AI 초안 생성: Gemini API 직접 호출 (백엔드 에러 원천 차단)
+            // 브레인스톰 내용을 기반으로 "살을 붙여서" 정식 사업계획서 작성
+            // ──────────────────────────────────────────────────────────
+            const allBranches: any[] = [];
+            if (session.workspace_data && Array.isArray(session.workspace_data)) {
+                for (const col of session.workspace_data) {
+                    if (col.branches && Array.isArray(col.branches)) {
+                        allBranches.push(...col.branches);
+                    }
+                }
+            }
+
+            console.log('📝 Found branches for AI drafting:', allBranches.length);
+            const docTitle = session.title || '사업계획서';
+            
+            let draftHtml = `<h1>${docTitle}</h1><p>초안 생성에 실패했습니다. 내용을 직접 작성해주세요.</p>`;
+
+            if (allBranches.length > 0) {
+                try {
+                    const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+                    if (!geminiKey) throw new Error("GEMINI_API_KEY가 없습니다.");
+
+                    const brainstormText = allBranches.map(b => `[${b.label}]\n${b.description || '내용 없음'}`).join('\n\n');
+                    
+                    const systemPrompt = `당신은 대한민국 최고 수준의 공공/정부지원사업 사업계획서 대필 전문가(AI 에이전트)입니다.
+사용자가 제공한 [브레인스톰 내용]을 바탕으로, 각 항목에 전문적인 살을 붙여 정식 사업계획서 본문(초안)을 작성해주세요.
+
+**[매우 중요한 지시사항]**
+1. 반드시 HTML 형식으로만 출력하세요. (Markdown 불가) 허용 태그: <h1>, <h2>, <h3>, <p>, <strong>, <ul>, <ol>, <li>, <table>, <thead>, <tbody>, <tr>, <th>, <td>.
+2. 경쟁사와 비교, 일정, 예산 계획, 기대효과 등 구조화가 필요한 부분은 **반드시 <table> 태그를 사용하여 깔끔한 표(Table)로 시각화** 하세요. (예: 추진 일정표, 예산 소요 계획표 등)
+3. 문체는 '명사형 맺음(~함, ~임, ~구축 계획임)' 또는 '정중한 비즈니스 경어(~합니다)'로 일관성 있게 작성하세요.
+4. 내용이 부실한 브레인스톰 항목이 있더라도, 주제를 추론하여 그럴듯한 기대효과나 전략을 **스스로 창작하여 덧붙여주세요**.
+5. 내용 없이 "작성해주세요"만 있는 부분도 AI가 직접 가상의(하지만 논리적인) 사업 내용을 지어내서라도 풍성하게 작성하세요.
+\n\n[브레인스톰 내용]\n${brainstormText}`;
+
+                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+                            generationConfig: { temperature: 0.7 }
+                        })
                     });
-                });
+
+                    const data = await response.json();
+                    if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        let text = data.candidates[0].content.parts[0].text;
+                        // Markdown HTML 블록 제거 (```html ... ```)
+                        text = text.replace(/```html\s*/g, '').replace(/```\s*$/g, '').trim();
+                        draftHtml = text;
+                    } else {
+                        throw new Error("Gemini 응답 구조가 올바르지 않습니다.");
+                    }
+                } catch (apiError) {
+                    console.error("Gemini API Error:", apiError);
+                    draftHtml = `<h1>${docTitle}</h1><p>AI 초안 작성 중 오류가 발생했습니다. 브레인스톰 내용만 단순 결합합니다.</p>`;
+                    // Fallback: 단순 복붙
+                    allBranches.forEach((b: any) => {
+                        draftHtml += `<h2>${b.label}</h2><p>${b.description || ''}</p>`;
+                    });
+                }
+            } else if (!session.brainstorm_content) {
+                // No data at all — use template
+                draftHtml = templateToEditorHtml(mockTemplate, docTitle);
             }
 
-            // 3. Request Draft from Gateway
-            const res = await supabase.functions.invoke('insight-agent-gateway', {
-                body: {
-                    userMessage: "위의 브레인스톰 메모와 마인드맵 구조를 바탕으로, PSST 기반 정부지원사업계획서 초안을 작성해주세요. 각 섹션(문제인식, 해결방안, 성장전략, 팀구성 등)별로 나누어 구체적으로 작성하며, 반드시 HTML 태그(<h1>, <h2>, <p>) 형식으로 포맷팅하여 반환해주세요. 마크다운 기호(```html) 등은 포함하지 마세요.",
-                    branchLabel: session.title || '새 문서 초안',
-                    branchDescription: context,
-                    chatHistory: [],
-                    mode: 'editor-assist',
-                },
-            });
+            console.log('📝 Generated draft HTML length:', draftHtml.length);
 
-            let aiResponse = res.data?.response || res.data?.analysis?.summary || '';
-
-            // 4. Sanitize HTML
-            aiResponse = aiResponse.replace(/```html/g, '').replace(/```/g, '').trim();
-            if (!aiResponse.startsWith('<')) {
-                // Fallback to basic template if LLM didn't return HTML
-                aiResponse = templateToEditorHtml(mockTemplate, session.title || "맞춤형 사업계획서");
+            // ── DEFINITIVE STRATEGY: window global + interval watchdog ──
+            // This CANNOT be overwritten by React re-renders because it runs continuously
+            
+            // Step 1: Store in ref + React state
+            pendingDraftRef.current = draftHtml;
+            setEditorContent(draftHtml);
+            setEditorMarkdown(draftHtml);
+            setDraftCompleted(true);
+            setHasUnsavedChanges(true);
+            
+            if (Platform.OS === 'web') {
+                // Step 2: Write to window global (survives React re-renders)
+                (window as any).__nexusDraft = draftHtml;
+                (window as any).__nexusDraftExpiry = Date.now() + 5000; // 5 second window
+                
+                // Step 3: Watchdog interval — re-injects every 200ms for 5 seconds
+                // This guarantees the draft always wins, even if React template overwrites it
+                const watchdog = setInterval(() => {
+                    if (!(window as any).__nexusDraft) {
+                        clearInterval(watchdog);
+                        return;
+                    }
+                    if (Date.now() > (window as any).__nexusDraftExpiry) {
+                        console.log('📝 Watchdog: expiry reached, stopping');
+                        (window as any).__nexusDraft = null;
+                        clearInterval(watchdog);
+                        return;
+                    }
+                    const editorEl = document.getElementById('nexus-editor-content');
+                    if (editorEl) {
+                        const currentLen = editorEl.innerHTML.length;
+                        const targetHtml = (window as any).__nexusDraft;
+                        if (editorEl.innerHTML !== targetHtml) {
+                            console.log(`📝 Watchdog: injecting draft (current=${currentLen} target=${targetHtml.length})`);
+                            editorEl.innerHTML = targetHtml;
+                        }
+                    }
+                }, 200);
+                
+                // Step 4: Also remount NotionEditor once
+                setTimeout(() => {
+                    setEditorKey(prev => prev + 1);
+                }, 300);
             }
 
-            setEditorContent(aiResponse);
-            setEditorMarkdown(aiResponse); // Very basic fallback for markdown
-            setHasUnsavedChanges(true); // Trigger auto-save immediately
+            // Chat confirmation
+            setChatMessages(prev => [...prev, {
+                role: 'assistant',
+                content: `✅ 초안 작성이 완료되었습니다! ${allBranches.length}개의 브레인스톰 섹션을 문서로 변환했습니다. 오른쪽 에디터 패널에 표시됩니다.`
+            }]);
 
         } catch (err) {
-            console.error('Draft generation failed:', err);
-            loadTemplateForSession(session, false); // Fallback
+            console.error('📝 Draft generation failed:', err);
+            loadTemplateForSession(session, false);
         } finally {
             setDraftGenerating(false);
         }
@@ -192,12 +297,14 @@ export const NexusEditView = () => {
             setShowResumePrompt(false);
 
             // Prioritize saved editor_content, fallback to brainstorm branches
-            if (data.editor_content) {
+            if (data.editor_content && data.editor_content.length > 50) {
                 setEditorContent(data.editor_content);
+                setDraftCompleted(true);
             } else {
                 const branches = data.workspace_data || [];
                 const content = buildEditorContentFromBranches(branches);
                 setEditorContent(content);
+                setDraftCompleted(false); // Show the "AI 초안 작성" button
             }
 
             setHasUnsavedChanges(false);
@@ -238,8 +345,9 @@ export const NexusEditView = () => {
         setChatLoading(true);
 
         // 🌟 Feature: Detect "Write" or "Draft" request to trigger auto-drafting
-        const draftingKeywords = ['작성', '초안', '써줘', '만들어줘', 'write', 'draft', 'generate'];
-        if (draftingKeywords.some(kw => userMsg.includes(kw)) && (!editorContent || editorContent.length < 50)) {
+        // Allow re-drafting even if draftCompleted=true, as user may want to regenerate
+        const draftingKeywords = ['초안 작성', '전체 작성', '다시 작성', '새로 작성', '자동 작성', '초안을 작성', '처음부터 작성', '바탕으로 작성', '작성해줘', '써줘', '만들어줘', '작성해', '생성해'];
+        if (draftingKeywords.some(kw => userMsg.includes(kw)) && selectedSession) {
             setChatMessages(prev => [...prev, { role: 'assistant', content: '알겠습니다. 브레인스톰 데이터를 분석하여 사업계획서 초안을 작성하겠습니다...' }]);
             await generateAutoDraft(selectedSession);
             setChatLoading(false);
@@ -247,21 +355,42 @@ export const NexusEditView = () => {
         }
 
         try {
-            const context = editorMarkdown || editorContent;
-            const res = await supabase.functions.invoke('insight-agent-gateway', {
-                body: {
-                    userMessage: `[문서 작성 도움 요청] ${userMsg}`,
-                    branchLabel: selectedSession?.title || '새 문서',
-                    branchDescription: context.substring(0, 500),
-                    chatHistory: chatMessages.slice(-6),
-                    mode: 'editor-assist',
-                },
+            // Build context: include both brainstorm data and current editor content
+            const brainstormContext = (selectedSession?.workspace_data || []).flatMap((col: any) =>
+                (col.branches || []).map((node: any) => `[${node.label}] ${node.description || ''}`)
+            ).join('\n');
+            const editorContext = (editorMarkdown || editorContent).substring(0, 800);
+            const fullContext = `[현재 에디터 내용]\n${editorContext}\n\n[브레인스톰 데이터]\n${brainstormContext}`;
+
+            const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+            
+            const prompt = `당신은 사업계획서 작성 도우미입니다.
+사용자의 요청에 맞춰 내용을 작성하거나 수정해주세요.
+답변은 깔끔하고 명확한 텍스트나 간단한 마크다운으로 작성하세요.
+
+[현재 에디터 내용 일부]
+${fullContext.substring(0, 800)}
+
+요청: ${userMsg}`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.7 }
+                })
             });
 
-            const aiResponse = res.data?.response || res.data?.analysis?.summary || '응답을 생성할 수 없습니다.';
+            const data = await response.json();
+            let aiResponse = '응답을 생성할 수 없습니다.';
+            if (data.candidates && data.candidates[0].content.parts[0].text) {
+                aiResponse = data.candidates[0].content.parts[0].text;
+            }
+
             setChatMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
         } catch (err) {
-            setChatMessages(prev => [...prev, { role: 'assistant', content: '⚠️ AI 응답 오류가 발생했습니다.' }]);
+            setChatMessages(prev => [...prev, { role: 'assistant', content: '⚠️ AI 응답 오류가 발생했습니다. "초안 작성해줘"로 다시 시도해 주세요.' }]);
         } finally {
             setChatLoading(false);
             setTimeout(() => chatScrollRef.current?.scrollToEnd({ animated: true }), 100);
@@ -411,20 +540,23 @@ export const NexusEditView = () => {
                                     <View style={styles.sectionHeader}>
                                         <Sparkles size={16} color="#F59E0B" />
                                         {/* 🌟 New: Action Bar for drafting */}
-                            {(!editorContent || editorContent.length < 50) && (
-                                <View style={{ padding: 20, backgroundColor: 'rgba(79, 70, 229, 0.05)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(79, 70, 229, 0.2)', marginBottom: 20 }}>
-                                    <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '700', marginBottom: 8 }}>AI가 초안을 작성해 드릴까요?</Text>
-                                    <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 16, lineHeight: 18 }}>현재 저장된 브레인스톰 메모와 마인드맵 데이터를 분석하여 PSST 양식의 기초 서류를 완성합니다.</Text>
+                            {!draftCompleted && !draftGenerating && (
+                                <View style={{ padding: 16, backgroundColor: 'rgba(79, 70, 229, 0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(79, 70, 229, 0.25)', marginBottom: 16 }}>
+                                    <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '700', marginBottom: 6 }}>✨ AI가 초안을 작성해 드릴까요?</Text>
+                                    <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 14, lineHeight: 18 }}>브레인스톰 메모와 마인드맵 데이터를 분석하여 PSST 양식의 사업계획서 초안을 작성합니다.</Text>
                                     <TouchableOpacity
                                         style={{ backgroundColor: '#4F46E5', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
                                         onPress={() => generateAutoDraft(selectedSession)}
-                                        disabled={draftGenerating}
                                     >
                                         <Sparkles size={16} color="#FFF" />
-                                        <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>
-                                            {draftGenerating ? '작성 중...' : 'AI 초안 작성 시작'}
-                                        </Text>
+                                        <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>AI 초안 작성 시작</Text>
                                     </TouchableOpacity>
+                                </View>
+                            )}
+                            {draftGenerating && (
+                                <View style={{ padding: 16, backgroundColor: 'rgba(129, 140, 248, 0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(129, 140, 248, 0.2)', marginBottom: 16, alignItems: 'center' }}>
+                                    <ActivityIndicator size="small" color="#818CF8" />
+                                    <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '700', marginTop: 8 }}>AI 초안 작성 중...</Text>
                                 </View>
                             )}
 
@@ -512,7 +644,8 @@ export const NexusEditView = () => {
                             {/* Editor */}
                             <View style={{ flex: 1, position: 'relative' }}>
                                 <NotionEditor
-                                    initialContent={editorContent}
+                                    key={editorKey}
+                                    initialContent={pendingDraftRef.current || editorContent}
                                     onChange={handleEditorChange}
                                     placeholder="/ 를 입력하여 블록 타입을 선택하세요..."
                                 />

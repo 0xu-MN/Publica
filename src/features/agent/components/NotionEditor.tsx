@@ -62,17 +62,24 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
     const [charCount, setCharCount] = useState(0);
     const [activeSlashIdx, setActiveSlashIdx] = useState(0);
 
-    // Initialize with content
+    const lastAppliedContent = useRef<string>('');
+    const mountedRef = useRef(false); // Only apply initialContent once per mount
+
+    // Initialize content exactly once when first non-empty initialContent arrives
     useEffect(() => {
-        if (editorRef.current && initialContent) {
-            // Only update if current editor is empty or basically empty
-            // This prevents overwriting user's active typing
-            const currentHtml = editorRef.current.innerHTML;
-            if (!currentHtml || currentHtml === '<p><br></p>' || currentHtml === '<p><br/></p>' || initialContent.length > currentHtml.length + 10) {
-                editorRef.current.innerHTML = initialContent;
-                setIsEmpty(false);
-                handleContentChange();
-            }
+        if (!editorRef.current) return;
+        if (mountedRef.current) {
+            // Already initialized — only allow updates if content completely changed
+            // (i.e., via key prop remount which resets mountedRef)
+            return;
+        }
+        if (initialContent && initialContent !== lastAppliedContent.current) {
+            console.log('📝 NotionEditor: First mount applying content, length=', initialContent.length);
+            editorRef.current.innerHTML = initialContent;
+            lastAppliedContent.current = initialContent;
+            mountedRef.current = true;
+            setIsEmpty(false);
+            handleContentChange();
         }
     }, [initialContent]);
 
@@ -524,6 +531,7 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
             <ScrollView style={styles.scrollArea} contentContainerStyle={{ flexGrow: 1 }}>
                 <div
                     ref={editorRef}
+                    id="nexus-editor-content"
                     contentEditable
                     suppressContentEditableWarning
                     onInput={handleInput}
@@ -590,6 +598,42 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                 .notion-editor h2 {
                     font-size: 24px; font-weight: 700; color: #E2E8F0;
                     margin: 22px 0 8px; line-height: 1.3; letter-spacing: -0.3px;
+                }
+
+                /* ─── Tables (Premium Dark Theme) ─── */
+                .notion-editor table {
+                    width: 100%;
+                    border-collapse: separate;
+                    border-spacing: 0;
+                    margin: 24px 0;
+                    font-size: 14px;
+                    border-radius: 12px;
+                    overflow: hidden;
+                    border: 1px solid #334155;
+                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                }
+                .notion-editor th {
+                    background-color: #1E293B;
+                    color: #F8FAFC;
+                    font-weight: 700;
+                    text-align: left;
+                    padding: 14px 16px;
+                    border-bottom: 2px solid #475569;
+                    letter-spacing: -0.02em;
+                }
+                .notion-editor td {
+                    background-color: #0F172A;
+                    color: #CBD5E1;
+                    padding: 14px 16px;
+                    border-bottom: 1px solid #1E293B;
+                    vertical-align: top;
+                    line-height: 1.5;
+                }
+                .notion-editor tr:last-child td {
+                    border-bottom: none;
+                }
+                .notion-editor tr:hover td {
+                    background-color: #162032;
                 }
                 .notion-editor h3 {
                     font-size: 18px; font-weight: 700; color: #CBD5E1;
