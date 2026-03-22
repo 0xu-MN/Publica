@@ -1,0 +1,1114 @@
+commit 27b3354bc1a2244e98468d64ad62ed362e632ac4
+Author: 0xu-MN <hong56800@gmail.com>
+Date:   Sun Mar 22 16:27:40 2026 +0900
+
+    feat(nexus-edit): Implement DOCX auto-mapping engine and UI integration
+
+diff --git a/server/main.py b/server/main.py
+index 87a1c8c..03dd5e8 100644
+--- a/server/main.py
++++ b/server/main.py
+@@ -7,7 +7,7 @@ import os
+ import tempfile
+ import zipfile
+ import shutil
+-from fastapi import FastAPI, UploadFile, File, Form
++from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
+ from fastapi.middleware.cors import CORSMiddleware
+ from fastapi.responses import JSONResponse, FileResponse
+ from pydantic import BaseModel
+@@ -17,6 +17,8 @@ try:
+ except ImportError:
+     pass
+ 
++import docx_mapper
++
+ app = FastAPI(title="InsightFlow PDF Parser")
+ 
+ app.add_middleware(
+@@ -556,4 +558,45 @@ async def process_hwpx(
+     except Exception as e:
+         return JSONResponse(status_code=500, content={"error": str(e)})
+     finally:
+-        shutil.rmtree(temp_dir)
+\ No newline at end of file
++        shutil.rmtree(temp_dir)
++
++@app.post("/api/autofill-docx")
++async def process_docx(
++    background_tasks: BackgroundTasks,
++    file: UploadFile = File(...),
++    payload: str = Form("{}")
++):
++    """
++    1. Receives a .docx template and AI generated payload.
++    2. Runs the mapping algorithm via docx_mapper.py.
++    3. Returns the perfectly structured and filled .docx file.
++    """
++    if not file.filename.endswith('.docx'):
++        return JSONResponse(status_code=400, content={"error": "Only .docx files are supported here"})
++
++    temp_dir = tempfile.mkdtemp()
++    input_path = os.path.join(temp_dir, "input.docx")
++    output_path = os.path.join(temp_dir, "output.docx")
++
++    try:
++        content = await file.read()
++        with open(input_path, "wb") as f:
++            f.write(content)
++
++        # Execute Document Auto-Mapping
++        success = docx_mapper.fill_docx_template(input_path, payload, output_path)
++        
++        if not success:
++            return JSONResponse(status_code=500, content={"error": "Failed to map docx file. Check server logs."})
++
++        # Return the built docx file and clean up background temp files
++        background_tasks.add_task(shutil.rmtree, temp_dir, ignore_errors=True)
++        return FileResponse(
++            output_path, 
++            filename=f"filled_{file.filename}", 
++            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
++        )
++        
++    except Exception as e:
++        shutil.rmtree(temp_dir, ignore_errors=True)
++        return JSONResponse(status_code=500, content={"error": str(e)})
+\ No newline at end of file
+
+commit 7356e315cbc1108180805ae5f5d29a6d77ec15a8
+Author: 0xu-MN <hong56800@gmail.com>
+Date:   Sun Mar 22 16:11:48 2026 +0900
+
+    feat(hwpx): Merge HWPX endpoint into primary python server and update dependencies
+
+diff --git a/server/main.py b/server/main.py
+index 71127f1..87a1c8c 100644
+--- a/server/main.py
++++ b/server/main.py
+@@ -3,10 +3,19 @@ import fitz
+ import pdfplumber
+ import re
+ import math
+-from fastapi import FastAPI, UploadFile, File
++import os
++import tempfile
++import zipfile
++import shutil
++from fastapi import FastAPI, UploadFile, File, Form
+ from fastapi.middleware.cors import CORSMiddleware
++from fastapi.responses import JSONResponse, FileResponse
+ from pydantic import BaseModel
+ from typing import List, Optional
++try:
++    from lxml import etree
++except ImportError:
++    pass
+ 
+ app = FastAPI(title="InsightFlow PDF Parser")
+ 
+@@ -490,4 +499,61 @@ async def parse_pdf(file: UploadFile = File(...)):
+ 
+ @app.get("/health")
+ def health():
+-    return {"status": "ok"}
+\ No newline at end of file
++    return {"status": "ok"}
++
++@app.post("/api/upload-hwpx")
++async def process_hwpx(
++    file: UploadFile = File(...),
++    payload: str = Form("{}")
++):
++    """
++    1. Receives a .hwpx file and AI generated payload.
++    2. Unzips the .hwpx (which is just a zip of XMLs).
++    3. Parses Contents/section0.xml.
++    4. (Future) Maps payload into the XML tables.
++    5. Zips it back and returns the file.
++    """
++    if not file.filename.endswith('.hwpx'):
++        return JSONResponse(status_code=400, content={"error": "Only .hwpx files are supported"})
++
++    temp_dir = tempfile.mkdtemp()
++    input_path = os.path.join(temp_dir, "input.hwpx")
++    extract_dir = os.path.join(temp_dir, "extracted")
++    output_path = os.path.join(temp_dir, "output.hwpx")
++
++    try:
++        content = await file.read()
++        with open(input_path, "wb") as f:
++            f.write(content)
++
++        with zipfile.ZipFile(input_path, 'r') as zip_ref:
++            zip_ref.extractall(extract_dir)
++        
++        section0_path = os.path.join(extract_dir, 'Contents', 'section0.xml')
++        has_section0 = os.path.exists(section0_path)
++        
++        preview_text = "No section0.xml found"
++        if has_section0:
++            with open(section0_path, 'r', encoding='utf-8') as f:
++                xml_content = f.read()
++            preview_text = xml_content[:200]
++
++        # For PoC: Just re-zip it exactly as is
++        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zip_out:
++            for root, _, files in os.walk(extract_dir):
++                for f_name in files:
++                    file_path = os.path.join(root, f_name)
++                    arcname = os.path.relpath(file_path, extract_dir)
++                    zip_out.write(file_path, arcname)
++
++        return {
++            "status": "success",
++            "message": "HWPX successfully extracted and inspected in Primary Server",
++            "section0_preview": preview_text,
++            "payload_received": payload
++        }
++        
++    except Exception as e:
++        return JSONResponse(status_code=500, content={"error": str(e)})
++    finally:
++        shutil.rmtree(temp_dir)
+\ No newline at end of file
+
+commit 5eb6f6158079e071c52a80f97db7b09be5e599f1
+Author: 0xu-MN <hong56800@gmail.com>
+Date:   Tue Feb 24 13:16:04 2026 +0900
+
+    Fix AI Context Engine and Sparkle Coordinates
+    
+    - Refactored processPageBlocks and onSparkle to aggregate exact paragraph blocks using sectionTextAccumulator. AI Explainer now receives surgically precise context instead of 4000-char full-page dumps.
+    - Fortified PyMuPDF search_for with ligature replacers and regex numeric prefix strippers to locate academic logical titles (e.g., '2. Materials' vs '2 Materials') which fixes identical Sparkles falling back to x=0, y=0.
+    - Re-tightened Government document L1 L2 title Lintel to reject standard bullet points.
+
+diff --git a/server/main.py b/server/main.py
+index 53ecb14..71127f1 100644
+--- a/server/main.py
++++ b/server/main.py
+@@ -1,3 +1,5 @@
++import io
++import fitz
+ import pdfplumber
+ import re
+ import math
+@@ -38,7 +40,9 @@ def get_body_font_size(words):
+     freq = {}
+     for w in words:
+         size = round(w['size'] * 2) / 2
+-        freq[size] = freq.get(size, 0) + 1
++        # 글자 수만큼 가중치를 부여하여, 잘게 쪼개진 작은 표 숫자들이 본문 크기를 왜곡하지 않도록 방지
++        weight = len(w.get('text', 'a'))
++        freq[size] = freq.get(size, 0) + weight
+     return max(freq.items(), key=lambda x: x[1])[0]
+ 
+ def group_by_line(words, y_tolerance=4, x_tolerance=10):
+@@ -92,6 +96,12 @@ def group_by_line(words, y_tolerance=4, x_tolerance=10):
+             })
+     return grouped
+ 
++def is_bold(fontname):
++    if not fontname: return False
++    name_lower = fontname.lower()
++    # HWP PDF 변환 시 'hdr' (header) 폰트가 대제목으로 쓰이는 경우가 많음
++    return any(w in name_lower for w in ['bold', 'heavy', 'black', 'godic', '고딕', 'hdr'])
++
+ def parse_section_number(text):
+     first_word = text.split(' ')[0].rstrip('.')
+     m = re.match(r'^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2})$', first_word)
+@@ -111,12 +121,31 @@ def determine_level(group, body_size):
+     if "et al." in text.lower():
+         return 0, group['text']
+ 
++    # ── 0. 명백한 본문/불릿 기호 거르기 (절대 제목이 될 수 없음) ──────────────────────
++    if re.match(r'^[\-◦•※\*]\s', text) or re.match(r'^[-◦•※\*]$', text):
++        return 0, group['text']
++    # 원문자(①, ②, ⓐ, ㉮ 등)로 시작하는 항목은 대개 세부 지시사항이거나 본문 리스트임
++    if re.match(r'^[①-⑳ⓐ-ⓩ㉠-㉾]', text):
++        return 0, group['text']
++
+     # ── 1. 명백한 비제목 패턴 제거 ──────────────────────────────────────────
+ 
+     # 표/그림 캡션 제외
+     if re.search(r'^(표|그림|table|figure|fig\.?|ref\.?)\s*[\d\[\(]', text, re.IGNORECASE):
+         return 0, group['text']
+ 
++    # 폰트 기반 크기/굵기 확인
++    is_large = group['size'] > body_size * 1.15
++    is_very_large = group['size'] > body_size * 1.3
++    group_is_bold = is_bold(group.get('fontname', ''))
++
++    # ✅ 새로운 FIX: 참고문헌(References) 가짜 제목 필터링
++    # 번호로 시작하지만, 본문 크기이고 굵지 않으며, 길이가 제법 길면 참고문헌 의심
++    if not is_large and not group_is_bold and len(text) > 30:
++        # 연도, 페이지, vol, 또는 전형적인 서지사항 저자 이름 패턴 (& Name, Name Initial)
++        if re.search(r'\(\d{4}\)|vol\.|pp\.|[A-Z][a-z]+\s+[A-Z]\.?\s*\&|&\s*[A-Z][a-z]+', text):
++             return 0, group['text']
++
+     # ✅ FIX: 문장 종결 패턴 — 번호+점으로 끝나는 경우는 제외해야 함
+     # "2.2." 같은 번호는 마침표로 끝나지만 제목임
+     # 진짜 문장만 걸러냄: 한국어 종결어미 또는 콤마/세미콜론으로 끝나는 경우
+@@ -135,6 +164,9 @@ def determine_level(group, body_size):
+     is_korean_box = text.startswith('□') or text.startswith('■') or text.startswith('▣') or text.startswith('▶')
+     if is_korean_box:
+         rest = re.sub(r'^[□■▣▶]\s*', '', text).strip()
++        # 폰트 크기가 충분히 크지 않은 단순 체크박스는 제목 취급 불가
++        if not is_large and not group_is_bold:
++            return 0, group['text']
+         # 콜론이 있는 항목 (□ 지원내용 : 사업화)은 제목이 아님
+         if ':' in rest or '：' in rest:
+             return 0, group['text']
+@@ -199,6 +231,25 @@ def determine_level(group, body_size):
+             return 2, text
+         return 3, text
+ 
++    # ── 6. 한국어 공문서 개요 기호 (가., 1), 가), (1)) ────────────────────────
++    korean_outline = re.match(r'^([가-하]\.|\d{1,2}\)|[가-하]\)|\(\d{1,2}\)|\([가-하]\))\s+(.*)', text)
++    if korean_outline:
++        content = korean_outline.group(2).strip()
++        if not content or re.match(r'^[a-z\-•·oㅇ○\*]', content) or len(text) > 100:
++             return 0, group['text']
++        if re.search(r'(다|함|됨|음|니다)[\.\s]*$', content):
++             return 0, group['text']
++        return 3, text
++
++    # ── 7. 폰트 크기 기반 무번호 대제목 추론 (정부 공고문용 최후의 보루) ────────────────────────
++    # 숫자가 전혀 없더라도, 글씨가 압도적으로 크고 굵으면 대제목(L1)으로 인정
++    if is_very_large and group_is_bold and len(text) < 40 and len(text.split()) < 8:
++        # 단, 진짜 문장처럼 마침표나 종결어미로 끝나면 안됨
++        stripped_for_check = text.rstrip()
++        if not re.search(r'(다\.|함\.|됨\.|음\.|니다\.|기\.|고\.|며\.|은\.|는\.|이\.|가\.|을\.|를\.|,\s*|;\s*|\.\s*)$', stripped_for_check):
++             # 압도적으로 크고 굵은 무번호 제목은 보통 1 레벨로 간주
++             return 1, text
++
+     return 0, group['text']
+ 
+ 
+@@ -213,7 +264,118 @@ async def parse_pdf(file: UploadFile = File(...)):
+     seen_numbers = set()
+     seen_titles = set()
+ 
+-    with pdfplumber.open(file.file) as pdf:
++    file_content = await file.read()
++    
++    # 1. 문서 메타데이터 TOC (Bookmarks) 우선 탐색 (fitz 사용)
++    try:
++        fitz_doc = fitz.open(stream=file_content, filetype="pdf")
++        embedded_toc = fitz_doc.get_toc()
++        # fitz.get_toc() 리턴 구조: [[level, title, page_num], ...]
++        if embedded_toc and len(embedded_toc) > 0:
++            print(f"🌟 SUCCESS: Found native embedded TOC with {len(embedded_toc)} items!")
++            for idx, item in enumerate(embedded_toc):
++                level, title, page_num_native = item[0], str(item[1]).strip(), int(item[2])
++                
++                # Sparkle 버튼을 위한 X, Y 좌표 계산
++                x_coord, y_coord = 0.0, 0.0
++                try:
++                    # PyMuPDF pages are 0-indexed, internal TOC is typically 1-indexed
++                    actual_page_idx = max(0, page_num_native - 1)
++                    if actual_page_idx < len(fitz_doc):
++                        # 목차의 페이지 번호가 실제 논리적 페이지와 다를 수 있으므로 해당 페이지와 다음 페이지(혹은 다다음)까지 검색
++                        search_pages = [actual_page_idx, actual_page_idx + 1]
++                        for search_idx in search_pages:
++                            if search_idx >= len(fitz_doc): continue
++                            page_obj = fitz_doc[search_idx]
++                            
++                            rects = page_obj.search_for(title)
++                            
++                            # PDF 본문에는 리거처(ligature)가 쓰였을 수 있음 (fi -> ﬁ, fl -> ﬂ)
++                            if not rects and ("fi" in title or "fl" in title):
++                                lig_title = title.replace("fi", "ﬁ").replace("fl", "ﬂ")
++                                rects = page_obj.search_for(lig_title)
++                                
++                            # 목차 메타데이터 번호 형식("2. ")과 실제 본문 형식("2 ")이 다를 수 있음. 문자 부분만 추출하여 검색
++                            if not rects:
++                                clean_text_only = re.sub(r'^[\d\.\s]+', '', title)
++                                if len(clean_text_only) > 5:
++                                    rects = page_obj.search_for(clean_text_only)
++                            
++                            if not rects and len(title.split()) > 3:
++                                short_title = " ".join(title.split()[:4])
++                                rects = page_obj.search_for(short_title)
++                                if not rects and ("fi" in short_title or "fl" in short_title):
++                                    rects = page_obj.search_for(short_title.replace("fi", "ﬁ").replace("fl", "ﬂ"))
++                                    
++                            # 문자 부분만의 첫 3단어 검색 (단어 불일치 대비 최후 보루)
++                            if not rects:
++                                clean_text_only = re.sub(r'^[\d\.\s]+', '', title)
++                                if len(clean_text_only.split()) > 2:
++                                    short_clean = " ".join(clean_text_only.split()[:3])
++                                    rects = page_obj.search_for(short_clean)
++                                    
++                            if not rects and len(title.split()) > 2:
++                                short_title = " ".join(title.split()[:2])
++                                rects = page_obj.search_for(short_title)
++                                if not rects and ("fi" in short_title or "fl" in short_title):
++                                    rects = page_obj.search_for(short_title.replace("fi", "ﬁ").replace("fl", "ﬂ"))
++                                
++                            if rects:
++                                x_coord = float(rects[0].x0)
++                                y_coord = float(rects[0].y0)
++                                # 만약 실제 찾은 페이지가 목차 페이지와 다르면, 목차 페이지 넘버도 업데이트해줌
++                                if search_idx != actual_page_idx:
++                                    page_num_native = search_idx + 1
++                                break
++                except Exception:
++                    pass
++
++                toc.append(TOCItem(
++                    id=f"native-toc-{idx}",
++                    level=level,
++                    title=title,
++                    rawTitle=title,
++                    number=parse_section_number(title),
++                    page=page_num_native,
++                    readingOrder=idx,
++                    x=x_coord,
++                    y=y_coord
++                ))
++            
++            # 본문 추출 (검색/컨텍스트를 위해) - 목차 ID를 키로 매핑
++            # 페이지별 텍스트를 추출한 뒤, 해당 페이지에 있는 목차 ID들에게 텍스트를 분배 (가장 단순한 폴백 매핑)
++            page_to_tocs = {}
++            for t in toc:
++                if t.page not in page_to_tocs:
++                    page_to_tocs[t.page] = []
++                page_to_tocs[t.page].append(t)
++
++            for page_num in range(len(fitz_doc)):
++                # fitz_doc is 0-indexed, toc.page is 1-indexed
++                page = fitz_doc[page_num]
++                text = page.get_text("text") + "\n"
++                
++                tocs_on_page = page_to_tocs.get(page_num + 1, [])
++                for t in tocs_on_page:
++                    # 해당 페이지의 모든 목차 ID들에 대해 페이지 전체 텍스트를 할당 (클라이언트에서 어떤 걸 클릭해도 조회 가능)
++                    sections[t.id] = text
++                
++                # 이전 버전 호환성을 위해 기본 sec- ID에도 저장
++                sec_id = f"sec-{page_num}-0"
++                sections[sec_id] = text
++                
++            return PDFParseResult(
++                numPages=len(fitz_doc),
++                toc=toc,
++                sections=sections,
++                summary=f"Native metadata TOC extracted. Pages: {len(fitz_doc)}"
++            )
++    except Exception as e:
++        print(f"⚠️ PyMuPDF TOC extraction failed: {e}")
++        pass
++
++    # 2. 메타데이터 TOC가 없을 경우 기존의 휴리스틱 파서로 폴백
++    with pdfplumber.open(io.BytesIO(file_content)) as pdf:
+         num_pages = len(pdf.pages)
+ 
+         # 본문 폰트 크기: 1번째, 중간 페이지 샘플링
+
+commit 05c74fe73b199676add49075c7393936dbbf3208
+Author: 0xu-MN <hong56800@gmail.com>
+Date:   Tue Feb 24 04:02:13 2026 +0900
+
+    fix(pdf): resolve cross-column merging, TOC regex duplication, and UI alignment bugs
+
+diff --git a/server/main.py b/server/main.py
+index eaf6a61..53ecb14 100644
+--- a/server/main.py
++++ b/server/main.py
+@@ -1,4 +1,5 @@
+ import pdfplumber
++import re
+ import math
+ from fastapi import FastAPI, UploadFile, File
+ from fastapi.middleware.cors import CORSMiddleware
+@@ -7,7 +8,6 @@ from typing import List, Optional
+ 
+ app = FastAPI(title="InsightFlow PDF Parser")
+ 
+-# Allow CORS for local React Native Web
+ app.add_middleware(
+     CORSMiddleware,
+     allow_origins=["*"],
+@@ -30,106 +30,177 @@ class TOCItem(BaseModel):
+ class PDFParseResult(BaseModel):
+     numPages: int
+     toc: List[TOCItem]
+-    sections: dict # section_id -> text content
++    sections: dict
+ 
+ def get_body_font_size(words):
+     if not words:
+         return 12.0
+-        
+     freq = {}
+     for w in words:
+         size = round(w['size'] * 2) / 2
+         freq[size] = freq.get(size, 0) + 1
+-        
+     return max(freq.items(), key=lambda x: x[1])[0]
+ 
+-def group_by_line(words, y_tolerance=3):
+-    """Group words that are on the same line (similar y0) and close together in X."""
++def group_by_line(words, y_tolerance=4, x_tolerance=10):
+     if not words:
+         return []
+         
+-    # Sort initially by Y then X
+-    sorted_words = sorted(words, key=lambda w: (w['top'], w['x0']))
++    # 1. Sort purely by Y to get horizontal bands
++    sorted_by_y = sorted(words, key=lambda w: w['top'])
+     
+-    lines = []
+-    current_line = [sorted_words[0]]
+-    
+-    for word in sorted_words[1:]:
+-        last_word = current_line[-1]
+-        
+-        # If Y is very similar, it's the same line
+-        if abs(word['top'] - last_word['top']) < y_tolerance:
+-            current_line.append(word)
++    lines_by_y = []
++    current_y_line = [sorted_by_y[0]]
++    for word in sorted_by_y[1:]:
++        if abs(word['top'] - current_y_line[0]['top']) < y_tolerance:
++            current_y_line.append(word)
+         else:
+-            lines.append(current_line)
+-            current_line = [word]
+-            
+-    if current_line:
+-        lines.append(current_line)
++            lines_by_y.append(current_y_line)
++            current_y_line = [word]
++    if current_y_line:
++        lines_by_y.append(current_y_line)
+         
+-    # Convert line groups to combined objects
+     grouped = []
+-    for line in lines:
+-        if not line:
+-            continue
+-            
+-        text = " ".join([w['text'] for w in line])
+-        avg_size = sum([w['size'] for w in line]) / len(line)
+-        
+-        grouped.append({
+-            'text': text,
+-            'x0': line[0]['x0'],
+-            'x1': line[-1]['x1'],
+-            'top': min([w['top'] for w in line]),
+-            'bottom': max([w['bottom'] for w in line]),
+-            'size': avg_size,
+-            'fontname': line[0].get('fontname', ''),
+-            'raw_words': line
+-        })
++    # 2. Inside each Y-band, sort by X and split columns
++    for y_line in lines_by_y:
++        y_line.sort(key=lambda w: w['x0'])
+         
++        sub_lines = []
++        current_sub = [y_line[0]]
++        for word in y_line[1:]:
++            last_word = current_sub[-1]
++            if word['x0'] - last_word['x1'] > x_tolerance:
++                sub_lines.append(current_sub)
++                current_sub = [word]
++            else:
++                current_sub.append(word)
++        if current_sub:
++            sub_lines.append(current_sub)
++            
++        for sub in sub_lines:
++            if not sub: continue
++            text = " ".join([w['text'] for w in sub])
++            avg_size = sum([w['size'] for w in sub]) / len(sub)
++            grouped.append({
++                'text': text,
++                'x0': sub[0]['x0'],
++                'x1': sub[-1]['x1'],
++                'top': min([w['top'] for w in sub]),
++                'bottom': max([w['bottom'] for w in sub]),
++                'size': avg_size,
++                'fontname': sub[0].get('fontname', ''),
++                'raw_words': sub
++            })
+     return grouped
+ 
+-def is_bold(fontname):
+-    if not fontname:
+-        return False
+-    name_lower = fontname.lower()
+-    return any(w in name_lower for w in ['bold', 'heavy', 'black', 'godic', '고딕'])
+-
+ def parse_section_number(text):
+-    import re
+-    first_word = text.split(' ')[0]
+-    
+-    # "1", "2.3", "3.1.2"
+-    m = re.match(r'^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2})$', first_word.rstrip('.'))
++    first_word = text.split(' ')[0].rstrip('.')
++    m = re.match(r'^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2})$', first_word)
+     if m:
+         return m.group(1).rstrip('.')
+     return None
+ 
+ def determine_level(group, body_size):
+-    size_ratio = group['size'] / body_size
+     text = group['text'].strip()
+-    
+-    # 1. Start with Boxed Number or solid number "1 사업 개요"
+-    import re
+-    if re.match(r'^\d{1,2}\.?\s+', text):
+-        return 1
+-        
+-    # 2. Sub-headings "□ 신청자격"
+-    if text.startswith('□'):
+-        return 2
+-        
+-    # 3. Nested numbers "1.1 대상"
+-    if re.match(r'^\d{1,2}\.\d{1,2}\.?\s+', text):
+-        return 2
+-        
+-    if re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}\.?\s+', text):
+-        return 3
+-        
+-    # 4. Font size / weight fallback
+-    if size_ratio >= 1.4 or (size_ratio >= 1.15 and is_bold(group['fontname'])):
+-        return 1
++
++    # Fix PDF extraction duplications (e.g. "2.11 2.11." → "2.11.")
++    text = re.sub(r'^([\d]+(?:\.[\d]+)*)\.?\s+\1\.?\s+', r'\1 ', text).strip()
++
++    if not text or len(text) < 2:
++        return 0, group['text']
+         
+-    return 0
++    if "et al." in text.lower():
++        return 0, group['text']
++
++    # ── 1. 명백한 비제목 패턴 제거 ──────────────────────────────────────────
++
++    # 표/그림 캡션 제외
++    if re.search(r'^(표|그림|table|figure|fig\.?|ref\.?)\s*[\d\[\(]', text, re.IGNORECASE):
++        return 0, group['text']
++
++    # ✅ FIX: 문장 종결 패턴 — 번호+점으로 끝나는 경우는 제외해야 함
++    # "2.2." 같은 번호는 마침표로 끝나지만 제목임
++    # 진짜 문장만 걸러냄: 한국어 종결어미 또는 콤마/세미콜론으로 끝나는 경우
++    stripped_for_check = text.rstrip()
++    is_numbered_heading_candidate = bool(re.match(r'^[\dIVX]', stripped_for_check))
++
++    if not is_numbered_heading_candidate:
++        # 번호가 없는 텍스트는 문장 종결 패턴으로 거름
++        if re.search(r'(다\.|함\.|됨\.|음\.|니다\.|기\.|고\.|며\.|은\.|는\.|이\.|가\.|을\.|를\.|,\s*|;\s*)$', stripped_for_check):
++            return 0, group['text']
++        # 마침표로 끝나는데 번호가 아닌 경우 (일반 문장)
++        if re.search(r'[가-힣a-z]\.$', stripped_for_check):
++            return 0, group['text']
++
++    # ── 2. 한국어 박스형 제목 (□ ■ ▣ ▶) ────────────────────────────────────
++    is_korean_box = text.startswith('□') or text.startswith('■') or text.startswith('▣') or text.startswith('▶')
++    if is_korean_box:
++        rest = re.sub(r'^[□■▣▶]\s*', '', text).strip()
++        # 콜론이 있는 항목 (□ 지원내용 : 사업화)은 제목이 아님
++        if ':' in rest or '：' in rest:
++            return 0, group['text']
++        # 너무 긴 항목 제외
++        if len(rest.split()) > 6:
++            return 0, group['text']
++        return 2, text
++
++    # ── 3. 표준 학술 섹션명 ────────────────────────────────────────────────
++    clean_text = re.sub(r'^[\d\s\.]+', '', text).strip()
++    is_spaced_abstract = bool(re.match(r'^A\s*B\s*S\s*T\s*R\s*A\s*C\s*T$', clean_text, re.IGNORECASE))
++    is_academic = bool(re.match(
++        r'^(abstract|introduction|background|methods?|materials?\s+and\s+methods?|results?|discussion|conclusions?|references?|acknowledgments?)$',
++        clean_text, re.IGNORECASE
++    ))
++    if is_academic or is_spaced_abstract:
++        return 1, clean_text
++
++    # ── 4. ✅ 한국어 번호형 제목 (점 없이): "1 사업 개요", "2 지원내용" ─────
++    # 반드시 한국어 또는 대문자로 시작하는 내용이 따라와야 함
++    korean_no_dot = re.match(r'^(\d{1,2}(?:\.\d{1,2})*)\s+([가-힣A-Z].{0,60})$', text)
++    if korean_no_dot and re.search(r'[가-힣]', text):
++        num_part = korean_no_dot.group(1)
++        content = korean_no_dot.group(2).strip()
++
++        # 문장 종결어미로 끝나면 제외
++        if re.search(r'(다|함|됨|음|니다|기|고|며|을|를|이|가|은|는)$', content.rstrip('.')):
++            return 0, group['text']
++        # 너무 길면 제외
++        if len(text) > 80 or len(text.split()) > 10:
++            return 0, group['text']
++
++        dots = num_part.count('.')
++        if dots == 0:
++            return 1, text
++        if dots == 1:
++            return 2, text
++        return 3, text
++
++    # ── 5. 표준 번호형 제목 (점 포함): "1.", "2.1.", "3.1.2." ──────────────
++    number_match = re.match(r'^([IVX]+\.|\d{1,2}\.|\d{1,2}(?:\.\d{1,2})+\.?)\s+(.*)', text)
++    if number_match:
++        num = number_match.group(1).rstrip('.')
++        content = number_match.group(2).strip()
++
++        # 소문자/불릿으로 시작하는 내용 제외
++        if not content or re.match(r'^[a-z\-•·oㅇ○\*]', content):
++            return 0, group['text']
++
++        # 길이 제한
++        if len(text) > 160 or len(text.split()) > 28:
++            return 0, group['text']
++
++        # ✅ FIX: 내용이 한국어 종결어미로 끝나면 제목 아님
++        if re.search(r'(다|함|됨|음|니다)[\.\s]*$', content):
++            return 0, group['text']
++
++        dots = num.count('.')
++        if dots == 0:
++            return 1, text
++        if dots == 1:
++            return 2, text
++        return 3, text
++
++    return 0, group['text']
++
+ 
+ @app.post("/api/parse-pdf", response_model=PDFParseResult)
+ async def parse_pdf(file: UploadFile = File(...)):
+@@ -137,91 +208,124 @@ async def parse_pdf(file: UploadFile = File(...)):
+     sections = {}
+     current_section_id = None
+     reading_order_counter = 0
+-    
++
++    # ✅ 전역 중복 방지 (번호 기반)
++    seen_numbers = set()
++    seen_titles = set()
++
+     with pdfplumber.open(file.file) as pdf:
+         num_pages = len(pdf.pages)
+-        
+-        # Get global body font size from sample pages (1st and middle)
++
++        # 본문 폰트 크기: 1번째, 중간 페이지 샘플링
+         sample_words = []
+-        for p_idx in [0, min(2, num_pages - 1)]:
++        sample_indices = list({0, min(2, num_pages - 1), num_pages // 2})
++        for p_idx in sample_indices:
+             sample_words.extend(pdf.pages[p_idx].extract_words(extra_attrs=['size']))
+         body_size = get_body_font_size(sample_words)
+-        
++        print(f"📏 Body font size: {body_size}")
++
+         for page_num, page in enumerate(pdf.pages):
+             words = page.extract_words(extra_attrs=['size', 'fontname'])
+             page_height = page.height
++            page_width = page.width
++
++            all_groups = group_by_line(words)
++
++            page_toc_items = []
+             
+-            # Simple Column detection (left vs right)
+-            left_col = []
+-            right_col = []
+-            page_center = page.width / 2
+-            
+-            for w in words:
+-                if w['x0'] < page_center:
+-                    left_col.append(w)
+-                else:
+-                    right_col.append(w)
+-                    
+-            # Process left then right columns to maintain reading order
+-            sorted_words = []
+-            if left_col and right_col:
+-                # Need to group by line within columns first, then combine
+-                left_groups = group_by_line(left_col)
+-                right_groups = group_by_line(right_col)
+-                all_groups = left_groups + right_groups
+-            else:
+-                all_groups = group_by_line(words)
+-                
+             for group in all_groups:
+-                level = determine_level(group, body_size)
+-                
+-                # Check for noise (headers/footers)
+-                if group['top'] < page_height * 0.08 or group['top'] > page_height * 0.92:
+-                    if len(group['text'].split()) < 8 and not group['text'].startswith('□'):
+-                       level = 0
+-                
++                level, cleaned_text = determine_level(group, body_size)
++                group['text'] = cleaned_text
++
++                # 헤더/푸터 영역 제외 (상위 8%, 하위 8%)
++                top_ratio = group['top'] / page_height
++                if top_ratio < 0.08 or top_ratio > 0.92:
++                    if level == 0 or (len(group['text'].split()) < 5 and not group['text'].startswith('□')):
++                        level = 0
++
++                # 표/그림 다시 한번 걸러냄
+                 if level > 0:
+-                    import re
+-                    # Ignore tables / figures
+                     if re.match(r'^(표|그림|table|figure|fig)\s*\d+', group['text'], re.IGNORECASE):
+                         level = 0
+-                        
++
+                 if level > 0:
+-                    # Clean title
+-                    title = group['text']
+-                    
+-                    # Remove trailing stuff
+-                    title = re.sub(r'[\.,;:!?]$', '', title).strip()
+-                    
+-                    # Too short or too long
+-                    if len(title) < 2 or len(title) > 80:
+-                         level = 0
++                    title = group['text'].strip()
++                    # 제목 끝 불필요한 구두점 제거 (단, 번호형 마침표는 유지)
++                    title = re.sub(r'[;!?]$', '', title).strip()
++
++                    sec_id = f"sec-{page_num}-{int(group['top'])}"
++                    number = parse_section_number(title)
++
++                    # ✅ 전역 중복 체크 (번호 기반)
++                    if number:
++                        if number in seen_numbers:
++                            print(f"⏭️ Skip duplicate number: {number} '{title}'")
++                            # 중복 번호지만 섹션 텍스트는 계속 누적
++                            if current_section_id:
++                                sections[current_section_id] = sections.get(current_section_id, "") + group['text'] + "\n"
++                            continue
++                        seen_numbers.add(number)
+                     
+-                    if level > 0:
+-                        sec_id = f"sec-{page_num}-{int(group['top'])}"
+-                        number = parse_section_number(title)
+-                        
+-                        toc_item = TOCItem(
+-                            id=sec_id,
+-                            title=title,
+-                            rawTitle=group['text'],
+-                            page=page_num + 1,
+-                            y=float(group['top']),
+-                            x=float(group['x0']),
+-                            level=level,
+-                            number=number,
+-                            readingOrder=reading_order_counter
+-                        )
+-                        toc.append(toc_item)
+-                        sections[sec_id] = group['text'] + "\n"
+-                        current_section_id = sec_id
+-                        reading_order_counter += 1
++                    # 텍스트 기반 중복 체크 (번호 떼고 순수 텍스트로 비교하여 "5 Conclusions"와 "Conclusions" 중복 방지)
++                    clean_title_key = re.sub(r'^[\d\s\.]+', '', title).lower().strip()[:60]
++                    if clean_title_key: # "2.2" 같이 텍스트가 없는 경우는 스킵 안함
++                        if clean_title_key in seen_titles:
++                            print(f"⏭️ Skip duplicate title: '{title}'")
++                            if current_section_id:
++                                sections[current_section_id] = sections.get(current_section_id, "") + group['text'] + "\n"
++                            continue
++                        seen_titles.add(clean_title_key)
++
++                    # 같은 페이지 직전 항목과 좌표 중복 체크 (PDF 레이어 중복)
++                    if toc and toc[-1].page == page_num + 1:
++                        y_diff = abs(toc[-1].y - float(group['top']))
++                        x_diff = abs(toc[-1].x - float(group['x0']))
++                        if y_diff < 8 and x_diff < 8:
++                            print(f"⏭️ Skip coordinate duplicate: '{title}'")
++                            continue
++
++                    toc_item = TOCItem(
++                        id=sec_id,
++                        title=title,
++                        rawTitle=group['text'],
++                        page=page_num + 1,
++                        y=float(group['top']),
++                        x=float(group['x0']),
++                        level=level,
++                        number=number,
++                        readingOrder=reading_order_counter
++                    )
++                    page_toc_items.append(toc_item)
++                    sections[sec_id] = title + "\n"
++                    current_section_id = sec_id
++                    print(f"✅ L{level} p{page_num+1}: '{title}' (num={number})")
++
+                 else:
++                    # 본문 텍스트 → 현재 섹션에 누적
+                     if current_section_id:
+-                        sections[current_section_id] += group['text'] + "\n"
+-                        
++                        existing = sections.get(current_section_id, "")
++                        # 섹션당 최대 8000자 (AI 컨텍스트 과부하 방지)
++                        if len(existing) < 8000:
++                            sections[current_section_id] = existing + group['text'] + "\n"
++
++            # 페이지가 끝나면, 왼쪽 열 -> 오른쪽 열 순으로 정렬하여 TOC에 편입
++            page_toc_items.sort(key=lambda item: (
++                0 if item.x < page_width * 0.45 else 1,  # Left column first
++                item.y                                   # Then top-to-bottom
++            ))
++            for item in page_toc_items:
++                item.readingOrder = reading_order_counter
++                toc.append(item)
++                reading_order_counter += 1
++
++    print(f"\n📋 총 TOC 항목: {len(toc)}개")
+     return PDFParseResult(
+         numPages=num_pages,
+         toc=toc,
+         sections=sections
+     )
++
++
++@app.get("/health")
++def health():
++    return {"status": "ok"}
+\ No newline at end of file
+
+commit 372acdaff1ab663cf7b31390cfb511dceaf4bf32
+Author: 0xu-MN <hong56800@gmail.com>
+Date:   Mon Feb 23 04:16:30 2026 +0900
+
+    feat(agent): Introduce Python server-side PDF parsing and integration
+
+diff --git a/server/main.py b/server/main.py
+new file mode 100644
+index 0000000..eaf6a61
+--- /dev/null
++++ b/server/main.py
+@@ -0,0 +1,227 @@
++import pdfplumber
++import math
++from fastapi import FastAPI, UploadFile, File
++from fastapi.middleware.cors import CORSMiddleware
++from pydantic import BaseModel
++from typing import List, Optional
++
++app = FastAPI(title="InsightFlow PDF Parser")
++
++# Allow CORS for local React Native Web
++app.add_middleware(
++    CORSMiddleware,
++    allow_origins=["*"],
++    allow_credentials=True,
++    allow_methods=["*"],
++    allow_headers=["*"],
++)
++
++class TOCItem(BaseModel):
++    id: str
++    title: str
++    rawTitle: str
++    page: int
++    y: float
++    x: float
++    level: int
++    number: Optional[str] = None
++    readingOrder: int
++
++class PDFParseResult(BaseModel):
++    numPages: int
++    toc: List[TOCItem]
++    sections: dict # section_id -> text content
++
++def get_body_font_size(words):
++    if not words:
++        return 12.0
++        
++    freq = {}
++    for w in words:
++        size = round(w['size'] * 2) / 2
++        freq[size] = freq.get(size, 0) + 1
++        
++    return max(freq.items(), key=lambda x: x[1])[0]
++
++def group_by_line(words, y_tolerance=3):
++    """Group words that are on the same line (similar y0) and close together in X."""
++    if not words:
++        return []
++        
++    # Sort initially by Y then X
++    sorted_words = sorted(words, key=lambda w: (w['top'], w['x0']))
++    
++    lines = []
++    current_line = [sorted_words[0]]
++    
++    for word in sorted_words[1:]:
++        last_word = current_line[-1]
++        
++        # If Y is very similar, it's the same line
++        if abs(word['top'] - last_word['top']) < y_tolerance:
++            current_line.append(word)
++        else:
++            lines.append(current_line)
++            current_line = [word]
++            
++    if current_line:
++        lines.append(current_line)
++        
++    # Convert line groups to combined objects
++    grouped = []
++    for line in lines:
++        if not line:
++            continue
++            
++        text = " ".join([w['text'] for w in line])
++        avg_size = sum([w['size'] for w in line]) / len(line)
++        
++        grouped.append({
++            'text': text,
++            'x0': line[0]['x0'],
++            'x1': line[-1]['x1'],
++            'top': min([w['top'] for w in line]),
++            'bottom': max([w['bottom'] for w in line]),
++            'size': avg_size,
++            'fontname': line[0].get('fontname', ''),
++            'raw_words': line
++        })
++        
++    return grouped
++
++def is_bold(fontname):
++    if not fontname:
++        return False
++    name_lower = fontname.lower()
++    return any(w in name_lower for w in ['bold', 'heavy', 'black', 'godic', '고딕'])
++
++def parse_section_number(text):
++    import re
++    first_word = text.split(' ')[0]
++    
++    # "1", "2.3", "3.1.2"
++    m = re.match(r'^((\d{1,2}\.){1,3}\d{0,2}|\d{1,2})$', first_word.rstrip('.'))
++    if m:
++        return m.group(1).rstrip('.')
++    return None
++
++def determine_level(group, body_size):
++    size_ratio = group['size'] / body_size
++    text = group['text'].strip()
++    
++    # 1. Start with Boxed Number or solid number "1 사업 개요"
++    import re
++    if re.match(r'^\d{1,2}\.?\s+', text):
++        return 1
++        
++    # 2. Sub-headings "□ 신청자격"
++    if text.startswith('□'):
++        return 2
++        
++    # 3. Nested numbers "1.1 대상"
++    if re.match(r'^\d{1,2}\.\d{1,2}\.?\s+', text):
++        return 2
++        
++    if re.match(r'^\d{1,2}\.\d{1,2}\.\d{1,2}\.?\s+', text):
++        return 3
++        
++    # 4. Font size / weight fallback
++    if size_ratio >= 1.4 or (size_ratio >= 1.15 and is_bold(group['fontname'])):
++        return 1
++        
++    return 0
++
++@app.post("/api/parse-pdf", response_model=PDFParseResult)
++async def parse_pdf(file: UploadFile = File(...)):
++    toc = []
++    sections = {}
++    current_section_id = None
++    reading_order_counter = 0
++    
++    with pdfplumber.open(file.file) as pdf:
++        num_pages = len(pdf.pages)
++        
++        # Get global body font size from sample pages (1st and middle)
++        sample_words = []
++        for p_idx in [0, min(2, num_pages - 1)]:
++            sample_words.extend(pdf.pages[p_idx].extract_words(extra_attrs=['size']))
++        body_size = get_body_font_size(sample_words)
++        
++        for page_num, page in enumerate(pdf.pages):
++            words = page.extract_words(extra_attrs=['size', 'fontname'])
++            page_height = page.height
++            
++            # Simple Column detection (left vs right)
++            left_col = []
++            right_col = []
++            page_center = page.width / 2
++            
++            for w in words:
++                if w['x0'] < page_center:
++                    left_col.append(w)
++                else:
++                    right_col.append(w)
++                    
++            # Process left then right columns to maintain reading order
++            sorted_words = []
++            if left_col and right_col:
++                # Need to group by line within columns first, then combine
++                left_groups = group_by_line(left_col)
++                right_groups = group_by_line(right_col)
++                all_groups = left_groups + right_groups
++            else:
++                all_groups = group_by_line(words)
++                
++            for group in all_groups:
++                level = determine_level(group, body_size)
++                
++                # Check for noise (headers/footers)
++                if group['top'] < page_height * 0.08 or group['top'] > page_height * 0.92:
++                    if len(group['text'].split()) < 8 and not group['text'].startswith('□'):
++                       level = 0
++                
++                if level > 0:
++                    import re
++                    # Ignore tables / figures
++                    if re.match(r'^(표|그림|table|figure|fig)\s*\d+', group['text'], re.IGNORECASE):
++                        level = 0
++                        
++                if level > 0:
++                    # Clean title
++                    title = group['text']
++                    
++                    # Remove trailing stuff
++                    title = re.sub(r'[\.,;:!?]$', '', title).strip()
++                    
++                    # Too short or too long
++                    if len(title) < 2 or len(title) > 80:
++                         level = 0
++                    
++                    if level > 0:
++                        sec_id = f"sec-{page_num}-{int(group['top'])}"
++                        number = parse_section_number(title)
++                        
++                        toc_item = TOCItem(
++                            id=sec_id,
++                            title=title,
++                            rawTitle=group['text'],
++                            page=page_num + 1,
++                            y=float(group['top']),
++                            x=float(group['x0']),
++                            level=level,
++                            number=number,
++                            readingOrder=reading_order_counter
++                        )
++                        toc.append(toc_item)
++                        sections[sec_id] = group['text'] + "\n"
++                        current_section_id = sec_id
++                        reading_order_counter += 1
++                else:
++                    if current_section_id:
++                        sections[current_section_id] += group['text'] + "\n"
++                        
++    return PDFParseResult(
++        numPages=num_pages,
++        toc=toc,
++        sections=sections
++    )

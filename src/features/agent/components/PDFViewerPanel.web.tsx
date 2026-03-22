@@ -35,6 +35,9 @@ async function fetchPythonTOC(url: string) {
             const parseRes = await fetch(primaryUrl, {
                 method: 'POST',
                 body: formData,
+                headers: {
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
@@ -54,6 +57,9 @@ async function fetchPythonTOC(url: string) {
             console.log(`🚒 [Hybrid] 2차 시도 (A안 - EC2 무적 서버): ${fallbackUrl}`);
             const fallbackRes = await fetch(fallbackUrl, {
                 method: 'POST',
+                headers: {
+                    'Bypass-Tunnel-Reminder': 'true'
+                },
                 body: formData,
             });
 
