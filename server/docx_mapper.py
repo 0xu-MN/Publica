@@ -63,15 +63,21 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
                 
                 elif element.name in ['ul', 'ol']:
                     for li in element.find_all('li', recursive=False):
-                        doc.add_paragraph(li.get_text().strip(), style='List Bullet')
+                        # Use manual bullet character to avoid "no style with name 'List Bullet'" errors
+                        # since many templates strip out default Word styles.
+                        doc.add_paragraph("• " + li.get_text().strip())
                         
                 elif element.name == 'table':
                     rows = element.find_all('tr')
                     if rows:
-                        # Determine max columns
                         max_cols = max([len(r.find_all(['td', 'th'])) for r in rows])
                         docx_table = doc.add_table(rows=0, cols=max_cols)
-                        docx_table.style = 'Table Grid'
+                        
+                        # Try to apply Table Grid style, fallback silently if not found
+                        try:
+                            docx_table.style = 'Table Grid'
+                        except KeyError:
+                            pass
                         
                         for i, r in enumerate(rows):
                             cells = r.find_all(['td', 'th'])
