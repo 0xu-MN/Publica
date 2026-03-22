@@ -50,15 +50,19 @@ async function fetchPythonTOC(url: string) {
         } catch (error) {
             console.warn(`⚠️ [Hybrid] 1차 시도 실패(타임아웃/오류). 즉시 A안(EC2 소화기)으로 전환합니다!`, error);
 
-            // A안: EC2 서버로 재요청 (무제한 대기)
-            console.log(`🚒 [Hybrid] 2차 시도 (A안 - EC2 무적 서버): ${fallbackUrl}`);
-            const fallbackRes = await fetch(fallbackUrl, {
-                method: 'POST',
+            const fallbackUrl = 'https://afraid-flies-accept.loca.lt/api/parse-pdf'; // A안: 긴급 로컬 터널 서버 (EC2 장애 대처용)
+            console.log('🔄 B안 실패, A안(긴급 터널 서버)으로 폴백 시도 중...');
+            
+            const fallbackRes = await fetch(fallbackUrl, { 
+                method: 'POST', 
                 body: formData,
+                headers: {
+                    'Bypass-Tunnel-Reminder': 'true' // Localtunnel Splash Screen Bypass
+                }
             });
-
+            
             if (!fallbackRes.ok) {
-                throw new Error(`2차 시도까지 모두 실패 상태코드: ${fallbackRes.status}`);
+                throw new Error(`Fallback HTTP error! status: ${fallbackRes.status}`);
             }
 
             const data = await fallbackRes.json();

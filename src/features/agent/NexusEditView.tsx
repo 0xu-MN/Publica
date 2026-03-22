@@ -508,13 +508,16 @@ ${brainstormContext}
         try {
             const formData = new FormData();
             const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-            // Production Vercel hits EC2, Local hits localhost 8001
-            const baseUrl = isHttps ? "http://13.209.136.25:8001" : "http://localhost:8001";
+            // Production Vercel hits Emergency Tunnel, Local hits localhost 8001
+            const baseUrl = isHttps ? "https://afraid-flies-accept.loca.lt" : "http://localhost:8001";
             const endpoint = isDocx ? `${baseUrl}/api/autofill-docx` : `${baseUrl}/api/upload-hwpx`;
             
             const response = await fetch(endpoint, {
                 method: "POST",
                 body: formData,
+                headers: {
+                    "Bypass-Tunnel-Reminder": "true"
+                }
             });
 
             if (!response.ok) {

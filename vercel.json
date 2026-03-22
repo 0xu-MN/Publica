@@ -3,7 +3,7 @@
     "rewrites": [
         {
             "source": "/api/parse-pdf",
-            "destination": "http://13.209.136.25:8001/api/parse-pdf"
+            "destination": "https://afraid-flies-accept.loca.lt/api/parse-pdf"
         },
         {
             "source": "/(.*)",
