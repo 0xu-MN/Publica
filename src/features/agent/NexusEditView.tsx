@@ -179,11 +179,12 @@ export const NexusEditView = () => {
                     const data = await response.json();
                     if (data.candidates && data.candidates[0].content.parts[0].text) {
                         let aiResponseText = data.candidates[0].content.parts[0].text;
-                        // Clean up markdown markers if Gemini ignores the prompt
-                        aiResponseText = aiResponseText.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
                         
                         try {
-                            const parsed = JSON.parse(aiResponseText);
+                            const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+                            if (!jsonMatch) throw new Error("No JSON object found in response");
+                            
+                            const parsed = JSON.parse(jsonMatch[0]);
                             if (parsed.document_html) {
                                 draftHtml = parsed.document_html;
                             } else {
@@ -425,10 +426,13 @@ ${brainstormContext}
             
             if (data.candidates && data.candidates[0].content.parts[0].text) {
                 let aiResponseText = data.candidates[0].content.parts[0].text.trim();
-                aiResponseText = aiResponseText.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
                 
                 try {
-                    const parsed = JSON.parse(aiResponseText);
+                    // JSON 데이터만 추출 (AI가 인사말을 붙이더라도 무시)
+                    const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
+                    if (!jsonMatch) throw new Error("No JSON object found in response");
+                    
+                    const parsed = JSON.parse(jsonMatch[0]);
                     setChatMessages(prev => [...prev, { role: 'assistant', content: parsed.reply || "요청하신 작업을 완료했습니다." }]);
                     
                     if (parsed.modified_html) {
