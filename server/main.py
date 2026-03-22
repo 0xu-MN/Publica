@@ -7,7 +7,7 @@ import os
 import tempfile
 import zipfile
 import shutil
-from fastapi import FastAPI, UploadFile, File, Form
+from fastapi import FastAPI, UploadFile, File, Form, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
@@ -16,6 +16,8 @@ try:
     from lxml import etree
 except ImportError:
     pass
+
+import docx_mapper
 
 app = FastAPI(title="InsightFlow PDF Parser")
 
@@ -557,3 +559,44 @@ async def process_hwpx(
         return JSONResponse(status_code=500, content={"error": str(e)})
     finally:
         shutil.rmtree(temp_dir)
+
+@app.post("/api/autofill-docx")
+async def process_docx(
+    background_tasks: BackgroundTasks,
+    file: UploadFile = File(...),
+    payload: str = Form("{}")
+):
+    """
+    1. Receives a .docx template and AI generated payload.
+    2. Runs the mapping algorithm via docx_mapper.py.
+    3. Returns the perfectly structured and filled .docx file.
+    """
+    if not file.filename.endswith('.docx'):
+        return JSONResponse(status_code=400, content={"error": "Only .docx files are supported here"})
+
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, "input.docx")
+    output_path = os.path.join(temp_dir, "output.docx")
+
+    try:
+        content = await file.read()
+        with open(input_path, "wb") as f:
+            f.write(content)
+
+        # Execute Document Auto-Mapping
+        success = docx_mapper.fill_docx_template(input_path, payload, output_path)
+        
+        if not success:
+            return JSONResponse(status_code=500, content={"error": "Failed to map docx file. Check server logs."})
+
+        # Return the built docx file and clean up background temp files
+        background_tasks.add_task(shutil.rmtree, temp_dir, ignore_errors=True)
+        return FileResponse(
+            output_path, 
+            filename=f"filled_{file.filename}", 
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+        
+    except Exception as e:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+        return JSONResponse(status_code=500, content={"error": str(e)})

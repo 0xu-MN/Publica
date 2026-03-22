@@ -365,18 +365,20 @@ export const NexusEditView = () => {
             
             const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
             
-            const prompt = `당신은 사업계획서 전문 AI 어시스턴트입니다. 
-사용자의 요청에 따라 친절하게 답변하거나, 문서를 직접 수정해 주어야 합니다.
+            const prompt = `당신은 대한민국 최고 수준의 공공/정부지원사업 사업계획서 대필 전문가(AI 에이전트)입니다.
+사용자의 요청에 따라 사업계획서를 직접 수정해 주어야 합니다.
 
 [작업 지시사항]
 1. 사용자의 요청이 원본 문서(현재 에디터 내용)의 특정 부분 수정/추가/삭제를 원한다면, 해당 부분을 정밀하게 반영하여 **전체 HTML 코드**를 다시 작성해 \`modified_html\` 필드에 담아주세요.
 2. 만약 수정 요청이 아니라 단순 질문이나 대화라면, \`modified_html\`은 null로 설정하세요.
-3. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다. 코멘트나 마크다운 블록(\`\`\`json) 조차 넣지 말고 오직 중괄호 {} 로 시작하고 끝나는 JSON만 출력하세요.
+3. **[가장 중요]** \`modified_html\`안에는 절대로 마크다운(#, **)이나 인사말을 넣지 마세요! 반드시 <h1>, <h2>, <p>, <ul>, <table>, <thead>, <tbody>, <tr>, <th>, <td> 태그만을 사용한 **순수 HTML**로만 작성하세요.
+4. 경쟁사와 비교, 일정, 예산 계획, 기대효과 등 구조화가 필요한 부분은 **반드시 <table> 태그를 사용하여 깔끔한 표(Table)로 시각화** 하세요.
+5. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다. 코멘트나 마크다운 블록(\`\`\`json) 조차 넣지 말고 오직 중괄호 {} 로 시작하고 끝나는 JSON만 출력하세요.
 
 응답 JSON 규격:
 {
-    "reply": "사용자에게 할 친절한 채팅 답변 (예: 네, 성장전략 부분을 3줄로 수정했습니다.)",
-    "modified_html": "전체 HTML 문서 코드 (수정이 필요 없는 단순 질문이면 null)"
+    "reply": "사용자에게 할 친절한 채팅 답변 (예: 네, 요청하신 대로 성장전략 표를 추가했습니다.)",
+    "modified_html": "HTML 코드 (수정이 필요 없는 경우 null)"
 }
 
 [현재 에디터 내용 (HTML)]
@@ -451,43 +453,66 @@ ${brainstormContext}
         }
     };
 
-    // --- HWPX Upload & Auto-Fill ---
-    const handleHwpxUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    // --- Document Upload & Auto-Fill ---
+    const handleDocumentAutoFill = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (!file || !file.name.endsWith('.hwpx')) {
-            alert("공고문 파일은 반드시 .hwpx 형식이어야 합니다.");
+        if (!file) return;
+        
+        const isDocx = file.name.endsWith('.docx');
+        const isHwpx = file.name.endsWith('.hwpx');
+        
+        if (!isDocx && !isHwpx) {
+            alert("공고문 양식은 반드시 .docx 또는 .hwpx 형식이어야 합니다.");
             return;
         }
 
         setHwpxLoading(true);
         // Temporary UI update during processing
-        setChatMessages(prev => [...prev, { role: 'assistant', content: '⏳ 업로드된 HWPX 원본 파일을 분석하고 AI 작성 데이터를 매핑하고 있습니다... (약 10초 소요)' }]);
+        setChatMessages(prev => [...prev, { role: 'assistant', content: `⏳ 업로드된 ${isDocx ? 'DOCX' : 'HWPX'} 원본 양식을 분석하고 AI 작성 데이터를 매핑하고 있습니다... (약 10초 소요)` }]);
 
         try {
             const formData = new FormData();
             formData.append("file", file);
             formData.append("payload", editorContent);
 
-            const response = await fetch("http://localhost:8000/api/upload-hwpx", {
+            const endpoint = isDocx ? "http://localhost:8000/api/autofill-docx" : "http://localhost:8000/api/upload-hwpx";
+            const response = await fetch(endpoint, {
                 method: "POST",
                 body: formData,
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "HWPX 서버 통신 실패");
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.error || "문서 매핑 서버 통신 실패 (Python Backend 확인 필요)");
             }
 
-            const data = await response.json();
-            console.log("HWPX Engine Response:", data);
-            
-            alert(`🎉 HWPX 매핑 엔진(Python) 연동 성공!\n원본: ${file.name}\n결과: ${data.message}\n설명: 현재 파일 분해/조립 엔진(Ph.2 PoC)이 완벽하게 가동되었습니다.\n(실제 자동완성본 다운로드는 UI/V2에서 연결됩니다)`);
-            setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ HWPX 원본 구조 분석이 완료되었습니다. (성공)\n진짜 자동완성본 다운로드는 Phase 2에서 완벽하게 활성화됩니다.` }]);
+            if (isDocx) {
+                // Handle Blob response for DOCX (file download)
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `[Publica_완성본]_${file.name}`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                alert(`🎉 DOCX 매핑 성공!\n원본: ${file.name}\n설명: AI 초안이 매핑된 DOCX 파일이 다운로드 폴더에 저장되었습니다.`);
+                setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ DOCX 완성본 병합이 완료되었습니다. 내 컴퓨터 폴더에서 확인해 보세요!` }]);
+            } else {
+                // Handling HWPX PoC response (JSON preview)
+                const data = await response.json();
+                console.log("HWPX Engine Response:", data);
+                
+                alert(`🎉 HWPX 매핑 엔진(Python) 연동 성공!\n원본: ${file.name}\n결과: ${data.message}\n설명: 현재 파일 분해/조립 엔진(Ph.2 PoC)이 완벽하게 가동되었습니다.\n(실제 자동완성본 다운로드는 UI/V2에서 연결됩니다)`);
+                setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ HWPX 원본 구조 분석이 완료되었습니다. (성공)\n진짜 자동완성본 다운로드는 Phase 2에서 완벽하게 활성화됩니다.` }]);
+            }
             
         } catch (error: any) {
-            console.error("HWPX Processing error:", error);
-            alert(`HWPX 처리 실패: ${error.message}\n(Python 백엔드 서버가 켜져 있는지 메인 터미널을 확인해주세요)`);
-            setChatMessages(prev => [...prev, { role: 'assistant', content: `❌ HWPX 분석 실패: ${error.message}` }]);
+            console.error("Document Processing error:", error);
+            alert(`문서 변환 실패: ${error.message}\n(Python 백엔드 서버가 켜져 있는지 메인 터미널을 확인해주세요)`);
+            setChatMessages(prev => [...prev, { role: 'assistant', content: `❌ 문서 분석 실패: ${error.message}` }]);
         } finally {
             setHwpxLoading(false);
             if (event.target) event.target.value = '';
@@ -529,10 +554,10 @@ ${brainstormContext}
                                 <div style={{ position: 'relative', display: 'inline-block' }}>
                                     <input
                                         type="file"
-                                        accept=".hwpx"
+                                        accept=".hwpx,.docx"
                                         id="hwpx-upload"
                                         style={{ display: 'none' }}
-                                        onChange={handleHwpxUpload}
+                                        onChange={handleDocumentAutoFill}
                                         disabled={hwpxLoading}
                                     />
                                     <label htmlFor="hwpx-upload" style={{
@@ -544,7 +569,7 @@ ${brainstormContext}
                                         transition: 'all 0.2s'
                                     }}>
                                         {hwpxLoading ? <ActivityIndicator size="small" color="#818CF8" /> : <Upload size={16} color="#818CF8" />}
-                                        <Text style={{ color: '#818CF8', fontWeight: '600', fontSize: 13 }}>원본 HWPX 자동 완성 (PoC)</Text>
+                                        <Text style={{ color: '#818CF8', fontWeight: '600', fontSize: 13 }}>원본 DOCX / HWPX 자동 완성</Text>
                                     </label>
                                 </div>
                             )}

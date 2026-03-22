@@ -23,3 +23,5 @@ typing_extensions==4.15.0
 uvicorn==0.39.0
 lxml
 python-multipart
+python-docx
+beautifulsoup4
