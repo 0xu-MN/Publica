@@ -25,7 +25,7 @@ async function fetchPythonTOC(url: string) {
         // B안: Vercel 프록시 (또는 Vercel Serverless) 먼저 찌르기
         const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
         const primaryUrl = isHttps ? '/api/parse-pdf' : 'http://localhost:8001/api/parse-pdf';
-        const fallbackUrl = 'http://13.209.136.25:8001/api/parse-pdf'; // A안: EC2 영구 서버 (최후의 보루)
+        const fallbackUrl = 'https://publica-insightflow.loca.lt/api/parse-pdf'; // A안: EC2 영구 서버 (최후의 보루) -> 임시 로컬터널 우회
 
         try {
             console.log(`⚡ [Hybrid] 1차 시도 (B안 - 15초 제한 Vercel): ${primaryUrl}`);
