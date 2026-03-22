@@ -347,49 +347,82 @@ export const NexusEditView = () => {
 
         // 🌟 Feature: Detect "Write" or "Draft" request to trigger auto-drafting
         // Allow re-drafting even if draftCompleted=true, as user may want to regenerate
-        const draftingKeywords = ['초안 작성', '전체 작성', '다시 작성', '새로 작성', '자동 작성', '초안을 작성', '처음부터 작성', '바탕으로 작성', '작성해줘', '써줘', '만들어줘', '작성해', '생성해'];
+        // Remove overly broad generic keywords to prevent accidental full-document resets
+        const draftingKeywords = ['초안 작성 시작', '전체 문서 작성', '처음부터 다시 작성'];
         if (draftingKeywords.some(kw => userMsg.includes(kw)) && selectedSession) {
-            setChatMessages(prev => [...prev, { role: 'assistant', content: '알겠습니다. 브레인스톰 데이터를 분석하여 사업계획서 초안을 작성하겠습니다...' }]);
+            setChatMessages(prev => [...prev, { role: 'assistant', content: '알겠습니다. 브레인스톰 데이터를 분석하여 전체 사업계획서 초안을 새로 작성하겠습니다...' }]);
             await generateAutoDraft(selectedSession);
             setChatLoading(false);
             return;
         }
 
         try {
-            // Build context: include both brainstorm data and current editor content
+            // Build Context
             const brainstormContext = (selectedSession?.workspace_data || []).flatMap((col: any) =>
                 (col.branches || []).map((node: any) => `[${node.label}] ${node.description || ''}`)
             ).join('\n');
-            const editorContext = (editorMarkdown || editorContent).substring(0, 800);
-            const fullContext = `[현재 에디터 내용]\n${editorContext}\n\n[브레인스톰 데이터]\n${brainstormContext}`;
-
+            const editorContext = editorMarkdown || editorContent;
+            
             const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
             
-            const prompt = `당신은 사업계획서 작성 도우미입니다.
-사용자의 요청에 맞춰 내용을 작성하거나 수정해주세요.
-답변은 깔끔하고 명확한 텍스트나 간단한 마크다운으로 작성하세요.
+            const prompt = `당신은 사업계획서 전문 AI 어시스턴트입니다. 
+사용자의 요청에 따라 친절하게 답변하거나, 문서를 직접 수정해 주어야 합니다.
 
-[현재 에디터 내용 일부]
-${fullContext.substring(0, 800)}
+[작업 지시사항]
+1. 사용자의 요청이 원본 문서(현재 에디터 내용)의 특정 부분 수정/추가/삭제를 원한다면, 해당 부분을 정밀하게 반영하여 **전체 HTML 코드**를 다시 작성해 \`modified_html\` 필드에 담아주세요.
+2. 만약 수정 요청이 아니라 단순 질문이나 대화라면, \`modified_html\`은 null로 설정하세요.
+3. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다. 코멘트나 마크다운 블록(\`\`\`json) 조차 넣지 말고 오직 중괄호 {} 로 시작하고 끝나는 JSON만 출력하세요.
 
-요청: ${userMsg}`;
+응답 JSON 규격:
+{
+    "reply": "사용자에게 할 친절한 채팅 답변 (예: 네, 성장전략 부분을 3줄로 수정했습니다.)",
+    "modified_html": "전체 HTML 문서 코드 (수정이 필요 없는 단순 질문이면 null)"
+}
+
+[현재 에디터 내용 (HTML)]
+${editorContext}
+
+[관련 브레인스톰 데이터]
+${brainstormContext}
+
+사용자 요청: ${userMsg}`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                    generationConfig: { temperature: 0.7 }
+                    generationConfig: { temperature: 0.2 } // Lower temp for strict JSON
                 })
             });
 
             const data = await response.json();
-            let aiResponse = '응답을 생성할 수 없습니다.';
+            
             if (data.candidates && data.candidates[0].content.parts[0].text) {
-                aiResponse = data.candidates[0].content.parts[0].text;
+                let aiResponseText = data.candidates[0].content.parts[0].text.trim();
+                aiResponseText = aiResponseText.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
+                
+                try {
+                    const parsed = JSON.parse(aiResponseText);
+                    setChatMessages(prev => [...prev, { role: 'assistant', content: parsed.reply || "요청하신 작업을 완료했습니다." }]);
+                    
+                    if (parsed.modified_html) {
+                        setEditorContent(parsed.modified_html);
+                        setEditorMarkdown(parsed.modified_html);
+                        setHasUnsavedChanges(true);
+                        
+                        // Force a React re-mount of NotionEditor to apply the upstream update instantly
+                        setTimeout(() => {
+                            setEditorKey(prev => prev + 1);
+                        }, 50);
+                    }
+                } catch (parseError) {
+                    console.error("JSON Parse Error:", parseError, "Raw Response:", aiResponseText);
+                    setChatMessages(prev => [...prev, { role: 'assistant', content: aiResponseText }]); // Fallback to raw text
+                }
+            } else {
+                setChatMessages(prev => [...prev, { role: 'assistant', content: '응답을 생성할 수 없습니다.' }]);
             }
-
-            setChatMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
         } catch (err) {
             setChatMessages(prev => [...prev, { role: 'assistant', content: '⚠️ AI 응답 오류가 발생했습니다. "초안 작성해줘"로 다시 시도해 주세요.' }]);
         } finally {
