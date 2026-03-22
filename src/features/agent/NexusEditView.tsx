@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Platform, Animated } from 'react-native';
-import { FileText, MessageCircle, ChevronLeft, ChevronRight, Save, FolderOpen, Sparkles, Send, Bot, User as UserIcon, ArrowLeft, Zap, X, PanelLeftClose, PanelLeftOpen } from 'lucide-react-native';
+import { FileText, MessageCircle, ChevronLeft, ChevronRight, Save, FolderOpen, Sparkles, Send, Bot, User as UserIcon, ArrowLeft, Zap, X, PanelLeftClose, PanelLeftOpen, Upload } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useSessionManager } from './hooks/useSessionManager';
 import { useProjectStore } from '../../store/useProjectStore';
@@ -43,6 +43,7 @@ export const NexusEditView = () => {
     const [templateLoading, setTemplateLoading] = useState(false);
     const [draftGenerating, setDraftGenerating] = useState(false);
     const [draftCompleted, setDraftCompleted] = useState(false); // Track if AI has generated content
+    const [hwpxLoading, setHwpxLoading] = useState(false);
     // 🔑 Key counter to force NotionEditor remount when content changes externally
     const [editorKey, setEditorKey] = useState(0);
     // 🔑 Ref that holds the definitive draft HTML — bypasses state batching issues
@@ -417,6 +418,49 @@ ${fullContext.substring(0, 800)}
         }
     };
 
+    // --- HWPX Upload & Auto-Fill ---
+    const handleHwpxUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file || !file.name.endsWith('.hwpx')) {
+            alert("공고문 파일은 반드시 .hwpx 형식이어야 합니다.");
+            return;
+        }
+
+        setHwpxLoading(true);
+        // Temporary UI update during processing
+        setChatMessages(prev => [...prev, { role: 'assistant', content: '⏳ 업로드된 HWPX 원본 파일을 분석하고 AI 작성 데이터를 매핑하고 있습니다... (약 10초 소요)' }]);
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("payload", editorContent);
+
+            const response = await fetch("http://localhost:8000/upload-hwpx", {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "HWPX 서버 통신 실패");
+            }
+
+            const data = await response.json();
+            console.log("HWPX Engine Response:", data);
+            
+            alert(`🎉 HWPX 매핑 엔진(Python) 연동 성공!\n원본: ${file.name}\n결과: ${data.message}\n설명: 현재 파일 분해/조립 엔진(Ph.2 PoC)이 완벽하게 가동되었습니다.\n(실제 자동완성본 다운로드는 UI/V2에서 연결됩니다)`);
+            setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ HWPX 원본 구조 분석이 완료되었습니다. (성공)\n진짜 자동완성본 다운로드는 Phase 2에서 완벽하게 활성화됩니다.` }]);
+            
+        } catch (error: any) {
+            console.error("HWPX Processing error:", error);
+            alert(`HWPX 처리 실패: ${error.message}\n(Python 백엔드 서버가 켜져 있는지 메인 터미널을 확인해주세요)`);
+            setChatMessages(prev => [...prev, { role: 'assistant', content: `❌ HWPX 분석 실패: ${error.message}` }]);
+        } finally {
+            setHwpxLoading(false);
+            if (event.target) event.target.value = '';
+        }
+    };
+
     // --- Auto-save every 30 seconds ---
     useEffect(() => {
         if (autoSaveTimerRef.current) clearInterval(autoSaveTimerRef.current);
@@ -448,6 +492,29 @@ ${fullContext.substring(0, 800)}
                 <View style={styles.headerRight}>
                     {selectedSession && (
                         <>
+                            {Platform.OS === 'web' && (
+                                <div style={{ position: 'relative', display: 'inline-block' }}>
+                                    <input
+                                        type="file"
+                                        accept=".hwpx"
+                                        id="hwpx-upload"
+                                        style={{ display: 'none' }}
+                                        onChange={handleHwpxUpload}
+                                        disabled={hwpxLoading}
+                                    />
+                                    <label htmlFor="hwpx-upload" style={{
+                                        display: 'flex', alignItems: 'center', gap: 6,
+                                        marginRight: 12, padding: '8px 16px',
+                                        backgroundColor: 'rgba(129, 140, 248, 0.1)',
+                                        border: '1px solid rgba(129, 140, 248, 0.3)',
+                                        borderRadius: 8, cursor: hwpxLoading ? 'wait' : 'pointer',
+                                        transition: 'all 0.2s'
+                                    }}>
+                                        {hwpxLoading ? <ActivityIndicator size="small" color="#818CF8" /> : <Upload size={16} color="#818CF8" />}
+                                        <Text style={{ color: '#818CF8', fontWeight: '600', fontSize: 13 }}>원본 HWPX 자동 완성 (PoC)</Text>
+                                    </label>
+                                </div>
+                            )}
                             {lastSaved && <Text style={{ color: '#475569', fontSize: 10, fontWeight: '500' }}>저장됨 {lastSaved}</Text>}
                             {hasUnsavedChanges && !isSaving && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#F59E0B' }} />}
                         </>
