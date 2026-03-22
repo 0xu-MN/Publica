@@ -119,24 +119,29 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
                         continue
 
                     if n_key and n_key in sections and n_key not in mapped_keys:
-                        # Find the target blank cell!
+                        # Find the target blank cell! (Bulletproof Heuristic)
                         target_cell = None
                         
-                        # Heuristic 1: Is there a cell to the right?
-                        if c_idx + 1 < len(row.cells):
-                            right_cell = row.cells[c_idx + 1]
-                            # If right cell is mostly empty, it's the blank!
-                            if len(right_cell.text.strip()) < 50:
-                                target_cell = right_cell
-                        
-                        # Heuristic 2: If cell spans the row, look directly below
+                        # 1. Prefer Below Cell if it's a dedicated big box (Very common for major sections)
+                        if r_idx + 1 < len(table.rows):
+                            below_row = table.rows[r_idx + 1]
+                            # If the below row is a single giant merged cell, it is 100% the text area
+                            if len(set(below_row.cells)) == 1:
+                                target_cell = below_row.cells[0]
+                                
+                        # 2. If not a giant below box, try Right Cell
+                        if not target_cell and c_idx + 1 < len(row.cells):
+                            # Ensure it's not the same merged cell
+                            if row.cells[c_idx+1] != cell:
+                                target_cell = row.cells[c_idx+1]
+
+                        # 3. Fallback to strict Below cell
                         if not target_cell and r_idx + 1 < len(table.rows):
-                            below_cell = table.rows[r_idx + 1].cells[c_idx]
-                            if len(below_cell.text.strip()) < 50:
-                                target_cell = below_cell
+                            if table.rows[r_idx+1].cells[c_idx] != cell:
+                                target_cell = table.rows[r_idx+1].cells[c_idx]
                                 
                         if target_cell:
-                            target_cell.text = "" # Clear template placeholders like [작성란]
+                            target_cell.text = "" # Completely wipe government placeholder guides!
                             insert_elements_into_container(target_cell, sections[n_key])
                             mapped_keys.add(n_key)
 
@@ -144,7 +149,6 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
         unmapped_sections = [k for k in sections.keys() if k not in mapped_keys and k != "도입부"]
         
         if len(mapped_keys) == 0:
-            # Nothing matched at all! Do a global append
             doc.add_page_break()
             title_para = doc.add_paragraph()
             title_run = title_para.add_run("=== AI 초안 본문 (자동 첨부) ===")
@@ -152,7 +156,6 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
             title_run.font.size = Pt(14)
             insert_elements_into_container(doc, all_elements)
         elif len(unmapped_sections) > 0:
-            # Some sections mapped, some didn't. Append missing ones.
             doc.add_page_break()
             title_para = doc.add_paragraph()
             title_run = title_para.add_run("=== 누락된 AI 구역 내용 (자동 첨부) ===")
@@ -160,11 +163,17 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
             for k in unmapped_sections:
                 insert_elements_into_container(doc, sections[k])
 
-        # 4. Eradicate all rigid row heights to prevent text clipping (Crucial for Govt Forms)
+        # 4. XML-Level Eradication of rigid row heights
+        # Government forms enforce w:trHeight=exact. python-docx API often fails to remove it. We must delete the XML nodes.
         for table in doc.tables:
             for row in table.rows:
-                row.height_rule = WD_ROW_HEIGHT_RULE.AUTO
-                row.height = None
+                tr = row._tr
+                trPr = tr.trPr
+                if trPr is not None:
+                    # Find all w:trHeight elements and brutally remove them
+                    trHeights = trPr.findall("{http://schemas.openxmlformats.org/wordprocessingml/2006/main}trHeight")
+                    for trh in trHeights:
+                        trPr.remove(trh)
 
         doc.save(output_path)
         return True
