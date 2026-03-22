@@ -2,28 +2,38 @@ import docx
 import os
 import tempfile
 import json
+import re
 from bs4 import BeautifulSoup
 from docx.shared import Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+
+def _reset_paragraph_format(p):
+    """ Forcefully cure overlapping text bugs in strict government forms """
+    p.paragraph_format.line_spacing_rule = WD_LINE_SPACING.SINGLE
+    p.paragraph_format.line_spacing = 1.0
+    p.paragraph_format.space_before = Pt(3)
+    p.paragraph_format.space_after = Pt(3)
 
 def insert_elements_into_container(container, elements):
-    """ Helper to insert parsed BeautifulSoup elements into a python-docx container (Document or Cell) """
     for element in elements:
         if element.name in ['h1', 'h2', 'h3', 'h4']:
             level = int(element.name[1])
             p = container.add_paragraph()
+            _reset_paragraph_format(p)
             run = p.add_run(element.get_text().strip())
             run.bold = True
-            run.font.size = Pt(16 - (level * 1))
+            run.font.size = Pt(13 - (level * 1)) # Downsize slightly to fit tables
         
         elif element.name == 'p':
             text = element.get_text().strip()
             if text:
-                container.add_paragraph(text)
+                p = container.add_paragraph(text)
+                _reset_paragraph_format(p)
         
         elif element.name in ['ul', 'ol']:
             for li in element.find_all('li', recursive=False):
-                container.add_paragraph("• " + li.get_text().strip())
+                p = container.add_paragraph("• " + li.get_text().strip())
+                _reset_paragraph_format(p)
                 
         elif element.name == 'table':
             rows = element.find_all('tr')
@@ -39,94 +49,120 @@ def insert_elements_into_container(container, elements):
                         row_cells = docx_table.add_row().cells
                         for j, c in enumerate(cells):
                             if j < len(row_cells):
-                                row_cells[j].text = c.get_text().strip()
+                                target_cell = row_cells[j]
+                                target_cell.text = c.get_text().strip()
+                                # Reset cell's paragraph
+                                for cp in target_cell.paragraphs:
+                                    _reset_paragraph_format(cp)
                                 if c.name == 'th':
-                                    for paragraph in row_cells[j].paragraphs:
+                                    for paragraph in target_cell.paragraphs:
                                         for run in paragraph.runs: run.bold = True
         elif element.name is None:
             text = str(element).strip()
             if text:
-                container.add_paragraph(text)
+                p = container.add_paragraph(text)
+                _reset_paragraph_format(p)
+
+def get_normalized_key(text):
+    text = re.sub(r'\s+', '', text)
+    if "문제" in text and "인식" in text: return "문제인식"
+    if ("실현" in text and "가능" in text) or "솔루션" in text: return "실현가능성"
+    if "성장" in text and "전략" in text: return "성장전략"
+    if "팀" in text and ("구성" in text or "역량" in text): return "팀구성"
+    if "사업비" in text or "예산" in text: return "사업비"
+    return None
 
 def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> bool:
     try:
         doc = docx.Document(input_path)
         soup = BeautifulSoup(payload_html, "html.parser")
         
-        # Extract all elements for universal {{본문}} tag
         all_elements = list(soup.body.children if soup.body else soup.children)
 
-        # Step 1: Parse HTML into logical sections based on Headings
+        # 1. Parse HTML into sections
         sections = {}
-        current_key = "{{도입부}}"
+        current_key = "도입부"
         sections[current_key] = []
         
         for element in all_elements:
             if element.name in ['h1', 'h2', 'h3', 'h4']:
                 text = element.get_text().strip()
-                if "문제" in text: current_key = "{{문제인식}}"
-                elif "실현" in text or "솔루션" in text: current_key = "{{실현가능성}}"
-                elif "성장" in text or "시장" in text: current_key = "{{성장전략}}"
-                elif "역량" in text or "팀" in text: current_key = "{{팀구성}}"
-                elif "사업비" in text or "예산" in text: current_key = "{{사업비}}"
-                elif "개요" in text or "목표" in text: current_key = "{{사업개요}}"
-                elif "기대효과" in text or "파급효과" in text: current_key = "{{기대효과}}"
-                else: current_key = f"{{{{{text}}}}}"
+                n_key = get_normalized_key(text)
+                if n_key:
+                    current_key = n_key
                 
                 if current_key not in sections:
                     sections[current_key] = []
-                # Keep the heading in the section itself for completeness
+                # Keep heading
                 sections[current_key].append(element)
             else:
                 if str(element).strip():
+                    if current_key not in sections:
+                        sections[current_key] = []
                     sections[current_key].append(element)
 
-        # Step 2: Traverse DOCX and inject Native Elements inside targeted Table Cells
-        replaced_tokens = False
+        # 2. Smart Table Cell Finder
+        mapped_keys = set()
         
-        # Process simple text overrides outside tables
-        for para in doc.paragraphs:
-            if "{{사업아이템}}" in para.text:
-                para.text = para.text.replace("{{사업아이템}}", "AI 자동 작성 사업 아이템")
-            # Usually users put {{본문}} or {{문제인식}} inside tables. 
-            # If it's a raw paragraph, we just clear it (injecting rich elements mid-paragraph is limited in python-docx)
-            for key in list(sections.keys()) + ["{{본문}}", "{{내용}}"]:
-                if key in para.text:
-                    para.text = para.text.replace(key, "")
-                    replaced_tokens = True # We consider it replaced, but rely on table injection for rich formatting
-        
-        # Process Table Cells (where 99% of government blanks are)
         for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    # Universal body tag
-                    if "{{본문}}" in cell.text or "{{내용}}" in cell.text:
-                        cell.text = cell.text.replace("{{본문}}", "").replace("{{내용}}", "").strip()
+            for r_idx, row in enumerate(table.rows):
+                for c_idx, cell in enumerate(row.cells):
+                    cell_text = cell.text.strip()
+                    n_key = get_normalized_key(cell_text)
+                    
+                    # Also support explicit legacy tags if present
+                    if "{{본문}}" in cell_text or "{{내용}}" in cell_text:
+                        cell.text = ""
                         insert_elements_into_container(cell, all_elements)
-                        replaced_tokens = True
-                        continue # Move to next cell to avoid double injecting
+                        mapped_keys.add("본문")
+                        continue
 
-                    # Specific section tags
-                    for key, elements in sections.items():
-                        if key in cell.text:
-                            # Clear the tag and inject the rich section elements
-                            cell.text = cell.text.replace(key, "").strip()
-                            insert_elements_into_container(cell, elements)
-                            replaced_tokens = True
+                    if n_key and n_key in sections and n_key not in mapped_keys:
+                        # Find the target blank cell!
+                        target_cell = None
+                        
+                        # Heuristic 1: Is there a cell to the right?
+                        if c_idx + 1 < len(row.cells):
+                            right_cell = row.cells[c_idx + 1]
+                            # If right cell is mostly empty, it's the blank!
+                            if len(right_cell.text.strip()) < 50:
+                                target_cell = right_cell
+                        
+                        # Heuristic 2: If cell spans the row, look directly below
+                        if not target_cell and r_idx + 1 < len(table.rows):
+                            below_cell = table.rows[r_idx + 1].cells[c_idx]
+                            if len(below_cell.text.strip()) < 50:
+                                target_cell = below_cell
+                                
+                        if target_cell:
+                            target_cell.text = "" # Clear template placeholders like [작성란]
+                            insert_elements_into_container(target_cell, sections[n_key])
+                            mapped_keys.add(n_key)
 
-        # Step 3: Fallback Appender (If user uploaded a fully blank template with NO tags)
-        if not replaced_tokens:
+        # 3. Fallback Append for unmapped sections
+        unmapped_sections = [k for k in sections.keys() if k not in mapped_keys and k != "도입부"]
+        
+        if len(mapped_keys) == 0:
+            # Nothing matched at all! Do a global append
             doc.add_page_break()
             title_para = doc.add_paragraph()
             title_run = title_para.add_run("=== AI 초안 본문 (자동 첨부) ===")
             title_run.bold = True
             title_run.font.size = Pt(14)
-            title_run.font.color.rgb = RGBColor(0, 51, 153)
-            
             insert_elements_into_container(doc, all_elements)
+        elif len(unmapped_sections) > 0:
+            # Some sections mapped, some didn't. Append missing ones.
+            doc.add_page_break()
+            title_para = doc.add_paragraph()
+            title_run = title_para.add_run("=== 누락된 AI 구역 내용 (자동 첨부) ===")
+            title_run.bold = True
+            for k in unmapped_sections:
+                insert_elements_into_container(doc, sections[k])
 
         doc.save(output_path)
         return True
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"DOCX processing error: {e}")
         return False
