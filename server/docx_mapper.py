@@ -6,6 +6,7 @@ import re
 from bs4 import BeautifulSoup
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
+from docx.enum.table import WD_ROW_HEIGHT_RULE
 
 def _reset_paragraph_format(p):
     """ Forcefully cure overlapping text bugs in strict government forms """
@@ -158,6 +159,12 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
             title_run.bold = True
             for k in unmapped_sections:
                 insert_elements_into_container(doc, sections[k])
+
+        # 4. Eradicate all rigid row heights to prevent text clipping (Crucial for Govt Forms)
+        for table in doc.tables:
+            for row in table.rows:
+                row.height_rule = WD_ROW_HEIGHT_RULE.AUTO
+                row.height = None
 
         doc.save(output_path)
         return True
