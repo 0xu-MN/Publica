@@ -507,10 +507,11 @@ ${brainstormContext}
 
         try {
             const formData = new FormData();
-            formData.append("file", file);
-            formData.append("payload", editorContent);
-
-            const endpoint = isDocx ? "http://localhost:8000/api/autofill-docx" : "http://localhost:8000/api/upload-hwpx";
+            const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+            // Production Vercel hits EC2, Local hits localhost 8001
+            const baseUrl = isHttps ? "http://13.209.136.25:8001" : "http://localhost:8001";
+            const endpoint = isDocx ? `${baseUrl}/api/autofill-docx` : `${baseUrl}/api/upload-hwpx`;
+            
             const response = await fetch(endpoint, {
                 method: "POST",
                 body: formData,
