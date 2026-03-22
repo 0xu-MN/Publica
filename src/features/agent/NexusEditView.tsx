@@ -154,28 +154,51 @@ export const NexusEditView = () => {
 사용자가 제공한 [브레인스톰 내용]을 바탕으로, 각 항목에 전문적인 살을 붙여 정식 사업계획서 본문(초안)을 작성해주세요.
 
 **[매우 중요한 지시사항]**
-1. **절대 마크다운(Markdown) 기호(#, **, -, *)를 쓰지 마세요!!** 오직 순수 HTML 태그(<h1>, <h2>, <p>, <strong>, <ul>, <li>)로만 문서를 구성하세요.
-2. 경쟁사와 비교, 일정, 예산 계획, 기대효과 등 복잡한 데이터나 구조화가 필요한 부분은 **반드시 <table>, <thead>, <tbody>, <tr>, <th>, <td> 태그를 사용하여 깔끔하게 도표화(시각화)** 하세요.
-3. 문서의 시작부터 끝까지 ` + "`" + `html` + "`" + ` 코드 블록도 쓰지 말고, 처음부터 <h1> 태그로 시작하여 끝나는 완전한 HTML 문자열만 반환하세요.
+1. 사용자의 인사말이나 부연 설명 없이, 오직 완성된 문서만 출력해야 합니다.
+2. 문서는 절대 마크다운(Markdown) 기호(#, **, -, *)를 쓰지 말고, 오직 순수 HTML 태그(<h1>, <h2>, <p>, <strong>, <ul>, <li>)로만 구성하세요.
+3. 경쟁사와 비교, 일정, 예산 계획, 기대효과 등 복잡한 데이터나 구조화가 필요한 부분은 **반드시 <table>, <thead>, <tbody>, <tr>, <th>, <td> 태그를 사용하여 깔끔하게 도표화(시각화)** 하세요.
 4. 문체는 '명사형 맺음(~함, ~임, ~구축 계획임)' 또는 '정중한 비즈니스 경어(~합니다)'로 일관성 있게 작성하세요.
-5. 내용 없이 빈 항목이 있더라도, 당신이 직접 가상의(하지만 논리적인) 사업 내용을 창작하여 풍성하게 채워 넣으세요.
-\n\n[브레인스톰 내용]\n${brainstormText}`;
+5. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다. 코멘트나 마크다운 블록(\`\`\`json) 조차 넣지 말고 오직 중괄호 {} 로 시작하고 끝나는 JSON만 출력하세요.
+
+응답 JSON 규격:
+{
+    "document_html": "앞서 지시한 완벽한 순수 HTML 코드의 전체 문자열"
+}
+
+[브레인스톰 내용]\n${brainstormText}`;
 
                     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-                            generationConfig: { temperature: 0.7 }
+                            generationConfig: { temperature: 0.2 }
                         })
                     });
 
                     const data = await response.json();
                     if (data.candidates && data.candidates[0].content.parts[0].text) {
-                        let text = data.candidates[0].content.parts[0].text;
-                        // Markdown HTML 블록 제거 (```html ... ```)
-                        text = text.replace(/```html\s*/g, '').replace(/```\s*$/g, '').trim();
-                        draftHtml = text;
+                        let aiResponseText = data.candidates[0].content.parts[0].text;
+                        // Clean up markdown markers if Gemini ignores the prompt
+                        aiResponseText = aiResponseText.replace(/```json\s*/g, '').replace(/```\s*$/g, '').trim();
+                        
+                        try {
+                            const parsed = JSON.parse(aiResponseText);
+                            if (parsed.document_html) {
+                                draftHtml = parsed.document_html;
+                            } else {
+                                throw new Error("JSON payload missing document_html");
+                            }
+                        } catch (e) {
+                            console.error("Draft JSON Parse Error:", e, aiResponseText);
+                            // Fallback heuristic: Try to extract HTML directly 
+                            const htmlMatch = aiResponseText.match(/<h[1-6].*/s);
+                            if (htmlMatch) {
+                                draftHtml = htmlMatch[0];
+                            } else {
+                                throw new Error("Could not extract HTML from generative response");
+                            }
+                        }
                     } else {
                         throw new Error("Gemini 응답 구조가 올바르지 않습니다.");
                     }
