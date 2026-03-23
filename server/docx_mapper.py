@@ -44,7 +44,7 @@ def insert_elements_into_container(container, elements):
             p.paragraph_format.space_after = Pt(4)
             run = p.add_run(element.get_text().strip())
             run.bold = True
-            run.font.size = Pt(13 - getattr(element, 'level', level) * 1) 
+            run.font.size = Pt(13 - (level * 1)) 
         
         elif element.name == 'p':
             text = element.get_text().strip()
