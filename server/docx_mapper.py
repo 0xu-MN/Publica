@@ -15,26 +15,54 @@ def _reset_paragraph_format(p):
     p.paragraph_format.space_before = Pt(3)
     p.paragraph_format.space_after = Pt(3)
 
+def __render_markdown_text(p, text):
+    """ Parses **bold** and handles actual newlines (and literal '\\n') """
+    text = text.replace('\\n', '\n')
+    parts = re.split(r'(\*\*.*?\*\*)', text)
+    
+    for part in parts:
+        if not part: continue
+        is_bold = part.startswith('**') and part.endswith('**')
+        clean_text = part[2:-2] if is_bold else part
+        
+        lines = clean_text.split('\n')
+        for i, line in enumerate(lines):
+            if line:
+                run = p.add_run(line)
+                if is_bold:
+                    run.bold = True
+            if i < len(lines) - 1:
+                p.add_run().add_break()
+
 def insert_elements_into_container(container, elements):
     for element in elements:
         if element.name in ['h1', 'h2', 'h3', 'h4']:
             level = int(element.name[1])
             p = container.add_paragraph()
             _reset_paragraph_format(p)
+            p.paragraph_format.space_before = Pt(14)
+            p.paragraph_format.space_after = Pt(4)
             run = p.add_run(element.get_text().strip())
             run.bold = True
-            run.font.size = Pt(13 - (level * 1)) # Downsize slightly to fit tables
+            run.font.size = Pt(13 - getattr(element, 'level', level) * 1) 
         
         elif element.name == 'p':
             text = element.get_text().strip()
             if text:
-                p = container.add_paragraph(text)
+                p = container.add_paragraph()
                 _reset_paragraph_format(p)
+                p.paragraph_format.space_before = Pt(6)
+                p.paragraph_format.space_after = Pt(6)
+                __render_markdown_text(p, text)
         
         elif element.name in ['ul', 'ol']:
             for li in element.find_all('li', recursive=False):
-                p = container.add_paragraph("• " + li.get_text().strip())
+                p = container.add_paragraph()
                 _reset_paragraph_format(p)
+                p.paragraph_format.space_before = Pt(4)
+                p.paragraph_format.left_indent = Pt(14)
+                p.add_run("• ")
+                __render_markdown_text(p, li.get_text().strip())
                 
         elif element.name == 'table':
             rows = element.find_all('tr')
@@ -51,18 +79,20 @@ def insert_elements_into_container(container, elements):
                         for j, c in enumerate(cells):
                             if j < len(row_cells):
                                 target_cell = row_cells[j]
-                                target_cell.text = c.get_text().strip()
                                 # Reset cell's paragraph
-                                for cp in target_cell.paragraphs:
-                                    _reset_paragraph_format(cp)
+                                p = target_cell.paragraphs[0]
+                                _reset_paragraph_format(p)
+                                p.text = "" 
+                                __render_markdown_text(p, c.get_text().strip())
                                 if c.name == 'th':
-                                    for paragraph in target_cell.paragraphs:
-                                        for run in paragraph.runs: run.bold = True
+                                    for run in p.runs: run.bold = True
         elif element.name is None:
             text = str(element).strip()
             if text:
-                p = container.add_paragraph(text)
+                p = container.add_paragraph()
                 _reset_paragraph_format(p)
+                p.paragraph_format.space_before = Pt(6)
+                __render_markdown_text(p, text)
 
 def get_normalized_key(text):
     text = re.sub(r'\s+', '', text)
