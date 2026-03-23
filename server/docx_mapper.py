@@ -136,6 +136,13 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
         mapped_keys = set()
         
         for table in doc.tables:
+            # 🌟 FIX: Skip Table of Contents (목차) and Summary (요약) tables which falsely trap mapping keywords!
+            table_head_text = ""
+            if len(table.rows) > 0:
+                table_head_text = "".join(c.text for c in table.rows[0].cells).replace(" ", "")
+            if "목차" in table_head_text or "개요" in table_head_text or "요약" in table_head_text:
+                continue
+
             for r_idx, row in enumerate(table.rows):
                 for c_idx, cell in enumerate(row.cells):
                     cell_text = cell.text.strip()
