@@ -529,11 +529,18 @@ ${brainstormContext}
 
             if (isDocx) {
                 // Handle Blob response for DOCX (file download)
-                const blob = await response.blob();
+                let blob = await response.blob();
+                // 🌟 FIX: Force explicit MIME type because CORS proxies often strip headers, causing Safari to download extension-less UUID files
+                blob = new Blob([blob], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
+                
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = `[Publica_완성본]_${file.name}`;
+                
+                // 🌟 FIX: Clean filename of brackets/unsafe unicode which causes Safari to totally ignore a.download
+                const safeName = (file.name || 'document.docx').replace(/[^a-zA-Z0-9.\-_가-힣() ]/g, '_');
+                a.download = `Publica_Draft_${safeName}`;
+                
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
