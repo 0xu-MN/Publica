@@ -3,7 +3,7 @@
     "rewrites": [
         {
             "source": "/api/parse-pdf",
-            "destination": "https://publica-insightflow.loca.lt/api/parse-pdf"
+            "destination": "https://totally-bargain-convergence-dragon.trycloudflare.com/api/parse-pdf"
         },
         {
             "source": "/(.*)",

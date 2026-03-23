@@ -507,9 +507,11 @@ ${brainstormContext}
 
         try {
             const formData = new FormData();
+            formData.append('file', file);
+            formData.append('payload', JSON.stringify({ document_html: editorContent }));
             const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
             // Production Vercel hits Emergency Tunnel, Local hits localhost 8001
-            const baseUrl = isHttps ? "https://publica-insightflow.loca.lt" : "http://localhost:8001";
+            const baseUrl = isHttps ? "https://totally-bargain-convergence-dragon.trycloudflare.com" : "http://localhost:8001";
             const endpoint = isDocx ? `${baseUrl}/api/autofill-docx` : `${baseUrl}/api/upload-hwpx`;
             
             const response = await fetch(endpoint, {
