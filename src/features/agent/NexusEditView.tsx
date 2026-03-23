@@ -537,7 +537,9 @@ ${brainstormContext}
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
-                window.URL.revokeObjectURL(url);
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                }, 1000);
                 
                 alert(`🎉 DOCX 매핑 성공!\n원본: ${file.name}\n설명: AI 초안이 매핑된 DOCX 파일이 다운로드 폴더에 저장되었습니다.`);
                 setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ DOCX 완성본 병합이 완료되었습니다. 내 컴퓨터 폴더에서 확인해 보세요!` }]);
