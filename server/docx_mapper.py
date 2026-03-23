@@ -105,6 +105,10 @@ def get_normalized_key(text):
 
 def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> bool:
     try:
+        # Pre-process HTML bold tags into Markdown equivalent to gracefully handle AI fallback
+        payload_html = payload_html.replace('<strong>', '**').replace('</strong>', '**')
+        payload_html = payload_html.replace('<b>', '**').replace('</b>', '**')
+
         doc = docx.Document(input_path)
         soup = BeautifulSoup(payload_html, "html.parser")
         
@@ -159,22 +163,21 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
                         # Find the target blank cell! (Bulletproof Heuristic)
                         target_cell = None
                         
-                        # 1. Prefer Below Cell if it's a dedicated big box (Very common for major sections)
+                        # 1. Prefer Below Cell if it's a dedicated big box
+                        # 🌟 FIX: Use `c._tc` to distinct underlying XML element instances, Python-docx creates multiple wrapper objects!
                         if r_idx + 1 < len(table.rows):
                             below_row = table.rows[r_idx + 1]
-                            # If the below row is a single giant merged cell, it is 100% the text area
-                            if len(set(below_row.cells)) == 1:
+                            if len(set(c._tc for c in below_row.cells)) == 1:
                                 target_cell = below_row.cells[0]
                                 
                         # 2. If not a giant below box, try Right Cell
                         if not target_cell and c_idx + 1 < len(row.cells):
-                            # Ensure it's not the same merged cell
-                            if row.cells[c_idx+1] != cell:
+                            if row.cells[c_idx+1]._tc != cell._tc:
                                 target_cell = row.cells[c_idx+1]
 
                         # 3. Fallback to strict Below cell
                         if not target_cell and r_idx + 1 < len(table.rows):
-                            if table.rows[r_idx+1].cells[c_idx] != cell:
+                            if table.rows[r_idx+1].cells[c_idx]._tc != cell._tc:
                                 target_cell = table.rows[r_idx+1].cells[c_idx]
                                 
                         if target_cell:
