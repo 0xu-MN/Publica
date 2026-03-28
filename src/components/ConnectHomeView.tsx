@@ -285,7 +285,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                             style={{ flex: 1, display: 'flex' }}
                                         >
                                             <TouchableOpacity
-                                                onPress={() => onProgramSelect?.(topGrants[0])}
+                                                onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(topGrants[0])}
                                                 className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
                                             >
                                                 <View className="absolute top-0 right-0 p-8 z-10">
@@ -330,7 +330,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                             style={{ flex: 1, display: 'flex' }}
                                         >
                                             <TouchableOpacity
-                                                onPress={() => onProgramSelect?.(topGrants[1])}
+                                                onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(topGrants[1])}
                                                 className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
                                             >
                                                 <View className="absolute top-0 right-0 p-8 z-10">
@@ -396,7 +396,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                 <Text className="text-white text-xl font-bold">정부사업 안내</Text>
                             </View>
                             <TouchableOpacity
-                                onPress={onNavigateToGrantList}
+                                onPress={() => !user ? onLoginPress?.() : onNavigateToGrantList?.()}
                                 className="bg-white/5 px-3 py-1.5 rounded-md border border-white/10"
                             >
                                 <Text className="text-blue-400 text-[10px] font-bold">맞춤형 공고 전체보기 {'>'}</Text>
@@ -532,7 +532,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                             <Home size={22} color="#3B82F6" />
                             <Text className="text-white text-2xl font-black">My Workspace Summary</Text>
                         </View>
-                        <TouchableOpacity><Text className="text-slate-500 text-sm font-bold">워크스페이스 이동 {'>'}</Text></TouchableOpacity>
+                        <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToWorkspace?.()} ><Text className="text-slate-500 text-sm font-bold">워크스페이스 이동 {'>'}</Text></TouchableOpacity>
                     </View>
 
                     <View className="relative">
