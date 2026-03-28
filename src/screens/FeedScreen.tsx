@@ -27,6 +27,7 @@ import { AnalysisResultScreen } from './AnalysisResultScreen';
 import { createProject } from '../services/projects';
 import { useProjectStore } from '../store/useProjectStore';
 import { PricingPage } from '../components/workspace/views/PricingPage';
+import { LandingPage } from '../components/LandingPage';
 
 // Filter categories
 const CATEGORIES = ['전체'];
@@ -145,7 +146,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const [lastUpdateTime, setLastUpdateTime] = useState<Date>(new Date());
 
-    const [viewMode, setViewMode] = useState<'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing'>('connect');
+    const [viewMode, setViewMode] = useState<'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing' | 'landing'>('landing');
     const [targetUserId, setTargetUserId] = useState<string | null>(null);
     const [selectedProgram, setSelectedProgram] = useState<any | null>(null);
     const [selectedAnalysisResult, setSelectedAnalysisResult] = useState<any | null>(null);
@@ -164,7 +165,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
             try {
                 // If user logs out, force Connect Mode and clear personal data
                 if (!user) {
-                    setViewMode('connect');
+                    setViewMode('landing');
                     setNotifications([]); // Clear notifications
                     setActiveCategory('전체'); // Reset category
                     return;
@@ -186,10 +187,10 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
 
                 if (savedViewMode) {
                     // Always land on Connect Hub ('connect') as the main page
-                    if (savedViewMode === 'feed') {
-                        setViewMode('connect');
-                    } else if (savedViewMode === 'workspace' && !user) {
-                        setViewMode('connect');
+                    if (savedViewMode === 'feed' || savedViewMode === 'landing') {
+                        setViewMode('workspace');
+                    } else if ((savedViewMode === 'workspace' || savedViewMode === 'connect') && !user) {
+                        setViewMode('landing');
                     } else {
                         setViewMode(savedViewMode as any);
                     }
@@ -412,6 +413,13 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                     </View>
                 ) : null
             }
+            {viewMode === 'landing' && (
+                <LandingPage
+                    onLoginPress={() => setAuthModalVisible(true)}
+                    onStartFree={() => setAuthModalVisible(true)}
+                    onNavigateToPricing={() => setViewMode('pricing')}
+                />
+            )}
             {viewMode === 'connect' && (
                 <ConnectHomeView
                     onNavigateToLounge={() => setViewMode('lounge')}

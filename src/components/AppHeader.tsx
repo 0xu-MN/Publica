@@ -19,8 +19,8 @@ interface FeedNotification {
 }
 
 interface AppHeaderProps {
-    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing';
-    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing') => void;
+    viewMode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing' | 'landing';
+    setViewMode: (mode: 'feed' | 'connect' | 'lounge' | 'workspace' | 'settings' | 'grants' | 'pricing' | 'landing') => void;
     activeCategory: string;
     setActiveCategory: (category: string) => void;
     user: any;
@@ -87,7 +87,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 {/* Left: Logo */}
                 <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => { setViewMode('connect'); setActiveCategory('전체'); }}
+                    onPress={() => { setViewMode(user ? 'connect' : 'landing'); setActiveCategory('전체'); }}
                     className="flex-row items-center z-10"
                 >
                     <View className="w-12 h-12 items-center justify-center bg-[#FDF8F3] rounded-[14px]">
@@ -107,6 +107,37 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <View className="absolute inset-0 flex-row justify-center items-center pointer-events-none">
                         <View className="pointer-events-auto flex-row items-center gap-3">
 
+                            {!user ? (
+                                /* GUEST NAVIGATION: Landing page menu */
+                                <View className="h-12 px-2 rounded-full bg-slate-800/80 border border-white/10 flex-row items-center shadow-lg shadow-black/20 backdrop-blur-md">
+                                    <TouchableOpacity
+                                        onPress={() => setViewMode('landing')}
+                                        className={`h-9 px-4 rounded-full justify-center ${viewMode === 'landing' ? 'bg-purple-600' : 'hover:bg-white/5'}`}
+                                    >
+                                        <Text className={`text-[13px] font-bold ${viewMode === 'landing' ? 'text-white' : 'text-slate-400'}`}>서비스 소개</Text>
+                                    </TouchableOpacity>
+
+                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
+
+                                    <TouchableOpacity
+                                        onPress={() => setViewMode('pricing')}
+                                        className={`h-9 px-4 rounded-full justify-center ${viewMode === 'pricing' ? 'bg-amber-600' : 'hover:bg-white/5'}`}
+                                    >
+                                        <Text className={`text-[13px] font-bold ${viewMode === 'pricing' ? 'text-white' : 'text-slate-400'}`}>요금안내</Text>
+                                    </TouchableOpacity>
+
+                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
+
+                                    <TouchableOpacity
+                                        onPress={() => setViewMode('connect')}
+                                        className={`h-9 px-4 rounded-full justify-center ${viewMode === 'connect' ? 'bg-emerald-600' : 'hover:bg-white/5'}`}
+                                    >
+                                        <Text className={`text-[13px] font-bold ${viewMode === 'connect' ? 'text-white' : 'text-slate-400'}`}>Connect Hub</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            ) : (
+                                /* AUTHENTICATED NAVIGATION */
+                                <>
                             {/* 1. Workspace Button */}
                             <TouchableOpacity
                                 onPress={() => setViewMode('workspace')}
@@ -170,6 +201,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     <Icons.Globe size={20} color="#64748B" />
                                 </TouchableOpacity>
                             )}
+                                </>
+                            )}
 
                         </View>
                     </View>
@@ -192,13 +225,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     </TouchableOpacity>
 
                     {!user ? (
-                        <TouchableOpacity
-                            onPress={onAuthModalOpen}
-                            className="bg-white/10 px-4 py-2 rounded-xl flex-row items-center border border-white/10"
-                        >
-                            <Icons.User size={16} color="#fff" style={{ marginRight: 6 }} />
-                            <Text className="text-white font-semibold text-sm">로그인</Text>
-                        </TouchableOpacity>
+                        <View className="flex-row items-center gap-2">
+                            <TouchableOpacity
+                                onPress={onAuthModalOpen}
+                                className="bg-white/10 px-4 py-2 rounded-xl flex-row items-center border border-white/10"
+                            >
+                                <Icons.User size={16} color="#fff" style={{ marginRight: 6 }} />
+                                <Text className="text-white font-semibold text-sm">로그인</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={onAuthModalOpen}
+                                className="bg-purple-600 px-4 py-2 rounded-xl flex-row items-center hover:bg-purple-500 active:scale-95"
+                            >
+                                <Text className="text-white font-bold text-sm">무료 시작하기</Text>
+                            </TouchableOpacity>
+                        </View>
                     ) : (
                         <>
                             {!isDesktop && (
