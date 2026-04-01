@@ -48,55 +48,57 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
 
                 <Animated.View
                     entering={SlideInDown.springify()}
-                    className={`w-full max-w-[400px] bg-[#0F172A] rounded-2xl border border-slate-700 p-8 items-center ${Platform.OS === 'web' ? 'shadow-2xl shadow-black' : ''}`}
+                    className={`w-full max-w-[400px] bg-[#FDF8F3] rounded-3xl border border-[#E2E8F0] p-10 items-center ${Platform.OS === 'web' ? 'shadow-xl shadow-black/5' : ''}`}
                     style={[
-                        Platform.OS !== 'web' ? { elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 } : {}
+                        Platform.OS !== 'web' ? { elevation: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 24 } : {}
                     ]}
                 >
-                    <Pressable className="absolute top-4 right-4 p-2 z-[50] opacity-70 hover:opacity-100" onPress={onClose}>
-                        <X size={18} color="#94A3B8" />
+                    <Pressable className="absolute top-6 right-6 p-2 z-[50] opacity-50 hover:opacity-100" onPress={onClose}>
+                        <X size={20} color="#64748B" />
                     </Pressable>
 
-                    <View className="mb-8 items-center">
-                        <Text className="text-2xl font-bold text-white mb-2 tracking-tight">환영합니다</Text>
-                        <Text className="text-sm text-slate-400 text-center leading-[20px]">
+                    <View className="mb-10 items-center">
+                        <View className="w-16 h-16 bg-[#7C3AED]/10 rounded-2xl items-center justify-center mb-6">
+                            <Text className="text-3xl font-black text-[#7C3AED]">P</Text>
+                        </View>
+                        <Text className="text-2xl font-bold text-[#27272a] mb-3 tracking-tight">반갑습니다</Text>
+                        <Text className="text-sm text-[#64748B] text-center leading-[22px] font-medium">
                             Publica에 로그인하고{'\n'}나만의 인사이트를 발견하세요.
                         </Text>
                     </View>
 
-                    <View className="w-full gap-3 mb-6">
-                        {/* Google Button - Shadcn Outline/Secondary Style */}
+                    <View className="w-full gap-4 mb-8">
+                        {/* Google Button */}
                         <Pressable
                             style={({ pressed }) => [
-                                pressed && { opacity: 0.9, backgroundColor: '#1e293b' }
+                                pressed && { opacity: 0.9, backgroundColor: '#F8FAFC' }
                             ]}
-                            className="w-full h-11 rounded-md flex-row items-center justify-center relative bg-white border border-slate-200"
+                            className="w-full h-12 rounded-xl flex-row items-center justify-center relative bg-white border border-[#E2E8F0] shadow-sm shadow-black/5"
                             onPress={handleGoogleLogin}
                         >
-                            <View className="absolute left-4 w-5 h-5 items-center justify-center">
-                                {/* Simple Google G Icon replacement for text */}
-                                <Text className="font-bold text-lg text-slate-900">G</Text>
+                            <View className="absolute left-4 w-6 h-6 items-center justify-center">
+                                <Text className="font-bold text-lg text-[#27272a]">G</Text>
                             </View>
-                            <Text className="text-slate-900 text-sm font-medium">Google로 계속하기</Text>
+                            <Text className="text-[#27272a] text-[15px] font-semibold">Google로 계속하기</Text>
                         </Pressable>
 
-                        {/* Kakao Button - Custom Brand Brand */}
+                        {/* Kakao Button */}
                         <Pressable
                             style={({ pressed }) => [
-                                pressed && { opacity: 0.9 }
+                                pressed && { opacity: 0.95 }
                             ]}
-                            className="w-full h-11 rounded-md flex-row items-center justify-center relative bg-[#FEE500] border border-[#FEE500]"
+                            className="w-full h-12 rounded-xl flex-row items-center justify-center relative bg-[#FEE500]"
                             onPress={handleKakaoLogin}
                         >
-                            <View className="absolute left-4 w-5 h-5 items-center justify-center">
+                            <View className="absolute left-4 w-6 h-6 items-center justify-center">
                                 <Text className="font-bold text-lg text-[#3C1E1E]">K</Text>
                             </View>
-                            <Text className="text-[#3C1E1E] text-sm font-medium">카카오로 계속하기</Text>
+                            <Text className="text-[#3C1E1E] text-[15px] font-semibold">카카오로 계속하기</Text>
                         </Pressable>
                     </View>
 
-                    <Text className="text-[11px] text-slate-600 text-center px-4">
-                        로그인 시 PUBLICA의 <Text className="underline">서비스 이용약관</Text> 및 <Text className="underline">개인정보 처리방침</Text>에 동의하게 됩니다.
+                    <Text className="text-[12px] text-[#94A3B8] text-center px-4 leading-[18px]">
+                        로그인 시 PUBLICA의 <Text className="underline font-medium text-[#7C3AED]">서비스 이용약관</Text> 및 <Text className="underline font-medium text-[#7C3AED]">개인정보 처리방침</Text>에 동의하게 됩니다.
                     </Text>
                 </Animated.View>
             </View>

@@ -76,10 +76,10 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
     // Type-based accent color (matches TowerCard)
     const getAccentColor = () => {
         switch (displayNode.type || displayNode.action_type) {
-            case 'documentation': return '#8B5CF6';
+            case 'documentation': return '#7C3AED';
             case 'action': return '#F59E0B';
             case 'research':
-            default: return '#3B82F6';
+            default: return '#7C3AED';
         }
     };
     const accentColor = getAccentColor();
@@ -146,7 +146,7 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                     {/* Chat Header */}
                     <View style={styles.chatHeader}>
                         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                            <Sparkles size={14} color="#10B981" style={{ marginRight: 6 }} />
+                            <Sparkles size={14} color="#7C3AED" style={{ marginRight: 6 }} />
                             <Text style={styles.chatContext}>
                                 {displayNode.label ? `분석 중: ${displayNode.label}` : 'Publica Agent'}
                             </Text>
@@ -195,7 +195,7 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                                             }
                                         }}
                                     >
-                                        <GitBranch size={12} color="#10B981" />
+                                        <GitBranch size={12} color="#7C3AED" />
                                         <Text style={styles.inlineBranchBtnText}>이 답변을 하위 브랜치로 추가</Text>
                                     </TouchableOpacity>
                                 )}
@@ -203,9 +203,9 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                         ))}
 
                         {loading && (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10 }}>
-                                <ActivityIndicator size="small" color="#10B981" />
-                                <Text style={{ color: '#64748B', fontSize: 12, marginLeft: 8 }}>Thinking...</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 10, paddingHorizontal: 12 }}>
+                                <ActivityIndicator size="small" color="#7C3AED" />
+                                <Text style={{ color: '#94A3B8', fontSize: 12, marginLeft: 8, fontWeight: '600' }}>분석 중...</Text>
                             </View>
                         )}
 
@@ -233,13 +233,13 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
                     {/* Input Area */}
                     <View style={styles.inputRow}>
                         <TouchableOpacity style={styles.attachPill} onPress={onFileUpload}>
-                            <Paperclip size={14} color="#10B981" />
+                            <Paperclip size={14} color="#7C3AED" />
                             <Text style={styles.attachText}>PDF</Text>
                         </TouchableOpacity>
                         <TextInput
                             style={styles.chatInput}
-                            placeholder="이 항목에 대해 질문..."
-                            placeholderTextColor="#64748B"
+                            placeholder="질문을 입력하세요..."
+                            placeholderTextColor="#94A3B8"
                             value={input}
                             onChangeText={setInputState}
                             onSubmitEditing={() => handleSend()}
@@ -259,52 +259,58 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
 
                 {/* Deep Dive */}
                 <TouchableOpacity
-                    style={[styles.actionBtn, { borderColor: '#3B82F6' }]}
+                    style={[styles.actionBtn, { borderColor: '#E2E8F0' }]}
                     onPress={() => onAction('DEEP_DIVE', node)}
                 >
-                    <Search size={14} color="#3B82F6" />
-                    <View style={{ flex: 1, marginLeft: 10 }}>
-                        <Text style={[styles.actionBtnTitle, { color: '#3B82F6' }]}>Deep Dive</Text>
-                        <Text style={styles.actionBtnDesc}>이 항목을 더 깊이 분석합니다</Text>
+                    <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(59, 130, 246, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Search size={16} color="#3B82F6" />
                     </View>
-                    <ChevronRight size={14} color="#3B82F6" />
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={[styles.actionBtnTitle, { color: '#27272a' }]}>Deep Dive</Text>
+                        <Text style={styles.actionBtnDesc}>AI를 통해 이 항목을 더 정밀하게 분석합니다</Text>
+                    </View>
+                    <ChevronRight size={14} color="#94A3B8" />
                 </TouchableOpacity>
 
                 {/* Add to Memo */}
                 {onAppendToMemo && (
                     <TouchableOpacity
-                        style={[styles.actionBtn, { borderColor: '#10B981' }]}
+                        style={[styles.actionBtn, { borderColor: '#E2E8F0' }]}
                         onPress={() => {
                             const memoText = `[${displayNode.label}]\n${displayNode.description || ''}`;
                             onAppendToMemo(memoText);
                         }}
                     >
-                        <Sparkles size={14} color="#10B981" />
-                        <View style={{ flex: 1, marginLeft: 10 }}>
-                            <Text style={[styles.actionBtnTitle, { color: '#10B981' }]}>메모장에 추가</Text>
+                        <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(124, 58, 237, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                            <Sparkles size={16} color="#7C3AED" />
+                        </View>
+                        <View style={{ flex: 1, marginLeft: 12 }}>
+                            <Text style={[styles.actionBtnTitle, { color: '#27272a' }]}>메모장에 추가</Text>
                             <Text style={styles.actionBtnDesc}>이 내용을 브레인스톰 메모로 복사합니다</Text>
                         </View>
-                        <ChevronRight size={14} color="#10B981" />
+                        <ChevronRight size={14} color="#94A3B8" />
                     </TouchableOpacity>
                 )}
 
 
                 {/* Ask AI — Now toggles the chat section */}
                 <TouchableOpacity
-                    style={[styles.actionBtn, { borderColor: '#8B5CF6' }, chatExpanded && { backgroundColor: '#8B5CF620', borderColor: '#8B5CF6' }]}
+                    style={[styles.actionBtn, { borderColor: chatExpanded ? '#7C3AED' : '#E2E8F0' }, chatExpanded && { backgroundColor: 'rgba(124, 58, 237, 0.05)' }]}
                     onPress={() => setChatExpanded(!chatExpanded)}
                 >
-                    <MessageCircle size={14} color="#8B5CF6" />
-                    <View style={{ flex: 1, marginLeft: 10 }}>
-                        <Text style={[styles.actionBtnTitle, { color: '#8B5CF6' }]}>Ask AI</Text>
+                    <View style={{ width: 32, height: 32, borderRadius: 10, backgroundColor: 'rgba(99, 102, 241, 0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                        <MessageCircle size={16} color="#6366F1" />
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 12 }}>
+                        <Text style={[styles.actionBtnTitle, { color: '#27272a' }]}>Ask AI</Text>
                         <Text style={styles.actionBtnDesc}>
-                            {chatExpanded ? '채팅 닫기' : '이 항목에 대해 질문합니다'}
+                            {chatExpanded ? '채팅 닫기' : '이 항목에 대해 자유롭게 질문합니다'}
                         </Text>
                     </View>
                     {chatExpanded ? (
-                        <ChevronDown size={14} color="#8B5CF6" />
+                        <ChevronDown size={14} color="#7C3AED" />
                     ) : (
-                        <ChevronRight size={14} color="#8B5CF6" />
+                        <ChevronRight size={14} color="#94A3B8" />
                     )}
                 </TouchableOpacity>
             </View>
@@ -337,90 +343,92 @@ export const DetailPanel = forwardRef<DetailPanelRef, DetailPanelProps>(({
 const styles = StyleSheet.create({
     panel: {
         position: 'absolute', right: 0, top: 0, bottom: 0,
-        width: 360,
-        backgroundColor: '#020617',
-        borderLeftWidth: 1, borderColor: '#1E293B',
+        width: 380,
+        backgroundColor: '#FFFFFF',
+        borderLeftWidth: 1, borderColor: '#E2E8F0',
         zIndex: 90,
+        shadowColor: '#000', shadowOffset: { width: -10, height: 0 }, shadowOpacity: 0.05, shadowRadius: 20,
     },
     header: {
-        height: 56,
+        height: 60,
         paddingHorizontal: 20,
-        borderBottomWidth: 1, borderColor: '#1E293B',
+        borderBottomWidth: 1, borderColor: '#F1F5F9',
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+        backgroundColor: '#FFFFFF',
     },
-    headerTitle: { color: '#64748B', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
-    typeDot: { width: 8, height: 8, borderRadius: 4 },
+    headerTitle: { color: '#27272a', fontSize: 13, fontWeight: '900', letterSpacing: 1 },
+    typeDot: { width: 10, height: 10, borderRadius: 5 },
 
-    typeBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, alignSelf: 'flex-start', marginBottom: 12 },
-    typeBadgeText: { fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+    typeBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 16 },
+    typeBadgeText: { fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
 
-    titleText: { color: '#F1F5F9', fontSize: 20, fontWeight: '800', lineHeight: 28, marginBottom: 16 },
-    bodyText: { color: '#94A3B8', fontSize: 14, lineHeight: 22 },
+    titleText: { color: '#27272a', fontSize: 22, fontWeight: '900', lineHeight: 30, marginBottom: 16, letterSpacing: -0.5 },
+    bodyText: { color: '#64748B', fontSize: 14, lineHeight: 24, fontWeight: '500' },
 
-    referencesSection: { marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderColor: '#1E293B' },
-    sectionLabel: { color: '#64748B', fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
-    referenceItem: { backgroundColor: '#0F172A', borderRadius: 6, padding: 10, marginBottom: 6, borderWidth: 1, borderColor: '#1E293B' },
-    referenceText: { color: '#94A3B8', fontSize: 12, lineHeight: 16 },
+    referencesSection: { marginTop: 32, paddingTop: 20, borderTopWidth: 1, borderColor: '#F1F5F9' },
+    sectionLabel: { color: '#94A3B8', fontSize: 11, fontWeight: '800', letterSpacing: 1 },
+    referenceItem: { backgroundColor: '#F8FAFC', borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: '#E2E8F0' },
+    referenceText: { color: '#64748B', fontSize: 12, lineHeight: 18, fontWeight: '500' },
 
     // Chat Section
     chatSection: { flex: 1 },
     chatHeader: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        padding: 12, borderBottomWidth: 1, borderColor: '#1E293B',
-        backgroundColor: '#0F172A',
+        paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderColor: '#F1F5F9',
+        backgroundColor: '#FFFFFF',
     },
-    chatContext: { color: '#10B981', fontSize: 12, fontWeight: '600' },
-    chatHistory: { flex: 1, padding: 12, backgroundColor: '#020617' },
-    msgBubble: { padding: 10, borderRadius: 8, marginBottom: 8, maxWidth: '85%' },
-    msgMe: { backgroundColor: '#2563EB', alignSelf: 'flex-end' },
-    msgAi: { backgroundColor: '#0F172A', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#1E293B' },
-    msgText: { color: '#E2E8F0', fontSize: 13, lineHeight: 18 },
+    chatContext: { color: '#7C3AED', fontSize: 12, fontWeight: '800' },
+    chatHistory: { flex: 1, padding: 16, backgroundColor: '#FDF8F3' },
+    msgBubble: { padding: 14, borderRadius: 16, marginBottom: 10, maxWidth: '85%', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
+    msgMe: { backgroundColor: '#7C3AED', alignSelf: 'flex-end', borderTopRightRadius: 4 },
+    msgAi: { backgroundColor: '#FFFFFF', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#E2E8F0', borderTopLeftRadius: 4 },
+    msgText: { color: '#27272a', fontSize: 14, lineHeight: 20, fontWeight: '500' },
 
     inputRow: {
         flexDirection: 'row', alignItems: 'center',
-        padding: 8, borderTopWidth: 1, borderColor: '#1E293B',
-        backgroundColor: '#0F172A',
+        padding: 12, borderTopWidth: 1, borderColor: '#F1F5F9',
+        backgroundColor: '#FFFFFF',
     },
-    chatInput: { flex: 1, color: 'white', minHeight: 36, maxHeight: 80, paddingHorizontal: 8, paddingVertical: 6, fontSize: 13, textAlignVertical: 'top' },
-    sendFab: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#2563EB', justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+    chatInput: { flex: 1, color: '#27272a', minHeight: 44, maxHeight: 100, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, fontWeight: '500', backgroundColor: '#F8FAFC', borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+    sendFab: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#7C3AED', justifyContent: 'center', alignItems: 'center', marginLeft: 12, shadowColor: '#7C3AED', shadowOpacity: 0.3, shadowRadius: 10 },
 
     attachPill: {
         flexDirection: 'row', alignItems: 'center',
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
-        paddingHorizontal: 10, paddingVertical: 4,
-        borderRadius: 12, marginRight: 6,
-        borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.3)',
+        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+        paddingHorizontal: 12, paddingVertical: 6,
+        borderRadius: 16, marginRight: 10,
+        borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.2)',
     },
-    attachText: { color: '#10B981', fontSize: 11, fontWeight: '700', marginLeft: 4 },
+    attachText: { color: '#7C3AED', fontSize: 11, fontWeight: '800', marginLeft: 4 },
 
-    suggestionContainer: { marginTop: 12, paddingHorizontal: 4 },
-    suggestionTitle: { color: '#64748B', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' },
+    suggestionContainer: { marginTop: 16, paddingHorizontal: 4 },
+    suggestionTitle: { color: '#94A3B8', fontSize: 11, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 },
     suggestionChip: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        backgroundColor: '#0F172A', paddingVertical: 10, paddingHorizontal: 14,
-        borderRadius: 10, marginBottom: 6,
-        borderWidth: 1, borderColor: '#1E293B',
+        backgroundColor: '#FFFFFF', paddingVertical: 12, paddingHorizontal: 16,
+        borderRadius: 14, marginBottom: 8,
+        borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 5
     },
-    suggestionLabel: { color: '#E2E8F0', fontSize: 12, fontWeight: '500' },
+    suggestionLabel: { color: '#27272a', fontSize: 13, fontWeight: '700' },
 
     // Action Bar
-    actionBar: { padding: 12, borderTopWidth: 1, borderColor: '#1E293B', backgroundColor: '#020617', gap: 6 },
-    actionTitle: { color: '#64748B', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 2, textTransform: 'uppercase' },
+    actionBar: { padding: 20, borderTopWidth: 1, borderColor: '#F1F5F9', backgroundColor: '#FFFFFF', gap: 10 },
+    actionTitle: { color: '#94A3B8', fontSize: 11, fontWeight: '900', letterSpacing: 1, marginBottom: 4, textTransform: 'uppercase' },
 
     actionBtn: {
         flexDirection: 'row', alignItems: 'center',
-        padding: 10,
-        borderRadius: 8, borderWidth: 1,
-        backgroundColor: '#0F172A',
+        padding: 12,
+        borderRadius: 16, borderWidth: 1.5,
+        backgroundColor: '#FFFFFF',
     },
-    actionBtnTitle: { fontSize: 13, fontWeight: '700' },
-    actionBtnDesc: { color: '#64748B', fontSize: 10, marginTop: 1 },
+    actionBtnTitle: { fontSize: 14, fontWeight: '800' },
+    actionBtnDesc: { color: '#94A3B8', fontSize: 11, marginTop: 2, fontWeight: '500' },
 
     // Inline Branch Button in Chat
     inlineBranchBtn: {
         flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start',
-        borderWidth: 1, borderColor: '#10B981', backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, marginTop: 4,
+        borderWidth: 1, borderColor: '#7C3AED', backgroundColor: 'rgba(124, 58, 237, 0.05)',
+        paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, marginTop: 6,
     },
-    inlineBranchBtnText: { color: '#10B981', fontSize: 11, fontWeight: '700', marginLeft: 6 },
+    inlineBranchBtnText: { color: '#7C3AED', fontSize: 11, fontWeight: '800', marginLeft: 6 },
 });

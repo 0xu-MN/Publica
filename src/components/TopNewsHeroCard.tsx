@@ -176,7 +176,7 @@ export const TopNewsHeroCard: React.FC<TopNewsHeroCardProps> = ({ item, index, p
                             ))}
                         </View>
 
-                        <View className="flex-row items-center bg-blue-600 px-4 py-2 rounded-full shadow-lg shadow-blue-600/30">
+                        <View className="flex-row items-center bg-purple-600 px-4 py-2 rounded-full shadow-lg shadow-purple-600/30">
                             <Text className="text-white text-xs font-bold mr-1">Read Now</Text>
                             <ArrowRight size={12} color="#fff" />
                         </View>

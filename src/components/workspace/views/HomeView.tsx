@@ -2,17 +2,17 @@ import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { Calendar, Briefcase, FileText, CheckCircle2, TrendingUp, Clock, MoreHorizontal } from 'lucide-react-native';
 
-const WidgetCard = ({ title, icon: Icon, children, color = '#3B82F6', className = '' }: any) => (
-    <View className={`bg-[#0F172A] rounded-2xl border border-white/5 p-5 ${className}`}>
-        <View className="flex-row items-center justify-between mb-4">
-            <View className="flex-row items-center gap-2">
-                <View className="p-2 rounded-lg bg-white/5">
-                    <Icon size={18} color={color} />
+const WidgetCard = ({ title, icon: Icon, children, color = '#7C3AED', className = '' }: any) => (
+    <View className={`bg-white rounded-[32px] border border-[#E2E8F0] p-6 shadow-sm shadow-black/[0.02] ${className}`}>
+        <View className="flex-row items-center justify-between mb-6">
+            <View className="flex-row items-center gap-3">
+                <View className="w-10 h-10 rounded-xl bg-[#7C3AED]/10 items-center justify-center">
+                    <Icon size={20} color={color} strokeWidth={2.5} />
                 </View>
-                <Text className="text-white font-bold text-sm">{title}</Text>
+                <Text className="text-[#27272a] font-black text-sm uppercase tracking-widest">{title}</Text>
             </View>
-            <TouchableOpacity>
-                <MoreHorizontal size={16} color="#64748B" />
+            <TouchableOpacity className="w-8 h-8 items-center justify-center rounded-full bg-slate-50">
+                <MoreHorizontal size={18} color="#94A3B8" />
             </TouchableOpacity>
         </View>
         {children}
@@ -21,55 +21,58 @@ const WidgetCard = ({ title, icon: Icon, children, color = '#3B82F6', className 
 
 export const HomeView = () => {
     return (
-        <ScrollView className="flex-1 bg-[#050B14]">
-            <View className="p-8 max-w-[1600px] w-full mx-auto">
+        <ScrollView className="flex-1 bg-[#FDF8F3]">
+            <View className="p-10 max-w-[1400px] w-full mx-auto">
                 {/* Welcome Header */}
-                <View className="mb-8">
-                    <Text className="text-white text-3xl font-bold mb-2">안녕하세요, 홍길동 연구원님 👋</Text>
-                    <Text className="text-slate-400 text-base">오늘도 성공적인 연구를 시작해보세요.</Text>
+                <View className="mb-12">
+                    <View className="bg-[#7C3AED] self-start px-3 py-1 rounded-full mb-4 shadow-lg shadow-[#7C3AED]/20">
+                        <Text className="text-white text-[10px] font-black uppercase tracking-widest">Dashboard Hub</Text>
+                    </View>
+                    <Text className="text-[#27272a] text-4xl font-black mb-3 tracking-tighter">안녕하세요, 홍길동 연구원님 👋</Text>
+                    <Text className="text-[#64748B] text-lg font-bold">당신만의 혁신적인 전략 연구실이 준비되었습니다.</Text>
                 </View>
 
                 {/* Main Grid Layout */}
-                <View className="flex-row flex-wrap gap-6">
+                <View className="flex-row flex-wrap gap-8">
 
                     {/* Left Column (Main Stats & Timeline) - Flex 2 */}
-                    <View className="flex-1 min-w-[500px] gap-6">
+                    <View className="flex-[2] min-w-[600px] gap-8">
                         {/* Summary Stats */}
-                        <View className="flex-row gap-4">
-                            <WidgetCard title="진행중 프로젝트" icon={Briefcase} color="#3B82F6" className="flex-1">
-                                <Text className="text-3xl font-bold text-white mb-1">3<span className="text-base font-normal text-slate-500 ml-1">건</span></Text>
-                                <View className="bg-blue-500/10 px-2 py-1 rounded self-start">
-                                    <Text className="text-blue-400 text-xs">+1개 이번 주 시작</Text>
+                        <View className="flex-row gap-6">
+                            <WidgetCard title="진행중 프로젝트" icon={Briefcase} color="#7C3AED" className="flex-1">
+                                <Text className="text-4xl font-black text-[#27272a] mb-2">3<Text className="text-base font-bold text-[#94A3B8] ml-2">건</Text></Text>
+                                <View className="bg-emerald-500/10 px-3 py-1.5 rounded-xl self-start border border-emerald-500/10">
+                                    <Text className="text-emerald-600 text-[11px] font-black uppercase tracking-tighter">+1개 이번 주 시작</Text>
                                 </View>
                             </WidgetCard>
-                            <WidgetCard title="마감 임박" icon={Clock} color="#EF4444" className="flex-1">
-                                <Text className="text-3xl font-bold text-white mb-1">2<span className="text-base font-normal text-slate-500 ml-1">건</span></Text>
-                                <View className="bg-red-500/10 px-2 py-1 rounded self-start">
-                                    <Text className="text-red-400 text-xs">2일 내 마감</Text>
+                            <WidgetCard title="마감 임박 과제" icon={Clock} color="#EF4444" className="flex-1">
+                                <Text className="text-4xl font-black text-[#27272a] mb-2">2<Text className="text-base font-bold text-[#94A3B8] ml-2">건</Text></Text>
+                                <View className="bg-rose-500/10 px-3 py-1.5 rounded-xl self-start border border-rose-500/10">
+                                    <Text className="text-rose-600 text-[11px] font-black uppercase tracking-tighter">2일 내 마감 예정</Text>
                                 </View>
                             </WidgetCard>
-                            <WidgetCard title="완료된 작업" icon={CheckCircle2} color="#10B981" className="flex-1">
-                                <Text className="text-3xl font-bold text-white mb-1">12<span className="text-base font-normal text-slate-500 ml-1">건</span></Text>
-                                <View className="bg-emerald-500/10 px-2 py-1 rounded self-start">
-                                    <Text className="text-emerald-400 text-xs">지난달 대비 20% ▲</Text>
+                            <WidgetCard title="완료된 리포트" icon={CheckCircle2} color="#10B981" className="flex-1">
+                                <Text className="text-4xl font-black text-[#27272a] mb-2">12<Text className="text-base font-bold text-[#94A3B8] ml-2">건</Text></Text>
+                                <View className="bg-[#7C3AED]/10 px-3 py-1.5 rounded-xl self-start border border-[#7C3AED]/10">
+                                    <Text className="text-[#7C3AED] text-[11px] font-black uppercase tracking-tighter">지난달 대비 20% ▲</Text>
                                 </View>
                             </WidgetCard>
                         </View>
 
                         {/* Today's Schedule timeline placeholder */}
-                        <WidgetCard title="오늘의 일정 정리" icon={Calendar} color="#F59E0B" className="min-h-[300px]">
-                            <View className="space-y-4">
+                        <WidgetCard title="오늘의 일정 정리" icon={Calendar} color="#F59E0B" className="flex-none">
+                            <View className="gap-4">
                                 {[
-                                    { time: '10:00 AM', title: 'R&D 기획 회의', tag: 'Team', active: true },
-                                    { time: '02:00 PM', title: '정부 과제 서류 검토', tag: 'Review', active: false },
-                                    { time: '04:00 PM', title: 'AI 모델 벤치마킹 분석', tag: 'Focus', active: false },
+                                    { time: '10:00 AM', title: 'R&D 기획 전략 회의', tag: 'Team Strategy', active: true },
+                                    { time: '02:00 PM', title: '정부 지원 사업 서류 검토', tag: 'Document Review', active: false },
+                                    { time: '04:00 PM', title: 'AI 기반 시장성 분석', tag: 'Market Insight', active: false },
                                 ].map((item, idx) => (
-                                    <View key={idx} className={`flex-row items-center p-3 rounded-xl border ${item.active ? 'bg-amber-500/10 border-amber-500/30' : 'bg-slate-800/30 border-transparent'}`}>
-                                        <Text className={`text-sm font-semibold w-20 ${item.active ? 'text-amber-400' : 'text-slate-500'}`}>{item.time}</Text>
-                                        <View className={`w-1 h-8 mx-3 rounded-full ${item.active ? 'bg-amber-500' : 'bg-slate-700'}`} />
+                                    <View key={idx} className={`flex-row items-center p-5 rounded-2xl border ${item.active ? 'bg-[#7C3AED]/5 border-[#7C3AED]/20 shadow-sm' : 'bg-[#F8FAFC]/50 border-[#E2E8F0]'}`}>
+                                        <Text className={`text-xs font-black w-24 uppercase tracking-widest ${item.active ? 'text-[#7C3AED]' : 'text-[#94A3B8]'}`}>{item.time}</Text>
+                                        <View className={`w-1 h-10 mx-5 rounded-full ${item.active ? 'bg-[#7C3AED]' : 'bg-[#E2E8F0]'}`} />
                                         <View className="flex-1">
-                                            <Text className={`font-medium ${item.active ? 'text-white' : 'text-slate-300'}`}>{item.title}</Text>
-                                            <Text className="text-xs text-slate-500">{item.tag}</Text>
+                                            <Text className={`text-base font-bold ${item.active ? 'text-[#27272a]' : 'text-[#64748B]'}`}>{item.title}</Text>
+                                            <Text className="text-[11px] text-[#94A3B8] font-black uppercase mt-1 tracking-widest">{item.tag}</Text>
                                         </View>
                                     </View>
                                 ))}
@@ -78,23 +81,23 @@ export const HomeView = () => {
                     </View>
 
                     {/* Right Column (Projects & Grants) - Flex 1 */}
-                    <View className="w-[400px] gap-6">
+                    <View className="flex-1 min-w-[380px] gap-8">
 
-                        {/* Active Projects */}
-                        <WidgetCard title="진행중인 프로젝트" icon={TrendingUp} color="#8B5CF6">
-                            <View className="space-y-4">
+                        {/* Recent Progress */}
+                        <WidgetCard title="최근 분석 진행도" icon={TrendingUp} color="#7C3AED">
+                            <View className="gap-6">
                                 {[
-                                    { name: 'SaaS MVP 개발', progress: 75, color: 'bg-purple-500' },
-                                    { name: 'K-Startup 예비창업', progress: 40, color: 'bg-blue-500' },
-                                    { name: '시장 조사 보고서', progress: 90, color: 'bg-emerald-500' },
+                                    { name: 'SaaS MVP 전략 수립', progress: 75, color: '#7C3AED' },
+                                    { name: 'K-Startup 예비창업가 과제', progress: 40, color: '#3B82F6' },
+                                    { name: 'AI 기술 기반 시장 분석', progress: 90, color: '#10B981' },
                                 ].map((p, i) => (
                                     <View key={i}>
-                                        <View className="flex-row justify-between mb-1.5">
-                                            <Text className="text-slate-300 text-sm font-medium">{p.name}</Text>
-                                            <Text className="text-slate-500 text-xs">{p.progress}%</Text>
+                                        <View className="flex-row justify-between mb-3 items-end">
+                                            <Text className="text-[#27272a] text-sm font-black">{p.name}</Text>
+                                            <Text className="text-[#7C3AED] text-[11px] font-black uppercase tracking-widest">{p.progress}%</Text>
                                         </View>
-                                        <View className="h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                                            <View className={`h-full ${p.color}`} style={{ width: `${p.progress}%` }} />
+                                        <View className="h-2 bg-[#F1F5F9] rounded-full overflow-hidden shadow-inner">
+                                            <View className="h-full rounded-full shadow-sm" style={{ width: `${p.progress}%`, backgroundColor: p.color }} />
                                         </View>
                                     </View>
                                 ))}
@@ -102,41 +105,43 @@ export const HomeView = () => {
                         </WidgetCard>
 
                         {/* Recommended Grants */}
-                        <WidgetCard title="맞춤 사업 추천" icon={Briefcase} color="#EC4899">
-                            <View className="space-y-3">
+                        <WidgetCard title="신규 매칭 사업" icon={Briefcase} color="#D946EF">
+                            <View className="gap-3">
                                 {[
-                                    { name: '2026 예비창업패키지', dday: 'D-12', tag: '최대 1억' },
-                                    { name: '데이터바우처 지원사업', dday: 'D-5', tag: '최대 7천' },
-                                    { name: 'AI 바우처 지원', dday: 'D-20', tag: '최대 3억' },
+                                    { name: '2026 예비창업패키지 신규 선정', dday: 'D-12', tag: '최대 1억 지원' },
+                                    { name: '중기부 혁신 데이터 바우처', dday: 'D-5', tag: '최대 7천만 규모' },
+                                    { name: '생성형 AI 서비스 바우처', dday: 'D-20', tag: '최대 3억 지원' },
                                 ].map((g, i) => (
-                                    <TouchableOpacity key={i} className="flex-row items-center justify-between p-3 rounded-xl bg-slate-800/30 hover:bg-slate-800/50 border border-white/5">
-                                        <View className="flex-1 mr-2">
-                                            <Text className="text-slate-200 text-sm font-medium truncate" numberOfLines={1}>{g.name}</Text>
-                                            <Text className="text-pink-400 text-[10px] mt-0.5">{g.tag}</Text>
+                                    <TouchableOpacity key={i} className="flex-row items-center justify-between p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] active:bg-slate-50">
+                                        <View className="flex-1 mr-3">
+                                            <Text className="text-[#27272a] text-sm font-black truncate mb-1" numberOfLines={1}>{g.name}</Text>
+                                            <Text className="text-[#D946EF] text-[10px] font-black uppercase tracking-widest">{g.tag}</Text>
                                         </View>
-                                        <View className="bg-slate-800 px-2 py-1 rounded text-xs text-slate-400 border border-white/10">
-                                            <Text className="text-[10px] text-slate-400">{g.dday}</Text>
+                                        <View className="bg-white px-2 py-1 rounded-lg border border-[#E2E8F0] items-center justify-center">
+                                            <Text className="text-[10px] text-[#64748B] font-black uppercase">{g.dday}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                            <TouchableOpacity className="mt-4 py-2 bg-pink-500/10 rounded-lg items-center border border-pink-500/20">
-                                <Text className="text-pink-400 text-xs font-semibold">모든 공고 보기</Text>
+                            <TouchableOpacity className="mt-6 py-4 bg-[#7C3AED] rounded-2xl items-center shadow-lg shadow-[#7C3AED]/20 active:opacity-90">
+                                <Text className="text-white text-xs font-black uppercase tracking-widest">맞춤 공고 더보기</Text>
                             </TouchableOpacity>
                         </WidgetCard>
 
                         {/* Recent Files */}
-                        <WidgetCard title="최근 작업 서류" icon={FileText} color="#64748B">
-                            <View className="space-y-2">
+                        <WidgetCard title="최근 파일함" icon={FileText} color="#64748B">
+                            <View className="gap-3">
                                 {[
-                                    { name: '사업계획서_Draft_v2.docx', time: '2시간 전' },
-                                    { name: '매출추정표_2026.xlsx', time: '어제' },
+                                    { name: '전략기획서_v2_최종안.docx', time: '2시간 전' },
+                                    { name: '2026_사업추정_데이터.xlsx', time: '어제 오후' },
                                 ].map((f, i) => (
-                                    <TouchableOpacity key={i} className="flex-row items-center p-2 rounded-lg hover:bg-slate-800/50">
-                                        <FileText size={14} color="#94A3B8" className="mr-2" />
+                                    <TouchableOpacity key={i} className="flex-row items-center p-3 rounded-xl border border-transparent hover:bg-[#F8FAFC]">
+                                        <View className="w-8 h-8 rounded-lg bg-slate-50 items-center justify-center mr-3">
+                                            <FileText size={16} color="#94A3B8" />
+                                        </View>
                                         <View className="flex-1">
-                                            <Text className="text-slate-300 text-xs truncate" numberOfLines={1}>{f.name}</Text>
-                                            <Text className="text-slate-600 text-[10px]">{f.time}</Text>
+                                            <Text className="text-[#27272a] text-xs font-bold truncate" numberOfLines={1}>{f.name}</Text>
+                                            <Text className="text-[#94A3B8] text-[10px] uppercase font-black tracking-widest mt-0.5">{f.time}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
@@ -145,7 +150,7 @@ export const HomeView = () => {
                     </View>
                 </View>
             </View>
-            <View className="h-12" />{/* Bottom Spacer */}
+            <View className="h-32" />{/* Bottom Spacer */}
         </ScrollView>
     );
 };

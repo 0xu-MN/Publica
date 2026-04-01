@@ -10,6 +10,7 @@ import { ActiveProjectCard } from '../components/ActiveProjectCard';
 import { TodayScheduleWidget } from '../components/TodayScheduleWidget';
 import { StatsCard } from '../components/StatsCard';
 import { RecommendedBusinessCard } from '../components/RecommendedBusinessCard';
+import Footer from '../../Footer';
 
 interface WorkspaceDashboardProps {
     onOpenCalendar: () => void;
@@ -161,34 +162,47 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
 
     return (
         <ScrollView
-            className="flex-1 bg-[#020617]"
+            className="flex-1 bg-[#FDF8F3]"
             contentContainerStyle={{ padding: 24, paddingTop: 60 }}
         >
             <View className="max-w-[1400px] w-full mx-auto">
                 {/* Greeting Header */}
-                <View className="mb-6">
-                    <Text className="text-white text-3xl font-bold mb-2">
+                <View className="mb-10">
+                    <Text className="text-[#27272a] text-4xl font-black mb-3 tracking-tighter leading-tight">
                         안녕하세요, {nickname}님 👋
                     </Text>
-                    <Text className="text-slate-400 text-sm">
-                        오늘은 성공적인 연구를 시작하세요
-                    </Text>
+                    <View className="flex-row items-center gap-2">
+                        <View className="px-2.5 py-1 rounded-full bg-[#7C3AED]/10 border border-[#7C3AED]/20">
+                            <Text className="text-[#7C3AED] text-[11px] font-bold uppercase tracking-wider">Professional Planner</Text>
+                        </View>
+                        <Text className="text-[#64748B] text-sm font-medium">
+                            오늘도 당신의 혁신적인 연구를 Publica가 지원합니다.
+                        </Text>
+                    </View>
                 </View>
 
                 {/* AI Briefing Cards */}
                 {briefings.length > 0 && (
-                    <View className="mb-6 bg-blue-500/10 border border-blue-400/20 rounded-2xl p-5">
-                        <View className="flex-row items-center gap-2 mb-4">
-                            <View className="w-8 h-8 rounded-full bg-blue-500/20 items-center justify-center">
-                                <Zap size={16} color="#60A5FA" fill="#60A5FA" />
+                    <View className="mb-10 bg-white border border-[#E2E8F0] rounded-[40px] p-8 shadow-xl shadow-black/[0.03]">
+                        <View className="flex-row items-center justify-between mb-6">
+                            <View className="flex-row items-center gap-3">
+                                <View className="w-10 h-10 rounded-2xl bg-[#7C3AED] items-center justify-center shadow-lg shadow-[#7C3AED]/30">
+                                    <Zap size={20} color="#FFFFFF" fill="#FFFFFF" />
+                                </View>
+                                <View>
+                                    <Text className="text-[#27272a] font-black text-lg">AI Strategic Briefing</Text>
+                                    <Text className="text-[#94A3B8] text-xs font-bold uppercase tracking-widest">Real-time Analysis</Text>
+                                </View>
                             </View>
-                            <Text className="text-blue-400 font-semibold text-sm">오늘의 브리핑</Text>
+                            <TouchableOpacity className="bg-[#F8FAFC] px-4 py-2 rounded-xl border border-[#E2E8F0]">
+                                <Text className="text-[#64748B] text-xs font-bold">전체 브리핑</Text>
+                            </TouchableOpacity>
                         </View>
-                        <View className="gap-2">
+                        <View className="gap-3">
                             {briefings.map((briefing, index) => (
-                                <View key={briefing.id} className="flex-row items-start gap-3">
-                                    <View className="mt-1.5 w-1.5 h-1.5 rounded-full bg-blue-400" />
-                                    <Text className="flex-1 text-white text-sm leading-5">
+                                <View key={briefing.id} className="flex-row items-center bg-[#FDF8F3] p-4 rounded-2xl border border-[#7C3AED]/10">
+                                    <View className="w-2 h-2 rounded-full bg-[#7C3AED] mr-4 shadow-sm shadow-[#7C3AED]/50" />
+                                    <Text className="flex-1 text-[#475569] text-[14px] font-bold leading-relaxed">
                                         {briefing.message}
                                     </Text>
                                 </View>
@@ -198,19 +212,21 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                 )}
 
                 {/* Main Content Grid - Middle Section with 3 Columns */}
-                <View className="flex-row gap-6 mb-6">
+                <View className="flex-row gap-6 mb-10">
                     {/* Column 1 - Pipeline */}
-                    <View className="w-[400px] bg-[#0F172A]/80 rounded-2xl p-5 border border-white/5">
+                    <View className="w-[400px] bg-white rounded-[40px] p-8 border border-[#E2E8F0] shadow-2xl shadow-black/[0.04]">
                         {/* Header */}
-                        <TouchableOpacity className="flex-row items-center justify-between mb-4">
-                            <View className="flex-row items-center gap-2">
-                                <Layers size={18} color="#3B82F6" />
-                                <Text className="text-white font-bold text-base">Active Strategy Pipeline</Text>
+                        <TouchableOpacity className="flex-row items-center justify-between mb-8">
+                            <View className="flex-row items-center gap-3">
+                                <View className="w-8 h-8 rounded-xl bg-[#7C3AED]/10 items-center justify-center">
+                                    <Layers size={18} color="#7C3AED" strokeWidth={2.5} />
+                                </View>
+                                <Text className="text-[#27272a] font-black text-base uppercase tracking-wider">Active Strategy Pipeline</Text>
                             </View>
-                            <ChevronRight size={18} color="#475569" />
+                            <ChevronRight size={18} color="#CBD5E1" />
                         </TouchableOpacity>
 
-                        <View className="gap-4 mb-4">
+                        <View className="gap-5 mb-6">
                             {pipelineProjects.length > 0 ? (
                                 pipelineProjects.map(project => (
                                     <ProjectPipelineCard
@@ -224,17 +240,18 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                                     />
                                 ))
                             ) : (
-                                <View className="py-8 items-center justify-center">
-                                    <Text className="text-slate-500 text-sm">진행 중인 프로젝트가 없습니다</Text>
+                                <View className="py-12 items-center justify-center bg-[#F8FAFC] rounded-3xl border border-dashed border-[#CBD5E1]">
+                                    <Layers size={32} color="#CBD5E1" strokeWidth={1.5} className="mb-3" />
+                                    <Text className="text-[#94A3B8] text-sm font-medium">진행 중인 프로젝트가 없습니다</Text>
                                 </View>
                             )}
                         </View>
 
                         {/* Footer Button */}
                         <TouchableOpacity
-                            className="bg-white/5 py-3 rounded-xl border border-white/5 items-center justify-center mt-auto"
+                            className="bg-[#F8FAFC] py-4 rounded-[20px] border border-[#E2E8F0] items-center justify-center mt-auto active:bg-slate-50 transition-all"
                         >
-                            <Text className="text-slate-400 text-xs font-semibold">전체 파이프라인 보기</Text>
+                            <Text className="text-[#64748B] text-xs font-black uppercase tracking-widest">전체 파이프라인 상세보기</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -277,29 +294,29 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                         />
 
                         {/* Stats Cards Row */}
-                        <View className="flex-row gap-3">
+                        <View className="flex-row gap-4">
                             <StatsCard
                                 icon={Briefcase}
-                                iconColor="#3B82F6"
+                                iconColor="#7C3AED"
                                 title="저장된 AI 세션"
                                 value={savedSessions.length.toString()}
-                                subtitle="최근 저장된 작업"
-                                valueColor="#3B82F6"
+                                subtitle="최근 작업 기반"
+                                valueColor="#7C3AED"
                             />
                             <StatsCard
                                 icon={AlertCircle}
-                                iconColor="#EF4444"
+                                iconColor="#F87171"
                                 title="마감 임박"
                                 value="2"
-                                subtitle="2일 내 마감"
-                                valueColor="#EF4444"
+                                subtitle="2일 이내"
+                                valueColor="#F87171"
                             />
                             <StatsCard
                                 icon={CheckCircle}
                                 iconColor="#10B981"
                                 title="완료된 과제"
                                 value="12"
-                                subtitle="지난 달 20% ▲"
+                                subtitle="지난 달 대비 20% ▲"
                                 valueColor="#10B981"
                             />
                         </View>
@@ -307,31 +324,36 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                 </View>
 
                 {/* Bottom Section: Ongoing Projects */}
-                <View>
-                    <View className="flex-row items-center justify-between mb-4">
-                        <Text className="text-white font-bold text-lg">
-                            진행 중인 프로젝트
-                        </Text>
-                        <TouchableOpacity onPress={() => onNavigateToPortfolio?.()}>
-                            <Text className="text-blue-400 text-sm font-semibold">
+                <View className="mb-10">
+                    <View className="flex-row items-center justify-between mb-8">
+                        <View className="flex-row items-center gap-3">
+                            <View className="w-8 h-8 rounded-xl bg-[#7C3AED]/10 items-center justify-center">
+                                <CheckCircle size={18} color="#7C3AED" strokeWidth={2.5} />
+                            </View>
+                            <Text className="text-[#27272a] font-black text-2xl tracking-tighter">
+                                진행 중인 프로젝트
+                            </Text>
+                        </View>
+                        <TouchableOpacity onPress={() => onNavigateToPortfolio?.()} className="bg-white px-4 py-2 rounded-full border border-[#E2E8F0] shadow-sm">
+                            <Text className="text-[#7C3AED] text-sm font-bold">
                                 전체보기
                             </Text>
                         </TouchableOpacity>
                     </View>
 
                     {/* Horizontal Layout for Saved Sessions */}
-                    <View className="flex-row gap-4">
+                    <View className="flex-row gap-6">
                         {savedSessions.length > 0 ? (
                             savedSessions.slice(0, 3).map(session => {
                                 const branchCount = session.workspace_data?.reduce((acc: number, col: any) => acc + (col.branches?.length || 0), 0) || 0;
                                 const hasEditor = !!session.editor_content && session.editor_content.length > 50;
                                 const hasChat = (session.chat_history?.length || 0) > 2;
                                 let progress = 10;
-                                let progressColor = '#64748B';
-                                let stage = '시작됨';
-                                if (hasEditor && branchCount > 0) { progress = 75; progressColor = '#10B981'; stage = '서류 작성 중'; }
-                                else if (branchCount > 0 && hasChat) { progress = 50; progressColor = '#3B82F6'; stage = '브레인스톰 완료'; }
-                                else if (branchCount > 0) { progress = 30; progressColor = '#F59E0B'; stage = '분석 진행 중'; }
+                                let progressColor = '#94A3B8';
+                                let stage = '분석 대기';
+                                if (hasEditor && branchCount > 0) { progress = 85; progressColor = '#7C3AED'; stage = '최종 초안 작성 중'; }
+                                else if (branchCount > 0 && hasChat) { progress = 60; progressColor = '#7C3AED'; stage = '아이디어 수립 완료'; }
+                                else if (branchCount > 0) { progress = 35; progressColor = '#7C3AED'; stage = '기초 기획 단계'; }
 
                                 return (
                                     <View key={session.id} className="flex-1">
@@ -349,13 +371,15 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                                 );
                             })
                         ) : (
-                            <View className="flex-1 py-8 items-center">
-                                <Text className="text-slate-500 text-sm">저장된 AI 세션이 없습니다</Text>
+                            <View className="flex-1 py-16 items-center bg-white rounded-[40px] border border-dashed border-[#CBD5E1]">
+                                <Briefcase size={40} color="#CBD5E1" strokeWidth={1} className="mb-4" />
+                                <Text className="text-[#94A3B8] text-base font-medium">저장된 AI 세션이 없습니다</Text>
                             </View>
                         )}
                     </View>
                 </View>
             </View>
+            <Footer />
         </ScrollView>
     );
 };

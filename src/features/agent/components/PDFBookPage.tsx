@@ -12,15 +12,15 @@ interface PDFBookPageProps {
     serverTOCItems?: any[];
     onLoadSuccess?: (page: any) => void;
     onBlockClick?: (block: Block, event: any) => void;
-    onSparkle?: (info: { id?: string; y: number; text: string; type: 'heading' }, event: any) => void;
+    onSparkle?: (info: Block, event: any) => void;
 }
 
 const BLOCK_COLORS: Record<string, { hover: string; selected: string; badge: string }> = {
-    heading: { hover: 'rgba(139,92,246,0.07)', selected: 'rgba(139,92,246,0.14)', badge: '#8B5CF6' },
-    paragraph: { hover: 'rgba(59,130,246,0.06)', selected: 'rgba(59,130,246,0.12)', badge: '#3B82F6' },
-    figure: { hover: 'rgba(245,158,11,0.07)', selected: 'rgba(245,158,11,0.14)', badge: '#F59E0B' },
-    formula: { hover: 'rgba(236,72,153,0.07)', selected: 'rgba(236,72,153,0.14)', badge: '#EC4899' },
-    default: { hover: 'rgba(99,102,241,0.05)', selected: 'rgba(99,102,241,0.11)', badge: '#6366F1' },
+    heading: { hover: 'rgba(124, 58, 237, 0.08)', selected: 'rgba(124, 58, 237, 0.15)', badge: '#7C3AED' },
+    paragraph: { hover: 'rgba(100, 116, 139, 0.05)', selected: 'rgba(100, 116, 139, 0.1)', badge: '#64748B' },
+    figure: { hover: 'rgba(245, 158, 11, 0.07)', selected: 'rgba(245, 158, 11, 0.14)', badge: '#F59E0B' },
+    formula: { hover: 'rgba(124, 58, 237, 0.05)', selected: 'rgba(124, 58, 237, 0.1)', badge: '#7C3AED' },
+    default: { hover: 'rgba(124, 58, 237, 0.04)', selected: 'rgba(124, 58, 237, 0.1)', badge: '#7C3AED' },
 };
 
 export const PDFBookPage: React.FC<PDFBookPageProps> = ({
@@ -133,7 +133,7 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                             onClick={(e: any) => {
                                 e.stopPropagation();
                                 onSparkle?.(
-                                    { id: block.id, y: block.y, text: block.text, type: 'heading' },
+                                    block,
                                     { clientX: e.clientX, clientY: e.clientY, pageX: e.pageX, pageY: e.pageY }
                                 );
                             }}
@@ -142,18 +142,18 @@ export const PDFBookPage: React.FC<PDFBookPageProps> = ({
                                 left: btnLeft,
                                 top: btnTop,
                                 width: 26,
-                                height: 26,
-                                borderRadius: 4,
-                                backgroundColor: isHovered ? '#6366F1' : 'white',
+                                height: 30,
+                                borderRadius: 8,
+                                backgroundColor: isHovered ? '#7C3AED' : 'white',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 zIndex: 30,
-                                borderWidth: 1,
-                                borderColor: isHovered ? '#4F46E5' : '#E2E8F0',
+                                borderWidth: 1.5,
+                                borderColor: isHovered ? '#7C3AED' : '#E2E8F0',
                                 // @ts-ignore
                                 boxShadow: isHovered
-                                    ? '0 4px 6px rgba(99,102,241,0.2)'
-                                    : '0 1px 2px rgba(0,0,0,0.05)',
+                                    ? '0 6px 15px rgba(124, 58, 237, 0.25)'
+                                    : '0 2px 4px rgba(0,0,0,0.05)',
                                 cursor: 'pointer',
                                 transition: 'all 0.15s ease',
                                 opacity: isHovered ? 1 : 0.75,

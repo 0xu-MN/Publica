@@ -909,7 +909,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     // 🌟 Workspace Render Helper (Extract for Split View Reuse)
     const renderWorkspace = () => (
         <View
-            style={{ flex: 1, backgroundColor: '#0a0a0a' }}
+            style={{ flex: 1, backgroundColor: '#FDF8F3' }}
             {...(Platform.OS === 'web' ? {
                 onDragOver: (e: any) => { e.preventDefault(); },
                 onDragEnter: () => setIsDragging(true),
@@ -1084,9 +1084,9 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             <View style={styles.header}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Zap size={16} color="#818CF8" />
-                        <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '800', letterSpacing: -0.3 }}>Publica NEXUS</Text>
-                        <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '600' }}>— Flow</Text>
+                        <Zap size={16} color="#7C3AED" />
+                        <Text style={{ color: '#27272a', fontSize: 14, fontWeight: '900', letterSpacing: -0.3 }}>Publica NEXUS</Text>
+                        <Text style={{ color: '#7C3AED', fontSize: 13, fontWeight: '700' }}>— Flow</Text>
                     </View>
                     
                     {/* 🌟 FIX: 방해되는 window.prompt 대신 네이티브 헤더 UI에 이름 입력창 배치 */}
@@ -1098,17 +1098,21 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                 placeholder="프로젝트 이름 설정..."
                                 placeholderTextColor="#94A3B8"
                                 style={{
-                                    backgroundColor: '#1E293B',
-                                    color: '#FFF',
+                                    backgroundColor: '#FFFFFF',
+                                    color: '#27272a',
                                     borderWidth: 1,
-                                    borderColor: '#334155',
-                                    borderRadius: 6,
-                                    paddingHorizontal: 10,
-                                    paddingVertical: 4,
+                                    borderColor: '#E2E8F0',
+                                    borderRadius: 8,
+                                    paddingHorizontal: 12,
+                                    paddingVertical: 5,
                                     fontSize: 13,
-                                    fontWeight: '600',
-                                    minWidth: 180,
-                                    outlineStyle: 'none'
+                                    fontWeight: '700',
+                                    minWidth: 200,
+                                    outlineStyle: 'none',
+                                    shadowColor: '#000',
+                                    shadowOffset: { width: 0, height: 1 },
+                                    shadowOpacity: 0.05,
+                                    shadowRadius: 2
                                 } as any}
                             />
                         </View>
@@ -1119,29 +1123,29 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 8 }}>
                             <TouchableOpacity
                                 style={[
-                                    { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
+                                    { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
                                     !isLeftPanelMinimized
-                                        ? { backgroundColor: '#10B98115', borderColor: '#10B981' }
-                                        : { backgroundColor: '#111827', borderColor: '#1E293B' }
+                                        ? { backgroundColor: 'rgba(124, 58, 237, 0.08)', borderColor: '#7C3AED' }
+                                        : { backgroundColor: '#FFFFFF', borderColor: '#E2E8F0' }
                                 ]}
                                 onPress={() => setIsLeftPanelMinimized(!isLeftPanelMinimized)}
                             >
-                                <Text style={{ fontSize: 10 }}>✏️</Text>
-                                <Text style={{ color: !isLeftPanelMinimized ? '#10B981' : '#475569', fontSize: 10, fontWeight: '700' }}>
+                                <Text style={{ fontSize: 12 }}>✏️</Text>
+                                <Text style={{ color: !isLeftPanelMinimized ? '#7C3AED' : '#64748B', fontSize: 11, fontWeight: '800' }}>
                                     에디터
                                 </Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[
-                                    { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 4 },
+                                    { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
                                     isInspectorOpen
-                                        ? { backgroundColor: '#8B5CF615', borderColor: '#8B5CF6' }
-                                        : { backgroundColor: '#111827', borderColor: '#1E293B' }
+                                        ? { backgroundColor: 'rgba(124, 58, 237, 0.08)', borderColor: '#7C3AED' }
+                                        : { backgroundColor: '#FFFFFF', borderColor: '#E2E8F0' }
                                 ]}
                                 onPress={() => setIsInspectorOpen(!isInspectorOpen)}
                             >
-                                <Text style={{ fontSize: 10 }}>🔍</Text>
-                                <Text style={{ color: isInspectorOpen ? '#8B5CF6' : '#475569', fontSize: 10, fontWeight: '700' }}>
+                                <Text style={{ fontSize: 12 }}>🔍</Text>
+                                <Text style={{ color: isInspectorOpen ? '#7C3AED' : '#64748B', fontSize: 11, fontWeight: '800' }}>
                                     분석
                                 </Text>
                             </TouchableOpacity>
@@ -1458,22 +1462,22 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             {showGrantConfirm && (
                 <View style={{
                     position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.7)', justifyContent: 'center', alignItems: 'center', zIndex: 9999
+                    backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', zIndex: 9999
                 }}>
                     <View style={{
-                        backgroundColor: '#1E293B', borderRadius: 16, padding: 32, maxWidth: 420, width: '90%',
-                        borderWidth: 1, borderColor: '#334155', shadowColor: '#000', shadowOffset: { width: 0, height: 8 },
-                        shadowOpacity: 0.5, shadowRadius: 24
+                        backgroundColor: '#FFFFFF', borderRadius: 24, padding: 32, maxWidth: 420, width: '90%',
+                        borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+                        shadowOpacity: 0.1, shadowRadius: 30
                     }}>
-                        <Text style={{ color: '#E2E8F0', fontSize: 18, fontWeight: '800', marginBottom: 12, textAlign: 'center' }}>
-                            공고문 작성 확인
+                        <Text style={{ color: '#27272a', fontSize: 20, fontWeight: '900', marginBottom: 12, textAlign: 'center', letterSpacing: -0.5 }}>
+                            공고 분석 시작
                         </Text>
-                        <Text style={{ color: '#94A3B8', fontSize: 14, lineHeight: 22, textAlign: 'center', marginBottom: 24 }}>
-                            '{pendingGrantTitle}'{'\n'}공고문 작성을 하시겠습니까?
+                        <Text style={{ color: '#64748B', fontSize: 14, lineHeight: 22, textAlign: 'center', marginBottom: 24, fontWeight: '500' }}>
+                            '{pendingGrantTitle}'{'\n'}기반의 맞춤형 사업 전략을 도출하시겠습니까?
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 12 }}>
                             <TouchableOpacity
-                                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#334155', alignItems: 'center' }}
+                                style={{ flex: 1, paddingVertical: 14, borderRadius: 16, backgroundColor: '#F1F5F9', alignItems: 'center' }}
                                 onPress={() => {
                                     setShowGrantConfirm(false);
                                     setShowWelcome(true);
@@ -1481,16 +1485,16 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                                     setPendingGrantTitle('');
                                 }}
                             >
-                                <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700' }}>취소</Text>
+                                <Text style={{ color: '#64748B', fontSize: 14, fontWeight: '700' }}>나중에</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
-                                style={{ flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: '#4F46E5', alignItems: 'center' }}
+                                style={{ flex: 1, paddingVertical: 14, borderRadius: 16, backgroundColor: '#7C3AED', alignItems: 'center' }}
                                 onPress={() => {
                                     setShowGrantConfirm(false);
                                     setShowQuestionnaire(true);
                                 }}
                             >
-                                <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '700' }}>확인</Text>
+                                <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '800' }}>분석 시작</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -1501,13 +1505,13 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             {toastMessage && (
                 <View style={{
                     position: 'absolute', bottom: 40, alignSelf: 'center', left: 0, right: 0,
-                    backgroundColor: '#10B981', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 24,
-                    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8,
-                    zIndex: 9999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-                    maxWidth: 300, marginHorizontal: 'auto'
+                    backgroundColor: '#7C3AED', paddingHorizontal: 28, paddingVertical: 16, borderRadius: 32,
+                    shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20,
+                    zIndex: 9999, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+                    maxWidth: 320, marginHorizontal: 'auto'
                 }}>
-                    <Save size={16} color="#FFF" />
-                    <Text style={{ color: '#FFF', fontWeight: 'bold' }}>{toastMessage}</Text>
+                    <Save size={18} color="#FFF" />
+                    <Text style={{ color: '#FFF', fontWeight: '900', fontSize: 14 }}>{toastMessage}</Text>
                 </View>
             )}
 
@@ -1549,20 +1553,20 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                 <View style={{
                     position: 'absolute',
                     top: 0, left: 0, right: 0, bottom: 0,
-                    backgroundColor: 'rgba(2, 6, 23, 0.9)',
+                    backgroundColor: 'rgba(253, 248, 243, 0.95)',
                     zIndex: 9999,
                     alignItems: 'center',
                     justifyContent: 'center',
                     padding: 40
                 }}>
-                    <ActivityIndicator size="large" color="#FFF" />
-                    <Text style={{ color: '#FFF', fontSize: 18, fontWeight: '800', marginTop: 24, textAlign: 'center' }}>
+                    <ActivityIndicator size="large" color="#7C3AED" />
+                    <Text style={{ color: '#27272a', fontSize: 20, fontWeight: '900', marginTop: 24, textAlign: 'center' }}>
                         Publica AI
                     </Text>
-                    <Text style={{ color: '#818CF8', fontSize: 15, fontWeight: '600', marginTop: 8, textAlign: 'center' }}>
+                    <Text style={{ color: '#7C3AED', fontSize: 15, fontWeight: '700', marginTop: 8, textAlign: 'center' }}>
                         {transitionStep}
                     </Text>
-                    <Text style={{ color: '#475569', fontSize: 12, marginTop: 20, textAlign: 'center', lineHeight: 20 }}>
+                    <Text style={{ color: '#64748B', fontSize: 13, marginTop: 20, textAlign: 'center', lineHeight: 22, fontWeight: '500' }}>
                         브레인스톰 데이터를 통합하여{'\n'}전문적인 사업계획서 본문을 구성하고 있습니다.
                     </Text>
                 </View>
@@ -1572,55 +1576,53 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#000000' },
-    header: { height: 52, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, zIndex: 100, borderBottomWidth: 1, borderColor: '#1E293B', backgroundColor: '#0F172A' },
-    logo: { color: 'white', fontWeight: 'bold', fontSize: 18 },
-    contextBar: { backgroundColor: '#050505', borderBottomWidth: 1, borderColor: '#1E293B', paddingVertical: 10, paddingHorizontal: 20, zIndex: 90 },
-    canvasViewport: { flex: 1, overflow: 'hidden', backgroundColor: '#000' },
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    header: { height: 60, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, zIndex: 100, borderBottomWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
+    logo: { color: '#27272a', fontWeight: '900', fontSize: 20, letterSpacing: -0.5 },
+    contextBar: { backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderColor: '#E2E8F0', paddingVertical: 12, paddingHorizontal: 24, zIndex: 90 },
+    canvasViewport: { flex: 1, overflow: 'hidden', backgroundColor: '#FDF8F3' },
     canvasWorld: { padding: 100, flexDirection: 'row', alignItems: 'flex-start' },
-    zoomContainer: { position: 'absolute', bottom: 30, left: 30, flexDirection: 'row', backgroundColor: '#111', borderRadius: 8, borderWidth: 1, borderColor: '#222', padding: 6, alignItems: 'center', zIndex: 40, gap: 10 },
-    zoomText: { color: '#888', fontSize: 11, fontWeight: '600', width: 40, textAlign: 'center' },
-    columnWrapper: { flexDirection: 'column', marginRight: 50, width: 220, justifyContent: 'flex-start' },
-    loadingCard: { width: 220, height: LAYOUT.CARD_HEIGHT, backgroundColor: '#050505', borderRadius: 8, borderWidth: 1, borderColor: '#1E293B', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 10 },
-    loadingText: { color: '#3B82F6', fontSize: 13, fontWeight: '600' },
+    zoomContainer: { position: 'absolute', bottom: 30, left: 30, flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 8, alignItems: 'center', zIndex: 40, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10 },
+    zoomText: { color: '#64748B', fontSize: 12, fontWeight: '700', width: 45, textAlign: 'center' },
+    columnWrapper: { flexDirection: 'column', marginRight: 60, width: 240, justifyContent: 'flex-start' },
+    loadingCard: { width: 240, height: LAYOUT.CARD_HEIGHT, backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1.5, borderColor: '#E2E8F0', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8 },
+    loadingText: { color: '#7C3AED', fontSize: 13, fontWeight: '800' },
     nodeList: {},
-    startBtn: { marginTop: 100, marginLeft: 50, backgroundColor: '#2563EB', padding: 15, borderRadius: 8 },
-    startBtnText: { color: 'white', fontWeight: 'bold' },
+    startBtn: { marginTop: 100, marginLeft: 50, backgroundColor: '#7C3AED', paddingVertical: 16, paddingHorizontal: 24, borderRadius: 16, shadowColor: '#7C3AED', shadowOpacity: 0.3, shadowRadius: 15 },
+    startBtnText: { color: 'white', fontWeight: '900', fontSize: 15 },
 
     // Left Navigation Sidebar Styles
     sidebar: {
-        width: 70,
-        backgroundColor: '#0F172A', // Darker slate blue for better visibility
+        width: 80,
+        backgroundColor: '#FFFFFF',
         borderRightWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
         alignItems: 'center',
-        paddingTop: 16,
-        paddingBottom: 16
+        paddingTop: 20,
+        paddingBottom: 20
     },
     sidebarItem: {
-        width: 52,
-        height: 52,
-        borderRadius: 14,
+        width: 56,
+        height: 56,
+        borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
         backgroundColor: 'transparent',
-        marginBottom: 8
+        marginBottom: 10
     },
     sidebarItemActive: {
-        backgroundColor: '#3B82F6',
-        shadowColor: '#3B82F6',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 12
+        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+        borderWidth: 1.5,
+        borderColor: '#7C3AED',
     },
 
     // Sidebar Styles
-    historySidebar: { position: 'absolute', top: 0, left: 0, bottom: 0, width: 300, backgroundColor: '#0F172A', zIndex: 200, borderRightWidth: 1, borderColor: '#334155', padding: 20 },
-    sidebarHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 },
-    sidebarTitle: { color: 'white', fontSize: 18, fontWeight: 'bold' },
-    sessionItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, borderBottomWidth: 1, borderColor: '#1E293B' },
-    sessionTitle: { color: 'white', fontSize: 14, fontWeight: '500' },
-    sessionDate: { color: '#64748B', fontSize: 12, marginTop: 4 },
+    historySidebar: { position: 'absolute', top: 0, left: 0, bottom: 0, width: 320, backgroundColor: '#FFFFFF', zIndex: 200, borderRightWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 10, height: 0 }, shadowOpacity: 0.05, shadowRadius: 20 },
+    sidebarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+    sidebarTitle: { color: '#27272a', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
+    sessionItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: '#F1F5F9' },
+    sessionTitle: { color: '#27272a', fontSize: 14, fontWeight: '700' },
+    sessionDate: { color: '#94A3B8', fontSize: 12, marginTop: 4, fontWeight: '500' },
 
     // 🌟 Empty State Placeholder
     emptyPlaceholder: {
@@ -1628,10 +1630,10 @@ const styles = StyleSheet.create({
         justifyContent: 'center', alignItems: 'center',
         zIndex: 1, // On top
         pointerEvents: 'none', // Allow drops through
-        backgroundColor: '#0a0a0a'
+        backgroundColor: '#FDF8F3'
     },
-    emptyTitle: { color: '#475569', fontSize: 18, fontWeight: '700', marginTop: 16 },
-    emptySub: { color: '#334155', fontSize: 14, marginTop: 8 },
+    emptyTitle: { color: '#27272a', fontSize: 20, fontWeight: '900', marginTop: 20, letterSpacing: -0.5 },
+    emptySub: { color: '#64748B', fontSize: 14, marginTop: 8, fontWeight: '500' },
 
     // 🌟 Loading Container
     loadingContainer: { flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: 20 },
@@ -1639,10 +1641,10 @@ const styles = StyleSheet.create({
     // 🌟 Drag Overlay
     dragOverlay: {
         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(5, 5, 20, 0.8)',
+        backgroundColor: 'rgba(124, 58, 237, 0.08)',
         justifyContent: 'center', alignItems: 'center',
         zIndex: 50,
-        borderWidth: 2, borderColor: '#3B82F6', borderStyle: 'dashed'
+        borderWidth: 3, borderColor: '#7C3AED', borderStyle: 'dashed'
     },
-    dragText: { color: 'white', fontSize: 18, fontWeight: '700', marginTop: 16 }
+    dragText: { color: '#7C3AED', fontSize: 20, fontWeight: '900', marginTop: 16 }
 });

@@ -12,6 +12,11 @@ import tempfile
 import json
 import re
 from bs4 import BeautifulSoup
+from docx.document import Document
+from docx.oxml.table import CT_Tbl
+from docx.oxml.text.paragraph import CT_P
+from docx.table import Table, _Cell
+from docx.text.paragraph import Paragraph
 from docx.shared import Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
 from docx.enum.table import WD_ROW_HEIGHT_RULE
@@ -21,6 +26,21 @@ from template_registry import detect_template, normalize_section_key, get_unique
 # ─────────────────────────────────────────────
 # Shared Utilities
 # ─────────────────────────────────────────────
+
+def iter_block_items(parent):
+    """Yield each paragraph and table child within *parent*, in document order."""
+    if isinstance(parent, Document):
+        parent_elm = parent.element.body
+    elif isinstance(parent, _Cell):
+        parent_elm = parent._tc
+    else:
+        raise ValueError("unsupported parent")
+
+    for child in parent_elm.iterchildren():
+        if isinstance(child, CT_P):
+            yield Paragraph(child, parent)
+        elif isinstance(child, CT_Tbl):
+            yield Table(child, parent)
 
 def _reset_paragraph_format(p):
     """Forcefully cure overlapping text bugs in strict government forms."""
@@ -302,20 +322,24 @@ def coordinate_based_fill(doc, template_config, payload_html, output_path) -> bo
             else:
                 print(f"⚠️ No content found for section '{section_key}'")
 
+        if len(mapped_keys) == 0:
+            print("⚠️ Coordinate-based fill failed to map ANY sections. Falling back...")
+            return False
+
         # Handle unmapped sections (append at end)
         unmapped = [k for k in sections.keys() if k not in mapped_keys and k != "도입부"]
         if unmapped:
             print(f"📎 Unmapped sections will be appended: {unmapped}")
             doc.add_page_break()
             title_para = doc.add_paragraph()
-            title_run = title_para.add_run("=== 추가 AI 분석 내용 ===")
+            title_run = title_para.add_run("=== 추가 AI 분석 내용 (매핑되지 않음) ===")
             title_run.bold = True
             title_run.font.size = Pt(13)
             for k in unmapped:
                 insert_elements_into_container(doc, sections[k], style_config)
 
-        # XML-Level fix: Remove rigid row heights
-        _fix_row_heights(doc)
+        # XML-Level fix: Remove rigid row heights & Floating text overlap
+        _fix_table_xml(doc)
 
         doc.save(output_path)
         print(f"✅ Coordinate-based fill complete → {output_path}")
@@ -323,8 +347,10 @@ def coordinate_based_fill(doc, template_config, payload_html, output_path) -> bo
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        trace_str = traceback.format_exc()
         print(f"❌ Coordinate-based fill error: {e}")
+        with open('/tmp/insightflow_error.log', 'w') as f:
+            f.write(trace_str)
         return False
 
 
@@ -340,49 +366,92 @@ def heuristic_fill(doc, payload_html, output_path) -> bool:
     try:
         sections, all_elements = parse_html_into_sections(payload_html)
         mapped_keys = set()
+        
+        candidates = {}
+        active_n_key = None
 
-        for table in doc.tables:
-            # Skip ToC / summary tables
-            table_head_text = ""
-            if len(table.rows) > 0:
-                table_head_text = "".join(c.text for c in table.rows[0].cells).replace(" ", "")
-            if "목차" in table_head_text or "개요" in table_head_text or "요약" in table_head_text:
+        for block in iter_block_items(doc):
+            if isinstance(block, Paragraph):
+                n_key = normalize_section_key(block.text.strip())
+                if n_key and n_key in sections:
+                    active_n_key = n_key
+                    
+            elif isinstance(block, Table):
+                table_head_text = ""
+                if len(block.rows) > 0:
+                    table_head_text = "".join(c.text for c in block.rows[0].cells).replace(" ", "")
+                if len(doc.tables) > 1 and ("목차" in table_head_text or "개요" in table_head_text or "요약" in table_head_text):
+                    continue
+
+                if active_n_key:
+                    largest_cell = None
+                    max_area = 0
+                    for row in block.rows:
+                        unique_cells = []
+                        seen_tcs = set()
+                        for c in row.cells:
+                            if c._tc not in seen_tcs:
+                                seen_tcs.add(c._tc)
+                                unique_cells.append(c)
+                        
+                        for c in unique_cells:
+                            if len(c.text.strip()) < 300:
+                                area = len(row.cells)
+                                if area >= max_area:
+                                    max_area = area
+                                    largest_cell = c
+                    
+                    if largest_cell:
+                        candidates.setdefault(active_n_key, []).append(largest_cell)
+                        active_n_key = None
+
+                for r_idx, row in enumerate(block.rows):
+                    for c_idx, cell in enumerate(row.cells):
+                        cell_text = cell.text.strip()
+                        n_key = normalize_section_key(cell_text)
+
+                        if "{{본문}}" in cell_text or "{{내용}}" in cell_text:
+                             candidates.setdefault("본문", []).append(cell)
+                             continue
+
+                        if n_key and n_key in sections:
+                            target_cell = None
+
+                            if r_idx + 1 < len(block.rows):
+                                below_row = block.rows[r_idx + 1]
+                                if len(set(c._tc for c in below_row.cells)) == 1:
+                                    target_cell = below_row.cells[0]
+
+                            if not target_cell and c_idx + 1 < len(row.cells):
+                                if row.cells[c_idx + 1]._tc != cell._tc:
+                                    target_cell = row.cells[c_idx + 1]
+
+                            if not target_cell and r_idx + 1 < len(block.rows):
+                                if block.rows[r_idx + 1].cells[c_idx]._tc != cell._tc:
+                                    target_cell = block.rows[r_idx + 1].cells[c_idx]
+
+                            if target_cell:
+                                candidates.setdefault(n_key, []).append(target_cell)
+                                active_n_key = None
+                            else:
+                                active_n_key = n_key
+
+        # Now perform the actual insertions into the LAST found cell for each section
+        if "본문" in candidates:
+            # For exact template tokens, just take the first one
+            best_cell = candidates["본문"][0]
+            _clear_cell(best_cell)
+            insert_elements_into_container(best_cell, all_elements)
+            mapped_keys.add("본문")
+
+        for section_key, cell_list in candidates.items():
+            if section_key == "본문":
                 continue
-
-            for r_idx, row in enumerate(table.rows):
-                for c_idx, cell in enumerate(row.cells):
-                    cell_text = cell.text.strip()
-                    n_key = normalize_section_key(cell_text)
-
-                    if "{{본문}}" in cell_text or "{{내용}}" in cell_text:
-                        cell.text = ""
-                        insert_elements_into_container(cell, all_elements)
-                        mapped_keys.add("본문")
-                        continue
-
-                    if n_key and n_key in sections and n_key not in mapped_keys:
-                        target_cell = None
-
-                        # Strategy 1: single merged row below
-                        if r_idx + 1 < len(table.rows):
-                            below_row = table.rows[r_idx + 1]
-                            if len(set(c._tc for c in below_row.cells)) == 1:
-                                target_cell = below_row.cells[0]
-
-                        # Strategy 2: right cell (different _tc)
-                        if not target_cell and c_idx + 1 < len(row.cells):
-                            if row.cells[c_idx + 1]._tc != cell._tc:
-                                target_cell = row.cells[c_idx + 1]
-
-                        # Strategy 3: below cell (same column)
-                        if not target_cell and r_idx + 1 < len(table.rows):
-                            if table.rows[r_idx + 1].cells[c_idx]._tc != cell._tc:
-                                target_cell = table.rows[r_idx + 1].cells[c_idx]
-
-                        if target_cell:
-                            _clear_cell(target_cell)
-                            _insert_html_into_cell(target_cell, sections[n_key])
-                            mapped_keys.add(n_key)
+            # Pick the LAST matched cell - skips the top summary table and targets the detailed body
+            best_cell = cell_list[-1]
+            _clear_cell(best_cell)
+            _insert_html_into_cell(best_cell, sections[section_key])
+            mapped_keys.add(section_key)
 
         # Fallback append
         unmapped = [k for k in sections.keys() if k not in mapped_keys and k != "도입부"]
@@ -401,26 +470,31 @@ def heuristic_fill(doc, payload_html, output_path) -> bool:
             for k in unmapped:
                 insert_elements_into_container(doc, sections[k])
 
-        _fix_row_heights(doc)
+        _fix_table_xml(doc)
         doc.save(output_path)
         print(f"✅ Heuristic fill complete → {output_path}")
         return True
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        trace_str = traceback.format_exc()
         print(f"❌ Heuristic fill error: {e}")
+        with open('/tmp/insightflow_error.log', 'w') as f:
+            f.write(trace_str)
         return False
 
 
-# ─────────────────────────────────────────────
-# Row Height Fix (shared)
-# ─────────────────────────────────────────────
-
-def _fix_row_heights(doc):
-    """Remove rigid trHeight from all tables to allow auto-expansion."""
+def _fix_table_xml(doc):
+    """Remove rigid trHeight and tblpPr (floating properties) to allow auto-expansion and prevent overlaps."""
     ns = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
     for table in doc.tables:
+        # 1. Un-float table (Prevent text from overlapping behind the table)
+        tblPr = table._element.tblPr
+        if tblPr is not None:
+            for tblpPr in tblPr.findall(f"{ns}tblpPr"):
+                tblPr.remove(tblpPr)
+
+        # 2. Prevent cut-off text (Remove fixed row heights)
         for row in table.rows:
             tr = row._tr
             trPr = tr.trPr
@@ -442,12 +516,25 @@ def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> 
         template_config = detect_template(doc)
 
         if template_config:
-            return coordinate_based_fill(doc, template_config, payload_html, output_path)
+            # 1. Try coordinate fill mode
+            success = coordinate_based_fill(doc, template_config, payload_html, output_path)
+            if success:
+                return True
+            else:
+                # 2. Fallback to heuristic if coords completely failed
+                print("🔄 Coordinate mode failed. Switching to Heuristic mode.")
+                # We must reload doc because the target cells might be corrupted by partial edits/clears
+                doc = docx.Document(input_path)
+                return heuristic_fill(doc, payload_html, output_path)
         else:
             return heuristic_fill(doc, payload_html, output_path)
 
     except Exception as e:
         import traceback
-        traceback.print_exc()
+        trace_str = traceback.format_exc()
         print(f"❌ DOCX processing error: {e}")
+        
+        with open('/tmp/insightflow_error.log', 'w') as f:
+            f.write(trace_str)
+            
         return False

@@ -493,8 +493,9 @@ ${brainstormContext}
         const file = event.target.files?.[0];
         if (!file) return;
         
-        const isDocx = file.name.endsWith('.docx');
-        const isHwpx = file.name.endsWith('.hwpx');
+        const fileExt = file.name.toLowerCase();
+        const isDocx = fileExt.endsWith('.docx');
+        const isHwpx = fileExt.endsWith('.hwpx');
         
         if (!isDocx && !isHwpx) {
             alert("공고문 양식은 반드시 .docx 또는 .hwpx 형식이어야 합니다.");
@@ -527,38 +528,32 @@ ${brainstormContext}
                 throw new Error(errorData.error || "문서 매핑 서버 통신 실패 (Python Backend 확인 필요)");
             }
 
-            if (isDocx) {
-                // Handle Blob response for DOCX (file download)
-                let blob = await response.blob();
-                // 🌟 FIX: Force explicit MIME type because CORS proxies often strip headers, causing Safari to download extension-less UUID files
-                blob = new Blob([blob], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" });
-                
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                
-                // 🌟 FIX: Clean filename of brackets/unsafe unicode which causes Safari to totally ignore a.download
-                const safeName = (file.name || 'document.docx').replace(/[^a-zA-Z0-9.\-_가-힣() ]/g, '_');
-                a.download = `Publica_Draft_${safeName}`;
-                
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                setTimeout(() => {
-                    window.URL.revokeObjectURL(url);
-                }, 1000);
-                
-                alert(`🎉 DOCX 매핑 성공!\n원본: ${file.name}\n설명: AI 초안이 매핑된 DOCX 파일이 다운로드 폴더에 저장되었습니다.`);
-                setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ DOCX 완성본 병합이 완료되었습니다. 내 컴퓨터 폴더에서 확인해 보세요!` }]);
-            } else {
-                // Handling HWPX PoC response (JSON preview)
-                const data = await response.json();
-                console.log("HWPX Engine Response:", data);
-                
-                alert(`🎉 HWPX 매핑 엔진(Python) 연동 성공!\n원본: ${file.name}\n결과: ${data.message}\n설명: 현재 파일 분해/조립 엔진(Ph.2 PoC)이 완벽하게 가동되었습니다.\n(실제 자동완성본 다운로드는 UI/V2에서 연결됩니다)`);
-                setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ HWPX 원본 구조 분석이 완료되었습니다. (성공)\n진짜 자동완성본 다운로드는 Phase 2에서 완벽하게 활성화됩니다.` }]);
-            }
+            // Handle Blob response for BOTH DOCX and HWPX (file download)
+            let blob = await response.blob();
+            // Force explicit MIME type
+            const mimeType = isDocx 
+                ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document" 
+                : "application/haansofthwp";
+            blob = new Blob([blob], { type: mimeType });
             
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            
+            const ext = isDocx ? '.docx' : '.hwpx';
+            let safeName = (file.name || `document${ext}`).replace(/[^a-zA-Z0-9.\-_가-힣() ]/g, '_');
+            if (!safeName.toLowerCase().endsWith(ext)) safeName += ext;
+            a.download = `Publica_Draft_${safeName}`;
+            
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+            }, 1000);
+            
+            alert(`🎉 ${isDocx ? 'DOCX' : 'HWPX'} 병합본 내보내기 성공!\n설명: AI 초안이 매핑된 파일이 다운로드 폴더에 저장되었습니다.`);
+            setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ ${isDocx ? 'DOCX' : 'HWPX'} 자동 완성본 병합이 완료되어 다운로드 되었습니다!` }]);
         } catch (error: any) {
             console.error("Document Processing error:", error);
             alert(`문서 변환 실패: ${error.message}\n(Python 백엔드 서버가 켜져 있는지 메인 터미널을 확인해주세요)`);
@@ -716,24 +711,24 @@ ${brainstormContext}
                                         <Sparkles size={16} color="#F59E0B" />
                                         {/* 🌟 New: Action Bar for drafting */}
                             {!draftCompleted && !draftGenerating && (
-                                <View style={{ padding: 16, backgroundColor: 'rgba(79, 70, 229, 0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(79, 70, 229, 0.25)', marginBottom: 16 }}>
-                                    <Text style={{ color: '#E2E8F0', fontSize: 14, fontWeight: '700', marginBottom: 6 }}>✨ AI가 초안을 작성해 드릴까요?</Text>
-                                    <Text style={{ color: '#94A3B8', fontSize: 12, marginBottom: 14, lineHeight: 18 }}>브레인스톰 메모와 마인드맵 데이터를 분석하여 PSST 양식의 사업계획서 초안을 작성합니다.</Text>
-                                    <TouchableOpacity
-                                        style={{ backgroundColor: '#4F46E5', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
-                                        onPress={() => generateAutoDraft(selectedSession)}
-                                    >
-                                        <Sparkles size={16} color="#FFF" />
-                                        <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>AI 초안 작성 시작</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            )}
-                            {draftGenerating && (
-                                <View style={{ padding: 16, backgroundColor: 'rgba(129, 140, 248, 0.08)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(129, 140, 248, 0.2)', marginBottom: 16, alignItems: 'center' }}>
-                                    <ActivityIndicator size="small" color="#818CF8" />
-                                    <Text style={{ color: '#818CF8', fontSize: 13, fontWeight: '700', marginTop: 8 }}>AI 초안 작성 중...</Text>
-                                </View>
-                            )}
+                                    <View style={{ padding: 16, backgroundColor: 'rgba(124, 58, 237, 0.05)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.15)', marginBottom: 16 }}>
+                                        <Text style={{ color: '#27272a', fontSize: 14, fontWeight: '800', marginBottom: 6 }}>✨ AI가 초안을 작성해 드릴까요?</Text>
+                                        <Text style={{ color: '#64748B', fontSize: 12, marginBottom: 14, lineHeight: 18 }}>브레인스톰 메모와 마인드맵 데이터를 분석하여 PSST 양식의 사업계획서 초안을 작성합니다.</Text>
+                                        <TouchableOpacity
+                                            style={{ backgroundColor: '#7C3AED', paddingVertical: 10, borderRadius: 8, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }}
+                                            onPress={() => generateAutoDraft(selectedSession)}
+                                        >
+                                            <Sparkles size={16} color="#FFF" />
+                                            <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 13 }}>AI 초안 작성 시작</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                                {draftGenerating && (
+                                    <View style={{ padding: 16, backgroundColor: 'rgba(124, 58, 237, 0.05)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(124, 58, 237, 0.1)', marginBottom: 16, alignItems: 'center' }}>
+                                        <ActivityIndicator size="small" color="#7C3AED" />
+                                        <Text style={{ color: '#7C3AED', fontSize: 13, fontWeight: '700', marginTop: 8 }}>AI 초안 작성 중...</Text>
+                                    </View>
+                                )}
 
                             <Text style={styles.sectionTitle}>브레인스톰 데이터</Text>
                                     </View>
@@ -901,7 +896,7 @@ ${brainstormContext}
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#020617',
+        backgroundColor: '#FDF8F3',
     },
 
     // Header
@@ -912,8 +907,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 16,
         borderBottomWidth: 1,
-        borderColor: '#1E293B',
-        backgroundColor: '#0F172A',
+        borderColor: '#E2E8F0',
+        backgroundColor: '#FFFFFF',
     },
     headerLeft: {
         flexDirection: 'row',
@@ -926,7 +921,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: '#F1F5F9',
     },
     headerBrand: {
         flexDirection: 'row',
@@ -934,15 +929,15 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     headerTitle: {
-        color: '#E2E8F0',
+        color: '#27272a',
         fontSize: 14,
-        fontWeight: '800',
+        fontWeight: '900',
         letterSpacing: -0.3,
     },
     headerSubtitle: {
-        color: '#818CF8',
+        color: '#7C3AED',
         fontSize: 13,
-        fontWeight: '600',
+        fontWeight: '700',
     },
     headerRight: {
         flexDirection: 'row',
@@ -962,14 +957,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 8,
-        backgroundColor: 'rgba(16,185,129,0.1)',
+        backgroundColor: 'rgba(16,185,129,0.08)',
         borderWidth: 1,
-        borderColor: 'rgba(16,185,129,0.2)',
+        borderColor: 'rgba(16,185,129,0.15)',
     },
     saveBtnText: {
         color: '#10B981',
         fontSize: 12,
-        fontWeight: '700',
+        fontWeight: '800',
     },
 
     // Main
@@ -981,22 +976,22 @@ const styles = StyleSheet.create({
     // Left Panel
     leftPanel: {
         borderRightWidth: 1,
-        borderColor: '#1E293B',
-        backgroundColor: '#0B1120',
+        borderColor: '#E2E8F0',
+        backgroundColor: '#FDF8F3',
         overflow: 'hidden',
     },
 
     // Resume Banner
     resumeBanner: {
         padding: 16,
-        backgroundColor: 'rgba(129,140,248,0.08)',
+        backgroundColor: 'rgba(124, 58, 237, 0.05)',
         borderBottomWidth: 1,
-        borderColor: 'rgba(129,140,248,0.15)',
+        borderColor: 'rgba(124, 58, 237, 0.1)',
     },
     resumeText: {
-        color: '#C7D2FE',
+        color: '#27272a',
         fontSize: 13,
-        fontWeight: '700',
+        fontWeight: '800',
         marginBottom: 10,
     },
     resumeActions: {
@@ -1007,7 +1002,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 8,
         borderRadius: 8,
-        backgroundColor: '#4F46E5',
+        backgroundColor: '#7C3AED',
     },
     resumeBtnText: {
         color: '#FFF',
@@ -1028,9 +1023,9 @@ const styles = StyleSheet.create({
         paddingBottom: 10,
     },
     sectionTitle: {
-        color: '#E2E8F0',
+        color: '#27272a',
         fontSize: 13,
-        fontWeight: '800',
+        fontWeight: '900',
     },
     sessionScroll: {
         flex: 1,
@@ -1043,7 +1038,7 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     emptyText: {
-        color: '#475569',
+        color: '#94A3B8',
         fontSize: 13,
         textAlign: 'center',
         lineHeight: 20,
@@ -1053,18 +1048,22 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 14,
         borderRadius: 12,
-        backgroundColor: '#111827',
+        backgroundColor: '#FFFFFF',
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 4,
     },
     sessionItemTitle: {
-        color: '#E2E8F0',
+        color: '#27272a',
         fontSize: 13,
-        fontWeight: '700',
+        fontWeight: '800',
     },
     sessionItemMeta: {
-        color: '#475569',
+        color: '#94A3B8',
         fontSize: 11,
         fontWeight: '500',
         marginTop: 2,
@@ -1082,7 +1081,7 @@ const styles = StyleSheet.create({
         paddingTop: 12,
     },
     backToListText: {
-        color: '#60A5FA',
+        color: '#7C3AED',
         fontSize: 12,
         fontWeight: '700',
     },
@@ -1093,30 +1092,34 @@ const styles = StyleSheet.create({
     branchCard: {
         padding: 14,
         borderRadius: 12,
-        backgroundColor: '#111827',
+        backgroundColor: '#FFFFFF',
         marginBottom: 8,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 4,
     },
     branchCardRoot: {
-        borderColor: '#4F46E5',
-        backgroundColor: 'rgba(79,70,229,0.08)',
+        borderColor: '#7C3AED',
+        backgroundColor: 'rgba(124, 58, 237, 0.03)',
     },
     branchLabel: {
-        color: '#E2E8F0',
+        color: '#27272a',
         fontSize: 13,
-        fontWeight: '700',
+        fontWeight: '800',
         marginBottom: 4,
     },
     branchDesc: {
-        color: '#94A3B8',
+        color: '#64748B',
         fontSize: 12,
         lineHeight: 18,
     },
     branchInsertHint: {
-        color: '#4F46E5',
+        color: '#7C3AED',
         fontSize: 10,
-        fontWeight: '600',
+        fontWeight: '700',
         marginTop: 6,
     },
 
@@ -1124,7 +1127,8 @@ const styles = StyleSheet.create({
     chatSection: {
         height: 280,
         borderTopWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
+        backgroundColor: '#FFFFFF',
     },
     chatHeader: {
         flexDirection: 'row',
@@ -1133,12 +1137,12 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         paddingVertical: 10,
         borderBottomWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#F1F5F9',
     },
     chatHeaderText: {
-        color: '#C7D2FE',
+        color: '#27272a',
         fontSize: 12,
-        fontWeight: '700',
+        fontWeight: '800',
     },
     chatMessages: {
         flex: 1,
@@ -1149,7 +1153,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     chatEmptyText: {
-        color: '#475569',
+        color: '#94A3B8',
         fontSize: 12,
         textAlign: 'center',
         lineHeight: 18,
@@ -1157,22 +1161,22 @@ const styles = StyleSheet.create({
     chatBubble: {
         flexDirection: 'row',
         padding: 10,
-        borderRadius: 10,
+        borderRadius: 12,
         marginBottom: 8,
         maxWidth: '90%',
     },
     chatBubbleUser: {
-        backgroundColor: '#1E293B',
+        backgroundColor: '#7C3AED',
         alignSelf: 'flex-end',
     },
     chatBubbleAI: {
-        backgroundColor: 'rgba(129,140,248,0.08)',
+        backgroundColor: '#F8FAFC',
         borderWidth: 1,
-        borderColor: 'rgba(129,140,248,0.15)',
+        borderColor: '#E2E8F0',
         alignSelf: 'flex-start',
     },
     chatBubbleText: {
-        color: '#CBD5E1',
+        color: '#475569',
         fontSize: 12,
         lineHeight: 18,
         flex: 1,
@@ -1183,18 +1187,18 @@ const styles = StyleSheet.create({
         padding: 10,
         gap: 8,
         borderTopWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#F1F5F9',
     },
     chatInput: {
         flex: 1,
         height: 36,
-        backgroundColor: '#111827',
+        backgroundColor: '#F8FAFC',
         borderRadius: 10,
         paddingHorizontal: 12,
-        color: '#E2E8F0',
+        color: '#27272a',
         fontSize: 13,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
     },
     chatSendBtn: {
         width: 36,
@@ -1202,35 +1206,35 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#1E293B',
+        backgroundColor: '#F1F5F9',
     },
     chatSendBtnActive: {
-        backgroundColor: 'rgba(129,140,248,0.15)',
+        backgroundColor: 'rgba(124, 58, 237, 0.1)',
         borderWidth: 1,
-        borderColor: 'rgba(129,140,248,0.3)',
+        borderColor: 'rgba(124, 58, 237, 0.2)',
     },
 
     // Right Panel
     rightPanel: {
         flex: 1,
-        backgroundColor: '#020617',
+        backgroundColor: '#FDF8F3',
     },
     draftLoadingOverlay: {
         position: 'absolute',
         top: 0, left: 0, right: 0, bottom: 0,
-        backgroundColor: 'rgba(2, 6, 23, 0.85)',
+        backgroundColor: 'rgba(253, 248, 243, 0.95)',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 100,
     },
     draftLoadingText: {
-        color: '#E2E8F0',
+        color: '#27272a',
         fontSize: 18,
-        fontWeight: '700',
+        fontWeight: '900',
         marginTop: 16,
     },
     draftLoadingSubtext: {
-        color: '#94A3B8',
+        color: '#64748B',
         fontSize: 13,
         textAlign: 'center',
         marginTop: 8,
@@ -1245,12 +1249,12 @@ const styles = StyleSheet.create({
         gap: 12,
     },
     placeholderTitle: {
-        color: '#334155',
+        color: '#27272a',
         fontSize: 18,
-        fontWeight: '700',
+        fontWeight: '800',
     },
     placeholderDesc: {
-        color: '#475569',
+        color: '#94A3B8',
         fontSize: 13,
         textAlign: 'center',
         lineHeight: 20,
@@ -1263,13 +1267,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8,
         alignItems: 'center',
         borderLeftWidth: 1,
-        borderColor: '#1E293B',
-        backgroundColor: '#0B1120',
+        borderColor: '#E2E8F0',
+        backgroundColor: '#FDF8F3',
     },
     progressStripTitle: {
-        color: '#64748B',
+        color: '#94A3B8',
         fontSize: 9,
-        fontWeight: '800',
+        fontWeight: '900',
         letterSpacing: 0.5,
         textTransform: 'uppercase',
         marginBottom: 20,
@@ -1280,15 +1284,15 @@ const styles = StyleSheet.create({
     progressLine: {
         width: 2,
         height: 20,
-        backgroundColor: '#1E293B',
+        backgroundColor: '#E2E8F0',
     },
     progressLineBelow: {
         width: 2,
         height: 20,
-        backgroundColor: '#1E293B',
+        backgroundColor: '#E2E8F0',
     },
     progressLineCompleted: {
-        backgroundColor: '#818CF8',
+        backgroundColor: '#7C3AED',
     },
     progressCircle: {
         width: 32,
@@ -1296,39 +1300,39 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#111827',
+        backgroundColor: '#FFFFFF',
         borderWidth: 2,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
     },
     progressCircleCompleted: {
-        backgroundColor: 'rgba(129,140,248,0.15)',
-        borderColor: '#818CF8',
+        backgroundColor: 'rgba(124, 58, 237, 0.1)',
+        borderColor: '#7C3AED',
     },
     progressCircleActive: {
-        borderColor: '#818CF8',
-        backgroundColor: 'rgba(129,140,248,0.08)',
+        borderColor: '#7C3AED',
+        backgroundColor: 'rgba(124, 58, 237, 0.05)',
     },
     progressCheckmark: {
-        color: '#818CF8',
+        color: '#7C3AED',
         fontSize: 14,
-        fontWeight: '800',
+        fontWeight: '900',
     },
     progressNumber: {
-        color: '#475569',
+        color: '#94A3B8',
         fontSize: 12,
         fontWeight: '700',
     },
     progressLabel: {
-        color: '#475569',
+        color: '#94A3B8',
         fontSize: 9,
-        fontWeight: '600',
+        fontWeight: '700',
         marginTop: 4,
         textAlign: 'center',
     },
     progressLabelCompleted: {
-        color: '#818CF8',
+        color: '#7C3AED',
     },
     progressLabelActive: {
-        color: '#C7D2FE',
+        color: '#27272a',
     },
 });

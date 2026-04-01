@@ -24,26 +24,26 @@ export const TowerCard = ({ data, selected, collapsed = false, verticalDiff, onS
     // Type-based accent colors
     const getAccentColor = () => {
         switch (data.type || data.action_type) {
-            case 'documentation': return '#8B5CF6';
+            case 'documentation': return '#7C3AED';
             case 'action': return '#F59E0B';
             case 'research':
-            default: return '#3B82F6';
+            default: return '#7C3AED';
         }
     };
     const accentColor = getAccentColor();
-    const selectedColor = '#10B981';
+    const selectedColor = '#7C3AED';
 
     // 🏷️ Source badge colors
     const getSourceBadge = () => {
         switch (data.source) {
             case 'deep_dive':
-                return { label: '🔍 Deep Dive', color: '#3B82F6', bg: '#3B82F622' };
+                return { label: '🔍 Deep Dive', color: '#7C3AED', bg: 'rgba(124, 58, 237, 0.08)' };
             case 'branching':
-                return { label: '🌿 Branch', color: '#10B981', bg: '#10B98122' };
+                return { label: '🌿 Branch', color: '#10B981', bg: 'rgba(16, 185, 129, 0.08)' };
             case 'user':
-                return { label: '✏️ User', color: '#8B5CF6', bg: '#8B5CF622' };
+                return { label: '✏️ User', color: '#EC4899', bg: 'rgba(236, 72, 153, 0.08)' };
             case 'ask_ai':
-                return { label: '💬 Ask AI', color: '#A78BFA', bg: '#A78BFA22' };
+                return { label: '💬 Ask AI', color: '#6366F1', bg: 'rgba(99, 102, 241, 0.08)' };
             default:
                 return null; // AI-generated, no badge
         }
@@ -156,9 +156,9 @@ export const TowerCard = ({ data, selected, collapsed = false, verticalDiff, onS
             {/* Right Expand Indicator */}
             <View style={[styles.expandIndicator, selected && styles.expandIndicatorActive]}>
                 {selected ? (
-                    <ChevronDown size={12} color="#10B981" />
+                    <ChevronDown size={12} color="#7C3AED" />
                 ) : (
-                    <ChevronRight size={12} color="#475569" />
+                    <ChevronRight size={12} color="#94A3B8" />
                 )}
             </View>
 
@@ -171,32 +171,32 @@ const styles = StyleSheet.create({
     nodeWrapper: { position: 'relative', alignItems: 'center', height: LAYOUT.CARD_HEIGHT, marginBottom: 20 },
 
     // Full card
-    card: { width: 220, height: LAYOUT.CARD_HEIGHT, backgroundColor: '#050505', borderRadius: 4, padding: 16, borderWidth: 1, borderColor: '#222', justifyContent: 'flex-start' },
-    cardSelected: { borderColor: '#10B981', backgroundColor: '#080808', borderWidth: 1.5, shadowColor: '#10B981', shadowOpacity: 0.2, shadowRadius: 15 },
+    card: { width: 240, height: LAYOUT.CARD_HEIGHT, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, borderWidth: 1.5, borderColor: '#E2E8F0', justifyContent: 'flex-start', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10 },
+    cardSelected: { borderColor: '#7C3AED', backgroundColor: '#FFFFFF', borderWidth: 2, shadowColor: '#7C3AED', shadowOpacity: 0.15, shadowRadius: 20 },
 
     // Collapsed card
     collapsedCard: {
-        width: 220, height: COLLAPSED_HEIGHT - 4,
-        backgroundColor: '#0A0A0A', borderRadius: 4,
+        width: 240, height: COLLAPSED_HEIGHT - 4,
+        backgroundColor: '#FFFFFF', borderRadius: 12,
         paddingHorizontal: 12, paddingVertical: 8,
-        borderWidth: 1, borderColor: '#1A1A1A',
-        borderLeftWidth: 3,
+        borderWidth: 1, borderColor: '#E2E8F0',
+        borderLeftWidth: 4,
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         opacity: 0.7,
     },
-    collapsedTitle: { color: '#94A3B8', fontSize: 12, fontWeight: '600', flex: 1 },
+    collapsedTitle: { color: '#64748B', fontSize: 13, fontWeight: '700', flex: 1 },
 
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
-    stepLabel: { fontSize: 9, fontWeight: 'bold', color: '#3B82F6', letterSpacing: 1 },
-    statusIndicator: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#10B981' },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+    stepLabel: { fontSize: 10, fontWeight: '900', color: '#7C3AED', letterSpacing: 1 },
+    statusIndicator: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#7C3AED' },
 
-    cardTitle: { color: '#E2E8F0', fontSize: 14, fontWeight: '700', lineHeight: 20, marginBottom: 8 },
-    divider: { height: 1, backgroundColor: '#1E293B', marginBottom: 10 },
+    cardTitle: { color: '#27272a', fontSize: 15, fontWeight: '900', lineHeight: 22, marginBottom: 10, trackingTight: -0.3 } as any,
+    divider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 12 },
 
     cardBody: { flex: 1 },
     listItem: { flexDirection: 'row', alignItems: 'flex-start' },
-    bullet: { width: 3, height: 3, backgroundColor: '#3B82F6', borderRadius: 1.5, marginTop: 7, marginRight: 8 },
-    listText: { color: '#94A3B8', fontSize: 13, lineHeight: 18 },
+    bullet: { width: 4, height: 4, backgroundColor: '#7C3AED', borderRadius: 2, marginTop: 8, marginRight: 10 },
+    listText: { color: '#64748B', fontSize: 13, lineHeight: 20, fontWeight: '500' },
 
     typeBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 3 },
     typeBadgeText: { fontSize: 8, fontWeight: '800', letterSpacing: 0.5 },
@@ -206,12 +206,12 @@ const styles = StyleSheet.create({
     sourceBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, alignSelf: 'flex-start' },
     sourceBadgeText: { fontSize: 9, fontWeight: '700' },
 
-    anchorDot: { position: 'absolute', top: '50%', marginTop: -4, width: 8, height: 8, borderRadius: 4, backgroundColor: '#000', borderWidth: 1.5, borderColor: '#475569', zIndex: 10 },
-    anchorLeft: { left: -4 },
-    anchorRight: { right: -4 },
-    anchorActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
-    anchorLoading: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+    anchorDot: { position: 'absolute', top: '50%', marginTop: -5, width: 10, height: 10, borderRadius: 5, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#CBD5E1', zIndex: 10 },
+    anchorLeft: { left: -5 },
+    anchorRight: { right: -5 },
+    anchorActive: { backgroundColor: '#FFFFFF', borderColor: '#7C3AED' },
+    anchorLoading: { backgroundColor: '#FFFFFF', borderColor: '#7C3AED' },
 
-    expandIndicator: { position: 'absolute', right: 8, top: '50%', marginTop: -10, width: 20, height: 20, borderRadius: 10, backgroundColor: '#111', alignItems: 'center', justifyContent: 'center' },
-    expandIndicatorActive: { backgroundColor: 'rgba(16, 185, 129, 0.15)' },
+    expandIndicator: { position: 'absolute', right: 10, top: '50%', marginTop: -12, width: 24, height: 24, borderRadius: 12, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+    expandIndicatorActive: { backgroundColor: 'rgba(124, 58, 237, 0.1)', borderColor: 'rgba(124, 58, 237, 0.2)' },
 });

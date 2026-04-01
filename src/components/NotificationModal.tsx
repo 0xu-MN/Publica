@@ -24,40 +24,38 @@ export const NotificationModal = ({ visible, onClose, notifications, onMarkAsRea
                 className="flex-1 bg-black/60 items-end justify-start pt-20 pr-4 sm:pr-20"
             >
                 <View
-                    className="w-80 bg-[#1E293B] rounded-2xl border border-white/10 overflow-hidden shadow-2xl"
+                    className="w-80 bg-white rounded-2xl border border-[#E2E8F0] overflow-hidden shadow-2xl"
                     onStartShouldSetResponder={() => true} // Prevent closing when clicking inside
                 >
-                    <View className="px-4 py-3 border-b border-white/5 flex-row items-center justify-between bg-[#0F172A]">
-                        <View className="flex-row items-center gap-2">
-                            <Bell size={16} color="#3B82F6" />
-                            <Text className="text-white font-bold">알림</Text>
+                    <View className="px-5 py-4 border-b border-[#F1F5F9] flex-row items-center justify-between bg-white">
+                        <View className="flex-row items-center gap-2.5">
+                            <Bell size={18} color="#7C3AED" strokeWidth={2.5} />
+                            <Text className="text-[#27272a] font-bold text-base">알림</Text>
                         </View>
-                        {/* <TouchableOpacity onPress={onClose}>
-                            <X size={18} color="#94A3B8" />
-                        </TouchableOpacity> */}
                     </View>
 
-                    <ScrollView className="max-h-[400px]">
+                    <ScrollView className="max-h-[450px]">
                         {notifications.length === 0 ? (
-                            <View className="p-8 items-center justify-center">
-                                <Text className="text-slate-500 text-sm">새로운 알림이 없습니다.</Text>
+                            <View className="p-10 items-center justify-center">
+                                <Bell size={32} color="#CBD5E1" strokeWidth={1.5} className="mb-3" />
+                                <Text className="text-[#94A3B8] text-sm font-medium">새로운 알림이 없습니다.</Text>
                             </View>
                         ) : (
                             notifications.map((noti) => (
                                 <TouchableOpacity
                                     key={noti.id}
-                                    className={`p-4 border-b border-white/5 flex-row gap-3 ${noti.read ? 'opacity-50' : 'bg-blue-500/5'}`}
+                                    className={`px-5 py-4 border-b border-[#F8FAFC] flex-row gap-3.5 transition-all ${noti.read ? 'opacity-40' : 'bg-[#7C3AED]/5 active:bg-[#7C3AED]/10'}`}
                                     onPress={() => onMarkAsRead(noti.id)}
                                 >
-                                    <View className={`w-8 h-8 rounded-full items-center justify-center ${noti.type === 'like' ? 'bg-red-500/10' : 'bg-blue-500/10'}`}>
-                                        {noti.type === 'like' ? <Heart size={14} color="#EF4444" /> : <MessageCircle size={14} color="#3B82F6" />}
+                                    <View className={`w-10 h-10 rounded-full items-center justify-center shadow-sm ${noti.type === 'like' ? 'bg-red-50' : 'bg-[#7C3AED]/10'}`}>
+                                        {noti.type === 'like' ? <Heart size={16} color="#F87171" fill="#F87171" /> : <MessageCircle size={16} color="#7C3AED" fill="#7C3AED" />}
                                     </View>
                                     <View className="flex-1">
-                                        <Text className="text-slate-200 text-xs leading-5 mb-1">{noti.message}</Text>
-                                        <Text className="text-slate-500 text-[10px]">{noti.timestamp}</Text>
+                                        <Text className="text-[#27272a] text-[13px] leading-5 mb-1.5 font-medium">{noti.message}</Text>
+                                        <Text className="text-[#94A3B8] text-[11px] font-bold uppercase tracking-tighter">{noti.timestamp}</Text>
                                     </View>
                                     {!noti.read && (
-                                        <View className="w-1.5 h-1.5 rounded-full bg-red-500 mt-1.5" />
+                                        <View className="w-2 h-2 rounded-full bg-[#7C3AED] mt-1.5 shadow-sm shadow-[#7C3AED]/50" />
                                     )}
                                 </TouchableOpacity>
                             ))

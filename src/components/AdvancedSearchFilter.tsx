@@ -53,38 +53,38 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({ onSe
 
     const getTagColor = (type: 'AND' | 'OR' | 'NOT') => {
         switch (type) {
-            case 'AND': return { bg: 'bg-blue-500/20', border: 'border-blue-500/50', text: 'text-blue-400' };
-            case 'OR': return { bg: 'bg-emerald-500/20', border: 'border-emerald-500/50', text: 'text-emerald-400' };
-            case 'NOT': return { bg: 'bg-red-500/20', border: 'border-red-500/50', text: 'text-red-400' };
+            case 'AND': return { bg: 'bg-[#7C3AED]/10', border: 'border-[#7C3AED]/20', text: 'text-[#7C3AED]' };
+            case 'OR': return { bg: 'bg-emerald-50', border: 'border-emerald-100', text: 'text-emerald-600' };
+            case 'NOT': return { bg: 'bg-red-50', border: 'border-red-100', text: 'text-red-500' };
         }
     };
 
     return (
         <View className="mb-8">
-            <View className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-700/50 overflow-hidden shadow-lg shadow-black/20">
+            <View className="bg-white rounded-3xl border border-[#E2E8F0] overflow-hidden shadow-xl shadow-black/5">
                 {/* Header & Smart Input */}
-                <View className="p-5">
-                    <View className="flex-row items-center justify-between mb-4">
+                <View className="p-6">
+                    <View className="flex-row items-center justify-between mb-5">
                         <View className="flex-row items-center">
-                            <Icons.Search size={18} color="#10B981" />
-                            <Text className="text-white text-base font-bold ml-2">상세 조건 검색</Text>
+                            <Icons.Search size={20} color="#7C3AED" strokeWidth={2.5} />
+                            <Text className="text-[#27272a] text-lg font-bold ml-3">상세 조건 검색</Text>
                         </View>
-                        <TouchableOpacity onPress={toggleExpand} className="flex-row items-center">
-                            <Text className="text-slate-400 text-xs mr-1">{isExpanded ? '접기' : '더보기'}</Text>
-                            {isExpanded ? <Icons.ChevronUp size={16} color="#94A3B8" /> : <Icons.ChevronDown size={16} color="#94A3B8" />}
+                        <TouchableOpacity onPress={toggleExpand} className="flex-row items-center bg-[#F8FAFC] px-3 py-1.5 rounded-full border border-[#E2E8F0]">
+                            <Text className="text-[#64748B] text-[11px] font-bold mr-1.5 uppercase tracking-wider">{isExpanded ? '접기' : '더보기'}</Text>
+                            {isExpanded ? <Icons.ChevronUp size={14} color="#64748B" /> : <Icons.ChevronDown size={14} color="#64748B" />}
                         </TouchableOpacity>
                     </View>
 
                     {/* Tag Display Area */}
                     {activeTags.length > 0 && (
-                        <View className="flex-row flex-wrap gap-2 mb-3">
+                        <View className="flex-row flex-wrap gap-2.5 mb-4">
                             {activeTags.map((tag, idx) => {
                                 const style = getTagColor(tag.type);
                                 return (
-                                    <View key={idx} className={`flex-row items-center ${style.bg} px-2.5 py-1 rounded-md border ${style.border}`}>
-                                        <Text className={`${style.text} text-xs font-bold mr-1`}>{tag.type}</Text>
-                                        <Text className="text-slate-200 text-xs mr-2">{tag.text}</Text>
-                                        <TouchableOpacity onPress={() => removeTag(idx)}>
+                                    <View key={idx} className={`flex-row items-center ${style.bg} px-3 py-1.5 rounded-xl border ${style.border} shadow-sm`}>
+                                        <Text className={`${style.text} text-[10px] font-black mr-2 uppercase tracking-tight`}>{tag.type}</Text>
+                                        <Text className="text-[#475569] text-xs font-bold mr-2">{tag.text}</Text>
+                                        <TouchableOpacity onPress={() => removeTag(idx)} className="p-0.5 rounded-full hover:bg-black/5">
                                             <Icons.X size={12} color="#94A3B8" />
                                         </TouchableOpacity>
                                     </View>
@@ -94,25 +94,25 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({ onSe
                     )}
 
                     {/* Smart Input Field */}
-                    <View className="flex-row items-center bg-slate-950/50 border border-slate-700 rounded-xl px-4 py-3">
+                    <View className="flex-row items-center bg-[#F8FAFC] border border-[#E2E8F0] rounded-2xl px-5 py-4 shadow-inner">
                         <TextInput
-                            className="flex-1 text-white text-sm"
-                            placeholder="검색어 입력 (예: 청년, 반도체)"
-                            placeholderTextColor="#64748B"
+                            className="flex-1 text-[#27272a] text-[15px] font-medium"
+                            placeholder="검색어를 입력하세요 (예: 청년, 반도체)"
+                            placeholderTextColor="#94A3B8"
                             value={keyword}
                             onChangeText={setKeyword}
                             onSubmitEditing={() => addTag('AND')}
                         />
                         {keyword.length > 0 && (
-                            <View className="flex-row items-center gap-2">
-                                <TouchableOpacity onPress={() => addTag('AND')} className="bg-blue-500/20 px-2 py-1 rounded border border-blue-500/30">
-                                    <Text className="text-blue-400 text-xs font-bold">+ AND</Text>
+                            <View className="flex-row items-center gap-2 ml-3">
+                                <TouchableOpacity onPress={() => addTag('AND')} className="bg-[#7C3AED] px-3 py-1.5 rounded-lg shadow-sm active:opacity-90">
+                                    <Text className="text-white text-[11px] font-bold">AND</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => addTag('OR')} className="bg-emerald-500/20 px-2 py-1 rounded border border-emerald-500/30">
-                                    <Text className="text-emerald-400 text-xs font-bold">| OR</Text>
+                                <TouchableOpacity onPress={() => addTag('OR')} className="bg-emerald-500 px-3 py-1.5 rounded-lg shadow-sm active:opacity-90">
+                                    <Text className="text-white text-[11px] font-bold">OR</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity onPress={() => addTag('NOT')} className="bg-red-500/20 px-2 py-1 rounded border border-red-500/30">
-                                    <Text className="text-red-400 text-xs font-bold">- NOT</Text>
+                                <TouchableOpacity onPress={() => addTag('NOT')} className="bg-red-500 px-3 py-1.5 rounded-lg shadow-sm active:opacity-90">
+                                    <Text className="text-white text-[11px] font-bold">NOT</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -121,58 +121,58 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({ onSe
 
                 {/* Expanded Filters */}
                 {isExpanded && (
-                    <View className="px-5 pb-5 border-t border-slate-800/50 pt-4">
+                    <View className="px-6 pb-6 border-t border-[#F1F5F9] pt-6 bg-[#FDF8F3]/30">
                         {/* 1. Established Year */}
-                        <View className="mb-5">
-                            <Text className="text-slate-400 text-xs font-semibold mb-3">업력 (선택 1)</Text>
-                            <View className="flex-row flex-wrap gap-2">
+                        <View className="mb-6">
+                            <Text className="text-[#64748B] text-[13px] font-bold mb-4 ml-1 uppercase tracking-wider">업력 비즈니스 스테이지</Text>
+                            <View className="flex-row flex-wrap gap-2.5">
                                 {years.map((y) => (
                                     <TouchableOpacity
                                         key={y}
                                         onPress={() => setSelectedYear(selectedYear === y ? null : y)}
-                                        className={`px-3 py-1.5 rounded-full border ${selectedYear === y ? 'bg-emerald-500/20 border-emerald-500' : 'bg-slate-800 border-slate-700'}`}
+                                        className={`px-4 py-2 rounded-xl border transition-all ${selectedYear === y ? 'bg-[#7C3AED] border-[#7C3AED] shadow-md shadow-[#7C3AED]/20' : 'bg-white border-[#E2E8F0]'}`}
                                     >
-                                        <Text className={`text-xs ${selectedYear === y ? 'text-emerald-400 font-bold' : 'text-slate-400'}`}>{y}</Text>
+                                        <Text className={`text-[13px] font-bold ${selectedYear === y ? 'text-white' : 'text-[#64748B]'}`}>{y}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         </View>
 
                         {/* 2. Category */}
-                        <View className="mb-5">
-                            <Text className="text-slate-400 text-xs font-semibold mb-3">지원 분야 (중복 가능)</Text>
-                            <View className="flex-row flex-wrap gap-2">
+                        <View className="mb-6">
+                            <Text className="text-[#64748B] text-[13px] font-bold mb-4 ml-1 uppercase tracking-wider">지원 분야 (중복 가능)</Text>
+                            <View className="flex-row flex-wrap gap-2.5">
                                 {categories.map((c) => (
                                     <TouchableOpacity
                                         key={c}
                                         onPress={() => toggleSelection(selectedCategories, setSelectedCategories, c)}
-                                        className={`px-3 py-1.5 rounded-full border ${selectedCategories.includes(c) ? 'bg-blue-500/20 border-blue-500' : 'bg-slate-800 border-slate-700'}`}
+                                        className={`px-4 py-2 rounded-xl border transition-all ${selectedCategories.includes(c) ? 'bg-[#7C3AED]/10 border-[#7C3AED]/50 shadow-sm' : 'bg-white border-[#E2E8F0]'}`}
                                     >
-                                        <Text className={`text-xs ${selectedCategories.includes(c) ? 'text-blue-400 font-bold' : 'text-slate-400'}`}>{c}</Text>
+                                        <Text className={`text-[13px] font-bold ${selectedCategories.includes(c) ? 'text-[#7C3AED]' : 'text-[#64748B]'}`}>{c}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </View>
                         </View>
 
                         {/* 3. Region */}
-                        <View>
-                            <Text className="text-slate-400 text-xs font-semibold mb-3">지역</Text>
+                        <View className="mb-4">
+                            <Text className="text-[#64748B] text-[13px] font-bold mb-4 ml-1 uppercase tracking-wider">비즈니스 거점 지역</Text>
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} className="flex-row">
                                 {regions.map((r) => (
                                     <TouchableOpacity
                                         key={r}
                                         onPress={() => setSelectedRegion(r)}
-                                        className={`mr-2 px-3 py-1.5 rounded-full border ${selectedRegion === r ? 'bg-purple-500/20 border-purple-500' : 'bg-slate-800 border-slate-700'}`}
+                                        className={`mr-3 px-4 py-2 rounded-xl border transition-all ${selectedRegion === r ? 'bg-[#7C3AED] border-[#7C3AED] shadow-md shadow-[#7C3AED]/20' : 'bg-white border-[#E2E8F0]'}`}
                                     >
-                                        <Text className={`text-xs ${selectedRegion === r ? 'text-purple-400 font-bold' : 'text-slate-400'}`}>{r}</Text>
+                                        <Text className={`text-[13px] font-bold ${selectedRegion === r ? 'text-white' : 'text-[#64748B]'}`}>{r}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
                         </View>
 
                         {/* Search Button */}
-                        <TouchableOpacity className="mt-6 w-full bg-emerald-600 py-3 rounded-xl items-center shadow-lg shadow-emerald-900/50 active:bg-emerald-700">
-                            <Text className="text-white font-bold text-sm">필터 적용하여 검색</Text>
+                        <TouchableOpacity className="mt-8 w-full bg-[#7C3AED] py-4 rounded-2xl items-center shadow-xl shadow-[#7C3AED]/30 active:opacity-90 active:scale-[0.99] transition-all">
+                            <Text className="text-white font-black text-base tracking-widest">필터 적용하여 분석 시작</Text>
                         </TouchableOpacity>
                     </View>
                 )}

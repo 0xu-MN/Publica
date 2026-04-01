@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Modal, Pressable } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
-import { X, Bookmark, Bell, Moon, ChevronRight, User, Shield } from 'lucide-react-native';
+import { X, Bookmark, Bell, Moon, ChevronRight, User, Shield, LogOut } from 'lucide-react-native';
 
-// 🔐 Add any admin emails here (case-insensitive check)
 const ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com'];
 
 interface SettingsModalProps {
@@ -15,9 +14,8 @@ interface SettingsModalProps {
 export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsModalProps) => {
     const { user, signOut } = useAuth();
     const [notifications, setNotifications] = useState(true);
-    const [darkMode, setDarkMode] = useState(true);
+    const [darkMode, setDarkMode] = useState(false);
 
-    // Sync check — no async, no Supabase call needed
     const email = user?.email?.toLowerCase() || '';
     const name = user?.user_metadata?.name || user?.user_metadata?.full_name || '';
     
@@ -25,7 +23,6 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
                     || email.includes('hong56800') 
                     || name.includes('hong56800');
 
-    // Debug log on every render when visible
     useEffect(() => {
         if (visible) {
             console.log('🔒 SettingsModal: user email =', user?.email, '| name =', name, '| isAdmin =', isAdmin);
@@ -35,130 +32,157 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
     if (!visible) return null;
 
     return (
-        <View style={{
-            position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.7)',
-            justifyContent: 'center', alignItems: 'center',
-            padding: 24, zIndex: 9999,
-        }}>
-            <View style={{
-                width: '100%', maxWidth: 420,
-                backgroundColor: '#0F172A',
-                borderRadius: 24,
-                borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)',
-                overflow: 'hidden',
-            }}>
-                {/* Header */}
-                <View style={{
-                    paddingHorizontal: 24, paddingVertical: 16,
-                    backgroundColor: '#1E293B',
-                    borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)',
-                    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-                }}>
-                    <View>
-                        <Text style={{ color: '#fff', fontWeight: '800', fontSize: 20 }}>설정</Text>
-                        <Text style={{ color: '#64748B', fontSize: 12, marginTop: 2 }}>앱 설정 및 계정 관리</Text>
-                    </View>
-                    <TouchableOpacity onPress={onClose}
-                        style={{ padding: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 999 }}>
-                        <X size={20} color="#fff" />
-                    </TouchableOpacity>
-                </View>
-
-                <ScrollView style={{ maxHeight: 480 }}>
-                    {/* Profile Info */}
-                    <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' }}>
-                        <View style={{
-                            backgroundColor: 'rgba(59,130,246,0.07)',
-                            padding: 16, borderRadius: 16,
-                            borderWidth: 1, borderColor: 'rgba(59,130,246,0.12)',
-                            flexDirection: 'row', alignItems: 'center', gap: 12,
-                        }}>
-                            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(59,130,246,0.2)', alignItems: 'center', justifyContent: 'center' }}>
-                                <User size={20} color="#3B82F6" />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>프로필 수정</Text>
-                                <Text style={{ color: '#60A5FA', fontSize: 12, marginTop: 2 }}>My Workspace → 프로필 버튼에서 수정하세요</Text>
-                            </View>
-                            <ChevronRight size={16} color="#3B82F6" />
+        <Modal
+            transparent
+            visible={visible}
+            animationType="fade"
+            onRequestClose={onClose}
+        >
+            <Pressable style={styles.overlay} onPress={onClose}>
+                <Pressable style={styles.modalContainer} onPress={(e) => e.stopPropagation()}>
+                    {/* Header */}
+                    <View style={styles.header}>
+                        <View>
+                            <Text style={styles.title}>설정</Text>
+                            <Text style={styles.subtitle}>앱 설정 및 계정 관리</Text>
                         </View>
-                    </View>
-
-                    {/* Settings */}
-                    <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-                        {/* Saved Insights */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                <Bookmark size={18} color="#94A3B8" />
-                                <Text style={{ color: '#fff', fontWeight: '500' }}>Saved Insights</Text>
-                            </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Text style={{ color: '#475569', fontSize: 14 }}>0</Text>
-                                <ChevronRight size={16} color="#475569" />
-                            </View>
-                        </View>
-
-                        {/* Notifications */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                <Bell size={18} color="#94A3B8" />
-                                <Text style={{ color: '#fff', fontWeight: '500' }}>알림</Text>
-                            </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Text style={{ color: '#475569', fontSize: 13 }}>{notifications ? 'On' : 'Off'}</Text>
-                                <Switch value={notifications} onValueChange={setNotifications}
-                                    trackColor={{ false: '#334155', true: '#3B82F6' }} thumbColor="#fff" />
-                            </View>
-                        </View>
-
-                        {/* Dark Mode */}
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                                <Moon size={18} color="#94A3B8" />
-                                <Text style={{ color: '#fff', fontWeight: '500' }}>다크 모드</Text>
-                            </View>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                <Text style={{ color: '#475569', fontSize: 13 }}>{darkMode ? 'On' : 'Off'}</Text>
-                                <Switch value={darkMode} onValueChange={setDarkMode}
-                                    trackColor={{ false: '#334155', true: '#3B82F6' }} thumbColor="#fff" />
-                            </View>
-                        </View>
-                    </View>
-
-                    {/* Admin Panel — shows current email + admin status for debugging */}
-                    {isAdmin ? (
-                        <View style={{ paddingHorizontal: 24, paddingVertical: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' }}>
-                            <TouchableOpacity
-                                onPress={() => { onClose(); onNavigateAdmin?.(); }}
-                                style={{
-                                    flexDirection: 'row', alignItems: 'center', gap: 12,
-                                    paddingHorizontal: 16, paddingVertical: 14,
-                                    borderRadius: 14,
-                                    backgroundColor: 'rgba(129,140,248,0.1)',
-                                    borderWidth: 1, borderColor: 'rgba(129,140,248,0.25)',
-                                }}
-                            >
-                                <Shield size={18} color="#818CF8" />
-                                <Text style={{ color: '#818CF8', fontWeight: '800', fontSize: 14, flex: 1 }}>관리자 패널 (카드뉴스 관리)</Text>
-                                <ChevronRight size={16} color="#818CF8" />
-                            </TouchableOpacity>
-                        </View>
-                    ) : null}
-
-                    {/* Logout */}
-                    <View style={{ paddingHorizontal: 24, paddingVertical: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' }}>
-                        <TouchableOpacity onPress={signOut} style={{
-                            width: '100%', paddingVertical: 16,
-                            borderRadius: 16, alignItems: 'center',
-                            borderWidth: 1, borderColor: 'rgba(239,68,68,0.25)',
-                            backgroundColor: 'rgba(239,68,68,0.07)',
-                        }}>
-                            <Text style={{ color: '#EF4444', fontWeight: '800', fontSize: 14 }}>로그아웃</Text>
+                        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                            <X size={20} color="#18181b" />
                         </TouchableOpacity>
                     </View>
-                </ScrollView>
-            </View>
-        </View>
+
+                    <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
+                        {/* Profile Info */}
+                        <View style={styles.profileSection}>
+                            <View style={styles.profileCard}>
+                                <View style={styles.profileIconBox}>
+                                    <User size={22} color="#7C3AED" />
+                                </View>
+                                <View style={styles.profileInfo}>
+                                    <Text style={styles.profileName}>프로필 수정</Text>
+                                    <Text style={styles.profileGuide}>Workspace → 프로필 버튼에서 수정하세요</Text>
+                                </View>
+                                <ChevronRight size={16} color="#7C3AED" />
+                            </View>
+                        </View>
+
+                        {/* Settings Items */}
+                        <View style={styles.settingsGroup}>
+                            <SettingItem 
+                                icon={<Bookmark size={18} color="#94A3B8" />} 
+                                label="저장된 인사이트" 
+                                right={<View style={styles.countBadge}><Text style={styles.countText}>0</Text><ChevronRight size={16} color="#94A3B8" /></View>} 
+                            />
+                            <SettingItem 
+                                icon={<Bell size={18} color="#94A3B8" />} 
+                                label="알림 설정" 
+                                right={<Switch value={notifications} onValueChange={setNotifications} trackColor={{ false: '#E2E8F0', true: '#7C3AED' }} thumbColor="#fff" />} 
+                            />
+                            <SettingItem 
+                                icon={<Moon size={18} color="#94A3B8" />} 
+                                label="다크 모드 (준비 중)" 
+                                right={<Switch value={darkMode} disabled onValueChange={setDarkMode} trackColor={{ false: '#F1F5F9', true: '#7C3AED' }} thumbColor="#fff" />} 
+                            />
+                        </View>
+
+                        {/* Admin Link */}
+                        {isAdmin && (
+                            <View style={styles.adminSection}>
+                                <TouchableOpacity
+                                    onPress={() => { onClose(); onNavigateAdmin?.(); }}
+                                    style={styles.adminBtn}
+                                >
+                                    <Shield size={18} color="#7C3AED" />
+                                    <Text style={styles.adminBtnText}>관리자 패널</Text>
+                                    <ChevronRight size={16} color="#7C3AED" />
+                                </TouchableOpacity>
+                            </View>
+                        )}
+
+                        {/* Logout */}
+                        <View style={styles.logoutSection}>
+                            <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
+                                <LogOut size={18} color="#EF4444" style={{ marginRight: 8 }} />
+                                <Text style={styles.logoutBtnText}>로그아웃</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollView>
+                </Pressable>
+            </Pressable>
+        </Modal>
     );
 };
+
+const SettingItem = ({ icon, label, right }: { icon: any, label: string, right: any }) => (
+    <View style={styles.settingItem}>
+        <View style={styles.settingItemLeft}>
+            {icon}
+            <Text style={styles.settingLabel}>{label}</Text>
+        </View>
+        {right}
+    </View>
+);
+
+const styles = StyleSheet.create({
+    overlay: {
+        flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'center', alignItems: 'center', padding: 24
+    },
+    modalContainer: {
+        width: '100%', maxWidth: 400, backgroundColor: '#FFFFFF',
+        borderRadius: 28, overflow: 'hidden',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.15, shadowRadius: 20, elevation: 10
+    },
+    header: {
+        paddingHorizontal: 24, paddingVertical: 24, backgroundColor: '#FDF8F3',
+        borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between'
+    },
+    title: { color: '#18181b', fontWeight: '900', fontSize: 22, letterSpacing: -0.5 },
+    subtitle: { color: '#64748B', fontSize: 13, marginTop: 4, fontWeight: '500' },
+    closeBtn: {
+        width: 36, height: 36, borderRadius: 18, backgroundColor: '#FFFFFF',
+        alignItems: 'center', justifyContent: 'center', elevation: 2,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4
+    },
+    scrollView: { maxHeight: 500 },
+    profileSection: { paddingHorizontal: 24, paddingVertical: 20, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+    profileCard: {
+        backgroundColor: '#F5F3FF', padding: 16, borderRadius: 20,
+        borderWidth: 1, borderColor: '#7C3AED22',
+        flexDirection: 'row', alignItems: 'center', gap: 12
+    },
+    profileIconBox: {
+        width: 44, height: 44, borderRadius: 12, backgroundColor: '#7C3AED22',
+        alignItems: 'center', justifyContent: 'center'
+    },
+    profileInfo: { flex: 1 },
+    profileName: { color: '#18181b', fontWeight: '800', fontSize: 15 },
+    profileGuide: { color: '#7C3AED', fontSize: 11, marginTop: 2, fontWeight: '600' },
+    
+    settingsGroup: { paddingHorizontal: 8, paddingVertical: 12 },
+    settingItem: {
+        flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        paddingHorizontal: 16, paddingVertical: 14
+    },
+    settingItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    settingLabel: { color: '#18181b', fontWeight: '600', fontSize: 15 },
+    countBadge: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    countText: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
+
+    adminSection: { paddingHorizontal: 24, paddingVertical: 12, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+    adminBtn: {
+        flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16,
+        borderRadius: 20, backgroundColor: '#F5F3FF', borderWidth: 1, borderColor: '#7C3AED22'
+    },
+    adminBtnText: { color: '#7C3AED', fontWeight: '900', fontSize: 14, flex: 1 },
+
+    logoutSection: { paddingHorizontal: 24, paddingVertical: 24, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+    logoutBtn: {
+        width: '100%', paddingVertical: 16, borderRadius: 20,
+        alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
+        borderWidth: 1, borderColor: '#EF444422', backgroundColor: '#FEF2F2'
+    },
+    logoutBtnText: { color: '#EF4444', fontWeight: '800', fontSize: 15 },
+});

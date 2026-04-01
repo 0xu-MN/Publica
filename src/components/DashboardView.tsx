@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, useWindowDimensions, StyleSheet, TextInput } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Svg, Path, Defs, LinearGradient as SvgLinearGradient, Stop, Line, Rect, Text as SvgText } from 'react-native-svg';
-import { TrendingUp, ArrowRight, Activity, Layers, Search } from 'lucide-react-native';
+import { TrendingUp, ArrowRight, Activity, Layers, Search, Clock, Award, Star } from 'lucide-react-native';
 import Footer from './Footer';
 import { NewsItem } from '../services/newsService';
 import { MarketCarouselWidget } from './MarketWidgets';
@@ -26,10 +26,8 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
     const { width } = useWindowDimensions();
     const isDesktop = width >= 1024;
 
-    // State
     const [currentTime, setCurrentTime] = useState(new Date());
 
-    // Timer
     useEffect(() => {
         const timer = setInterval(() => setCurrentTime(new Date()), 1000);
         return () => clearInterval(timer);
@@ -43,24 +41,19 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
         return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', hour12: false });
     };
 
-    // Derived Data & Logic
-
-    // Seeded random generator for repeatable "daily views" simulation
-    // Allows the "Top 1" to remain constant for a specifc day, but change on the next day.
     const getDailyScore = (id: string, dateStr: string) => {
         let hash = 0;
         const str = id + dateStr;
         for (let i = 0; i < str.length; i++) {
             const char = str.charCodeAt(i);
             hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
+            hash = hash & hash;
         }
         return Math.abs(hash);
     };
 
-    const todayStr = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const todayStr = new Date().toISOString().split('T')[0];
 
-    // Sort by "daily score" (simulated popularity)
     const sortedByDailyPopularity = useMemo(() => {
         return [...newsData].sort((a, b) => {
             const scoreA = getDailyScore(a.id, todayStr);
@@ -69,94 +62,53 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
         });
     }, [newsData, todayStr]);
 
-    const sortedByImportance = useMemo(() => sortedByDailyPopularity, [sortedByDailyPopularity]);
-
-    // Daily Top selection for Science and Economy feeds
-    const scienceTop = useMemo(() => {
-        // Filter Science news from the daily sorted list
-        const scienceFeeds = sortedByDailyPopularity.filter(i => i.category === 'Science');
-        // The first item is deterministically the "Top 1" for today
-        return scienceFeeds.length > 0 ? scienceFeeds[0] : newsData[0];
-    }, [sortedByDailyPopularity, newsData]);
-
-    const economyTop = useMemo(() => {
-        // Filter Economy news from the daily sorted list
-        const economyFeeds = sortedByDailyPopularity.filter(i => i.category === 'Economy');
-        // The first item is deterministically the "Top 1" for today
-        return economyFeeds.length > 0 ? economyFeeds[0] : newsData[1];
-    }, [sortedByDailyPopularity, newsData]);
-
-    const trendingTopics = useMemo(() => sortedByImportance.slice(0, 5), [sortedByImportance]);
-
-    // Mock Real-time Rising (Randomly picked from keywords for demo)
+    const trendingTopics = useMemo(() => sortedByDailyPopularity.slice(0, 5), [sortedByDailyPopularity]);
     const risingKeywords = useMemo(() => ['#CES2026', '#AI_Agent', '#NVIDIA', '#Kospi2800'], []);
 
     return (
-        <View className="flex-1 max-w-[1400px] w-full mx-auto px-6 pt-4 gap-6 pb-6">
-
-            <View className="flex-1 flex-row gap-8 min-h-[600px]">
-                {/* 
-                    LEFT COLUMN: Hero Section (Stack Carousel)
-                    Takes up about 66% width
-                */}
-                <View className="flex-[2] gap-6 relative pt-12">
-                    {/* Header Text & Controls */}
-                    <View className="mb-2 items-center justify-center z-10">
-                        {/* AI Curation Pill with Light Rays */}
-                        <View className="relative items-center justify-center mb-6 self-center">
-                            {/* The Pill */}
-                            <View className="bg-blue-600/20 px-4 py-2 rounded-full border border-blue-500/30 flex-row items-center">
-                                <View className="w-1.5 h-1.5 rounded-full bg-blue-400 mr-2 shadow-sm shadow-blue-400" />
-                                <Text className="text-blue-200 text-xs font-bold">실시간 AI 큐레이션</Text>
+        <View style={styles.container}>
+            <View style={styles.mainRow}>
+                {/* LEFT COLUMN: Hero Section */}
+                <View style={styles.leftCol}>
+                    <View style={styles.heroHeader}>
+                        <View style={styles.aiPillWrapper}>
+                            <View style={styles.aiPill}>
+                                <View style={styles.pillDot} />
+                                <Text style={styles.pillText}>실시간 AI 큐레이션</Text>
                             </View>
 
-                            {/* Light Rays Effect - Web only, positioned below the pill */}
-                            {/* @ts-ignore - Web-specific rendering */}
-                            <div style={{
-                                position: 'absolute',
-                                top: '0%',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                width: '1400px',
-                                height: '1100px',
-                                marginTop: '-100px',
-                                pointerEvents: 'none',
-                                zIndex: 1,
-                                WebkitMaskImage: 'radial-gradient(ellipse 50% 70% at 50% 35%, black 0%, black 15%, transparent 55%)',
-                                maskImage: 'radial-gradient(ellipse 50% 70% at 50% 35%, black 0%, black 15%, transparent 55%)'
-                            }}>
+                            {/* Light Rays Effect */}
+                            {/* @ts-ignore */}
+                            <div style={styles.lightRaysContainer}>
                                 <LightRays
                                     raysOrigin="top-center"
-                                    raysColor="#ffffff"
-                                    raysSpeed={1.6}
-                                    lightSpread={1.2}
-                                    rayLength={3.5}
-                                    fadeDistance={2.0}
-                                    saturation={2.0}
-                                    mouseInfluence={0.1}
+                                    raysColor="#7C3AED"
+                                    raysSpeed={1.0}
+                                    lightSpread={1.5}
+                                    rayLength={3.0}
+                                    fadeDistance={1.8}
+                                    saturation={1.5}
+                                    mouseInfluence={0.15}
                                     noiseAmount={0}
                                     distortion={0}
-                                    pulsating={false}
+                                    pulsating={true}
                                     followMouse={false}
                                 />
                             </div>
                         </View>
 
-                        {/* Title Container */}
-                        <View className="flex-row items-center mb-2 justify-center">
-                            <Text className="text-white text-6xl font-bold">오늘의 </Text>
+                        <View style={styles.titleWrapper}>
+                            <Text style={styles.titleText}>오늘의 </Text>
                             <DecryptedText
-                                words={useMemo(() => ['바이오', '반도체', 'AI', '배터리', '우주항공', '로봇'], [])}
-                                interval={1500}
-                                className="text-blue-400 text-6xl font-bold"
+                                words={['바이오', '반도체', 'AI', '배터리', '우주항공', '로봇']}
+                                interval={2000}
+                                style={styles.titleAccent}
                             />
-                            <Text className="text-white text-6xl font-bold"> 인사이트</Text>
+                            <Text style={styles.titleText}> 인사이트</Text>
                         </View>
-
                     </View>
 
-                    {/* 3D Stack Carousel - Scaled down */}
-                    <View className="flex-1 w-full min-h-[420px]" style={{ transform: [{ scale: 0.85 }] }}>
+                    <View style={styles.carouselContainer}>
                         <VerticalStackCarousel
                             data={sortedByDailyPopularity.slice(0, 5)}
                             renderItem={(item, index, progress, totalItems) => (
@@ -168,119 +120,169 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                                 />
                             )}
                             itemHeight={340}
-                            containerHeight={420}
+                            containerHeight={460}
                         />
                     </View>
                 </View>
 
-                {/* 
-                    RIGHT COLUMN: Info & Utility
-                    Takes up remaining width (33%) - Reduced width
-                */}
-                <View className="flex-1 gap-4 -ml-12">
-
-                    {/* 1. Date & Auth Panel */}
-                    <View className="bg-slate-900/40 rounded-[28px] p-6 border border-white/5 relative">
-                        <View className="flex-row justify-between items-start">
+                {/* RIGHT COLUMN: Info & Utility */}
+                <View style={styles.rightCol}>
+                    {/* 1. Date & Status Panel */}
+                    <View style={styles.panel}>
+                        <View style={styles.panelHeader}>
                             <View>
-                                <Text className="text-slate-400 text-xs font-medium mb-1">오늘의 인사이트</Text>
-                                <View className="flex-row items-baseline gap-2">
-                                    <Text className="text-white text-xl font-bold">{formatDate(currentTime)}</Text>
-                                    <Text className="text-slate-400 text-sm font-medium">{formatTime(currentTime)}</Text>
+                                <Text style={styles.panelLabel}>CURRENT INSIGHT</Text>
+                                <View style={styles.dateTimeRow}>
+                                    <Text style={styles.dateText}>{formatDate(currentTime)}</Text>
+                                    <View style={styles.timeBadge}>
+                                        <Clock size={12} color="#7C3AED" />
+                                        <Text style={styles.timeText}>{formatTime(currentTime)}</Text>
+                                    </View>
                                 </View>
                             </View>
-                            {/* Auth Status */}
                             {user && (
-                                <View className="items-end">
-                                    <View className="bg-blue-600/20 px-2 py-0.5 rounded-full border border-blue-500/30 mb-1">
-                                        <Text className="text-blue-400 text-[10px] font-bold">Premium</Text>
-                                    </View>
+                                <View style={styles.premiumBadge}>
+                                    <Award size={14} color="#FFFFFF" />
+                                    <Text style={styles.premiumText}>PRO</Text>
                                 </View>
                             )}
                         </View>
                     </View>
-                    {/* User Welcome Removed */}
 
-                    {/* Search Bar - Moved to Right Column */}
-                    <View className="bg-slate-900/40 border border-white/10 rounded-[28px] px-6 py-4 flex-row items-center">
-                        <Search size={16} color="#64748B" style={{ marginRight: 10 }} />
-                        <Text className="text-slate-500 text-sm">관심있는 키워드를 검색해보세요</Text>
-                    </View>
+                    {/* Search Bar */}
+                    <TouchableOpacity style={styles.searchBar}>
+                        <Search size={18} color="#94A3B8" />
+                        <Text style={styles.searchText}>관심 있는 인사이트를 검색하세요</Text>
+                    </TouchableOpacity>
 
-                    {/* 2. Hot Keywords & Topics & Market Ticker */}
-                    <View className="flex-1 bg-slate-900/40 rounded-[28px] p-6 border border-white/5 relative min-h-[300px]">
-
-                        {/* Hot Keywords */}
-                        <View className="mb-6">
-                            <View className="flex-row items-center mb-3">
-                                <Activity size={16} color="#60A5FA" />
-                                <Text className="text-slate-200 text-sm font-bold ml-2">이번 주 HOT 키워드</Text>
-                                <Text className="text-blue-500 font-bold ml-1">#{hotKeywords[0] || '의대 증원'}</Text>
-                            </View>
-                            <View className="flex-row flex-wrap gap-2">
-                                {hotKeywords.slice(0, 5).map((keyword, i) => (
-                                    <View key={i} className="bg-blue-500/10 px-2.5 py-1.5 rounded-full border border-blue-500/20">
-                                        <Text className="text-blue-200 text-[11px] font-medium">#{keyword.replace('#', '')}</Text>
-                                    </View>
-                                ))}
-                            </View>
+                    {/* 2. Hot Keywords & Trends Panel */}
+                    <View style={[styles.panel, { flex: 1 }]}>
+                        <View style={styles.sectionHeader}>
+                            <Activity size={18} color="#7C3AED" />
+                            <Text style={styles.sectionTitle}>TRENDING KEYWORDS</Text>
+                        </View>
+                        <View style={styles.keywordGrid}>
+                            {hotKeywords.slice(0, 8).map((keyword, i) => (
+                                <TouchableOpacity key={i} style={styles.keywordItem}>
+                                    <Text style={styles.keywordText}>#{keyword.replace('#', '')}</Text>
+                                </TouchableOpacity>
+                            ))}
                         </View>
 
-                        {/* Real-time Rising */}
-                        <View className="mb-6">
-                            <View className="flex-row items-center mb-3">
-                                <TrendingUp size={14} color="#F87171" />
-                                <Text className="text-slate-200 text-xs font-bold ml-2">실시간 급상승</Text>
-                                <View className="bg-red-500/20 px-1.5 py-0.5 rounded ml-2">
-                                    <Text className="text-red-400 text-[9px] font-bold">LIVE</Text>
+                        <View style={styles.divider} />
+
+                        <View style={styles.sectionHeader}>
+                            <TrendingUp size={18} color="#10B981" />
+                            <Text style={styles.sectionTitle}>RISING TOPICS</Text>
+                            <View style={styles.liveBadge}><Text style={styles.liveText}>LIVE</Text></View>
+                        </View>
+                        <View style={styles.risingList}>
+                            {risingKeywords.map((tag, i) => (
+                                <View key={i} style={styles.risingItem}>
+                                    <Text style={styles.risingLabel}>{tag}</Text>
+                                    <Text style={styles.risingTrend}>▲</Text>
                                 </View>
-                            </View>
-                            <View className="flex-row flex-wrap gap-2">
-                                {risingKeywords.map((tag, i) => (
-                                    <View key={i} className="flex-row items-center bg-slate-800/80 px-2.5 py-1.5 rounded-lg border border-white/5">
-                                        <Text className="text-slate-300 text-[11px] font-medium">{tag}</Text>
-                                        <Text className="text-red-400 text-[9px] ml-1.5 font-bold">▲</Text>
-                                    </View>
-                                ))}
-                            </View>
+                            ))}
                         </View>
 
-                        {/* Weekly Topics */}
-                        <View className="mb-6">
-                            <View className="flex-row items-center mb-3">
-                                <Layers size={14} color="#34D399" />
-                                <Text className="text-slate-200 text-xs font-bold ml-2">주간 핫 토픽</Text>
-                            </View>
-                            <View className="gap-3">
-                                {trendingTopics.slice(0, 4).map((item, i) => (
-                                    <TouchableOpacity key={i} className="flex-row items-start group">
-                                        <View className={`px-1.5 py-0.5 rounded mr-2 mt-0.5 ${item.category === 'Science' ? 'bg-sky-500/20' : 'bg-emerald-500/20'}`}>
-                                            <Text className={`text-[9px] font-bold ${item.category === 'Science' ? 'text-sky-400' : 'text-emerald-400'}`}>
-                                                {item.category === 'Science' ? '과학' : '경제'}
-                                            </Text>
-                                        </View>
-                                        <Text className="text-slate-400 text-[11px] leading-4 flex-1 group-hover:text-slate-200 transition-colors" numberOfLines={1}>
-                                            {item.title}
+                        <View style={styles.divider} />
+
+                        <View style={styles.sectionHeader}>
+                            <Layers size={18} color="#3B82F6" />
+                            <Text style={styles.sectionTitle}>WEEKLY INSIGHTS</Text>
+                        </View>
+                        <View style={styles.insightList}>
+                            {trendingTopics.slice(0, 4).map((item, i) => (
+                                <TouchableOpacity key={i} style={styles.insightListItem}>
+                                    <View style={[styles.catBadge, { backgroundColor: item.category === 'Science' ? '#E0F2FE' : '#ECFDF5' }]}>
+                                        <Text style={[styles.catText, { color: item.category === 'Science' ? '#0369A1' : '#047857' }]}>
+                                            {item.category === 'Science' ? 'SCIENCE' : 'ECONOMY'}
                                         </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
+                                    </View>
+                                    <Text style={styles.insightItemTitle} numberOfLines={1}>{item.title}</Text>
+                                </TouchableOpacity>
+                            ))}
                         </View>
 
-                        {/* 3. Global Market Trend (Integrated at bottom of panel) */}
-                        <View className="flex-1">
-                            <View className="flex-row items-center mb-3">
-                                <TrendingUp size={14} color="#Fcd34d" />
-                                <Text className="text-slate-200 text-xs font-bold ml-2">글로벌 마켓 트렌드</Text>
+                        <View style={styles.marketFooter}>
+                            <View style={styles.sectionHeader}>
+                                <TrendingUp size={18} color="#F59E0B" />
+                                <Text style={styles.sectionTitle}>GLOBAL MARKET</Text>
                             </View>
-                            <View className="w-full">
-                                <CompactMarketTicker />
-                            </View>
+                            <CompactMarketTicker />
                         </View>
                     </View>
                 </View>
             </View>
-        </View >
+        </View>
     );
-
 };
+
+const styles = StyleSheet.create({
+    container: { flex: 1, maxWidth: 1400, width: '100%', alignSelf: 'center', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, backgroundColor: '#FDF8F3' },
+    mainRow: { flex: 1, flexDirection: 'row', gap: 32, minHeight: 600 },
+    
+    // Left Column
+    leftCol: { flex: 2, gap: 24, position: 'relative', paddingTop: 48 },
+    heroHeader: { alignItems: 'center', justifyContent: 'center', zIndex: 10, marginBottom: 8 },
+    aiPillWrapper: { position: 'relative', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
+    aiPill: { backgroundColor: '#7C3AED10', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: '#7C3AED30', flexDirection: 'row', alignItems: 'center' },
+    pillDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7C3AED', marginRight: 8 },
+    pillText: { color: '#7C3AED', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
+    lightRaysContainer: {
+        position: 'absolute',
+        top: 0,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 1400,
+        height: 1100,
+        marginTop: -100,
+        pointerEvents: 'none',
+        zIndex: 1,
+        // @ts-ignore
+        WebkitMaskImage: 'radial-gradient(ellipse 50% 70% at 50% 35%, black 0%, black 15%, transparent 55%)',
+        maskImage: 'radial-gradient(ellipse 50% 70% at 50% 35%, black 0%, black 15%, transparent 55%)'
+    },
+    titleWrapper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
+    titleText: { color: '#18181B', fontSize: 64, fontWeight: '900', letterSpacing: -2 },
+    titleAccent: { color: '#7C3AED', fontSize: 64, fontWeight: '900', letterSpacing: -2 },
+    carouselContainer: { flex: 1, width: '100%', minHeight: 420 },
+
+    // Right Column
+    rightCol: { flex: 1, gap: 16 },
+    panel: { backgroundColor: '#FFFFFF', borderRadius: 32, padding: 28, borderWidth: 1, borderColor: '#7C3AED10', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.04, shadowRadius: 24, elevation: 4 },
+    panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    panelLabel: { color: '#94A3B8', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 8 },
+    dateTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    dateText: { color: '#18181B', fontSize: 20, fontWeight: '800' },
+    timeBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FDF8F3', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, gap: 6 },
+    timeText: { color: '#7C3AED', fontSize: 14, fontWeight: '700' },
+    premiumBadge: { backgroundColor: '#7C3AED', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
+    premiumText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
+
+    searchBar: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 24, paddingHorizontal: 24, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    searchText: { color: '#94A3B8', fontSize: 15, fontWeight: '500' },
+
+    sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+    sectionTitle: { color: '#18181B', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
+    keywordGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
+    keywordItem: { backgroundColor: '#FDF8F3', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#7C3AED15' },
+    keywordText: { color: '#7C3AED', fontSize: 12, fontWeight: '700' },
+    
+    divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 24 },
+    
+    liveBadge: { backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginLeft: 8 },
+    liveText: { color: '#EF4444', fontSize: 9, fontWeight: '800' },
+    risingList: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    risingItem: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' },
+    risingLabel: { color: '#475569', fontSize: 12, fontWeight: '600' },
+    risingTrend: { color: '#EF4444', fontSize: 10, marginLeft: 6, fontWeight: '800' },
+
+    insightList: { gap: 12 },
+    insightListItem: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 4 },
+    catBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    catText: { fontSize: 9, fontWeight: '800' },
+    insightItemTitle: { color: '#475569', fontSize: 13, fontWeight: '600', flex: 1 },
+
+    marketFooter: { marginTop: 'auto', paddingTop: 24 }
+});

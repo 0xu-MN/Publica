@@ -1,0 +1,1211 @@
+env: load .env
+env: export EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY GEMINI_API_KEY GOOGLE_API_KEY EXPO_PUBLIC_GEMINI_API_KEY EXPO_PUBLIC_GEMINI_MODEL ANTHROPIC_API_KEY EXPO_PUBLIC_INSIGHT_AGENT_URL DATA_GO_KR_API_KEY EXPO_PUBLIC_TOSS_CLIENT_KEY TOSS_SECRET_KEY
+Starting project at /Users/admin/Desktop/insightflow
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.31 - expected version: ~54.0.33
+  expo-gl@16.0.9 - expected version: ~16.0.10
+  react-native-reanimated@4.2.1 - expected version: ~4.1.1
+  babel-preset-expo@54.0.9 - expected version: ~54.0.10
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web Bundled 806ms index.ts (2859 modules)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 85ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 105ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 89ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 83ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/features/agent/NexusEditView.tsx: Unexpected token (559:10)
+
+  557 |             setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ ${isDocx ? 'DOCX' : 'HWPX'} 자동 완성본 병합이 완료되어 다운로드 되었습니다!` }]);
+  558 |             
+> 559 |         } catch (error: any) {
+      |           ^
+  560 |             console.error("Document Processing error:", error);
+  561 |             alert(`문서 변환 실패: ${error.message}\n(Python 백엔드 서버가 켜져 있는지 메인 터미널을 확인해주세요)`);
+  562 |             setChatMessages(prev => [...prev, { role: 'assistant', content: `❌ 문서 분석 실패: ${error.message}` }]);
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11508:22)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12971:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseTryStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13281:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12880:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12174:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12149:10)
+    at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11328:10)
+    at TypeScriptParserMixin.parseAsyncArrowFromCallExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9819:18)
+    at TypeScriptParserMixin.parseCoverCallAndAsyncArrowHead (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11258:27)
+    at TypeScriptParserMixin.parseSubscript (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11184:19)
+    at TypeScriptParserMixin.parseSubscript (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9329:18)
+    at TypeScriptParserMixin.parseSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11158:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11149:17)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 86ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 87ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 93ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 665ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 76ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 131ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 86ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 108ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 90ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 86ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 81ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 92ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 89ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/ConnectHomeView.tsx: Unexpected token, expected "..." (526:62)
+
+  524 |                 {/* Horizontal Divider 2 */}
+  525 |                 <View className="w-full h-[1px] bg-slate-100 dark:bg-white/5 mb-16 relative">
+> 526 |                     <View classN                             {[1, 2, 3].map(i => (
+      |                                                               ^
+  527 |                                 <View key={i} className="flex-1 bg-white dark:bg-[#0F172A] p-8 rounded-[40px] border border-slate-200 dark:border-white/5 h-[180px] justify-between shadow-2xl">
+  528 |                                     <View>
+  529 |                                         <Text className="text-purple-500 text-[10px] font-black uppercase mb-2">Project 0{i}</Text>
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.expect (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6924:12)
+    at TypeScriptParserMixin.jsxParseAttribute (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4674:12)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4696:28)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10100:18)
+    at TypeScriptParserMixin.jsxParseOpeningElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4691:17)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4715:33)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4727:32)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4727:32)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4727:32)
+    at TypeScriptParserMixin.jsxParseElement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4778:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4788:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:39
+    at TypeScriptParserMixin.tryParse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6932:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:18)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12500:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12567:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11747:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseReturnStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13218:28)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12874:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/ConnectHomeView.tsx: Unexpected token, expected "..." (526:62)
+
+  524 |                 {/* Horizontal Divider 2 */}
+  525 |                 <View className="w-full h-[1px] bg-slate-100 dark:bg-white/5 mb-16 relative">
+> 526 |                     <View classN                             {[1, 2, 3].map(i => (
+      |                                                               ^
+  527 |                                 <View key={i} className="flex-1 bg-white dark:bg-[#0F172A] p-8 rounded-[40px] border border-slate-200 dark:border-white/5 h-[180px] justify-between shadow-2xl">
+  528 |                                     <View>
+  529 |                                         <Text className="text-purple-500 text-[10px] font-black uppercase mb-2">Project 0{i}</Text>
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.expect (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6924:12)
+    at TypeScriptParserMixin.jsxParseAttribute (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4674:12)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4696:28)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10100:18)
+    at TypeScriptParserMixin.jsxParseOpeningElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4691:17)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4715:33)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4727:32)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4727:32)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4727:32)
+    at TypeScriptParserMixin.jsxParseElement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4778:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4788:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:39
+    at TypeScriptParserMixin.tryParse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6932:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:18)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12500:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12567:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11747:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseReturnStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13218:28)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12874:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 105ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/features/agent/components/WelcomeScreen.tsx: Unexpected token (136:4)
+
+  134 |         </View>
+  135 |     );
+> 136 |     );
+      |     ^
+  137 | };
+  138 |
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11508:22)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12971:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12174:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12149:10)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11759:12)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseVar (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13460:91)
+    at TypeScriptParserMixin.parseVarStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13306:10)
+    at TypeScriptParserMixin.parseVarStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9469:31)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12927:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseExportDeclaration (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14010:17)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/features/agent/components/WelcomeScreen.tsx: Unexpected token (136:4)
+
+  134 |         </View>
+  135 |     );
+> 136 |     );
+      |     ^
+  137 | };
+  138 |
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11508:22)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12971:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12174:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12149:10)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11759:12)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseVar (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13460:91)
+    at TypeScriptParserMixin.parseVarStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13306:10)
+    at TypeScriptParserMixin.parseVarStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9469:31)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12927:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseExportDeclaration (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14010:17)
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 101ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 121ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 170ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+
+> publica@1.0.0 web
+> expo start --web
+
+env: load .env
+env: export EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY GEMINI_API_KEY GOOGLE_API_KEY EXPO_PUBLIC_GEMINI_API_KEY EXPO_PUBLIC_GEMINI_MODEL ANTHROPIC_API_KEY EXPO_PUBLIC_INSIGHT_AGENT_URL DATA_GO_KR_API_KEY EXPO_PUBLIC_TOSS_CLIENT_KEY TOSS_SECRET_KEY
+Starting project at /Users/admin/Desktop/insightflow
+Starting Metro Bundler
+The following packages should be updated for best compatibility with the installed expo version:
+  expo@54.0.31 - expected version: ~54.0.33
+  expo-gl@16.0.9 - expected version: ~16.0.10
+  react-native-reanimated@4.2.1 - expected version: ~4.1.1
+  babel-preset-expo@54.0.9 - expected version: ~54.0.10
+Your project may not work correctly until you install the expected versions of the packages.
+Waiting on http://localhost:8081
+Logs for your project will appear below.
+Web Bundled 1314ms index.ts (2781 modules)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 198ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+Web ./index.ts ░░░░░░░░░░░░░░░░  0.0% (0/1)
+Web Bundled 61ms index.ts (1 module)
+ LOG  [web] Logs will appear in the browser console
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+URIError: URI malformed
+    at decodeURIComponent (<anonymous>)
+    at /Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:25
+    at Array.map (<anonymous>)
+    at Server._processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:498:8)
+    at processRequest (/Users/admin/Desktop/insightflow/node_modules/metro/src/Server.js:461:10)
+    at call (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:239:7)
+    at next (/Users/admin/Desktop/insightflow/node_modules/connect/index.js:183:5)
+    at /Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/src/metro/index.ts:238:15
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/ConnectHomeView.tsx: Expected corresponding JSX closing tag for <ScrollView>. (660:12)
+
+  658 |                 </View>
+  659 |             </View>
+> 660 |             </View>
+      |             ^
+  661 |             <Footer />
+  662 |         </ScrollView>
+  663 |     );
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4756:16)
+    at TypeScriptParserMixin.jsxParseElement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4778:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4788:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:39
+    at TypeScriptParserMixin.tryParse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6932:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:18)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12500:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12567:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11747:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseReturnStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13218:28)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12874:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12174:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12149:10)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11759:12)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/ConnectHomeView.tsx: Expected corresponding JSX closing tag for <ScrollView>. (660:12)
+
+  658 |                 </View>
+  659 |             </View>
+> 660 |             </View>
+      |             ^
+  661 |             <Footer />
+  662 |         </ScrollView>
+  663 |     );
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4756:16)
+    at TypeScriptParserMixin.jsxParseElement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4778:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4788:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:39
+    at TypeScriptParserMixin.tryParse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6932:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:18)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12500:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12567:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11747:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseReturnStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13218:28)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12874:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12174:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12149:10)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11759:12)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/ConnectHomeView.tsx: Expected corresponding JSX closing tag for <ScrollView>. (660:12)
+
+  658 |                 </View>
+  659 |             </View>
+> 660 |             </View>
+      |             ^
+  661 |             <Footer />
+  662 |         </ScrollView>
+  663 |     );
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4756:16)
+    at TypeScriptParserMixin.jsxParseElement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4778:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4788:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:39
+    at TypeScriptParserMixin.tryParse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6932:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:18)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12500:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12567:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11747:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseReturnStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13218:28)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12874:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12174:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12149:10)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11759:12)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/ConnectHomeView.tsx: Unexpected digit after hash token. (155:49)
+
+  153 |                     </View>
+  154 |                     <TouchableOpacity style={styles.filterBtn}>
+> 155 |                         <Filter size={18} color="#94A3B8" />
+      |                                                  ^
+  156 |                         <Text style={styles.filterText}>필터링</Text>
+  157 |                     </TouchableOpacity>
+  158 |                 </View>
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.readToken_numberSign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:5967:18)
+    at TypeScriptParserMixin.getTokenFromCode (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6320:14)
+    at TypeScriptParserMixin.getTokenFromCode (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4826:11)
+    at TypeScriptParserMixin.getTokenFromCode (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10042:11)
+    at TypeScriptParserMixin.nextToken (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:5807:10)
+    at TypeScriptParserMixin.next (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:5717:10)
+    at TypeScriptParserMixin.parseLiteralAtNode (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11674:10)
+    at TypeScriptParserMixin.parseLiteral (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11679:17)
+    at TypeScriptParserMixin.parseStringLiteral (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11682:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11385:21)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.jsxParseAttributeValue (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4640:21)
+    at TypeScriptParserMixin.jsxParseAttribute (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4682:38)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4696:28)
+    at TypeScriptParserMixin.jsxParseOpeningElementAfterName (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10100:18)
+    at TypeScriptParserMixin.jsxParseOpeningElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4691:17)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4715:33)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4727:32)
+    at TypeScriptParserMixin.jsxParseElement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4778:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4788:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:39
+    at TypeScriptParserMixin.tryParse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6932:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:18)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12500:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12567:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11747:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/ConnectHomeView.tsx: Expected corresponding JSX closing tag for <ScrollView>. (345:16)
+
+  343 |                         />
+  344 |                     </View>
+> 345 |                 </View>
+      |                 ^
+  346 |             </View>
+  347 |             <Footer />
+  348 |         </ScrollView>
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.jsxParseElementAt (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4756:16)
+    at TypeScriptParserMixin.jsxParseElement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4778:17)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4788:19)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:39
+    at TypeScriptParserMixin.tryParse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6932:20)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9828:18)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12500:12)
+    at TypeScriptParserMixin.parseMaybeAssignAllowIn (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10864:17)
+    at TypeScriptParserMixin.parseMaybeAssignAllowInOrVoidPattern (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12567:17)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11747:28)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseReturnStatement (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13218:28)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12874:21)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseStatementListItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12823:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:61)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseBlock (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13373:10)
+    at TypeScriptParserMixin.parseFunctionBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12174:24)
+    at TypeScriptParserMixin.parseArrowExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12149:10)
+    at TypeScriptParserMixin.parseParenAndDistinguishExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11759:12)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11395:23)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/DashboardView.tsx: Unexpected token (289:4)
+
+  287 |     marketFooter: { marginTop: 'auto', paddingTop: 24 }
+  288 | });
+> 289 |     );
+      |     ^
+  290 |
+  291 | };
+  292 |
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11508:22)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12971:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseModuleItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12820:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:36)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseProgram (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12698:10)
+    at TypeScriptParserMixin.parseTopLevel (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12688:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14568:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10183:18)
+    at parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14581:26)
+    at parser (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:251:28)
+    at sync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:42:76)
+    at parseWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/dist/metro/transformer.js:15:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/supervising-transform-worker.js:94:25)
+    at transformFile (/Users/admin/Desktop/insightflow/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/DashboardView.tsx: Unexpected token (289:4)
+
+  287 |     marketFooter: { marginTop: 'auto', paddingTop: 24 }
+  288 | });
+> 289 |     );
+      |     ^
+  290 |
+  291 | };
+  292 |
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11508:22)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12971:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseModuleItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12820:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:36)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseProgram (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12698:10)
+    at TypeScriptParserMixin.parseTopLevel (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12688:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14568:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10183:18)
+    at parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14581:26)
+    at parser (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:251:28)
+    at sync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:42:76)
+    at parseWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/dist/metro/transformer.js:15:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/supervising-transform-worker.js:94:25)
+    at transformFile (/Users/admin/Desktop/insightflow/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/AppHeader.tsx: Unexpected token (317:4)
+
+  315 |     menuDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 4 },
+  316 | });
+> 317 |     );
+      |     ^
+  318 | };
+  319 |
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11508:22)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12971:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseModuleItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12820:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:36)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseProgram (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12698:10)
+    at TypeScriptParserMixin.parseTopLevel (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12688:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14568:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10183:18)
+    at parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14581:26)
+    at parser (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:251:28)
+    at sync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:42:76)
+    at parseWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/dist/metro/transformer.js:15:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/supervising-transform-worker.js:94:25)
+    at transformFile (/Users/admin/Desktop/insightflow/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)
+ ERROR  SyntaxError: /Users/admin/Desktop/insightflow/src/components/AppHeader.tsx: Unexpected token (317:4)
+
+  315 |     menuDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 4 },
+  316 | });
+> 317 |     );
+      |     ^
+  318 | };
+  319 |
+    at constructor (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:367:19)
+    at TypeScriptParserMixin.raise (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6624:19)
+    at TypeScriptParserMixin.unexpected (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:6644:16)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11508:22)
+    at TypeScriptParserMixin.parseExprAtom (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:4793:20)
+    at TypeScriptParserMixin.parseExprSubscripts (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11145:23)
+    at TypeScriptParserMixin.parseUpdate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11130:21)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:11110:23)
+    at TypeScriptParserMixin.parseMaybeUnary (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9890:18)
+    at TypeScriptParserMixin.parseMaybeUnaryOrPrivate (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10963:61)
+    at TypeScriptParserMixin.parseExprOps (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10968:23)
+    at TypeScriptParserMixin.parseMaybeConditional (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10945:23)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10895:21)
+    at TypeScriptParserMixin.parseMaybeAssign (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9839:20)
+    at TypeScriptParserMixin.parseExpressionBase (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10848:23)
+    at /Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:39
+    at TypeScriptParserMixin.allowInAnd (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12495:16)
+    at TypeScriptParserMixin.parseExpression (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10844:17)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12971:23)
+    at TypeScriptParserMixin.parseStatementContent (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:9569:18)
+    at TypeScriptParserMixin.parseStatementLike (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12843:17)
+    at TypeScriptParserMixin.parseModuleItem (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12820:17)
+    at TypeScriptParserMixin.parseBlockOrModuleBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13392:36)
+    at TypeScriptParserMixin.parseBlockBody (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:13385:10)
+    at TypeScriptParserMixin.parseProgram (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12698:10)
+    at TypeScriptParserMixin.parseTopLevel (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:12688:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14568:25)
+    at TypeScriptParserMixin.parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:10183:18)
+    at parse (/Users/admin/Desktop/insightflow/node_modules/@babel/parser/lib/index.js:14581:26)
+    at parser (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/parser/index.js:41:34)
+    at parser.next (<anonymous>)
+    at normalizeFile (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/normalize-file.js:64:37)
+    at normalizeFile.next (<anonymous>)
+    at run (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transformation/index.js:22:50)
+    at run.next (<anonymous>)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:22:33)
+    at transform.next (<anonymous>)
+    at evaluateSync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:251:28)
+    at sync (/Users/admin/Desktop/insightflow/node_modules/gensync/index.js:89:14)
+    at stopHiding - secret - don't use this - v1 (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/errors/rewrite-stack-trace.js:47:12)
+    at Object.transformSync (/Users/admin/Desktop/insightflow/node_modules/@babel/core/lib/transform.js:42:76)
+    at parseWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:75:18)
+    at transformSync (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transformSync.js:54:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/babel-transformer.js:127:58)
+    at transformJSWithBabel (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:468:47)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/metro-transform-worker.js:583:12)
+    at transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/transform-worker.js:178:19)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/react-native-css-interop/dist/metro/transformer.js:15:16)
+    at Object.transform (/Users/admin/Desktop/insightflow/node_modules/@expo/metro-config/build/transform-worker/supervising-transform-worker.js:94:25)
+    at transformFile (/Users/admin/Desktop/insightflow/node_modules/metro/src/DeltaBundler/Worker.flow.js:67:36)

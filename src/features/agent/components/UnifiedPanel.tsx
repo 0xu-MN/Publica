@@ -133,8 +133,8 @@ export const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                         {isInspectorOpen
-                            ? <PanelRightClose size={12} color="#94A3B8" />
-                            : <PanelRightOpen size={12} color="#8B5CF6" />
+                            ? <PanelRightClose size={14} color="#94A3B8" />
+                            : <PanelRightOpen size={14} color="#7C3AED" />
                         }
                     </TouchableOpacity>
                     {isInspectorOpen && <View style={styles.resizerLine} />}
@@ -172,51 +172,51 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: 'row',
-        backgroundColor: '#0a0a0a',
+        backgroundColor: '#FFFFFF',
     },
     editorDrawer: {
         flex: 1,
         minWidth: 180,
     },
     editorMinBar: {
-        width: 40,
-        backgroundColor: '#0F172A',
+        width: 48,
+        backgroundColor: '#FFFFFF',
         alignItems: 'center',
-        paddingTop: 12,
+        paddingTop: 16,
         borderRightWidth: 1,
-        borderRightColor: '#1E293B',
+        borderRightColor: '#E2E8F0',
     },
     minBarBtn: {
-        width: 32,
-        height: 32,
-        borderRadius: 8,
-        backgroundColor: '#1E293B',
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: '#F1F5F9',
         alignItems: 'center',
         justifyContent: 'center',
     },
     resizer: {
-        width: 20,
-        backgroundColor: '#0F172A',
+        width: 24,
+        backgroundColor: '#FFFFFF',
         justifyContent: 'center',
         alignItems: 'center',
         borderLeftWidth: 1,
         borderRightWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
     },
     toggleBtn: {
-        width: 20,
-        height: 32,
+        width: 24,
+        height: 40,
         alignItems: 'center',
         justifyContent: 'center',
     },
     resizerLine: {
-        width: 3,
-        height: 24,
-        backgroundColor: '#334155',
+        width: 4,
+        height: 32,
+        backgroundColor: '#E2E8F0',
         borderRadius: 2,
-        marginTop: 8,
+        marginTop: 10,
     },
     inspectorDrawer: {
-        backgroundColor: '#0a0a0a',
+        backgroundColor: '#FFFFFF',
     },
 });

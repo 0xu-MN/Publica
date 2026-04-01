@@ -44,53 +44,55 @@ export const ChatListView = ({ onSelectChat, activeChatId }: ChatListViewProps) 
     };
 
     return (
-        <View className="flex-1 bg-[#0A1628] border-r border-white/5">
+        <View className="flex-1 bg-white border-r border-slate-200">
             {/* Header */}
-            <View className="px-5 py-4 border-b border-white/5">
-                <Text className="text-white font-bold text-lg mb-4">Messages</Text>
-                {/* Search Bar Placeholder */}
-                <View className="bg-[#1E293B] flex-row items-center px-3 py-2 rounded-xl border border-white/5">
-                    <Search size={16} color="#64748B" />
-                    <Text className="text-slate-500 text-sm ml-2">검색...</Text>
+            <View className="px-5 py-6 border-b border-slate-100">
+                <Text className="text-[#27272a] font-extrabold text-xl mb-4 tracking-tight">Messages</Text>
+                {/* Search Bar */}
+                <View className="bg-slate-50 flex-row items-center px-4 py-3 rounded-2xl border border-slate-200">
+                    <Search size={18} color="#94A3B8" />
+                    <Text className="text-slate-400 text-sm ml-3 font-medium">채팅 검색...</Text>
                 </View>
             </View>
 
             {/* Chat List */}
-            <ScrollView className="flex-1">
+            <ScrollView className="flex-1 bg-white">
                 {chats.length > 0 ? (
                     chats.map((chat) => (
                         <TouchableOpacity
                             key={chat.id}
-                            className={`flex-row items-center p-4 border-b border-white/5 hover:bg-white/5 ${activeChatId === chat.id ? 'bg-blue-600/10' : ''}`}
+                            className={`flex-row items-center p-4 border-b border-slate-50 transition-all ${activeChatId === chat.id ? 'bg-purple-500/5' : ''}`}
                             onPress={() => onSelectChat({ id: chat.id, name: chat.name })}
                         >
-                            <View className="w-12 h-12 rounded-full bg-blue-600/20 items-center justify-center mr-3 relative border border-blue-500/30">
-                                <Text className="text-blue-400 font-bold text-lg">{chat.name[0]}</Text>
+                            <View className="w-14 h-14 rounded-full bg-purple-500/10 items-center justify-center mr-3 relative border border-purple-500/10 shadow-sm">
+                                <Text className="text-purple-600 font-bold text-xl">{chat.name[0]}</Text>
                                 {chat.unread > 0 && (
-                                    <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0A1628]" />
+                                    <View className="absolute bottom-0.5 right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white" />
                                 )}
                             </View>
                             <View className="flex-1">
                                 <View className="flex-row justify-between mb-1">
-                                    <Text className="text-white font-bold text-sm" numberOfLines={1}>{chat.name}</Text>
-                                    <Text className="text-slate-500 text-[10px]">{chat.timestamp}</Text>
+                                    <Text className="text-[#27272a] font-bold text-base" numberOfLines={1}>{chat.name}</Text>
+                                    <Text className="text-slate-400 text-[10px] font-medium">{chat.timestamp}</Text>
                                 </View>
-                                <Text className={`text-xs ${chat.unread > 0 ? 'text-white font-bold' : 'text-slate-400'}`} numberOfLines={1}>
+                                <Text className={`text-xs ${chat.unread > 0 ? 'text-[#27272a] font-bold' : 'text-slate-400 font-medium'}`} numberOfLines={1}>
                                     {chat.lastMessage}
                                 </Text>
                             </View>
                             {chat.unread > 0 && (
-                                <View className="ml-2 bg-blue-600 w-5 h-5 rounded-full items-center justify-center">
-                                    <Text className="text-white text-[10px] font-bold">{chat.unread}</Text>
+                                <View className="ml-2 bg-purple-600 w-5 h-5 rounded-full items-center justify-center shadow-lg shadow-purple-500/20">
+                                    <Text className="text-white text-[10px] font-black">{chat.unread}</Text>
                                 </View>
                             )}
                         </TouchableOpacity>
                     ))
                 ) : (
-                    <View className="flex-1 items-center justify-center p-6 mt-10">
-                        <Mail size={48} color="#475569" />
-                        <Text className="text-slate-500 text-center mt-4 text-sm">
-                            대화 시작하기
+                    <View className="flex-1 items-center justify-center p-10 mt-10">
+                        <View className="w-20 h-20 rounded-full bg-slate-50 items-center justify-center mb-6">
+                            <Mail size={32} color="#CBD5E1" />
+                        </View>
+                        <Text className="text-slate-400 text-center text-sm font-medium">
+                            아직 진행 중인 대화가 없습니다
                         </Text>
                     </View>
                 )}

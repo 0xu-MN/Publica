@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, SafeAreaView, StatusBar, ScrollView } from 'react-native';
+import { View, SafeAreaView, StatusBar, useColorScheme, StyleSheet } from 'react-native';
 import { AppHeader } from './AppHeader';
 
 interface FeedNotification {
@@ -26,7 +26,6 @@ interface MainLayoutProps {
     setIsSearchVisible: (visible: boolean) => void;
     notifications: FeedNotification[];
     setNotifications: React.Dispatch<React.SetStateAction<FeedNotification[]>>;
-    showFooter?: boolean; // Optional: some screens may not need footer
 }
 
 export const MainLayout: React.FC<MainLayoutProps> = ({
@@ -44,11 +43,10 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setIsSearchVisible,
     notifications,
     setNotifications,
-    showFooter = true
 }) => {
     return (
-        <SafeAreaView className="flex-1 bg-[#020617]">
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={styles.safeArea}>
+            <StatusBar barStyle="dark-content" backgroundColor="#FDF8F3" />
 
             <AppHeader
                 viewMode={viewMode}
@@ -66,9 +64,19 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
                 setNotifications={setNotifications}
             />
 
-            <View className="flex-1">
+            <View style={styles.mainContainer}>
                 {children}
             </View>
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    safeArea: {
+        flex: 1,
+        backgroundColor: '#FDF8F3',
+    },
+    mainContainer: {
+        flex: 1,
+    },
+});

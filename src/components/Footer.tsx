@@ -44,51 +44,41 @@ const Footer = () => {
     };
 
     return (
-        <View className="border-t border-white/10 mt-12 bg-[#050B14]">
-            <View className="max-w-[1400px] w-full mx-auto px-6 py-12">
-                <View className="flex-row flex-wrap justify-between gap-8">
-                    {/* Left: Brand & Business Info */}
-                    <View className="gap-4">
-                        <View>
-                            <Text className="text-white font-bold text-xl mb-1">Publica</Text>
-                            <Text className="text-slate-500 text-sm">Empowering Researchers & Founders</Text>
-                        </View>
+        <View className="w-full bg-[#FDF8F3] dark:bg-[#060B1A] border-t border-slate-200 dark:border-white/5 py-8 px-6 items-center">
+            <View className="max-w-[1400px] w-full flex-col md:flex-row justify-between items-start gap-8">
+                <View className="flex-1">
+                    <Text className="text-[#27272a] dark:text-white font-black text-xl mb-4 tracking-tighter uppercase">Publica</Text>
+                    <Text className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-[500px] mb-6 font-medium">
+                        기업을 위한 가장 완벽한 정부지원사업 맞춤형 솔루션.{'\n'}수많은 기업의 성공을 이끈 AI 자동화 기술을 먼저 경험하세요.
+                    </Text>
 
-                        <View className="gap-1">
-                            <Text className="text-slate-600 text-xs">상호명: HALOFORGE 헤일로포지 | 대표자: 홍수민</Text>
-                            <Text className="text-slate-600 text-xs">사업자등록번호: 846-04-03662 | 통신판매업신고: 2026-서울강남-00000</Text>
-                            <Text className="text-slate-600 text-xs">주소: 경기도 안산시 단원구 고잔로 57-11</Text>
-                            <Text className="text-slate-600 text-xs">문의: contact@publica.ai | s</Text>
-                        </View>
-
-                        <Text className="text-slate-700 text-[10px] mt-2">
-                            Copyright © 2026 Publica Inc. All rights reserved.
-                        </Text>
+                    <View className="gap-1.5">
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-bold">(주)퍼블리카컴퍼니 | 대표 김퍼블</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">사업자등록번호: 123-45-67890 | 통신판매업신고: 2026-서울강남-1234</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">서울특별시 강남구 테헤란로 123, 4층</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">고객지원실: 1588-0000 | 이메일: support@publica.io</Text>
                     </View>
+                </View>
 
-                    {/* Right: SNS & Links */}
-                    <View className="gap-6">
-                        <View className="flex-row items-center gap-4">
-                            <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Icons.Youtube size={20} color="#94A3B8" />
-                            </TouchableOpacity>
-                            <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Icons.Twitter size={20} color="#94A3B8" />
-                            </TouchableOpacity>
-                            <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Icons.Instagram size={20} color="#94A3B8" />
-                            </TouchableOpacity>
-                            <TouchableOpacity className="bg-slate-800/50 p-3 rounded-full hover:bg-slate-700 transition-all border border-white/5">
-                                <Icons.Send size={20} color="#94A3B8" />
-                            </TouchableOpacity>
-                        </View>
-
-                        <View className="flex-row gap-6">
-                            <TouchableOpacity onPress={() => setLegalType('terms')}><Text className="text-slate-500 text-xs hover:text-slate-300">이용약관</Text></TouchableOpacity>
-                            <TouchableOpacity onPress={() => setLegalType('privacy')}><Text className="text-slate-500 text-xs hover:text-slate-300">개인정보처리방침</Text></TouchableOpacity>
-                            <TouchableOpacity onPress={() => setLegalType('policy')}><Text className="text-slate-500 text-xs hover:text-slate-300">운영정책</Text></TouchableOpacity>
+                <View className="flex-row gap-16 md:gap-32">
+                    <View>
+                        <Text className="text-[#27272a] dark:text-slate-300 font-black text-xs uppercase tracking-widest mb-6">법적 안내</Text>
+                        <View className="gap-4">
+                            <TouchableOpacity onPress={() => setLegalType('terms')}><Text className="text-slate-500 dark:text-slate-400 text-sm font-bold">이용약관</Text></TouchableOpacity>
+                            <TouchableOpacity onPress={() => setLegalType('privacy')}><Text className="text-slate-500 dark:text-slate-400 text-sm font-bold">개인정보처리방침</Text></TouchableOpacity>
+                            <TouchableOpacity onPress={() => setLegalType('policy')}><Text className="text-slate-500 dark:text-slate-400 text-sm font-bold">운영정책</Text></TouchableOpacity>
                         </View>
                     </View>
+                </View>
+            </View>
+
+            <View className="w-full max-w-[1400px] mt-10 pt-6 border-t border-slate-200 dark:border-white/5 flex-row justify-between items-center">
+                <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-medium">
+                    © {new Date().getFullYear()} Publica Inc. All rights reserved.
+                </Text>
+                <View className="flex-row items-center gap-6">
+                    <TouchableOpacity><Icons.Youtube size={16} color="#94A3B8" /></TouchableOpacity>
+                    <TouchableOpacity><Icons.Instagram size={16} color="#94A3B8" /></TouchableOpacity>
                 </View>
             </View>
 

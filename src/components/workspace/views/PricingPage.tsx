@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Platform, useColorScheme } from 'react-native';
 import { Check, X, Sparkles, Zap, Crown, Shield, ArrowRight, Clock, CreditCard, Gift } from 'lucide-react-native';
 
 const { width } = Dimensions.get('window');
@@ -12,16 +12,45 @@ interface PricingPageProps {
 
 import { useAuth } from '../../../contexts/AuthContext';
 import { TossPaymentModal } from './TossPaymentModal';
+import Footer from '../../Footer';
 
 export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentPlan = 'free', onRequireAuth }) => {
     const { user } = useAuth();
+    const colorScheme = useColorScheme();
+    const isDark = colorScheme === 'dark';
+
     const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
     const [isPaymentModalVisible, setPaymentModalVisible] = useState(false);
 
-    const monthlyPrice = 29900;
-    const yearlyPrice = 299000;
+    
+    const theme = {
+        bg: '#FDF8F3',
+        card: '#FFFFFF',
+        text: '#27272a',
+        subtext: '#64748B',
+        border: '#E2E8F0',
+        cardProText: '#27272a',
+        amount: '#27272a',
+        faqQ: '#27272a',
+        toggleBg: '#FFFFFF',
+        toggleBorder: '#E2E8F0',
+        toggleText: '#64748B',
+    };
+
+    const monthlyPrice = 39000;
+    const yearlyPrice = 390000;
     const yearlyMonthly = Math.round(yearlyPrice / 12);
     const savingsPercent = Math.round((1 - yearlyMonthly / monthlyPrice) * 100);
+
+    useEffect(() => {
+        if (Platform.OS === 'web') {
+            const hasTestMode = window.location.href.includes('mode=toss_test') || window.location.href.includes('mode=test');
+            if (hasTestMode) {
+                // Short delay to ensure rendering before modal pops up
+                setTimeout(() => setPaymentModalVisible(true), 500);
+            }
+        }
+    }, []);
 
     const price = billingCycle === 'monthly' ? monthlyPrice : yearlyMonthly;
     const totalPrice = billingCycle === 'yearly' ? yearlyPrice : monthlyPrice;
@@ -40,14 +69,14 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
     ];
 
     return (
-        <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+        <ScrollView style={[styles.container, { backgroundColor: theme.bg }]} contentContainerStyle={styles.content}>
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.badge}>
-                    <Crown size={12} color="#F59E0B" />
-                    <Text style={styles.badgeText}>PUBLICA PRO</Text>
+                    <Crown size={12} color="#7C3AED" />
+                    <Text style={styles.badgeText}>PUBLICA PREMIUM</Text>
                 </View>
-                <Text style={styles.title}>당신의 사업을 위한{'\n'}가장 스마트한 투자</Text>
+                <Text style={[styles.title, { color: theme.text }]}>당신의 사업을 위한{'\n'}가장 스마트한 투자</Text>
                 <Text style={styles.subtitle}>
                     AI 기반 정부지원사업 전략 분석 · 사업계획서 자동 작성 · 맞춤 공고 매칭
                 </Text>
@@ -55,12 +84,12 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
 
             {/* Billing Toggle */}
             <View style={styles.toggleContainer}>
-                <View style={styles.toggle}>
+                <View style={[styles.toggle, { backgroundColor: theme.toggleBg, borderColor: theme.toggleBorder }]}>
                     <TouchableOpacity
                         style={[styles.toggleBtn, billingCycle === 'monthly' && styles.toggleBtnActive]}
                         onPress={() => setBillingCycle('monthly')}
                     >
-                        <Text style={[styles.toggleText, billingCycle === 'monthly' && styles.toggleTextActive]}>
+                        <Text style={[styles.toggleText, { color: billingCycle === 'monthly' ? '#FFF' : theme.toggleText }]}>
                             월간 결제
                         </Text>
                     </TouchableOpacity>
@@ -68,7 +97,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                         style={[styles.toggleBtn, billingCycle === 'yearly' && styles.toggleBtnActive]}
                         onPress={() => setBillingCycle('yearly')}
                     >
-                        <Text style={[styles.toggleText, billingCycle === 'yearly' && styles.toggleTextActive]}>
+                        <Text style={[styles.toggleText, { color: billingCycle === 'yearly' ? '#FFF' : theme.toggleText }]}>
                             연간 결제
                         </Text>
                         {savingsPercent > 0 && (
@@ -83,17 +112,17 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
             {/* Plan Cards */}
             <View style={styles.cardsRow}>
                 {/* Free Plan */}
-                <View style={styles.card}>
+                <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.border }]}>
                     <View style={styles.cardHeader}>
                         <View style={styles.planIcon}>
-                            <Zap size={20} color="#64748B" />
+                            <Zap size={20} color="#94A3B8" />
                         </View>
-                        <Text style={styles.planName}>Free</Text>
-                        <Text style={styles.planTagline}>시작하기</Text>
+                        <Text style={[styles.planName, { color: theme.text }]}>Free</Text>
+                        <Text style={styles.planTagline}>기본 기능 시작하기</Text>
                     </View>
 
                     <View style={styles.priceSection}>
-                        <Text style={styles.priceAmount}>₩0</Text>
+                        <Text style={[styles.priceAmount, { color: theme.amount }]}>₩0</Text>
                         <Text style={styles.pricePeriod}>영구 무료</Text>
                     </View>
 
@@ -103,7 +132,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                         disabled={currentPlan === 'free'}
                     >
                         <Text style={styles.planBtnFreeText}>
-                            {currentPlan === 'free' ? '현재 플랜' : '무료로 시작'}
+                            {currentPlan === 'free' ? '사용 중인 플랜' : '무료로 시작'}
                         </Text>
                     </TouchableOpacity>
 
@@ -111,9 +140,9 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                         {features.map((f, i) => (
                             <View key={i} style={styles.featureRow}>
                                 {f.free ? (
-                                    <Check size={14} color="#10B981" />
+                                    <Check size={14} color="#10B981" strokeWidth={3} />
                                 ) : (
-                                    <X size={14} color="#334155" />
+                                    <X size={14} color="#CBD5E1" strokeWidth={3} />
                                 )}
                                 <Text style={[styles.featureText, !f.free && styles.featureDisabled]}>
                                     {typeof f.free === 'string' ? `${f.name} (${f.free})` : f.name}
@@ -124,33 +153,33 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                 </View>
 
                 {/* Pro Plan */}
-                <View style={[styles.card, styles.cardPro]}>
+                <View style={[styles.card, styles.cardPro, { backgroundColor: theme.card }]}>
                     {/* Popular Badge */}
                     <View style={styles.popularBadge}>
                         <Sparkles size={10} color="#FFF" />
-                        <Text style={styles.popularText}>가장 인기</Text>
+                        <Text style={styles.popularText}>BEST CHOICE</Text>
                     </View>
 
                     <View style={styles.cardHeader}>
                         <View style={[styles.planIcon, styles.planIconPro]}>
-                            <Crown size={20} color="#F59E0B" />
+                            <Crown size={20} color="#7C3AED" />
                         </View>
-                        <Text style={[styles.planName, styles.planNamePro]}>Pro</Text>
-                        <Text style={styles.planTagline}>전문가용</Text>
+                        <Text style={[styles.planName, styles.planNamePro, { color: theme.cardProText }]}>Premium Pro</Text>
+                        <Text style={styles.planTagline}>전문가 수준의 결과물</Text>
                     </View>
 
                     <View style={styles.priceSection}>
-                        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
-                            <Text style={[styles.priceAmount, styles.priceAmountPro]}>
+                        <View style={{ flexDirection: 'row', alignItems: 'baseline' }}>
+                            <Text style={[styles.priceAmount, styles.priceAmountPro, { color: '#7C3AED' }]}>
                                 ₩{formatPrice(price)}
                             </Text>
-                            <Text style={styles.pricePeriod}>/월</Text>
+                            <Text style={[styles.pricePeriod, { color: '#94A3B8' }]}>/월</Text>
                         </View>
                         {billingCycle === 'yearly' && (
                             <Text style={styles.yearlyTotal}>연 ₩{formatPrice(totalPrice)} (월 ₩{formatPrice(yearlyMonthly)})</Text>
                         )}
                         {billingCycle === 'monthly' && (
-                            <Text style={styles.yearlyTotal}>연간 결제 시 {savingsPercent}% 할인</Text>
+                            <Text style={styles.yearlyTotal}>연간 결제 시 {savingsPercent}% 할인 혜택</Text>
                         )}
                     </View>
 
@@ -165,19 +194,20 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
                             setPaymentModalVisible(true);
                         }}
                     >
-                        <Gift size={14} color="#FFF" />
-                        <Text style={styles.planBtnProText}>7일 무료 체험 시작 (결제 진행)</Text>
-                        <ArrowRight size={14} color="#FFF" />
+                        <Gift size={16} color="#FFF" />
+                        <Text style={styles.planBtnProText}>7일 무료 체험 후 시작</Text>
+                        <ArrowRight size={16} color="#FFF" strokeWidth={3} />
                     </TouchableOpacity>
-                    <Text style={styles.trialNote}>
-                        <Clock size={10} color="#94A3B8" /> 7일 무료 체험 · 언제든 취소 가능
-                    </Text>
+                    <View style={styles.trialNoteContainer}>
+                        <Clock size={12} color="#94A3B8" />
+                        <Text style={styles.trialNote}>7일 무료 체험 · 언제든 해지 가능</Text>
+                    </View>
 
-                    <View style={styles.featureList}>
+                    <View style={[styles.featureList, { borderTopColor: '#F1F5F9' }]}>
                         {features.map((f, i) => (
                             <View key={i} style={styles.featureRow}>
-                                <Check size={14} color="#818CF8" />
-                                <Text style={[styles.featureText, styles.featureTextPro]}>
+                                <Check size={14} color="#7C3AED" strokeWidth={3} />
+                                <Text style={[styles.featureText, { color: '#475569', fontWeight: '600' }]}>
                                     {typeof f.pro === 'string' ? `${f.name} (${f.pro})` : f.name}
                                 </Text>
                             </View>
@@ -190,66 +220,55 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
             <View style={styles.trustSection}>
                 <View style={styles.trustRow}>
                     <View style={styles.trustItem}>
-                        <Shield size={16} color="#10B981" />
-                        <Text style={styles.trustText}>SSL 보안 결제</Text>
+                        <Shield size={16} color="#7C3AED" />
+                        <Text style={styles.trustText}>보안 결제 (SSL)</Text>
                     </View>
                     <View style={styles.trustItem}>
-                        <CreditCard size={16} color="#10B981" />
-                        <Text style={styles.trustText}>토스페이먼츠</Text>
+                        <CreditCard size={16} color="#7C3AED" />
+                        <Text style={styles.trustText}>토스페이먼츠 연동</Text>
                     </View>
                     <View style={styles.trustItem}>
-                        <Clock size={16} color="#10B981" />
-                        <Text style={styles.trustText}>언제든 해지</Text>
+                        <Clock size={16} color="#7C3AED" />
+                        <Text style={styles.trustText}>자유로운 구독 해지</Text>
                     </View>
                 </View>
             </View>
 
             {/* FAQ Section */}
             <View style={styles.faqSection}>
-                <Text style={styles.faqTitle}>자주 묻는 질문</Text>
-                <View style={styles.faqCard}>
-                    <Text style={styles.faqQ}>Q. 무료 체험 후 자동 결제되나요?</Text>
-                    <Text style={styles.faqA}>
-                        네, 7일 무료 체험 종료 후 선택하신 결제 주기(월간/연간)에 따라 자동 결제됩니다. 체험 기간 중 언제든 취소할 수 있으며, 취소 시 요금이 청구되지 않습니다.
-                    </Text>
-                </View>
-                <View style={styles.faqCard}>
-                    <Text style={styles.faqQ}>Q. 환불 정책은 어떻게 되나요?</Text>
-                    <Text style={styles.faqA}>
-                        결제 후 환불은 불가합니다. 단, 구독을 취소하시면 이미 결제된 주기의 남은 기간 동안은 Pro 플랜을 그대로 이용하실 수 있으며, 다음 결제일부터는 요금이 청구되지 않고 Free 플랜으로 자동 전환됩니다.
-                    </Text>
-                </View>
-                <View style={styles.faqCard}>
-                    <Text style={styles.faqQ}>Q. 플랜을 변경할 수 있나요?</Text>
-                    <Text style={styles.faqA}>
-                        언제든 설정에서 플랜 업그레이드 또는 다운그레이드가 가능합니다. 업그레이드 시 차액이 즉시 청구되며, 다운그레이드 시 다음 결제일부터 적용됩니다.
-                    </Text>
+                <Text style={[styles.faqTitle, { color: theme.text }]}>자주 묻는 질문</Text>
+                <View style={styles.faqList}>
+                    {[
+                        { q: 'Q. 무료 체험 후 자동 결제되나요?', a: '네, 7일 무료 체험 종료 후 선택하신 결제 주기(월간/연간)에 따라 자동 결제됩니다. 체험 기간 중 언제든 취소할 수 있으며, 취소 시 요금이 청구되지 않습니다.' },
+                        { q: 'Q. 환불 정책은 어떻게 되나요?', a: '결제 후 환불은 불가합니다. 단, 구독을 취소하시면 이미 결제된 주기의 남은 기간 동안은 Premium Pro 기능을 그대로 이용하실 수 있으며, 다음 결제일부터는 요금이 청구되지 않습니다.' },
+                        { q: 'Q. 플랜을 변경할 수 있나요?', a: '언제든 설정에서 플랜 업그레이드 또는 다운그레이드가 가능합니다. 업그레이드 시 즉시 적용되며, 다운그레이드 시 다음 결제일부터 공제됩니다.' }
+                    ].map((item, idx) => (
+                        <View key={idx} style={[styles.faqCard, { backgroundColor: '#FFFFFF', borderColor: '#E2E8F0' }]}>
+                            <Text style={styles.faqQ}>{item.q}</Text>
+                            <Text style={styles.faqA}>{item.a}</Text>
+                        </View>
+                    ))}
                 </View>
             </View>
 
             {/* Terms */}
             <View style={styles.termsSection}>
                 <Text style={styles.termsText}>
-                    결제를 진행하면 Publica의{' '}
-                    <Text style={styles.termsLink}>이용약관</Text> 및{' '}
-                    <Text style={styles.termsLink}>개인정보처리방침</Text>에 동의하는 것으로 간주됩니다.
-                </Text>
-                <Text style={styles.termsText}>
-                    구독은 자동 갱신되며, 결제 주기 종료 최소 24시간 전에 취소하지 않으면 자동으로 갱신됩니다.
+                    결제 시 <Text style={styles.termsLink}>이용약관</Text> 및 <Text style={styles.termsLink}>개인정보처리방침</Text>에 동의하게 됩니다.{'\n'}
+                    모든 서비스는 AI 기술을 기반으로 하며, 결과물의 최종 확인 책임은 사용자에게 있습니다.
                 </Text>
             </View>
 
-            {/* Spacer */}
+            <Footer />
             <View style={{ height: 60 }} />
 
-            {/* Toss Payments Modal */}
             <TossPaymentModal
                 visible={isPaymentModalVisible}
                 onClose={() => setPaymentModalVisible(false)}
                 planType={billingCycle}
                 price={price}
                 userEmail={user?.email || 'test@example.com'}
-                userName={user?.user_metadata?.nickname || user?.user_metadata?.full_name || '테스트 유저'}
+                userName={user?.user_metadata?.nickname || user?.user_metadata?.full_name || '사용자'}
             />
         </ScrollView>
     );
@@ -258,331 +277,334 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#020617',
     },
     content: {
         paddingBottom: 40,
     },
-
-    // Header
     header: {
         alignItems: 'center',
-        paddingTop: 48,
-        paddingBottom: 32,
+        paddingTop: 80,
+        paddingBottom: 40,
         paddingHorizontal: 24,
     },
     badge: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
-        backgroundColor: 'rgba(245,158,11,0.1)',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 100,
+        backgroundColor: '#7C3AED10',
         borderWidth: 1,
-        borderColor: 'rgba(245,158,11,0.2)',
-        marginBottom: 20,
+        borderColor: '#7C3AED20',
+        marginBottom: 24,
     },
     badgeText: {
-        color: '#F59E0B',
+        color: '#7C3AED',
         fontSize: 11,
-        fontWeight: '800',
+        fontWeight: '900',
         letterSpacing: 1.5,
     },
     title: {
-        color: '#F8FAFC',
-        fontSize: 32,
-        fontWeight: '800',
+        fontSize: 42,
+        fontWeight: '900',
         textAlign: 'center',
-        lineHeight: 42,
-        marginBottom: 12,
+        lineHeight: 52,
+        marginBottom: 20,
+        letterSpacing: -1.5,
     },
     subtitle: {
         color: '#64748B',
-        fontSize: 14,
+        fontSize: 16,
         textAlign: 'center',
-        lineHeight: 22,
-        maxWidth: 400,
+        lineHeight: 26,
+        maxWidth: 500,
+        fontWeight: '500',
     },
-
-    // Toggle
     toggleContainer: {
         alignItems: 'center',
-        marginBottom: 32,
+        marginBottom: 48,
     },
     toggle: {
         flexDirection: 'row',
-        backgroundColor: '#0F172A',
-        borderRadius: 12,
-        padding: 4,
+        borderRadius: 100,
+        padding: 6,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        shadowColor: '#000',
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
     },
     toggleBtn: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 20,
-        paddingVertical: 10,
-        borderRadius: 10,
+        gap: 8,
+        paddingHorizontal: 32,
+        paddingVertical: 14,
+        borderRadius: 100,
     },
     toggleBtnActive: {
-        backgroundColor: '#1E293B',
+        backgroundColor: '#7C3AED',
+        shadowColor: '#7C3AED',
+        shadowOpacity: 0.3,
+        shadowRadius: 15,
+        shadowOffset: { width: 0, height: 6 },
     },
     toggleText: {
-        color: '#64748B',
-        fontSize: 13,
-        fontWeight: '600',
-    },
-    toggleTextActive: {
-        color: '#E2E8F0',
+        fontSize: 15,
+        fontWeight: '800',
     },
     savingsBadge: {
         backgroundColor: '#10B981',
-        paddingHorizontal: 6,
-        paddingVertical: 2,
-        borderRadius: 6,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 100,
     },
     savingsText: {
         color: '#FFF',
-        fontSize: 9,
-        fontWeight: '800',
+        fontSize: 10,
+        fontWeight: '900',
     },
-
-    // Cards
     cardsRow: {
         flexDirection: 'row',
         paddingHorizontal: 24,
-        gap: 16,
+        gap: 24,
         justifyContent: 'center',
         flexWrap: 'wrap',
     },
     card: {
         flex: 1,
-        minWidth: 280,
-        maxWidth: 400,
-        backgroundColor: '#0F172A',
-        borderRadius: 20,
-        padding: 28,
+        minWidth: 340,
+        maxWidth: 440,
+        borderRadius: 48,
+        padding: 48,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        shadowColor: '#000',
+        shadowOpacity: 0.04,
+        shadowRadius: 30,
+        elevation: 8,
     },
     cardPro: {
-        backgroundColor: '#0F172A',
-        borderColor: '#4F46E5',
+        borderColor: '#7C3AED',
         borderWidth: 2,
-        shadowColor: '#4F46E5',
-        shadowOpacity: 0.15,
-        shadowRadius: 30,
-        shadowOffset: { width: 0, height: 10 },
+        shadowColor: '#7C3AED',
+        shadowOpacity: 0.1,
+        shadowRadius: 50,
+        shadowOffset: { width: 0, height: 24 },
+        elevation: 20,
     },
     popularBadge: {
         position: 'absolute',
-        top: -12,
-        right: 24,
+        top: -14,
+        alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 4,
-        backgroundColor: '#4F46E5',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 20,
+        gap: 6,
+        backgroundColor: '#7C3AED',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 100,
+        shadowColor: '#7C3AED',
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
     },
     popularText: {
         color: '#FFF',
         fontSize: 11,
-        fontWeight: '700',
+        fontWeight: '900',
+        letterSpacing: 0.5,
     },
-
-    // Card Header
     cardHeader: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 32,
     },
     planIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 14,
-        backgroundColor: '#1E293B',
+        width: 64,
+        height: 64,
+        borderRadius: 24,
+        backgroundColor: '#F8FAFC',
         alignItems: 'center',
         justifyContent: 'center',
-        marginBottom: 12,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
     },
     planIconPro: {
-        backgroundColor: 'rgba(245,158,11,0.1)',
-        borderWidth: 1,
-        borderColor: 'rgba(245,158,11,0.2)',
+        backgroundColor: '#7C3AED10',
+        borderColor: '#7C3AED30',
     },
     planName: {
-        color: '#E2E8F0',
-        fontSize: 22,
-        fontWeight: '800',
+        fontSize: 28,
+        fontWeight: '900',
     },
     planNamePro: {
-        color: '#F8FAFC',
+        color: '#27272a',
     },
     planTagline: {
-        color: '#64748B',
-        fontSize: 12,
-        marginTop: 2,
+        color: '#94A3B8',
+        fontSize: 14,
+        fontWeight: '600',
+        marginTop: 6,
     },
-
-    // Price
     priceSection: {
         alignItems: 'center',
-        marginBottom: 20,
+        marginBottom: 32,
     },
     priceAmount: {
-        color: '#E2E8F0',
-        fontSize: 36,
-        fontWeight: '800',
+        fontSize: 48,
+        fontWeight: '900',
+        letterSpacing: -1,
     },
     priceAmountPro: {
-        color: '#FFF',
+        color: '#7C3AED',
     },
     pricePeriod: {
-        color: '#64748B',
-        fontSize: 14,
+        fontSize: 18,
+        fontWeight: '600',
         marginLeft: 4,
-        marginBottom: 4,
     },
     yearlyTotal: {
-        color: '#475569',
-        fontSize: 11,
-        marginTop: 4,
+        color: '#64748B',
+        fontSize: 13,
+        fontWeight: '700',
+        marginTop: 8,
     },
-
-    // Plan Buttons
     planBtn: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 8,
-        paddingVertical: 14,
-        borderRadius: 12,
-        marginBottom: 8,
+        gap: 10,
+        paddingVertical: 20,
+        borderRadius: 24,
+        marginBottom: 16,
     },
     planBtnFree: {
-        backgroundColor: '#1E293B',
+        backgroundColor: '#F8FAFC',
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: '#E2E8F0',
     },
     planBtnPro: {
-        backgroundColor: '#4F46E5',
-        shadowColor: '#4F46E5',
-        shadowOpacity: 0.3,
-        shadowRadius: 12,
-        shadowOffset: { width: 0, height: 4 },
+        backgroundColor: '#7C3AED',
+        shadowColor: '#7C3AED',
+        shadowOpacity: 0.4,
+        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 8 },
     },
     planBtnFreeText: {
-        color: '#94A3B8',
-        fontSize: 14,
-        fontWeight: '700',
+        color: '#64748B',
+        fontSize: 16,
+        fontWeight: '800',
     },
     planBtnProText: {
         color: '#FFF',
-        fontSize: 14,
-        fontWeight: '700',
+        fontSize: 16,
+        fontWeight: '900',
+    },
+    trialNoteContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+        marginBottom: 32,
     },
     trialNote: {
-        color: '#64748B',
-        fontSize: 11,
-        textAlign: 'center',
-        marginBottom: 20,
+        color: '#94A3B8',
+        fontSize: 12,
+        fontWeight: '700',
     },
-
-    // Features
     featureList: {
         borderTopWidth: 1,
-        borderTopColor: '#1E293B',
-        paddingTop: 16,
-        gap: 12,
+        borderTopColor: '#F1F5F9',
+        paddingTop: 32,
+        gap: 16,
     },
     featureRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 10,
+        gap: 12,
     },
     featureText: {
-        color: '#94A3B8',
-        fontSize: 13,
+        fontSize: 14,
         flex: 1,
-    },
-    featureTextPro: {
-        color: '#CBD5E1',
+        fontWeight: '500',
     },
     featureDisabled: {
-        color: '#334155',
+        color: '#CBD5E1',
     },
-
-    // Trust
     trustSection: {
         paddingHorizontal: 24,
-        paddingTop: 40,
+        paddingTop: 64,
+        paddingBottom: 32,
     },
     trustRow: {
         flexDirection: 'row',
         justifyContent: 'center',
-        gap: 32,
+        gap: 48,
         flexWrap: 'wrap',
     },
     trustItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 8,
+        gap: 10,
     },
     trustText: {
-        color: '#64748B',
-        fontSize: 12,
-        fontWeight: '600',
+        color: '#7C3AED',
+        fontSize: 13,
+        fontWeight: '800',
     },
-
-    // FAQ
     faqSection: {
+        maxWidth: 900,
+        width: '100%',
+        alignSelf: 'center',
         paddingHorizontal: 24,
-        paddingTop: 48,
+        paddingTop: 80,
     },
     faqTitle: {
-        color: '#E2E8F0',
-        fontSize: 20,
-        fontWeight: '800',
-        marginBottom: 16,
+        fontSize: 28,
+        fontWeight: '900',
+        marginBottom: 32,
         textAlign: 'center',
+        letterSpacing: -0.5,
+    },
+    faqList: {
+        gap: 16,
     },
     faqCard: {
-        backgroundColor: '#0F172A',
-        borderRadius: 12,
-        padding: 18,
-        marginBottom: 10,
+        borderRadius: 32,
+        padding: 32,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        shadowColor: '#000',
+        shadowOpacity: 0.03,
+        shadowRadius: 15,
+        elevation: 2,
     },
     faqQ: {
-        color: '#E2E8F0',
-        fontSize: 13,
-        fontWeight: '700',
-        marginBottom: 6,
+        color: '#27272a',
+        fontSize: 16,
+        fontWeight: '800',
+        marginBottom: 12,
     },
     faqA: {
         color: '#64748B',
-        fontSize: 12,
-        lineHeight: 18,
+        fontSize: 14,
+        lineHeight: 22,
+        fontWeight: '500',
     },
-
-    // Terms
     termsSection: {
         paddingHorizontal: 24,
-        paddingTop: 32,
-        gap: 8,
+        paddingTop: 64,
+        paddingBottom: 32,
     },
     termsText: {
-        color: '#334155',
-        fontSize: 11,
+        color: '#94A3B8',
+        fontSize: 12,
         textAlign: 'center',
-        lineHeight: 16,
+        lineHeight: 20,
+        fontWeight: '500',
     },
     termsLink: {
-        color: '#6366F1',
+        color: '#7C3AED',
+        fontWeight: '700',
         textDecorationLine: 'underline',
     },
 });

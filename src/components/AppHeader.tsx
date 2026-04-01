@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Animated, ScrollView, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Animated, ScrollView, Modal, Image, StyleSheet } from 'react-native';
 import { Svg, Path, Circle, G, Rect, Text as SvgText } from 'react-native-svg';
 import { Icons } from '../utils/icons';
-import { AnimatedPillNav } from './AnimatedPillNav';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { useProjectStore } from '../store/useProjectStore';
@@ -51,7 +50,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
     const { profile } = useAuth();
     const { width } = useWindowDimensions();
-    const isDesktop = width >= 768;
+    const isDesktop = width >= 1024;
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
@@ -82,133 +81,80 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     });
 
     return (
-        <View className="px-6 py-4 z-50">
-            <View className="max-w-[1400px] w-full mx-auto flex-row justify-between items-center relative">
+        <View style={styles.headerContainer}>
+            <View style={styles.headerInner}>
                 {/* Left: Logo */}
                 <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={() => { setViewMode(user ? 'connect' : 'landing'); setActiveCategory('전체'); }}
-                    className="flex-row items-center z-10"
+                    style={styles.logoWrapper}
                 >
-                    <View className="w-12 h-12 items-center justify-center bg-[#FDF8F3] rounded-[14px]">
+                    <View style={styles.logoIcon}>
                         <Image
                             source={require('../../assets/publica logo.png')}
-                            style={{ width: 36, height: 36 }}
+                            style={{ width: 32, height: 32 }}
                             resizeMode="contain"
                         />
                     </View>
-                    <View className="ml-3">
-                        <Text className="text-white font-extrabold text-xl tracking-tighter">Publica</Text>
-                    </View>
+                    <Text style={styles.logoText}>PUBLICA</Text>
                 </TouchableOpacity>
 
-                {/* Centered Navigation (Desktop) - 🌟 MORPHING NAVIGATION */}
+                {/* Centered Navigation (Desktop) */}
                 {isDesktop && (
-                    <View className="absolute inset-0 flex-row justify-center items-center pointer-events-none">
-                        <View className="pointer-events-auto flex-row items-center gap-3">
-
+                    <View style={styles.navCentered}>
+                        <View style={styles.navRow}>
                             {!user ? (
-                                /* GUEST NAVIGATION: Landing page menu */
-                                <View className="h-12 px-2 rounded-full bg-slate-800/80 border border-white/10 flex-row items-center shadow-lg shadow-black/20 backdrop-blur-md">
-                                    <TouchableOpacity
-                                        onPress={() => setViewMode('landing')}
-                                        className={`h-9 px-4 rounded-full justify-center ${viewMode === 'landing' ? 'bg-purple-600' : 'hover:bg-white/5'}`}
-                                    >
-                                        <Text className={`text-[13px] font-bold ${viewMode === 'landing' ? 'text-white' : 'text-slate-400'}`}>서비스 소개</Text>
+                                <View style={styles.guestNav}>
+                                    <TouchableOpacity onPress={() => setViewMode('landing')}>
+                                        <Text style={[styles.navItemText, viewMode === 'landing' && styles.navItemActive]}>서비스 소개</Text>
                                     </TouchableOpacity>
-
-                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
-
-                                    <TouchableOpacity
-                                        onPress={() => setViewMode('pricing')}
-                                        className={`h-9 px-4 rounded-full justify-center ${viewMode === 'pricing' ? 'bg-amber-600' : 'hover:bg-white/5'}`}
-                                    >
-                                        <Text className={`text-[13px] font-bold ${viewMode === 'pricing' ? 'text-white' : 'text-slate-400'}`}>요금안내</Text>
+                                    <TouchableOpacity onPress={() => setViewMode('pricing')}>
+                                        <Text style={[styles.navItemText, viewMode === 'pricing' && styles.navItemActive]}>요금안내</Text>
                                     </TouchableOpacity>
-
-                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
-
-                                    <TouchableOpacity
-                                        onPress={() => setViewMode('connect')}
-                                        className={`h-9 px-4 rounded-full justify-center ${viewMode === 'connect' ? 'bg-emerald-600' : 'hover:bg-white/5'}`}
-                                    >
-                                        <Text className={`text-[13px] font-bold ${viewMode === 'connect' ? 'text-white' : 'text-slate-400'}`}>Connect Hub</Text>
+                                    <TouchableOpacity onPress={() => setViewMode('connect')}>
+                                        <Text style={[styles.navItemText, viewMode === 'connect' && styles.navItemActive]}>Connect Hub</Text>
                                     </TouchableOpacity>
                                 </View>
                             ) : (
-                                /* AUTHENTICATED NAVIGATION */
                                 <>
-                            {/* 1. Workspace Button */}
-                            <TouchableOpacity
-                                onPress={() => setViewMode('workspace')}
-                                className={`h-12 px-5 rounded-full border items-center justify-center shadow-lg backdrop-blur-md transition-all ${viewMode === 'workspace'
-                                    ? 'bg-purple-600 border-purple-500 shadow-purple-500/20'
-                                    : 'bg-slate-800/80 border-white/10 shadow-black/20'}`}
-                            >
-                                <View className="flex-row items-center">
-                                    <Icons.Zap size={16} color={viewMode === 'workspace' ? '#fff' : '#94A3B8'} style={{ marginRight: 6 }} />
-                                    <Text className={`text-sm font-bold ${viewMode === 'workspace' ? 'text-white' : 'text-slate-400'}`}>My Workspace</Text>
-                                </View>
-                            </TouchableOpacity>
-
-
-                            {/* 2. HUB Section */}
-                            {!(viewMode === 'workspace') ? (
-                                /* EXPANDED HUB: [ Connect Hub | Insight | Lounge ] */
-                                <View className="h-12 px-2 rounded-full bg-slate-800/80 border border-white/10 flex-row items-center shadow-lg shadow-black/20 backdrop-blur-md">
-
-                                    {/* Connect Hub */}
                                     <TouchableOpacity
-                                        onPress={() => setViewMode('connect')}
-                                        className={`h-9 px-3 rounded-full justify-center ${viewMode === 'connect' ? 'bg-emerald-600' : 'hover:bg-white/5'}`}
+                                        onPress={() => setViewMode('workspace')}
+                                        style={[styles.workspaceBtn, viewMode === 'workspace' && styles.workspaceBtnActive]}
                                     >
-                                        <Text className={`text-[13px] font-bold ${viewMode === 'connect' ? 'text-white' : 'text-slate-400'}`}>Connect Hub</Text>
+                                        <Icons.Zap size={16} color={viewMode === 'workspace' ? '#FFF' : '#7C3AED'} style={{ marginRight: 8 }} />
+                                        <Text style={[styles.workspaceBtnText, viewMode === 'workspace' && { color: '#FFF' }]}>My Workspace</Text>
                                     </TouchableOpacity>
 
-                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
-
-                                    {/* Insight: All */}
-                                    <TouchableOpacity
-                                        onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }}
-                                        className={`h-9 px-3 rounded-full justify-center ${viewMode === 'feed' && activeCategory === '전체' ? 'bg-blue-600' : 'hover:bg-white/5'}`}
-                                    >
-                                        <Text className={`text-[13px] font-bold ${viewMode === 'feed' && activeCategory === '전체' ? 'text-white' : 'text-slate-400'}`}>Insight</Text>
-                                    </TouchableOpacity>
-
-                                    <View className="w-[1px] h-4 bg-white/10 mx-1" />
-
-                                    {/* Lounge */}
-                                    <TouchableOpacity
-                                        onPress={() => {
-                                            if (!user) {
-                                                onAuthModalOpen();
-                                            } else {
-                                                setViewMode('lounge');
-                                            }
-                                        }}
-                                        className={`h-9 px-3 rounded-full justify-center ${viewMode === 'lounge' ? 'bg-pink-600' : 'hover:bg-white/5'}`}
-                                    >
-                                        <Text className={`text-[13px] font-bold ${viewMode === 'lounge' ? 'text-white' : 'text-slate-400'}`}>Lounge</Text>
-                                    </TouchableOpacity>
-
-                                </View>
-                            ) : (
-                                /* COLLAPSED HUB: (Globe Icon) */
-                                <TouchableOpacity
-                                    onPress={() => { setViewMode('connect'); setActiveCategory('전체'); }}
-                                    className="w-12 h-12 rounded-full bg-slate-800/50 border border-white/5 items-center justify-center hover:bg-slate-700 transition-all hover:scale-105 active:scale-95"
-                                >
-                                    <Icons.Globe size={20} color="#64748B" />
-                                </TouchableOpacity>
-                            )}
+                                    {viewMode !== 'workspace' ? (
+                                        <View style={styles.hubNav}>
+                                            <TouchableOpacity onPress={() => setViewMode('connect')} style={[styles.hubItem, viewMode === 'connect' && styles.hubItemActive]}>
+                                                <Text style={[styles.hubItemText, viewMode === 'connect' && { color: '#FFF' }]}>Connect Hub</Text>
+                                            </TouchableOpacity>
+                                            <View style={styles.hubDivider} />
+                                            <TouchableOpacity onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} style={[styles.hubItem, viewMode === 'feed' && styles.hubItemActive]}>
+                                                <Text style={[styles.hubItemText, viewMode === 'feed' && { color: '#FFF' }]}>Insight</Text>
+                                            </TouchableOpacity>
+                                            <View style={styles.hubDivider} />
+                                            <TouchableOpacity onPress={() => setViewMode('lounge')} style={[styles.hubItem, viewMode === 'lounge' && styles.hubItemActive]}>
+                                                <Text style={[styles.hubItemText, viewMode === 'lounge' && { color: '#FFF' }]}>Lounge</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    ) : (
+                                        <TouchableOpacity
+                                            onPress={() => { setViewMode('connect'); setActiveCategory('전체'); }}
+                                            style={styles.hubCollapsedBtn}
+                                        >
+                                            <Icons.Globe size={20} color="#7C3AED" />
+                                        </TouchableOpacity>
+                                    )}
                                 </>
                             )}
-
                         </View>
                     </View>
                 )}
 
-                <View className="flex-row items-center z-10">
+                {/* Right: Actions */}
+                <View style={styles.rightActions}>
                     <TouchableOpacity
                         onPress={() => {
                             if (user) {
@@ -218,189 +164,161 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 setViewMode('pricing');
                             }
                         }}
-                        className="mr-3 flex-row items-center bg-amber-500/10 px-3 py-1.5 rounded-full border border-amber-500/30 hover:bg-amber-500/20 transition-all"
+                        style={styles.proBadge}
                     >
-                        <Icons.Crown color="#FBBF24" size={16} />
-                        <Text className="text-amber-400 text-xs font-bold ml-1.5">PUBLICA PRO</Text>
+                        <Icons.Crown color="#F59E0B" size={14} />
+                        <Text style={styles.proBadgeText}>PRO</Text>
                     </TouchableOpacity>
 
                     {!user ? (
-                        <View className="flex-row items-center gap-2">
-                            <TouchableOpacity
-                                onPress={onAuthModalOpen}
-                                className="bg-white/10 px-4 py-2 rounded-xl flex-row items-center border border-white/10"
-                            >
-                                <Icons.User size={16} color="#fff" style={{ marginRight: 6 }} />
-                                <Text className="text-white font-semibold text-sm">로그인</Text>
+                        <View style={styles.authGroup}>
+                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.loginBtn}>
+                                <Text style={styles.loginBtnText}>로그인</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={onAuthModalOpen}
-                                className="bg-purple-600 px-4 py-2 rounded-xl flex-row items-center hover:bg-purple-500 active:scale-95"
-                            >
-                                <Text className="text-white font-bold text-sm">무료 시작하기</Text>
+                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.startBtn}>
+                                <Text style={styles.startBtnText}>프로젝트 시작</Text>
                             </TouchableOpacity>
                         </View>
                     ) : (
                         <>
-                            {!isDesktop && (
-                                isSearchVisible ? (
-                                    <View className="flex-row items-center bg-slate-800/80 rounded-2xl px-3 py-1.5 ml-2.5 border border-white/10 min-w-[200px]">
-                                        <TextInput
-                                            className="flex-1 text-white text-sm mr-2 min-w-[150px] p-0"
-                                            placeholder="검색어 입력..."
-                                            placeholderTextColor="#94A3B8"
-                                            value={searchQuery}
-                                            onChangeText={setSearchQuery}
-                                            autoFocus
-                                        />
-                                        <TouchableOpacity onPress={() => { setSearchQuery(''); setIsSearchVisible(false); }}>
-                                            <Icons.Close color="#94A3B8" size={20} />
-                                        </TouchableOpacity>
-                                    </View>
-                                ) : (
-                                    <TouchableOpacity onPress={() => setIsSearchVisible(true)}>
-                                        <Icons.Search color="#fff" size={24} className="opacity-90 ml-5" />
+                            <View style={styles.utilityGroup}>
+                                <View style={styles.notificationWrapper}>
+                                    <TouchableOpacity onPress={() => { setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false); }}>
+                                        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+                                            <Icons.Bell color={hasNotification ? "#F59E0B" : "#94A3B8"} size={22} fill={hasNotification ? "#F59E0B" : "none"} />
+                                        </Animated.View>
+                                        {hasNotification && <View style={styles.notificationDot} />}
                                     </TouchableOpacity>
-                                )
-                            )}
 
-                            {/* Pro Upgrade Button moved to global header space */}
-
-                            {/* Notification Bell Area */}
-                            <View className="relative z-50">
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setIsNotificationOpen(!isNotificationOpen);
-                                        setIsUserMenuOpen(false);
-                                    }}
-                                    className="ml-5 relative"
-                                >
-                                    <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                                        <Icons.Bell color={hasNotification ? "#FDBA74" : "#fff"} size={24} className="opacity-90" fill={hasNotification ? "#FDBA74" : "none"} />
-                                    </Animated.View>
-                                    {hasNotification && (
-                                        <View className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#020617]" />
+                                    {isNotificationOpen && (
+                                        <View style={styles.dropdownMenu}>
+                                            <View style={styles.dropdownHeader}>
+                                                <Text style={styles.dropdownHeaderText}>알림</Text>
+                                                <TouchableOpacity onPress={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}>
+                                                    <Text style={styles.markReadText}>모두 읽음</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            <ScrollView style={{ maxHeight: 300 }}>
+                                                {notifications.map((item) => (
+                                                    <TouchableOpacity key={item.id} style={[styles.dropdownItem, !item.isRead && { backgroundColor: '#7C3AED05' }]}>
+                                                        <View style={[styles.notifIcon, item.type === 'like' ? { backgroundColor: '#FEE2E2' } : { backgroundColor: '#F5F3FF' }]}>
+                                                            {item.type === 'like' ? <Icons.Heart size={14} color="#EF4444" fill="#EF4444" /> : <Icons.MessageCircle size={14} color="#7C3AED" />}
+                                                        </View>
+                                                        <View style={{ flex: 1 }}>
+                                                            <View style={styles.notifMeta}>
+                                                                <Text style={styles.notifSender}>{item.sender}</Text>
+                                                                <Text style={styles.notifTime}>{item.time}</Text>
+                                                            </View>
+                                                            <Text style={styles.notifContent} numberOfLines={2}>{item.content}</Text>
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                ))}
+                                            </ScrollView>
+                                        </View>
                                     )}
-                                </TouchableOpacity>
+                                </View>
 
-                                {/* Notification Dropdown */}
-                                {isNotificationOpen && (
-                                    <View className="absolute top-10 right-[-50px] w-[320px] bg-[#1E293B] border border-white/10 rounded-xl shadow-xl overflow-hidden z-[100]">
-                                        <View className="p-4 border-b border-white/5 flex-row justify-between items-center bg-[#0F172A]">
-                                            <Text className="text-white font-bold">알림</Text>
-                                            <TouchableOpacity onPress={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}>
-                                                <Text className="text-xs text-slate-400">모두 읽음</Text>
+                                <View style={styles.userMenuWrapper}>
+                                    <TouchableOpacity style={styles.profileSummary} onPress={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false); }}>
+                                        <View style={styles.userInfo}>
+                                            <Text style={styles.userName}>{user?.email?.split('@')[0]}</Text>
+                                            <Text style={styles.userRole}>{profile?.industry || 'Researcher'}</Text>
+                                        </View>
+                                        <View style={styles.userAvatar}>
+                                            <Icons.User color="#7C3AED" size={20} />
+                                        </View>
+                                    </TouchableOpacity>
+
+                                    {isUserMenuOpen && (
+                                        <View style={[styles.dropdownMenu, { right: 0, width: 180 }]}>
+                                            <TouchableOpacity style={styles.menuItem} onPress={() => { setViewMode('workspace'); setIsUserMenuOpen(false); }}>
+                                                <Icons.LayoutDashboard size={16} color="#94A3B8" style={{ marginRight: 12 }} />
+                                                <Text style={styles.menuItemText}>워크스페이스</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity style={styles.menuItem} onPress={() => { setIsProfileModalOpen(true); setIsUserMenuOpen(false); }}>
+                                                <Icons.Settings size={16} color="#94A3B8" style={{ marginRight: 12 }} />
+                                                <Text style={styles.menuItemText}>계정 설정</Text>
+                                            </TouchableOpacity>
+                                            <View style={styles.menuDivider} />
+                                            <TouchableOpacity style={styles.menuItem} onPress={() => { onSignOut(); setIsUserMenuOpen(false); }}>
+                                                <Icons.LogOut size={16} color="#EF4444" style={{ marginRight: 12 }} />
+                                                <Text style={[styles.menuItemText, { color: '#EF4444' }]}>로그아웃</Text>
                                             </TouchableOpacity>
                                         </View>
-                                        <ScrollView className="max-h-[300px]">
-                                            {notifications.map((item) => (
-                                                <TouchableOpacity
-                                                    key={item.id}
-                                                    onPress={() => {
-                                                        setNotifications(prev => prev.map(n => n.id === item.id ? { ...n, isRead: true } : n));
-                                                    }}
-                                                    className={`p-4 border-b border-white/5 flex-row gap-3 ${item.isRead ? 'opacity-50' : 'bg-blue-500/5'}`}
-                                                >
-                                                    <View className={`w-8 h-8 rounded-full items-center justify-center ${item.type === 'like' ? 'bg-pink-500/20' :
-                                                        item.type === 'comment' ? 'bg-blue-500/20' : 'bg-purple-500/20'
-                                                        }`}>
-                                                        {item.type === 'like' && <Icons.Heart size={14} color="#EC4899" fill="#EC4899" />}
-                                                        {item.type === 'comment' && <Icons.MessageCircle size={14} color="#3B82F6" fill="#3B82F6" />}
-                                                        {item.type === 'chat' && <Icons.MessageSquare size={14} color="#A855F7" fill="#A855F7" />}
-                                                    </View>
-                                                    <View className="flex-1">
-                                                        <View className="flex-row justify-between mb-1">
-                                                            <Text className="text-white font-bold text-sm">{item.sender}</Text>
-                                                            <Text className="text-slate-500 text-xs">{item.time}</Text>
-                                                        </View>
-                                                        <Text className="text-slate-300 text-xs leading-4" numberOfLines={2}>{item.content}</Text>
-                                                    </View>
-                                                </TouchableOpacity>
-                                            ))}
-                                        </ScrollView>
-                                    </View>
-                                )}
-                            </View>
-
-                            {/* User Menu Area */}
-                            <View className="relative z-50">
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        setIsUserMenuOpen(!isUserMenuOpen);
-                                        setIsNotificationOpen(false);
-                                    }}
-                                    className="ml-5"
-                                >
-                                    <View className="flex-row items-center ml-5">
-                                        <View className="mr-3 items-end">
-                                            <Text className="text-white text-[13px] font-bold">
-                                                {user?.email?.split('@')[0]}
-                                            </Text>
-                                            <Text className="text-slate-400 text-[10px]">
-                                                {profile?.user_type === 'business' || profile?.user_type === 'pre_entrepreneur'
-                                                    ? (profile?.industry || '미지정')
-                                                    : profile?.user_type === 'researcher'
-                                                        ? (profile?.expertise || profile?.major_category || '미지정')
-                                                        : (profile?.industry || user?.user_metadata?.user_role || '일반 사용자')}
-                                            </Text>
-                                        </View>
-                                        <Icons.User color="#fff" size={24} className="opacity-90" />
-                                    </View>
-                                </TouchableOpacity>
-
-                                {/* User Dropdown */}
-                                {isUserMenuOpen && (
-                                    <View className="absolute top-10 right-0 w-[200px] bg-[#1E293B] border border-white/10 rounded-xl shadow-xl overflow-hidden z-[100]">
-                                        <TouchableOpacity
-                                            className="p-4 border-b border-white/5 flex-row items-center hover:bg-white/5"
-                                            onPress={() => {
-                                                setViewMode('workspace');
-                                                setIsUserMenuOpen(false);
-                                            }}
-                                        >
-                                            <Icons.User size={16} color="#94A3B8" className="mr-3" />
-                                            <Text className="text-slate-200">마이페이지</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            className="p-4 border-b border-white/5 flex-row items-center hover:bg-white/5"
-                                            onPress={() => {
-                                                setIsProfileModalOpen(true);
-                                                setIsUserMenuOpen(false);
-                                            }}
-                                        >
-                                            <Icons.Settings size={16} color="#94A3B8" className="mr-3" />
-                                            <Text className="text-slate-200">계정 설정</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            className="p-4 flex-row items-center hover:bg-white/5"
-                                            onPress={() => {
-                                                onSignOut();
-                                                setIsUserMenuOpen(false);
-                                            }}
-                                        >
-                                            <Icons.LogOut size={16} color="#EF4444" className="mr-3" />
-                                            <Text className="text-red-400">로그아웃</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
+                                    )}
+                                </View>
                             </View>
                         </>
                     )}
                 </View>
             </View>
 
-            {/* Unified Profile Edit Modal */}
-            <Modal
-                visible={isProfileModalOpen}
-                animationType="slide"
-                transparent={true}
-                onRequestClose={() => setIsProfileModalOpen(false)}
-            >
-                <ProfileSetupScreen
-                    isEditing={true}
-                    onClose={() => setIsProfileModalOpen(false)}
-                />
+            <Modal visible={isProfileModalOpen} animationType="fade" transparent={true} onRequestClose={() => setIsProfileModalOpen(false)}>
+                <ProfileSetupScreen isEditing={true} onClose={() => setIsProfileModalOpen(false)} />
             </Modal>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    headerContainer: { width: '100%', backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', zIndex: 1000 },
+    headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
+    
+    logoWrapper: { flexDirection: 'row', alignItems: 'center' },
+    logoIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#7C3AED15' },
+    logoText: { marginLeft: 12, fontSize: 20, fontWeight: '900', color: '#18181B', letterSpacing: -1 },
+
+    navCentered: { position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' },
+    navRow: { flexDirection: 'row', alignItems: 'center', gap: 12, pointerEvents: 'auto' },
+    
+    guestNav: { flexDirection: 'row', alignItems: 'center', gap: 32 },
+    navItemText: { fontSize: 14, fontWeight: '700', color: '#94A3B8' },
+    navItemActive: { color: '#18181B', fontWeight: '900' },
+
+    workspaceBtn: { height: 48, paddingHorizontal: 20, borderRadius: 24, backgroundColor: '#FDF8F3', borderWidth: 1, borderColor: '#7C3AED20', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+    workspaceBtnActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+    workspaceBtnText: { color: '#7C3AED', fontSize: 13, fontWeight: '800' },
+
+    hubNav: { height: 48, paddingHorizontal: 6, borderRadius: 24, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center' },
+    hubItem: { height: 36, paddingHorizontal: 16, borderRadius: 18, justifyContent: 'center' },
+    hubItemActive: { backgroundColor: '#7C3AED' },
+    hubItemText: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+    hubDivider: { width: 1, height: 16, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
+    hubCollapsedBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FDF8F3', borderWidth: 1, borderColor: '#7C3AED20', alignItems: 'center', justifyContent: 'center' },
+
+    rightActions: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+    proBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF7ED', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#FED7AA', gap: 6 },
+    proBadgeText: { color: '#F59E0B', fontSize: 11, fontWeight: '900' },
+
+    authGroup: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    loginBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 99, borderWidth: 1, borderColor: '#E2E8F0' },
+    loginBtnText: { color: '#444', fontSize: 13, fontWeight: '700' },
+    startBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 99, backgroundColor: '#7C3AED' },
+    startBtnText: { color: '#FFF', fontSize: 13, fontWeight: '800' },
+
+    utilityGroup: { flexDirection: 'row', alignItems: 'center', gap: 24 },
+    notificationWrapper: { position: 'relative' },
+    notificationDot: { position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', borderWidth: 2, borderColor: '#FFF' },
+    
+    dropdownMenu: { position: 'absolute', top: 40, right: -40, width: 320, backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10, overflow: 'hidden', padding: 8 },
+    dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+    dropdownHeaderText: { fontSize: 14, fontWeight: '800', color: '#18181B' },
+    markReadText: { fontSize: 11, color: '#7C3AED', fontWeight: '700' },
+    dropdownItem: { flexDirection: 'row', padding: 16, gap: 12, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
+    notifIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    notifMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
+    notifSender: { fontSize: 13, fontWeight: '700', color: '#18181B' },
+    notifTime: { fontSize: 10, color: '#94A3B8' },
+    notifContent: { fontSize: 12, color: '#64748B', lineHeight: 18 },
+
+    userMenuWrapper: { position: 'relative' },
+    profileSummary: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    userInfo: { alignItems: 'flex-end', display: 'none' /* Toggleable if needed */ },
+    userName: { color: '#18181B', fontSize: 13, fontWeight: '800' },
+    userRole: { color: '#94A3B8', fontSize: 10, fontWeight: '600' },
+    userAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#7C3AED15' },
+
+    menuItem: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 12 },
+    menuItemText: { fontSize: 14, fontWeight: '700', color: '#475569' },
+    menuDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 4 },
+});

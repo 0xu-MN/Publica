@@ -121,13 +121,13 @@ export const ContextDock: React.FC<ContextDockProps> = ({
         <View style={styles.editorContainer}>
             {/* Brainstorm Header */}
             <View style={styles.editorToolbar}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Sparkles size={14} color="#F59E0B" />
-                    <Text style={{ color: '#F59E0B', fontSize: 12, fontWeight: '700' }}>브레인스퇰 메모</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Sparkles size={16} color="#7C3AED" />
+                    <Text style={{ color: '#7C3AED', fontSize: 14, fontWeight: '900' }}>브레인스토밍 메모</Text>
                 </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <View style={[styles.statusDot, { backgroundColor: isSaved ? '#10B981' : '#F59E0B' }]} />
-                    <Text style={{ color: '#475569', fontSize: 10 }}>{isSaved ? '저장됨' : '저장 중...'}</Text>
+                    <Text style={{ color: '#64748B', fontSize: 12, fontWeight: '600' }}>{isSaved ? '저장됨' : '저장 중...'}</Text>
                 </View>
             </View>
 
@@ -135,11 +135,12 @@ export const ContextDock: React.FC<ContextDockProps> = ({
             <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 24 }}>
                 <TextInput
                     style={{
-                        color: '#E2E8F0', fontSize: 14, lineHeight: 24,
-                        textAlignVertical: 'top', minHeight: 300,
+                        color: '#27272a', fontSize: 16, lineHeight: 26,
+                        textAlignVertical: 'top', minHeight: 400,
+                        fontWeight: '500',
                     }}
-                    placeholder={'브레인스퇰 내용을 자유롭게 정리하세요...\n\n• 핵심 아이디어\n• 참고할 브랜치 내용\n• 중요 포인트\n\n이 메모는 자동 저장되며,\n"서류 작성하러 가기" 시 Edit으로 전달됩니다.'}
-                    placeholderTextColor="#334155"
+                    placeholder={'브레인스토밍 내용을 자유롭게 정리하세요...\n\n• 핵심 아이디어\n• 참고할 브랜치 내용\n• 중요 포인트\n\n이 메모는 자동 저장되며,\n"서류 작성하러 가기" 시 Edit으로 전달됩니다.'}
+                    placeholderTextColor="#94A3B8"
                     value={memoText}
                     onChangeText={handleMemoChange}
                     multiline={true}
@@ -152,11 +153,11 @@ export const ContextDock: React.FC<ContextDockProps> = ({
                 <View style={styles.editorFooter}>
                     <Text style={styles.footerText}>{memoText.length}자</Text>
                     <TouchableOpacity
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#4F46E5', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#7C3AED', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, shadowColor: '#7C3AED', shadowOpacity: 0.2, shadowRadius: 10 }}
                         onPress={onSendToEdit}
                     >
-                        <Send size={12} color="#FFF" />
-                        <Text style={{ color: '#FFF', fontSize: 11, fontWeight: '700' }}>Edit으로 보내기</Text>
+                        <Send size={14} color="#FFF" />
+                        <Text style={{ color: '#FFF', fontSize: 13, fontWeight: '800' }}>Edit으로 보내기</Text>
                     </TouchableOpacity>
                 </View>
             )}
@@ -236,40 +237,40 @@ export const ContextDock: React.FC<ContextDockProps> = ({
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#0a0a0a' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
 
     // Minimized strip
     minimizedContainer: {
-        width: 56, backgroundColor: '#0a0a0a',
-        borderRightWidth: 1, borderColor: '#1E293B',
-        paddingTop: 8, alignItems: 'center', gap: 4,
+        width: 64, backgroundColor: '#FFFFFF',
+        borderRightWidth: 1.5, borderColor: '#E2E8F0',
+        paddingTop: 12, alignItems: 'center', gap: 6,
     },
     miniTab: {
-        width: 48, paddingVertical: 10, borderRadius: 8,
+        width: 52, paddingVertical: 12, borderRadius: 12,
         alignItems: 'center', gap: 4,
     },
-    miniTabLabel: { fontSize: 9, fontWeight: '700' },
+    miniTabLabel: { fontSize: 10, fontWeight: '800' },
     miniExpandBtn: {
-        marginTop: 'auto' as any, marginBottom: 12,
-        width: 32, height: 32, borderRadius: 16,
-        backgroundColor: '#111827', alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderColor: '#1E293B',
+        marginTop: 'auto' as any, marginBottom: 16,
+        width: 36, height: 36, borderRadius: 18,
+        backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center',
+        borderWidth: 1.5, borderColor: '#E2E8F0',
     },
 
     // Tab Header
     tabHeader: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        backgroundColor: '#111827', borderBottomWidth: 1, borderColor: '#1E293B', paddingRight: 8,
+        backgroundColor: '#F8FAFC', borderBottomWidth: 1.5, borderColor: '#E2E8F0', paddingRight: 8,
     },
     tabRow: { flexDirection: 'row', flex: 1 },
     tab: {
-        flexDirection: 'row', alignItems: 'center', gap: 6,
-        paddingHorizontal: 16, paddingVertical: 12,
-        borderBottomWidth: 2, borderBottomColor: 'transparent',
+        flexDirection: 'row', alignItems: 'center', gap: 8,
+        paddingHorizontal: 20, paddingVertical: 14,
+        borderBottomWidth: 3, borderBottomColor: 'transparent',
     },
-    tabActive: { borderBottomWidth: 2 },
-    tabLabel: { color: '#64748B', fontSize: 13, fontWeight: '600' },
-    closeBtn: { padding: 8 },
+    tabActive: { borderBottomWidth: 3 },
+    tabLabel: { color: '#94A3B8', fontSize: 14, fontWeight: '800' },
+    closeBtn: { padding: 10 },
     content: { flex: 1 },
 
     // Loading
@@ -277,10 +278,10 @@ const styles = StyleSheet.create({
     loadingText: { color: '#94A3B8', fontSize: 13 },
 
     // Editor Playground
-    editorContainer: { flex: 1, backgroundColor: '#0a0a0a' },
+    editorContainer: { flex: 1, backgroundColor: '#FFFFFF' },
     editorToolbar: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        padding: 8, borderBottomWidth: 1, borderColor: '#1E293B', backgroundColor: '#0F172A',
+        padding: 12, borderBottomWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC',
     },
     modeSelector: { flexDirection: 'row', gap: 4 },
     modeBtn: {
@@ -320,8 +321,8 @@ const styles = StyleSheet.create({
 
     editorFooter: {
         flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-        paddingHorizontal: 12, paddingVertical: 8,
-        borderTopWidth: 1, borderColor: '#1E293B', backgroundColor: '#0F172A',
+        paddingHorizontal: 16, paddingVertical: 12,
+        borderTopWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC',
     },
     footerText: { color: '#475569', fontSize: 11, fontWeight: '600' },
     statusDot: { width: 6, height: 6, borderRadius: 3 },

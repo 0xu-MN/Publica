@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Linking, SafeAreaView, Platform, StatusBar, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Linking, SafeAreaView, Platform, StatusBar, ActivityIndicator, StyleSheet } from 'react-native';
 import { ArrowLeft, Share2, Calendar, Building, CheckCircle, ExternalLink, Globe, Zap, AlertTriangle, XCircle, DollarSign, FileText, MapPin, Phone, Clock, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -60,7 +60,7 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
         }, 4500);
     };
 
-    // Helper to render bullet-point text (supports newline-separated bullets)
+    // Helper to render bullet-point text
     const renderBulletList = (text: string, icon: 'check' | 'x' | 'dot' = 'check') => {
         if (!text) return null;
         const lines = text.split('\n').filter(l => l.trim());
@@ -68,14 +68,12 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
             const cleanLine = line.replace(/^[•\-\s]+/, '').trim();
             if (!cleanLine) return null;
 
-            const isBold = cleanLine.startsWith('**') && cleanLine.includes('**:');
-
             return (
-                <View key={i} className="flex-row gap-3 mb-2.5">
-                    {icon === 'check' && <CheckCircle size={15} color="#3B82F6" style={{ marginTop: 3 }} />}
+                <View key={i} style={styles.bulletRow}>
+                    {icon === 'check' && <CheckCircle size={15} color="#7C3AED" style={{ marginTop: 3 }} />}
                     {icon === 'x' && <XCircle size={15} color="#EF4444" style={{ marginTop: 3 }} />}
-                    {icon === 'dot' && <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#64748B', marginTop: 7 }} />}
-                    <Text className="text-slate-300 leading-6 text-sm flex-1">
+                    {icon === 'dot' && <View style={styles.bulletDot} />}
+                    <Text style={styles.bulletText}>
                         {cleanLine.replace(/\*\*/g, '')}
                     </Text>
                 </View>
@@ -84,95 +82,85 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
     };
 
     return (
-        <SafeAreaView className="flex-1 bg-[#020617]">
-            <StatusBar barStyle="light-content" />
+        <SafeAreaView style={styles.container}>
+            <StatusBar barStyle="dark-content" />
 
             {/* Header */}
-            <View className="px-6 py-4 flex-row items-center justify-between border-b border-white/5 bg-[#020617] z-10">
-                <TouchableOpacity
-                    onPress={onBack}
-                    className="p-2 -ml-2 rounded-full active:bg-white/10"
-                >
-                    <ArrowLeft size={24} color="white" />
+            <View style={styles.header}>
+                <TouchableOpacity onPress={onBack} style={styles.headerIconBtn}>
+                    <ArrowLeft size={24} color="#27272a" />
                 </TouchableOpacity>
-                <Text className="text-white text-lg font-bold flex-1 text-center mx-4" numberOfLines={1}>
-                    정부사업 상세
+                <Text style={styles.headerTitle} numberOfLines={1}>
+                    공고 상세 정보
                 </Text>
-                <TouchableOpacity
-                    onPress={handleShare}
-                    className="p-2 -mr-2 rounded-full active:bg-white/10"
-                >
-                    <Share2 size={22} color="white" />
+                <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
+                    <Share2 size={22} color="#27272a" />
                 </TouchableOpacity>
             </View>
 
-            <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-                {/* Hero Section */}
-                <View className="relative overflow-hidden">
+            <ScrollView 
+                style={styles.scroll} 
+                showsVerticalScrollIndicator={false} 
+                contentContainerStyle={{ paddingBottom: 140 }}
+            >
+                {/* Hero / Cover Section */}
+                <View style={styles.heroSection}>
                     <LinearGradient
-                        colors={['#4C1D95', '#020617']}
-                        className="absolute inset-0 opacity-50"
+                        colors={['#7C3AED08', '#FDF8F3']}
+                        style={StyleSheet.absoluteFillObject}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 0, y: 1 }}
                     />
 
-                    <View className="px-6 pt-8 pb-10">
+                    <View style={styles.heroContent}>
                         {/* Badges */}
-                        <View className="flex-row gap-2 mb-4">
+                        <View style={styles.badgeRow}>
                             {program.d_day && (
-                                <View className="bg-red-500/20 px-3 py-1 rounded-full border border-red-500/30">
-                                    <Text className="text-red-400 text-xs font-bold">{program.d_day}</Text>
+                                <View style={styles.dDayBadge}>
+                                    <Text style={styles.dDayText}>{program.d_day}</Text>
                                 </View>
                             )}
-                            <View className="bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
-                                <Text className="text-emerald-400 text-xs font-bold">{program.status || '모집중'}</Text>
+                            <View style={styles.statusBadge}>
+                                <Text style={styles.statusText}>{program.status || '모집중'}</Text>
                             </View>
-                            <View className="bg-white/10 px-3 py-1 rounded-full border border-white/10">
-                                <Text className="text-slate-300 text-xs">{program.category}</Text>
+                            <View style={styles.categoryBadge}>
+                                <Text style={styles.categoryText}>{program.category}</Text>
                             </View>
-                            {program.region && program.region !== '전국' && (
-                                <View className="bg-purple-500/10 px-3 py-1 rounded-full border border-purple-500/20">
-                                    <Text className="text-purple-400 text-xs font-bold">{program.region}</Text>
-                                </View>
+                        </View>
+
+                        <Text style={styles.titleText}>{program.title}</Text>
+
+                        <View style={styles.agencyRow}>
+                            <Building size={16} color="#64748B" />
+                            <Text style={styles.agencyName}>{program.agency}</Text>
+                            {program.department && (
+                                <Text style={styles.departmentName}> · {program.department}</Text>
                             )}
                         </View>
 
-                        <Text className="text-white text-2xl font-bold leading-9 mb-6">
-                            {program.title}
-                        </Text>
+                        <View style={styles.divider} />
 
-                        <View className="flex-row items-center gap-2 mb-2">
-                            <Building size={16} color="#94A3B8" />
-                            <Text className="text-slate-300 text-sm font-medium">{program.agency}</Text>
-                        </View>
-                        {program.department && (
-                            <Text className="text-slate-400 text-xs pl-6 mb-2">{program.department}</Text>
-                        )}
-
-                        <View className="h-[1px] bg-white/10 my-4" />
-
-                        {/* Quick Info Grid */}
-                        <View className="flex-row flex-wrap gap-4">
+                        <View style={styles.quickInfoGrid}>
                             {program.application_period && (
-                                <View className="flex-row items-center gap-2">
-                                    <Calendar size={16} color="#94A3B8" />
-                                    <Text className="text-slate-300 text-sm">
-                                        {program.application_period}
-                                    </Text>
+                                <View style={styles.quickInfoItem}>
+                                    <View style={styles.quickIconBox}>
+                                        <Calendar size={14} color="#7C3AED" />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.quickLabel}>신청기간</Text>
+                                        <Text style={styles.quickValueText}>{program.application_period}</Text>
+                                    </View>
                                 </View>
                             )}
                             {program.budget && (
-                                <View className="flex-row items-center gap-2">
-                                    <DollarSign size={16} color="#10B981" />
-                                    <Text className="text-emerald-400 text-sm font-bold">
-                                        {program.budget}
-                                    </Text>
-                                </View>
-                            )}
-                            {program.region && (
-                                <View className="flex-row items-center gap-2">
-                                    <MapPin size={16} color="#94A3B8" />
-                                    <Text className="text-slate-300 text-sm">{program.region}</Text>
+                                <View style={styles.quickInfoItem}>
+                                    <View style={[styles.quickIconBox, { backgroundColor: '#10B98110' }]}>
+                                        <DollarSign size={14} color="#10B981" />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.quickLabel}>지원금액</Text>
+                                        <Text style={[styles.quickValueText, { color: '#10B981' }]}>{program.budget}</Text>
+                                    </View>
                                 </View>
                             )}
                         </View>
@@ -180,37 +168,30 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                 </View>
 
                 {/* Content Cards */}
-                <View className="px-5 -mt-6 gap-5">
-
+                <View style={styles.contentContainer}>
                     {/* 📋 사업 개요 */}
-                    <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                        <View className="flex-row items-center gap-2 mb-3">
-                            <Text className="text-lg">📋</Text>
-                            <Text className="text-white text-lg font-bold">사업 개요</Text>
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>📋</Text>
+                            <Text style={styles.cardTitle}>사업 개요</Text>
                         </View>
                         {program.description && (
-                            <Text className="text-slate-300 leading-6 text-sm mb-4">
+                            <Text style={styles.cardDescText}>
                                 {program.description}
                             </Text>
                         )}
-                        {/* Quick summary chips */}
-                        <View className="flex-row flex-wrap gap-2">
-                            {program.budget && (
-                                <View className="bg-emerald-500/10 px-3 py-2 rounded-xl border border-emerald-500/20">
-                                    <Text className="text-slate-500 text-[10px] mb-0.5">지원금액</Text>
-                                    <Text className="text-emerald-400 text-sm font-bold">{program.budget}</Text>
-                                </View>
-                            )}
-                            {program.application_period && (
-                                <View className="bg-blue-500/10 px-3 py-2 rounded-xl border border-blue-500/20">
-                                    <Text className="text-slate-500 text-[10px] mb-0.5">신청기간</Text>
-                                    <Text className="text-blue-400 text-sm font-bold">{program.application_period}</Text>
-                                </View>
-                            )}
+                        
+                        <View style={styles.summaryGrid}>
                             {program.target_audience && (
-                                <View className="bg-purple-500/10 px-3 py-2 rounded-xl border border-purple-500/20">
-                                    <Text className="text-slate-500 text-[10px] mb-0.5">지원대상</Text>
-                                    <Text className="text-purple-400 text-sm font-bold">{program.target_audience}</Text>
+                                <View style={styles.summaryItem}>
+                                    <Text style={styles.summaryLabel}>지원대상</Text>
+                                    <Text style={styles.summaryValue}>{program.target_audience}</Text>
+                                </View>
+                            )}
+                            {program.region && (
+                                <View style={styles.summaryItem}>
+                                    <Text style={styles.summaryLabel}>지역</Text>
+                                    <Text style={styles.summaryValue}>{program.region}</Text>
                                 </View>
                             )}
                         </View>
@@ -218,13 +199,13 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 
                     {/* ⚠️ 자격 요건 */}
                     {program.eligibility && (
-                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                            <View className="flex-row items-center gap-2 mb-4">
-                                <Text className="text-lg">⚠️</Text>
-                                <Text className="text-white text-lg font-bold">자격 요건</Text>
+                        <View style={styles.card}>
+                            <View style={styles.cardHeader}>
+                                <Text style={styles.cardIcon}>⚠️</Text>
+                                <Text style={styles.cardTitle}>자격 요건</Text>
                             </View>
-                            <View className="bg-amber-500/5 rounded-xl p-4 border border-amber-500/10 mb-3">
-                                <Text className="text-amber-400 text-xs font-bold mb-2">필수 요건</Text>
+                            <View style={styles.eligibilityBox}>
+                                <Text style={styles.eligibilitySubTitle}>필수 요건</Text>
                                 {renderBulletList(program.eligibility, 'check')}
                             </View>
                         </View>
@@ -232,12 +213,12 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 
                     {/* ❌ 제외 대상 */}
                     {program.exclusions && (
-                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                            <View className="flex-row items-center gap-2 mb-4">
-                                <Text className="text-lg">❌</Text>
-                                <Text className="text-white text-lg font-bold">제외 대상</Text>
+                        <View style={styles.card}>
+                            <View style={styles.cardHeader}>
+                                <Text style={styles.cardIcon}>❌</Text>
+                                <Text style={styles.cardTitle}>제외 대상</Text>
                             </View>
-                            <View className="bg-red-500/5 rounded-xl p-4 border border-red-500/10">
+                            <View style={styles.exclusionBox}>
                                 {renderBulletList(program.exclusions, 'x')}
                             </View>
                         </View>
@@ -245,139 +226,75 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 
                     {/* 💰 지원 내용 */}
                     {program.support_details && (
-                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                            <View className="flex-row items-center gap-2 mb-4">
-                                <Text className="text-lg">💰</Text>
-                                <Text className="text-white text-lg font-bold">지원 내용</Text>
+                        <View style={styles.card}>
+                            <View style={styles.cardHeader}>
+                                <Text style={styles.cardIcon}>💰</Text>
+                                <Text style={styles.cardTitle}>지원 내용</Text>
                             </View>
-                            {renderBulletList(program.support_details, 'dot')}
+                            <View style={styles.supportBox}>
+                                {renderBulletList(program.support_details, 'dot')}
+                            </View>
                         </View>
                     )}
 
-                    {/* 📝 신청 방법 */}
-                    {program.application_method && (
-                        <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                            <View className="flex-row items-center gap-2 mb-3">
-                                <Text className="text-lg">📝</Text>
-                                <Text className="text-white text-lg font-bold">신청 방법</Text>
-                            </View>
-                            <Text className="text-slate-300 leading-6 text-sm">
-                                {program.application_method}
-                            </Text>
+                    {/* 📄 신청 서류 */}
+                    <View style={styles.card}>
+                        <View style={styles.cardHeader}>
+                            <Text style={styles.cardIcon}>📄</Text>
+                            <Text style={styles.cardTitle}>제출 서류</Text>
                         </View>
-                    )}
-
-                    {/* ℹ️ 세부 정보 */}
-                    <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                        <View className="flex-row items-center gap-2 mb-4">
-                            <Text className="text-lg">ℹ️</Text>
-                            <Text className="text-white text-lg font-bold">세부 정보</Text>
-                        </View>
-                        <View className="gap-4">
-                            <View>
-                                <Text className="text-slate-500 text-xs mb-1">담당 기관</Text>
-                                <Text className="text-slate-200 font-medium">{program.agency}</Text>
+                        <View style={styles.documentList}>
+                            <View style={styles.docItem}>
+                                <CheckCircle size={16} color="#CBD5E1" />
+                                <Text style={styles.docItemText}>사업계획서 (필수)</Text>
                             </View>
-                            {program.department && (
-                                <View>
-                                    <Text className="text-slate-500 text-xs mb-1">담당부서</Text>
-                                    <Text className="text-slate-200 font-medium">{program.department}</Text>
-                                </View>
-                            )}
-                            {program.region && (
-                                <View>
-                                    <Text className="text-slate-500 text-xs mb-1">대상 지역</Text>
-                                    <Text className="text-slate-200 font-medium">{program.region}</Text>
-                                </View>
-                            )}
-                            {program.target_audience && (
-                                <View>
-                                    <Text className="text-slate-500 text-xs mb-1">지원 대상</Text>
-                                    <Text className="text-slate-200 font-medium">{program.target_audience}</Text>
-                                </View>
-                            )}
-                            {program.tech_field && (
-                                <View>
-                                    <Text className="text-slate-500 text-xs mb-1">기술 분야</Text>
-                                    <Text className="text-slate-200 font-medium">{program.tech_field}</Text>
-                                </View>
-                            )}
-                            {program.contact_info && (
-                                <View>
-                                    <Text className="text-slate-500 text-xs mb-1">문의처</Text>
-                                    <Text className="text-blue-400 font-medium">{program.contact_info}</Text>
-                                </View>
-                            )}
-                        </View>
-                    </View>
-
-                    {/* 📄 제출서류 및 첨부파일 */}
-                    <View className="bg-slate-900 rounded-2xl p-5 border border-white/10">
-                        <View className="flex-row items-center gap-2 mb-4">
-                            <Text className="text-lg">📄</Text>
-                            <Text className="text-white text-lg font-bold">제출서류 및 첨부파일</Text>
-                        </View>
-
-                        <View className="mb-4">
-                            <Text className="text-slate-500 text-xs mb-2">필수 제출 서류 (공고문에서 확인)</Text>
-                            <View className="flex-row items-start gap-2 mb-1">
-                                <CheckCircle size={14} color="#64748B" style={{ marginTop: 2 }} />
-                                <Text className="text-slate-300 text-sm">사업계획서 (필수)</Text>
+                            <View style={styles.docItem}>
+                                <CheckCircle size={16} color="#CBD5E1" />
+                                <Text style={styles.docItemText}>사업자등록증 원본</Text>
                             </View>
-                            <View className="flex-row items-start gap-2 mb-1">
-                                <CheckCircle size={14} color="#64748B" style={{ marginTop: 2 }} />
-                                <Text className="text-slate-300 text-sm">사업자등록증 (해당 시)</Text>
-                            </View>
-                            <View className="flex-row items-start gap-2">
-                                <CheckCircle size={14} color="#64748B" style={{ marginTop: 2 }} />
-                                <Text className="text-slate-300 text-sm">국세/지방세 완납증명서</Text>
+                            <View style={styles.docItem}>
+                                <CheckCircle size={16} color="#CBD5E1" />
+                                <Text style={styles.docItemText}>국세/지방세 납세증명서</Text>
                             </View>
                         </View>
-
-                        <View className="h-[1px] bg-white/5 my-3" />
 
                         <TouchableOpacity
                             onPress={handleDownloadFile}
-                            className="flex-row items-center justify-between bg-slate-800 p-3 rounded-xl border border-white/5 active:bg-slate-700"
+                            style={styles.originalLinkBtn}
                         >
-                            <View className="flex-row items-center gap-3">
-                                <View className="bg-blue-500/10 p-2 rounded-lg">
-                                    <Globe size={20} color="#3B82F6" />
+                            <View style={styles.originalLinkLeft}>
+                                <View style={styles.globeIconBox}>
+                                    <Globe size={18} color="#7C3AED" />
                                 </View>
                                 <View>
-                                    <Text className="text-white font-medium">
-                                        공고문 및 신청서식 확인하기
-                                    </Text>
-                                    <Text className="text-slate-500 text-xs">
-                                        원문 공고 사이트에서 서류를 다운로드 하세요
-                                    </Text>
+                                    <Text style={styles.originalLinkTitle}>공고문 원본 및 서식 확인</Text>
+                                    <Text style={styles.originalLinkSub}>주관 기관 공식 홈페이지로 이동합니다</Text>
                                 </View>
                             </View>
-                            <ChevronRight size={16} color="#94A3B8" />
+                            <ChevronRight size={18} color="#94A3B8" />
                         </TouchableOpacity>
                     </View>
-
                 </View>
             </ScrollView>
 
-            {/* Analysis Overlay Modal (Simple Implementation) */}
+            {/* Analysis Overlay */}
             {isAnalyzing && (
-                <View className="absolute inset-0 bg-black/80 items-center justify-center z-50">
-                    <View className="bg-slate-900 p-8 rounded-3xl items-center w-[80%] border border-blue-500/30">
-                        <ActivityIndicator size="large" color="#3B82F6" className="mb-6" />
-                        <Text className="text-white text-xl font-bold mb-2">AI 전략 분석 중...</Text>
-                        <View className="items-start w-full px-4 gap-3 mt-4">
-                            <View className="flex-row items-center gap-3">
-                                <View className={`w-2 h-2 rounded-full ${analysisStep >= 1 ? 'bg-blue-500' : 'bg-slate-700'}`} />
-                                <Text className={`${analysisStep >= 1 ? 'text-blue-400' : 'text-slate-600'}`}>공고문 PDF 분석</Text>
+                <View style={styles.overlay}>
+                    <View style={styles.analysisModal}>
+                        <ActivityIndicator size="large" color="#7C3AED" style={{ marginBottom: 24 }} />
+                        <Text style={styles.analysisTitle}>AI 전략 분석 중...</Text>
+                        <View style={styles.analysisSteps}>
+                            <View style={styles.analysisStepItem}>
+                                <View style={[styles.stepDot, analysisStep >= 1 && styles.stepDotActive]} />
+                                <Text style={[styles.stepText, analysisStep >= 1 && styles.stepTextActive]}>공고문 핵심 지표 추출</Text>
                             </View>
-                            <View className="flex-row items-center gap-3">
-                                <View className={`w-2 h-2 rounded-full ${analysisStep >= 2 ? 'bg-purple-500' : 'bg-slate-700'}`} />
-                                <Text className={`${analysisStep >= 2 ? 'text-purple-400' : 'text-slate-600'}`}>합격 전략 수립 (Gemini Pro)</Text>
+                            <View style={styles.analysisStepItem}>
+                                <View style={[styles.stepDot, analysisStep >= 2 && styles.stepDotActive, { backgroundColor: '#818CF8' }]} />
+                                <Text style={[styles.stepText, analysisStep >= 2 && styles.stepTextActive]}>합격 가능성 및 리스크 진단</Text>
                             </View>
-                            <View className="flex-row items-center gap-3">
-                                <View className={`w-2 h-2 rounded-full ${analysisStep >= 3 ? 'bg-emerald-500' : 'bg-slate-700'}`} />
-                                <Text className={`${analysisStep >= 3 ? 'text-emerald-400' : 'text-slate-600'}`}>사업계획서 초안 작성</Text>
+                            <View style={styles.analysisStepItem}>
+                                <View style={[styles.stepDot, analysisStep >= 3 && styles.stepDotActive, { backgroundColor: '#10B981' }]} />
+                                <Text style={[styles.stepText, analysisStep >= 3 && styles.stepTextActive]}>맞춤형 사업계획서 가이드 생성</Text>
                             </View>
                         </View>
                     </View>
@@ -385,33 +302,169 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
             )}
 
             {/* Bottom Action Bar */}
-            <View className="absolute bottom-0 left-0 right-0 bg-[#020617]/95 px-6 py-4 border-t border-white/10"
-                style={{ paddingBottom: Platform.OS === 'web' ? 16 : Platform.OS === 'ios' ? 40 : 16 }}
-            >
-                <View className="flex-row gap-3">
+            <View style={styles.bottomBar}>
+                <View style={styles.actionRow}>
                     <TouchableOpacity
                         onPress={handleOpenOriginal}
-                        className="flex-1 bg-slate-800 rounded-xl py-4 flex-row items-center justify-center active:bg-slate-700 border border-white/10"
+                        style={styles.secondaryBtn}
                     >
-                        <Text className="text-slate-300 font-bold text-base mr-2">원문 공고</Text>
-                        <ExternalLink size={18} color="#CBD5E1" />
+                        <Text style={styles.secondaryBtnText}>원문 보기</Text>
+                        <ExternalLink size={18} color="#64748B" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
                         onPress={handleAnalyze}
-                        className="flex-2 flex-[2] bg-blue-600 rounded-xl py-4 flex-row items-center justify-center active:bg-blue-700 shadow-lg shadow-blue-500/30"
+                        style={styles.primaryBtn}
                     >
-                        <LinearGradient
-                            colors={['#2563EB', '#1D4ED8']}
-                            className="absolute inset-0 rounded-xl"
-                        />
-                        <View className="flex-row items-center">
-                            <Text className="text-white font-bold text-base mr-2">AI 전략 분석하기</Text>
-                            <Zap size={18} color="white" fill="white" />
-                        </View>
+                        <Zap size={18} color="white" fill="white" />
+                        <Text style={styles.primaryBtnText}>AI 전략 분석 시작</Text>
                     </TouchableOpacity>
                 </View>
             </View>
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    header: { 
+        height: 64, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        paddingHorizontal: 20, 
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderColor: '#F1F5F9'
+    },
+    headerIconBtn: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+    headerTitle: { fontSize: 18, fontWeight: '900', color: '#27272a', letterSpacing: -0.5 },
+    
+    scroll: { flex: 1 },
+    heroSection: { minHeight: 280, paddingTop: 40, paddingBottom: 60 },
+    heroContent: { paddingHorizontal: 28 },
+    badgeRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+    dDayBadge: { backgroundColor: '#EF4444', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+    dDayText: { color: 'white', fontSize: 12, fontWeight: '900' },
+    statusBadge: { backgroundColor: '#7C3AED10', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#7C3AED20' },
+    statusText: { color: '#7C3AED', fontSize: 12, fontWeight: '800' },
+    categoryBadge: { backgroundColor: '#F1F5F9', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10 },
+    categoryText: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+    
+    titleText: { fontSize: 26, fontWeight: '900', color: '#27272a', lineHeight: 36, marginBottom: 20, letterSpacing: -1 },
+    agencyRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
+    agencyName: { color: '#475569', fontSize: 15, fontWeight: '700', marginLeft: 8 },
+    departmentName: { color: '#94A3B8', fontSize: 14, fontWeight: '500' },
+    divider: { height: 1, backgroundColor: '#E2E8F0', marginVertical: 24, width: '100%' },
+    
+    quickInfoGrid: { flexDirection: 'row', gap: 24 },
+    quickInfoItem: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
+    quickIconBox: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#7C3AED08', alignItems: 'center', justifyContent: 'center' },
+    quickLabel: { color: '#94A3B8', fontSize: 11, fontWeight: '800', marginBottom: 2 },
+    quickValueText: { color: '#475569', fontSize: 14, fontWeight: '800' },
+
+    contentContainer: { paddingHorizontal: 20, marginTop: -32, gap: 16 },
+    card: { 
+        backgroundColor: '#FFFFFF', 
+        borderRadius: 28, 
+        padding: 24, 
+        borderWidth: 1, 
+        borderColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.04,
+        shadowRadius: 16,
+    },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18 },
+    cardIcon: { fontSize: 18 },
+    cardTitle: { fontSize: 17, fontWeight: '900', color: '#27272a', letterSpacing: -0.5 },
+    cardDescText: { color: '#475569', fontSize: 14, lineHeight: 24, fontWeight: '500', marginBottom: 20 },
+    
+    summaryGrid: { flexDirection: 'row', gap: 12 },
+    summaryItem: { flex: 1, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 20, borderWidth: 1, borderColor: '#F1F5F9' },
+    summaryLabel: { color: '#94A3B8', fontSize: 11, fontWeight: '800', marginBottom: 4 },
+    summaryValue: { color: '#27272a', fontSize: 13, fontWeight: '800' },
+
+    eligibilityBox: { backgroundColor: '#FDF8F3', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#7C3AED10' },
+    eligibilitySubTitle: { color: '#7C3AED', fontSize: 12, fontWeight: '900', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
+    bulletRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+    bulletDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#94A3B8', marginTop: 8 },
+    bulletText: { color: '#475569', fontSize: 14, lineHeight: 22, fontWeight: '500', flex: 1 },
+
+    exclusionBox: { backgroundColor: '#FEF2F2', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#FEE2E2' },
+    supportBox: { gap: 4 },
+    
+    documentList: { marginBottom: 20 },
+    docItem: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+    docItemText: { color: '#64748B', fontSize: 14, fontWeight: '600' },
+    
+    originalLinkBtn: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        backgroundColor: '#F8FAFC', 
+        padding: 16, 
+        borderRadius: 20, 
+        borderWidth: 1, 
+        borderColor: '#F1F5F9' 
+    },
+    originalLinkLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    globeIconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#7C3AED08', alignItems: 'center', justifyContent: 'center' },
+    originalLinkTitle: { color: '#27272a', fontSize: 14, fontWeight: '800' },
+    originalLinkSub: { color: '#94A3B8', fontSize: 12, marginTop: 2, fontWeight: '500' },
+
+    bottomBar: { 
+        position: 'absolute', 
+        bottom: 0, 
+        left: 0, 
+        right: 0, 
+        backgroundColor: '#FFFFFF', 
+        paddingHorizontal: 24, 
+        paddingTop: 16, 
+        borderTopWidth: 1, 
+        borderColor: '#F1F5F9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -10 },
+        shadowOpacity: 0.05,
+        shadowRadius: 20,
+    },
+    actionRow: { flexDirection: 'row', gap: 12 },
+    secondaryBtn: { 
+        flex: 1, 
+        height: 56, 
+        borderRadius: 18, 
+        backgroundColor: '#F8FAFC', 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: 10,
+        borderWidth: 1,
+        borderColor: '#E2E8F0'
+    },
+    secondaryBtnText: { color: '#64748B', fontSize: 15, fontWeight: '800' },
+    primaryBtn: { 
+        flex: 2, 
+        height: 56, 
+        borderRadius: 18, 
+        backgroundColor: '#7C3AED', 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: 10,
+        shadowColor: '#7C3AED',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.2,
+        shadowRadius: 15,
+    },
+    primaryBtnText: { color: 'white', fontSize: 16, fontWeight: '900' },
+
+    overlay: { position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center', zIndex: 100 },
+    analysisModal: { backgroundColor: '#FFFFFF', padding: 32, borderRadius: 32, width: '85%', maxWidth: 400, alignItems: 'center' },
+    analysisTitle: { color: '#27272a', fontSize: 22, fontWeight: '900', marginBottom: 32, letterSpacing: -0.5 },
+    analysisSteps: { width: '100%', gap: 20 },
+    analysisStepItem: { flexDirection: 'row', alignItems: 'center', gap: 16 },
+    stepDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#E2E8F0' },
+    stepDotActive: { backgroundColor: '#7C3AED' },
+    stepText: { color: '#94A3B8', fontSize: 15, fontWeight: '700' },
+    stepTextActive: { color: '#27272a' },
+});

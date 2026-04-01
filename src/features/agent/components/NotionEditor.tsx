@@ -375,9 +375,9 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                         style={styles.templateBtn}
                         onPress={() => setShowTemplateMenu(!showTemplateMenu)}
                     >
-                        <Sparkles size={14} color="#818CF8" />
+                        <Sparkles size={14} color="#7C3AED" />
                         <Text style={styles.templateBtnText}>양식 삽입</Text>
-                        <ChevronDown size={12} color="#818CF8" />
+                        <ChevronDown size={12} color="#7C3AED" />
                     </TouchableOpacity>
                 </View>
             </View>
@@ -385,12 +385,12 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
             {/* ─── Template Dropdown ─── */}
             {showTemplateMenu && (
                 <div style={{
-                    position: 'absolute', top: 44, right: 12, zIndex: 200,
-                    width: 320, backgroundColor: '#0F172A', borderRadius: 12,
-                    border: '1px solid #1E293B', boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+                    position: 'absolute', top: 48, right: 12, zIndex: 200,
+                    width: 320, backgroundColor: '#FFFFFF', borderRadius: 16,
+                    border: '1px solid #E2E8F0', boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
                     padding: 8,
                 }}>
-                    <div style={{ padding: '6px 10px', fontSize: 10, color: '#818CF8', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: 1 }}>
+                    <div style={{ padding: '8px 12px 6px', fontSize: 11, color: '#7C3AED', fontWeight: 900, textTransform: 'uppercase' as const, letterSpacing: 1.2 }}>
                         사업계획서 양식
                     </div>
                     {TEMPLATE_SECTIONS.map(tmpl => (
@@ -400,15 +400,15 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                             className="ne-template-item"
                             style={{
                                 display: 'flex', flexDirection: 'column' as const,
-                                width: '100%', padding: '10px 12px', backgroundColor: 'transparent',
-                                border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' as const, gap: 2,
+                                width: '100%', padding: '12px 14px', backgroundColor: 'transparent',
+                                border: 'none', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const, gap: 2,
                             }}
                         >
-                            <span style={{ color: '#E2E8F0', fontSize: 13, fontWeight: 700 }}>{tmpl.label}</span>
-                            <span style={{ color: '#64748B', fontSize: 11 }}>{tmpl.desc}</span>
+                            <span style={{ color: '#27272a', fontSize: 14, fontWeight: 700 }}>{tmpl.label}</span>
+                            <span style={{ color: '#64748B', fontSize: 12 }}>{tmpl.desc}</span>
                         </button>
                     ))}
-                    <div style={{ borderTop: '1px solid #1E293B', marginTop: 4, paddingTop: 8 }}>
+                    <div style={{ borderTop: '1px solid #F1F5F9', marginTop: 4, paddingTop: 8 }}>
                         <button
                             onMouseDown={(e) => {
                                 e.preventDefault();
@@ -417,9 +417,9 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                             }}
                             className="ne-template-item"
                             style={{
-                                width: '100%', padding: '10px 12px', backgroundColor: 'rgba(129,140,248,0.08)',
-                                border: '1px solid rgba(129,140,248,0.15)', borderRadius: 8, cursor: 'pointer', textAlign: 'center' as const,
-                                color: '#818CF8', fontSize: 13, fontWeight: 700,
+                                width: '100%', padding: '12px 14px', backgroundColor: 'rgba(124, 58, 237, 0.05)',
+                                border: '1px solid rgba(124, 58, 237, 0.1)', borderRadius: 10, cursor: 'pointer', textAlign: 'center' as const,
+                                color: '#7C3AED', fontSize: 14, fontWeight: 900,
                             }}
                         >
                             📋 전체 양식 한번에 삽입
@@ -432,40 +432,40 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
             {showToolbar && (
                 <div style={{
                     position: 'absolute',
-                    top: toolbarPosition.top + 44,
+                    top: toolbarPosition.top + 48,
                     left: Math.max(0, toolbarPosition.left),
                     zIndex: 100,
                     display: 'flex', flexDirection: 'row' as const, gap: 2,
-                    backgroundColor: '#1E293B', borderRadius: 10,
-                    padding: '4px 6px',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.6)',
-                    border: '1px solid #334155',
+                    backgroundColor: '#FFFFFF', borderRadius: 12,
+                    padding: '6px 8px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.12)',
+                    border: '1px solid #E2E8F0',
                 }}>
                     {[
-                        { cmd: 'bold', icon: <Bold size={14} color="#E2E8F0" /> },
-                        { cmd: 'italic', icon: <Italic size={14} color="#E2E8F0" /> },
-                        { cmd: 'underline', icon: <Underline size={14} color="#E2E8F0" /> },
-                        { cmd: 'strikeThrough', icon: <Strikethrough size={14} color="#E2E8F0" /> },
+                        { cmd: 'bold', icon: <Bold size={14} color="#27272a" /> },
+                        { cmd: 'italic', icon: <Italic size={14} color="#27272a" /> },
+                        { cmd: 'underline', icon: <Underline size={14} color="#27272a" /> },
+                        { cmd: 'strikeThrough', icon: <Strikethrough size={14} color="#27272a" /> },
                     ].map(item => (
                         <button
                             key={item.cmd}
                             onMouseDown={(e) => { e.preventDefault(); execFormat(item.cmd); }}
                             style={{
-                                width: 32, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 4,
+                                width: 34, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8,
                             }}
                         >
                             {item.icon}
                         </button>
                     ))}
-                    <div style={{ width: 1, height: 20, backgroundColor: '#334155', margin: '0 4px', alignSelf: 'center' as const }} />
+                    <div style={{ width: 1, height: 24, backgroundColor: '#F1F5F9', margin: '0 6px', alignSelf: 'center' as const }} />
                     <button onMouseDown={(e) => { e.preventDefault(); insertLink(); }}
-                        style={{ width: 32, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 4 }}>
-                        <Link size={14} color="#E2E8F0" />
+                        style={{ width: 34, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8 }}>
+                        <Link size={14} color="#27272a" />
                     </button>
                     <button onMouseDown={(e) => { e.preventDefault(); document.execCommand('insertHTML', false, '<code class="ne-inline-code">' + (window.getSelection()?.toString() || 'code') + '</code>'); }}
-                        style={{ width: 32, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 4 }}>
-                        <Code size={14} color="#E2E8F0" />
+                        style={{ width: 34, height: 32, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'transparent', border: 'none', cursor: 'pointer', borderRadius: 8 }}>
+                        <Code size={14} color="#27272a" />
                     </button>
                 </div>
             )}
@@ -474,14 +474,14 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
             {showSlashMenu && (
                 <div style={{
                     position: 'absolute',
-                    top: slashPosition.top + 44,
+                    top: slashPosition.top + 48,
                     left: slashPosition.left,
-                    zIndex: 100, width: 280, maxHeight: 340,
+                    zIndex: 100, width: 280, maxHeight: 380,
                     overflowY: 'auto' as const,
-                    backgroundColor: '#0F172A', borderRadius: 12,
-                    border: '1px solid #1E293B',
-                    boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
-                    padding: 6,
+                    backgroundColor: '#FFFFFF', borderRadius: 16,
+                    border: '1px solid #E2E8F0',
+                    boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+                    padding: 8,
                 }}>
                     {Object.entries(commandCategories).map(([category, cmds]) => (
                         <div key={category}>
@@ -495,24 +495,24 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                                         key={cmd.id}
                                         onMouseDown={(e) => { e.preventDefault(); insertBlock(cmd.tag); }}
                                         style={{
-                                            display: 'flex', flexDirection: 'row' as const, alignItems: 'center', gap: 10,
-                                            width: '100%', padding: '8px 10px',
-                                            backgroundColor: globalIdx === activeSlashIdx ? '#1E293B' : 'transparent',
-                                            border: 'none', borderRadius: 8, cursor: 'pointer', textAlign: 'left' as const,
+                                            display: 'flex', flexDirection: 'row' as const, alignItems: 'center', gap: 12,
+                                            width: '100%', padding: '10px 12px',
+                                            backgroundColor: globalIdx === activeSlashIdx ? '#F8FAFC' : 'transparent',
+                                            border: 'none', borderRadius: 10, cursor: 'pointer', textAlign: 'left' as const,
                                         }}
-                                        onMouseOver={(e) => { (e.currentTarget.style.backgroundColor = '#1E293B'); setActiveSlashIdx(globalIdx); }}
+                                        onMouseOver={(e) => { (e.currentTarget.style.backgroundColor = '#F8FAFC'); setActiveSlashIdx(globalIdx); }}
                                         onMouseOut={(e) => { if (globalIdx !== activeSlashIdx) e.currentTarget.style.backgroundColor = 'transparent'; }}
                                     >
                                         <span style={{
-                                            width: 36, height: 36, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            backgroundColor: '#111827', borderRadius: 8, fontSize: 16,
-                                            border: '1px solid #1E293B',
+                                            width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            backgroundColor: '#F1F5F9', borderRadius: 10, fontSize: 18,
+                                            border: '1px solid #E2E8F0',
                                         }}>
                                             {cmd.icon}
                                         </span>
                                         <div>
-                                            <div style={{ color: '#E2E8F0', fontSize: 13, fontWeight: 600 }}>{cmd.label}</div>
-                                            <div style={{ color: '#64748B', fontSize: 11 }}>{cmd.desc}</div>
+                                            <div style={{ color: '#27272a', fontSize: 14, fontWeight: 700 }}>{cmd.label}</div>
+                                            <div style={{ color: '#64748B', fontSize: 12 }}>{cmd.desc}</div>
                                         </div>
                                     </button>
                                 );
@@ -542,14 +542,14 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                     style={{
                         minHeight: 500,
                         outline: 'none',
-                        color: '#E2E8F0',
-                        fontSize: 15,
-                        lineHeight: '28px',
+                        color: '#27272a',
+                        fontSize: 16,
+                        lineHeight: '30px',
                         fontFamily: "'Pretendard', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif",
                         padding: '0 40px',
-                        maxWidth: '100%', // 🌟 FIX: widened editor width
+                        maxWidth: '100%', 
                         margin: '0 auto',
-                        caretColor: '#818CF8',
+                        caretColor: '#7C3AED',
                         position: 'relative' as const,
                     }}
                     className="notion-editor"
@@ -558,9 +558,9 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                     <div style={{
                         position: 'absolute' as const,
                         top: 0, left: 40,
-                        color: '#334155',
-                        fontSize: 15,
-                        lineHeight: '28px',
+                        color: '#94A3B8',
+                        fontSize: 16,
+                        lineHeight: '30px',
                         pointerEvents: 'none' as const,
                         fontFamily: "'Pretendard', 'Apple SD Gothic Neo', sans-serif",
                         maxWidth: '100%',
@@ -583,7 +583,7 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
             {/* ─── Enhanced Editor Styles ─── */}
             <style dangerouslySetInnerHTML={{
                 __html: `
-                @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800&display=swap');
+                @import url('https://fonts.googleapis.com/css2?family=Pretendard:wght@400;500;600;700;800;900&display=swap');
 
                 .notion-editor {
                     font-family: 'Pretendard', 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -591,106 +591,107 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
 
                 /* ─── Headings ─── */
                 .notion-editor h1 {
-                    font-size: 32px; font-weight: 800; color: #F1F5F9;
-                    margin: 28px 0 12px; line-height: 1.25; letter-spacing: -0.5px;
-                    padding-bottom: 8px; border-bottom: 1px solid #1E293B;
+                    font-size: 36px; font-weight: 900; color: #27272a;
+                    margin: 32px 0 16px; line-height: 1.2; letter-spacing: -1px;
+                    padding-bottom: 12px; border-bottom: 2px solid #F1F5F9;
                 }
                 .notion-editor h2 {
-                    font-size: 24px; font-weight: 700; color: #E2E8F0;
-                    margin: 22px 0 8px; line-height: 1.3; letter-spacing: -0.3px;
+                    font-size: 26px; font-weight: 900; color: #27272a;
+                    margin: 24px 0 10px; line-height: 1.3; letter-spacing: -0.5px;
+                }
+                .notion-editor h3 {
+                    font-size: 20px; font-weight: 800; color: #27272a;
+                    margin: 18px 0 8px; line-height: 1.3;
                 }
 
-                /* ─── Tables (Premium Dark Theme) ─── */
+                /* ─── Tables (Premium Light Theme) ─── */
                 .notion-editor table {
                     width: 100%;
                     border-collapse: separate;
                     border-spacing: 0;
                     margin: 24px 0;
-                    font-size: 14px;
-                    border-radius: 12px;
+                    font-size: 15px;
+                    border-radius: 16px;
                     overflow: hidden;
-                    border: 1px solid #334155;
-                    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+                    border: 1.5px solid #E2E8F0;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
                 }
                 .notion-editor th {
-                    background-color: #1E293B;
-                    color: #F8FAFC;
-                    font-weight: 700;
+                    background-color: #F8FAFC;
+                    color: #475569;
+                    font-weight: 800;
                     text-align: left;
-                    padding: 14px 16px;
-                    border-bottom: 2px solid #475569;
-                    letter-spacing: -0.02em;
+                    padding: 16px 20px;
+                    border-bottom: 1.5px solid #E2E8F0;
+                    letter-spacing: -0.01em;
                 }
                 .notion-editor td {
-                    background-color: #0F172A;
-                    color: #CBD5E1;
-                    padding: 14px 16px;
-                    border-bottom: 1px solid #1E293B;
+                    background-color: #FFFFFF;
+                    color: #475569;
+                    padding: 16px 20px;
+                    border-bottom: 1px solid #F1F5F9;
                     vertical-align: top;
-                    line-height: 1.5;
+                    line-height: 1.6;
                 }
                 .notion-editor tr:last-child td {
                     border-bottom: none;
                 }
                 .notion-editor tr:hover td {
-                    background-color: #162032;
-                }
-                .notion-editor h3 {
-                    font-size: 18px; font-weight: 700; color: #CBD5E1;
-                    margin: 16px 0 6px; line-height: 1.3;
+                    background-color: #FDF8F3;
                 }
 
                 /* ─── Body ─── */
-                .notion-editor p { margin: 6px 0; line-height: 1.8; }
+                .notion-editor p { margin: 8px 0; line-height: 1.8; color: #475569; font-weight: 500; }
 
                 /* ─── Blockquote ─── */
                 .notion-editor blockquote {
-                    border-left: 3px solid #818CF8;
-                    padding: 8px 16px; margin: 12px 0;
-                    background: rgba(129, 140, 248, 0.04);
-                    border-radius: 0 8px 8px 0;
-                    color: #94A3B8; font-style: italic;
+                    border-left: 4px solid #7C3AED;
+                    padding: 10px 20px; margin: 16px 0;
+                    background: rgba(124, 58, 237, 0.04);
+                    border-radius: 0 12px 12px 0;
+                    color: #64748B; font-weight: 500;
                 }
 
                 /* ─── Lists ─── */
-                .notion-editor ul, .notion-editor ol { padding-left: 24px; margin: 6px 0; }
-                .notion-editor li { margin: 4px 0; line-height: 1.7; }
-                .notion-editor li::marker { color: #818CF8; }
+                .notion-editor ul, .notion-editor ol { padding-left: 28px; margin: 8px 0; }
+                .notion-editor li { margin: 6px 0; line-height: 1.8; color: #475569; }
+                .notion-editor li::marker { color: #7C3AED; font-weight: 900; }
 
                 /* ─── Divider ─── */
                 .notion-editor hr, .notion-editor .ne-divider {
-                    border: 0; border-top: 1px solid #1E293B;
-                    margin: 24px 0;
+                    border: 0; border-top: 2px solid #F1F5F9;
+                    margin: 32px 0;
                 }
 
                 /* ─── Bold/Strong ─── */
-                .notion-editor b, .notion-editor strong { color: #F8FAFC; font-weight: 700; }
+                .notion-editor b, .notion-editor strong { color: #27272a; font-weight: 900; }
 
                 /* ─── Links ─── */
                 .notion-editor a {
-                    color: #818CF8; text-decoration: underline;
-                    text-decoration-color: rgba(129,140,248,0.4);
-                    text-underline-offset: 3px;
-                    transition: color 0.15s;
+                    color: #7C3AED; text-decoration: underline;
+                    text-decoration-color: rgba(124, 58, 237, 0.3);
+                    text-underline-offset: 4px;
+                    transition: all 0.2s;
+                    font-weight: 700;
                 }
-                .notion-editor a:hover { color: #A5B4FC; }
+                .notion-editor a:hover { color: #5B21B6; text-decoration-color: #7C3AED; }
 
                 /* ─── Inline Code ─── */
                 .ne-inline-code, .notion-editor code:not(pre code) {
-                    background: rgba(129,140,248,0.1);
-                    color: #A5B4FC; padding: 2px 6px;
-                    border-radius: 4px; font-size: 0.9em;
+                    background: rgba(124, 58, 237, 0.08);
+                    color: #7C3AED; padding: 3px 8px;
+                    border-radius: 6px; font-size: 0.9em;
                     font-family: 'SF Mono', 'Fira Code', monospace;
-                    border: 1px solid rgba(129,140,248,0.15);
+                    font-weight: 700;
                 }
 
                 /* ─── Code Block ─── */
                 .ne-code, .notion-editor pre {
-                    background: #0B1120; border: 1px solid #1E293B;
-                    border-radius: 10px; padding: 16px 20px;
-                    margin: 12px 0; overflow-x: auto;
+                    background: #F8FAFC; border: 1.5px solid #E2E8F0;
+                    border-radius: 14px; padding: 20px 24px;
+                    margin: 16px 0; overflow-x: auto;
                     font-family: 'SF Mono', 'Fira Code', monospace;
-                    font-size: 13px; line-height: 1.6; color: #94A3B8;
+                    font-size: 14px; line-height: 1.6; color: #475569;
                 }
                 .ne-code code, .notion-editor pre code {
                     background: none; border: none; padding: 0;
@@ -699,79 +700,81 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
 
                 /* ─── Callout ─── */
                 .ne-callout {
-                    background: rgba(245,158,11,0.06);
-                    border: 1px solid rgba(245,158,11,0.15);
-                    border-radius: 10px; padding: 14px 18px;
-                    margin: 12px 0; font-size: 14px;
-                    color: #E2E8F0; display: flex; align-items: flex-start; gap: 8px;
+                    background: #FFFBEB;
+                    border: 1.5px solid #FEF3C7;
+                    border-radius: 14px; padding: 16px 20px;
+                    margin: 16px 0; font-size: 15px;
+                    color: #92400E; display: flex; align-items: flex-start; gap: 12px;
+                    font-weight: 600;
                 }
 
                 /* ─── Checklist ─── */
                 .ne-checklist {
                     display: flex; align-items: center;
-                    padding: 4px 0; margin: 2px 0;
+                    padding: 6px 0; margin: 4px 0;
                 }
-                .ne-checklist label { display: flex; align-items: center; color: #E2E8F0; cursor: pointer; }
+                .ne-checklist label { display: flex; align-items: center; color: #475569; cursor: pointer; font-weight: 500; }
 
                 /* ─── Table ─── */
                 .ne-table {
                     width: 100%; border-collapse: collapse;
-                    margin: 12px 0; border-radius: 8px; overflow: hidden;
-                    border: 1px solid #1E293B;
+                    margin: 16px 0; border-radius: 12px; overflow: hidden;
+                    border: 1.5px solid #E2E8F0;
                 }
                 .ne-table th {
-                    background: #111827; color: #94A3B8; font-weight: 700;
-                    padding: 10px 14px; text-align: left;
-                    border-bottom: 1px solid #1E293B; font-size: 12px;
-                    text-transform: uppercase; letter-spacing: 0.5px;
+                    background: #F8FAFC; color: #64748B; font-weight: 800;
+                    padding: 12px 16px; text-align: left;
+                    border-bottom: 1.5px solid #E2E8F0; font-size: 13px;
+                    text-transform: uppercase; letter-spacing: 0.8px;
                 }
                 .ne-table td {
-                    padding: 10px 14px; border-bottom: 1px solid #0F172A;
-                    color: #E2E8F0; font-size: 14px;
+                    padding: 12px 16px; border-bottom: 1px solid #F1F5F9;
+                    color: #475569; font-size: 15px;
                 }
-                .ne-table tr:hover td { background: rgba(129,140,248,0.04); }
 
                 /* ─── Section ─── */
                 .ne-section {
-                    border: 1px solid #1E293B; border-radius: 12px;
-                    padding: 20px 24px; margin: 16px 0;
-                    background: rgba(15,23,42,0.6);
+                    border: 1.5px solid #E2E8F0; border-radius: 16px;
+                    padding: 24px 28px; margin: 24px 0;
+                    background: #FFFFFF;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
                 }
                 .ne-section h2 { margin-top: 0 !important; border-bottom: none !important; }
                 .ne-section-hint {
-                    color: #475569 !important; font-size: 13px !important;
-                    font-style: italic; margin-bottom: 8px !important;
+                    color: #94A3B8 !important; font-size: 14px !important;
+                    font-style: italic; margin-bottom: 12px !important;
+                    font-weight: 500;
                 }
 
                 /* ─── Selection ─── */
-                .notion-editor::selection { background: rgba(129, 140, 248, 0.3); }
-                .notion-editor *::selection { background: rgba(129, 140, 248, 0.3); }
+                .notion-editor::selection { background: rgba(124, 58, 237, 0.15); }
+                .notion-editor *::selection { background: rgba(124, 58, 237, 0.15); }
 
                 /* ─── Block hover effect ─── */
                 .notion-editor > * {
-                    transition: background-color 0.15s;
-                    border-radius: 4px;
-                    padding-left: 4px; padding-right: 4px;
-                    margin-left: -4px; margin-right: -4px;
+                    transition: all 0.2s;
+                    border-radius: 8px;
+                    padding-left: 8px; padding-right: 8px;
+                    margin-left: -8px; margin-right: -8px;
                 }
                 .notion-editor > *:hover {
-                    background: rgba(129,140,248,0.03);
+                    background: rgba(124, 58, 237, 0.02);
                 }
 
                 /* ─── Toolbar button hover ─── */
-                .ne-toolbar-btn:hover { background: #1E293B !important; }
-                .ne-template-item:hover { background: #1E293B !important; }
+                .ne-toolbar-btn:hover { background: #F1F5F9 !important; }
+                .ne-template-item:hover { background: #F8FAFC !important; }
 
                 /* ─── Placeholder styling ─── */
                 .notion-editor:empty::before {
                     content: attr(data-placeholder);
-                    color: #334155; pointer-events: none;
+                    color: #CBD5E1; pointer-events: none;
                 }
 
                 /* ─── Scrollbar ─── */
-                .notion-editor::-webkit-scrollbar { width: 4px; }
+                .notion-editor::-webkit-scrollbar { width: 6px; }
                 .notion-editor::-webkit-scrollbar-track { background: transparent; }
-                .notion-editor::-webkit-scrollbar-thumb { background: #1E293B; border-radius: 4px; }
+                .notion-editor::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 10px; }
             ` }} />
         </View>
     );
@@ -802,18 +805,17 @@ export const getEditorMarkdown = (editorEl: HTMLDivElement | null): string => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        position: 'relative',
-        backgroundColor: '#020617',
+        backgroundColor: '#FFFFFF',
     },
     topToolbar: {
-        height: 44,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingHorizontal: 12,
-        borderBottomWidth: 1,
-        borderColor: '#1E293B',
-        backgroundColor: '#0F172A',
+        height: 48,
+        borderBottomWidth: 1.5,
+        borderColor: '#E2E8F0',
+        backgroundColor: '#F8FAFC',
     },
     topToolbarLeft: {
         flexDirection: 'row',

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Text } from 'react-native';
+import { Text, TextStyle, StyleProp } from 'react-native';
 
 interface DecryptedTextProps {
     words: string[];
     interval?: number;
-    className?: string;
+    style?: StyleProp<TextStyle>;
 }
 
 const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*가나다라마바사아자차카타파하거너더러머버서어저처커터퍼허';
@@ -12,7 +12,7 @@ const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#
 export const DecryptedText: React.FC<DecryptedTextProps> = ({
     words,
     interval = 3000,
-    className = ''
+    style
 }) => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [displayText, setDisplayText] = useState(words[0]);
@@ -65,5 +65,5 @@ export const DecryptedText: React.FC<DecryptedTextProps> = ({
         return () => clearInterval(decryptInterval);
     }, [isDecrypting, currentIndex, words]);
 
-    return <Text className={className}>{displayText}</Text>;
+    return <Text style={style}>{displayText}</Text>;
 };

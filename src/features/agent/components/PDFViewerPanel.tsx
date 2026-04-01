@@ -118,7 +118,7 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
                         onLoadSuccess={onDocumentLoadSuccess}
                         loading={
                             <View style={styles.loadingContainer}>
-                                <ActivityIndicator size="large" color="#3B82F6" />
+                                <ActivityIndicator size="large" color="#7C3AED" />
                             </View>
                         }
                         error={
@@ -172,7 +172,7 @@ export const PDFViewerPanel = forwardRef<PDFViewerRef, PDFViewerPanelProps>(
 );
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#525659' },
+    container: { flex: 1, backgroundColor: '#F8FAFC' },
     scrollContent: { paddingVertical: 20, alignItems: 'center' },
     loadingContainer: { flex: 1, height: 200, justifyContent: 'center', alignItems: 'center' },
     errorContainer: { flex: 1, padding: 20, justifyContent: 'center', alignItems: 'center' },

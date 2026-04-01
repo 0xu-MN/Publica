@@ -41,8 +41,8 @@ const RESEARCHER_TYPES = [
 const MAJOR_CATEGORIES = Object.keys(JOB_CATEGORIES);
 const INDUSTRY_CATEGORIES = Object.keys(JOB_CATEGORIES);
 const STEPS = [
-    { id: 1, title: '유형 선택', icon: <UserIcon size={18} color="#94A3B8" /> },
-    { id: 2, title: '상세 정보', icon: <FileText size={18} color="#94A3B8" /> }
+    { id: 1, title: '유형 선택', icon: <UserIcon size={18} color="#64748B" /> },
+    { id: 2, title: '상세 정보', icon: <FileText size={18} color="#64748B" /> }
 ];
 
 const Stepper = ({ currentStep }: { currentStep: number }) => {
@@ -56,7 +56,7 @@ const Stepper = ({ currentStep }: { currentStep: number }) => {
                             currentStep >= s.id && styles.stepIconBoxActive
                         ]}>
                             {React.cloneElement(s.icon as any, {
-                                color: currentStep >= s.id ? '#FFFFFF' : '#94A3B8',
+                                color: currentStep >= s.id ? '#FFFFFF' : '#64748B',
                                 size: 16
                             })}
                         </View>
@@ -325,7 +325,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                 <Text style={styles.typeTitle}>{title}</Text>
                 <Text style={styles.typeDesc}>{desc}</Text>
             </View>
-            {userType === type && <Check size={20} color="#3B82F6" />}
+            {userType === type && <Check size={20} color="#7C3AED" />}
         </TouchableOpacity>
     );
 
@@ -349,10 +349,10 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                         {step === 1 ? (
                             <View style={styles.stepContainer}>
                                 <View style={styles.cardGrid}>
-                                    {renderTypeCard('business', '기존 사업자', '사업자 등록증 보유', <Briefcase size={22} color={userType === 'business' ? '#3B82F6' : '#64748B'} />)}
-                                    {renderTypeCard('pre_entrepreneur', '예비 창업자', '창업 준비/아이디어', <Rocket size={22} color={userType === 'pre_entrepreneur' ? '#3B82F6' : '#64748B'} />)}
-                                    {renderTypeCard('researcher', '연구원 / 학생', 'R&D 및 학술 연구', <Beaker size={22} color={userType === 'researcher' ? '#3B82F6' : '#64748B'} />)}
-                                    {renderTypeCard('other', '프리랜서 / 기타', 'N잡러, 창작자 등', <UserIcon size={22} color={userType === 'other' ? '#3B82F6' : '#64748B'} />)}
+                                    {renderTypeCard('business', '기존 사업자', '사업자 등록증 보유', <Briefcase size={22} color={userType === 'business' ? '#7C3AED' : '#64748B'} />)}
+                                    {renderTypeCard('pre_entrepreneur', '예비 창업자', '창업 준비/아이디어', <Rocket size={22} color={userType === 'pre_entrepreneur' ? '#7C3AED' : '#64748B'} />)}
+                                    {renderTypeCard('researcher', '연구원 / 학생', 'R&D 및 학술 연구', <Beaker size={22} color={userType === 'researcher' ? '#7C3AED' : '#64748B'} />)}
+                                    {renderTypeCard('other', '프리랜서 / 기타', 'N잡러, 창작자 등', <UserIcon size={22} color={userType === 'other' ? '#7C3AED' : '#64748B'} />)}
                                 </View>
 
                                 <TouchableOpacity
@@ -373,7 +373,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                                 <Text style={styles.label}>사업자 정보 등록 (빠른 인증 & 신뢰도 +5)</Text>
                                                 <View style={styles.inputWrapper}>
                                                     <TouchableOpacity onPress={fetchBusinessInfoByNumber} style={styles.inputIcon}>
-                                                        {isAutoFilling ? <ActivityIndicator size="small" color="#3B82F6" /> : <Search size={18} color="#94A3B8" />}
+                                                        {isAutoFilling ? <ActivityIndicator size="small" color="#7C3AED" /> : <Search size={18} color="#94A3B8" />}
                                                     </TouchableOpacity>
                                                     <TextInput
                                                         style={styles.inputWithIcon}
@@ -599,7 +599,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                                     pickerModal.type === 'businessType' ? '사업의 종류 선택' : '산업 분야 선택'}
                             </Text>
                             <TouchableOpacity onPress={() => setPickerModal({ ...pickerModal, visible: false })}>
-                                <Text style={{ color: '#3B82F6', fontWeight: 'bold' }}>닫기</Text>
+                                <Text style={{ color: '#7C3AED', fontWeight: 'bold' }}>닫기</Text>
                             </TouchableOpacity>
                         </View>
                         <ScrollView style={styles.modalBody}>
@@ -644,9 +644,9 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#020617' },
-    overlay: { flex: 1, backgroundColor: 'rgba(2, 6, 23, 0.85)', justifyContent: 'center', alignItems: 'center', padding: 20 },
-    modalCard: { backgroundColor: 'white', width: '100%', maxWidth: 450, borderRadius: 32, padding: 24, shadowColor: '#000', shadowOpacity: 0.3, shadowRadius: 30, elevation: 15, position: 'relative' },
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    overlay: { flex: 1, backgroundColor: 'rgba(253, 248, 243, 0.9)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+    modalCard: { backgroundColor: 'white', width: '100%', maxWidth: 450, borderRadius: 32, padding: 32, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 30, elevation: 15, position: 'relative' },
     closeBtn: { position: 'absolute', top: 20, right: 20, zIndex: 10 },
     scrollContent: { paddingBottom: 20 },
     header: { marginBottom: 24, alignItems: 'center' },
@@ -664,13 +664,13 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#E2E8F0'
     },
-    typeCardActive: { borderColor: '#3B82F6', backgroundColor: '#EFF6FF' },
-    iconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#EDF2F7', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
+    typeCardActive: { borderColor: '#7C3AED', backgroundColor: 'rgba(124, 58, 237, 0.05)' },
+    iconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center', marginRight: 12 },
     iconBoxActive: { backgroundColor: 'white' },
     typeInfo: { flex: 1 },
     typeTitle: { color: '#0F172A', fontSize: 15, fontWeight: '700', marginBottom: 2 },
     typeDesc: { color: '#64748B', fontSize: 12 },
-    nextBtn: { backgroundColor: '#3B82F6', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    nextBtn: { backgroundColor: '#7C3AED', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 },
     nextBtnText: { color: 'white', fontSize: 16, fontWeight: '700' },
     btnDisabled: { opacity: 0.4 },
     backBtn: { marginBottom: 16 },
@@ -690,10 +690,10 @@ const styles = StyleSheet.create({
     },
     row: { flexDirection: 'row', gap: 8 },
     chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, backgroundColor: '#F1F5F9' },
-    chipActive: { backgroundColor: '#3B82F6' },
+    chipActive: { backgroundColor: '#7C3AED' },
     chipText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
     chipTextActive: { color: 'white' },
-    saveBtn: { backgroundColor: '#0F172A', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
+    saveBtn: { backgroundColor: '#27272a', height: 56, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginTop: 12 },
     dropdown: { backgroundColor: '#F8FAFC', height: 52, borderRadius: 14, paddingHorizontal: 16, justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
     dropdownText: { color: '#0F172A', fontSize: 15 },
     placeholderText: { color: '#94A3B8' },
@@ -750,11 +750,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center'
     },
     checkboxChecked: {
-        backgroundColor: '#3B82F6',
-        borderColor: '#3B82F6'
+        backgroundColor: '#7C3AED',
+        borderColor: '#7C3AED'
     },
     checkboxLabel: {
-        color: '#1E293B',
+        color: '#27272a',
         fontSize: 14,
         fontWeight: '600'
     },
@@ -785,9 +785,9 @@ const styles = StyleSheet.create({
         borderColor: '#E2E8F0'
     },
     stepIconBoxActive: {
-        backgroundColor: '#3B82F6',
-        borderColor: '#3B82F6',
-        shadowColor: '#3B82F6',
+        backgroundColor: '#7C3AED',
+        borderColor: '#7C3AED',
+        shadowColor: '#7C3AED',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
         marginTop: -16 // Align with icons
     },
     stepLineActive: {
-        backgroundColor: '#3B82F6'
+        backgroundColor: '#7C3AED'
     },
     secondaryBtn: {
         backgroundColor: '#F1F5F9',

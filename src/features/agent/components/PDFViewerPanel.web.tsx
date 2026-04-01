@@ -15,29 +15,29 @@ pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@3.11.174/build/pdf
 
 async function fetchPythonTOC(url: string) {
     try {
-        console.log("🚀 [Hybrid] 1단계: 파싱 요청 시작 (URL 가독화 중...)");
+        console.log("🚀 [Hybrid] 파싱 요청 시작...");
         const pdfRes = await fetch(url);
         const pdfBlob = await pdfRes.blob();
 
         const formData = new FormData();
         formData.append('file', pdfBlob, 'document.pdf');
 
-        // B안: Vercel 프록시 (또는 Vercel Serverless) 먼저 찌르기
+        // Primary: Vercel proxy (HTTPS) or localhost (dev)
         const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-        const primaryUrl = isHttps ? '/api/parse-pdf' : 'http://localhost:8001/api/parse-pdf';
-        const fallbackUrl = 'https://totally-bargain-convergence-dragon.trycloudflare.com/api/parse-pdf'; // A안: 클라우드플레어 터널 우회
+        const envBackendUrl = process.env.EXPO_PUBLIC_PYTHON_BACKEND_URL || '';
+        const primaryUrl = isHttps ? '/api/parse-pdf' : `${envBackendUrl || 'http://localhost:8001'}/api/parse-pdf`;
+        // Fallback: env-variable-defined backend (no more dead Cloudflare tunnels)
+        const fallbackUrl = envBackendUrl ? `${envBackendUrl}/api/parse-pdf` : null;
 
         try {
-            console.log(`⚡ [Hybrid] 1차 시도 (B안 - 15초 제한 Vercel): ${primaryUrl}`);
+            console.log(`⚡ [Hybrid] 1차 시도: ${primaryUrl}`);
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000); // Vercel 한계치 직전인 12초에서 끊음
+            const timeoutId = setTimeout(() => controller.abort(), 15000);
 
             const parseRes = await fetch(primaryUrl, {
                 method: 'POST',
                 body: formData,
-                headers: {
-                    'Bypass-Tunnel-Reminder': 'true'
-                },
+                headers: { 'Bypass-Tunnel-Reminder': 'true' },
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
@@ -47,29 +47,29 @@ async function fetchPythonTOC(url: string) {
             }
 
             const data = await parseRes.json();
-            console.log(`✅ [Hybrid] 1차(Vercel) 성공: ${data.toc?.length}개 항목`);
+            console.log(`✅ [Hybrid] 1차 성공: ${data.toc?.length}개 항목`);
             return data;
 
         } catch (error) {
-            console.warn(`⚠️ [Hybrid] 1차 시도 실패(타임아웃/오류). 즉시 A안(EC2 소화기)으로 전환합니다!`, error);
+            console.warn(`⚠️ [Hybrid] 1차 시도 실패. Fallback 시도 중...`, error);
 
-            // A안: EC2 서버로 재요청 (무제한 대기)
-            console.log(`🚒 [Hybrid] 2차 시도 (A안 - EC2 무적 서버): ${fallbackUrl}`);
-            const fallbackRes = await fetch(fallbackUrl, {
-                method: 'POST',
-                headers: {
-                    'Bypass-Tunnel-Reminder': 'true'
-                },
-                body: formData,
-            });
+            if (fallbackUrl) {
+                console.log(`🚒 [Hybrid] 2차 시도 (Fallback): ${fallbackUrl}`);
+                const fallbackRes = await fetch(fallbackUrl, {
+                    method: 'POST',
+                    headers: { 'Bypass-Tunnel-Reminder': 'true' },
+                    body: formData,
+                });
 
-            if (!fallbackRes.ok) {
-                throw new Error(`2차 시도까지 모두 실패 상태코드: ${fallbackRes.status}`);
+                if (!fallbackRes.ok) {
+                    throw new Error(`2차 시도까지 모두 실패 상태코드: ${fallbackRes.status}`);
+                }
+
+                const data = await fallbackRes.json();
+                console.log(`🏆 [Hybrid] 2차 Fallback 성공: ${data.toc?.length}개 항목`);
+                return data;
             }
-
-            const data = await fallbackRes.json();
-            console.log(`🏆 [Hybrid] 2차(EC2) 구조대 성공: ${data.toc?.length}개 항목`);
-            return data;
+            throw error;
         }
     } catch (error) {
         console.error('❌ [Hybrid] 모든 파이썬 서버 파싱 완전 실패:', error);

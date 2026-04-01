@@ -158,38 +158,39 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
     // --- END RESTORED LOGIC ---
 
     return (
-        <View className="flex-1 bg-[#020617]">
+        <View className="flex-1 bg-[#FDF8F3]">
             {/* --- MAIN PAGE SCROLL (Controls whole screen) --- */}
             <ScrollView
                 className="flex-1"
                 showsVerticalScrollIndicator={false}
             >
                 {/* --- TITLE AREA (Scrolls with content) --- */}
-                <View className="px-6 max-w-[1400px] w-full mx-auto pt-8 pb-4">
-                    <View className="flex-row items-center justify-between mb-2">
+                <View className="px-6 max-w-[1400px] w-full mx-auto pt-10 pb-6">
+                    <View className="flex-row items-center justify-between mb-3">
                         <View className="flex-row items-center">
-                            <Users size={28} color="#3B82F6" />
-                            <Text className="text-white text-3xl font-bold ml-3">커뮤니티 라운지</Text>
+                            <View className="w-10 h-10 bg-[#7C3AED]/10 rounded-xl items-center justify-center">
+                                <Users size={24} color="#7C3AED" />
+                            </View>
+                            <Text className="text-[#27272a] text-3xl font-bold ml-4">커뮤니티 라운지</Text>
                         </View>
                         <TouchableOpacity
                             onPress={() => setIsNotiModalVisible(true)}
-                            className="relative p-2 rounded-full hover:bg-white/5 bg-white/5 border border-white/10"
+                            className="relative p-2.5 rounded-full bg-white border border-[#E2E8F0] shadow-sm shadow-black/5"
                         >
-                            <Bell size={20} color={unreadCount > 0 ? "white" : "#94A3B8"} />
+                            <Bell size={20} color={unreadCount > 0 ? "#7C3AED" : "#64748B"} />
                             {unreadCount > 0 && (
-                                <View className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-[#020617]" />
+                                <View className="absolute top-2 right-2 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
                             )}
                         </TouchableOpacity>
                     </View>
-                    <Text className="text-slate-400 text-base">전문가들과 인사이트를 나누고 안전하게 소통하세요</Text>
+                    <Text className="text-[#64748B] text-base ml-1">전문가들과 인사이트를 나누고 안전하게 소통하세요</Text>
                 </View>
 
                 {/* --- MAIN CONTENT CONTAINER --- */}
-                <View className="flex-1 flex-row max-w-[1400px] w-full mx-auto relative px-6 pt-6 min-h-screen">
+                <View className="flex-1 flex-row max-w-[1400px] w-full mx-auto relative px-6 pt-4 min-h-screen">
 
-                    {/* --- LEFT COLUMN: Categories (Standard View) --- */}
-                    <View className="w-[240px] border-r border-white/5 pr-8 hidden md:flex">
-                        {/* This sidebar is part of main scroll, so it scrolls UP when page scrolls */}
+                    {/* --- LEFT COLUMN: Categories --- */}
+                    <View className="w-[260px] border-r border-[#E2E8F0] pr-8 hidden md:flex">
                         <TouchableOpacity
                             onPress={() => {
                                 if (!user) { if (onLoginRequired) onLoginRequired(); }
@@ -198,41 +199,41 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                                     setIsCreateModalVisible(true);
                                 }
                             }}
-                            className="flex-row items-center justify-center bg-blue-600 p-4 rounded-xl mb-8 hover:bg-blue-500 shadow-lg shadow-blue-500/20"
+                            className="flex-row items-center justify-center bg-[#7C3AED] p-4 rounded-xl mb-10 shadow-lg shadow-[#7C3AED]/20 active:opacity-90"
                         >
                             <Plus size={20} color="white" className="mr-2" />
-                            <Text className="text-white font-bold">새 글 작성</Text>
+                            <Text className="text-white font-bold text-base">새 글 작성</Text>
                         </TouchableOpacity>
 
-                        <Text className="text-slate-500 font-bold text-xs uppercase mb-4 ml-2">Categories</Text>
+                        <Text className="text-[#94A3B8] font-bold text-xs uppercase mb-5 ml-2 tracking-widest">Categories</Text>
 
                         {COMMUNITY_CATEGORIES.map((cat) => (
                             <TouchableOpacity
                                 key={cat}
                                 onPress={() => setActiveCategory(cat)}
-                                className={`p-3 rounded-lg flex-row items-center mb-1 ${activeCategory === cat ? 'bg-slate-800 border border-white/10' : 'hover:bg-slate-800/50'}`}
+                                className={`p-3.5 rounded-xl flex-row items-center mb-1.5 transition-all ${activeCategory === cat ? 'bg-[#7C3AED]/5 border border-[#7C3AED]/20' : 'hover:bg-slate-50'}`}
                             >
-                                <View className={`w-1.5 h-1.5 rounded-full mr-3 ${activeCategory === cat ? 'bg-blue-400' : 'bg-slate-600'}`} />
-                                <Text className={`${activeCategory === cat ? 'text-white font-bold' : 'text-slate-400'} text-sm`}>
+                                <View className={`w-2 h-2 rounded-full mr-4 ${activeCategory === cat ? 'bg-[#7C3AED]' : 'bg-[#CBD5E1]'}`} />
+                                <Text className={`${activeCategory === cat ? 'text-[#7C3AED] font-bold' : 'text-[#64748B] font-medium'} text-[15px]`}>
                                     {cat}
                                 </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
 
-                    {/* --- RIGHT COLUMN: Feed (NESTED SCROLL) --- */}
-                    <View className="flex-1 pl-0 md:pl-8">
+                    {/* --- RIGHT COLUMN: Feed --- */}
+                    <View className="flex-1 pl-0 md:pl-10">
 
                         {/* Mobile Header */}
-                        <View className="md:hidden mb-6">
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
+                        <View className="md:hidden mb-8">
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-5">
                                 {COMMUNITY_CATEGORIES.map((cat) => (
                                     <TouchableOpacity
                                         key={cat}
                                         onPress={() => setActiveCategory(cat)}
-                                        className={`mr-2 px-3 py-1.5 rounded-full border ${activeCategory === cat ? 'bg-blue-600 border-blue-600' : 'border-white/10 bg-slate-900'}`}
+                                        className={`mr-3 px-4 py-2 rounded-full border ${activeCategory === cat ? 'bg-[#7C3AED] border-[#7C3AED]' : 'border-[#E2E8F0] bg-white shadow-sm shadow-black/5'}`}
                                     >
-                                        <Text className={`text-xs ${activeCategory === cat ? 'text-white font-bold' : 'text-slate-400'}`}>{cat}</Text>
+                                        <Text className={`text-sm ${activeCategory === cat ? 'text-white font-bold' : 'text-[#64748B] font-medium'}`}>{cat}</Text>
                                     </TouchableOpacity>
                                 ))}
                             </ScrollView>
@@ -241,10 +242,10 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                                     if (!user) { if (onLoginRequired) onLoginRequired(); }
                                     else setIsCreateModalVisible(true);
                                 }}
-                                className="bg-blue-600 p-3 rounded-xl flex-row items-center justify-center mb-2"
+                                className="bg-[#7C3AED] p-4 rounded-xl flex-row items-center justify-center shadow-md shadow-[#7C3AED]/20"
                             >
-                                <Plus size={16} color="white" className="mr-1" />
-                                <Text className="text-white font-bold text-sm">글쓰기</Text>
+                                <Plus size={18} color="white" className="mr-2" />
+                                <Text className="text-white font-bold text-base">글쓰기</Text>
                             </TouchableOpacity>
                         </View>
 
@@ -321,7 +322,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                 pointerEvents={selectedProfileUserId ? 'auto' : 'none'}
             >
                 {selectedProfileUserId && (
-                    <View className="flex-1 bg-[#050B14] rounded-[32px] overflow-hidden border border-white/10 shadow-2xl">
+                    <View className="flex-1 bg-transparent rounded-[32px] overflow-hidden border border-slate-200 dark:border-white/10 shadow-2xl">
                         <PublicProfileView
                             userId={selectedProfileUserId}
                             onClose={() => setSelectedProfileUserId(null)}

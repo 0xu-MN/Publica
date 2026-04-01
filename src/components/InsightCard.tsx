@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Text, View, Pressable, Platform, TouchableOpacity } from 'react-native';
+import { Text, View, Pressable, Platform, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -42,61 +42,54 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
     };
 
     const isScience = item.category === 'Science';
-    const categoryColor = isScience ? '#0EA5E9' : '#10B981';
-    const categoryBg = isScience ? 'rgba(14, 165, 233, 0.2)' : 'rgba(16, 185, 129, 0.2)';
+    const categoryColor = isScience ? '#7C3AED' : '#10B981';
+    const categoryBg = isScience ? '#7C3AED08' : '#10B98108';
     const categoryLabel = isScience ? '과학' : '경제';
 
     return (
-        <Animated.View style={[rStyleContainer]} className="w-full mb-4">
+        <Animated.View style={[rStyleContainer, styles.container]}>
             <Pressable
                 onPress={onPress}
-                // @ts-ignore - web functionality
+                // @ts-ignore
                 onHoverIn={handleHoverIn}
                 onHoverOut={handleHoverOut}
-                className="w-full"
-                style={[style]}
+                style={[style, { width: '100%' }]}
             >
                 <View
-                    className={`w-full overflow-hidden border ${isHovered ? 'border-white/30' : 'border-white/10'} ${Platform.OS === 'web' && isHovered ? 'shadow-2xl shadow-blue-500/20' : ''}`}
-                    style={{ height: cardHeight, borderRadius: 30 }}
+                    style={[
+                        styles.card,
+                        { height: cardHeight },
+                        isHovered && styles.cardHovered
+                    ]}
                 >
                     {/* Background Image */}
                     <Image
                         source={{ uri: item.imageUrl }}
-                        className="absolute inset-0 w-full h-full"
+                        style={styles.image}
                         contentFit="cover"
                         contentPosition="center"
                         transition={500}
                     />
 
-                    {/* Gradient Overlay for Text Readability */}
+                    {/* Light Gradient Overlay */}
                     <LinearGradient
-                        colors={['transparent', 'rgba(5, 11, 20, 0.4)', 'rgba(5, 11, 20, 0.95)']}
-                        locations={[0, 0.5, 1]}
-                        className="absolute inset-0"
+                        colors={['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.4)', 'rgba(255, 255, 255, 0.95)']}
+                        locations={[0, 0.4, 0.8]}
+                        style={styles.gradient}
                     />
 
-                    {/* Glare Effect (Web Only) */}
-                    {isHovered && Platform.OS === 'web' && (
-                        <LinearGradient
-                            colors={['rgba(255,255,255,0.1)', 'transparent']}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 1 }}
-                            className="absolute inset-0"
-                        />
-                    )}
-
                     {/* Top Badges */}
-                    <View className="flex-row justify-between p-5">
+                    <View style={styles.topRow}>
                         <View
-                            className="px-3.5 py-1.5 rounded-full backdrop-blur-md border border-white/10 flex-row items-center"
-                            style={{ backgroundColor: categoryBg, borderColor: categoryColor }}
+                            style={[styles.categoryBadge, { backgroundColor: categoryBg, borderColor: categoryColor + '20' }]}
                         >
-                            <Text className="text-[11px] font-bold uppercase" style={{ color: categoryColor }}>{categoryLabel}</Text>
+                            <Text style={[styles.categoryText, { color: categoryColor }]}>{categoryLabel}</Text>
                         </View>
                         <TouchableOpacity
-                            className={`w-9 h-9 rounded-full items-center justify-center backdrop-blur-sm border border-white/5 active:bg-black/50 ${isScrapped ? 'bg-blue-500/20 shadow-lg shadow-blue-500/30' : 'bg-black/30'}`}
-                            style={{ zIndex: 50 }}
+                            style={[
+                                styles.bookmarkBtn,
+                                isScrapped && styles.bookmarkBtnActive
+                            ]}
                             onPress={(e) => {
                                 e.stopPropagation();
                                 onBookmarkPress?.();
@@ -105,35 +98,37 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
                         >
                             <Bookmark
                                 size={18}
-                                color={isScrapped ? "#3B82F6" : "white"}
-                                fill={isScrapped ? "#3B82F6" : "none"}
-                                opacity={isScrapped ? 1 : 0.9}
+                                color={isScrapped ? "#7C3AED" : "#64748B"}
+                                fill={isScrapped ? "#7C3AED" : "none"}
                             />
                         </TouchableOpacity>
                     </View>
 
                     {/* Bottom Content */}
-                    <View className="flex-1 justify-end p-5 pb-6">
-                        {/* 키워드 태그 */}
-                        <View className="flex-row flex-wrap mb-3 gap-1.5">
+                    <View style={styles.bottomContent}>
+                        {/* Tags */}
+                        <View style={styles.tagRow}>
                             {item.tags?.slice(0, 3).map((tag, i) => (
-                                <Text key={i} className="text-slate-300 text-[11px] bg-white/10 px-2.5 py-1 rounded-[8px] overflow-hidden font-medium backdrop-blur-md">{tag}</Text>
+                                <Text key={i} style={styles.tagText}>{tag}</Text>
                             ))}
                         </View>
 
                         <Text
-                            className={`text-white font-extrabold leading-[28px] mb-3 ${desktopMode ? 'text-[22px]' : 'text-[20px]'}`}
+                            style={[
+                                styles.title,
+                                { fontSize: desktopMode ? 20 : 18 }
+                            ]}
                             numberOfLines={3}
-                            style={{ textShadowColor: 'rgba(0, 0, 0, 0.5)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }}
                         >
                             {item.title}
                         </Text>
 
-                        <View className="flex-row items-center mt-1">
-                            <View className="flex-row items-center bg-black/20 px-2 py-1 rounded-lg backdrop-blur-sm">
-                                <Text className="text-slate-200 text-xs font-semibold">{item.source}</Text>
-                                <Text className="text-slate-400 mx-2 text-[10px]">•</Text>
-                                <Text className="text-slate-300 text-xs">{item.timestamp}</Text>
+                        <View style={styles.footer}>
+                            <View style={styles.sourceBox}>
+                                <Text style={styles.sourceText}>{item.source}</Text>
+                                <View style={styles.dot} />
+                                <Clock size={12} color="#94A3B8" />
+                                <Text style={styles.timeText}>{item.timestamp}</Text>
                             </View>
                         </View>
                     </View>
@@ -142,3 +137,129 @@ export const InsightCard: React.FC<InsightCardProps> = ({ item, style, desktopMo
         </Animated.View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: { width: '100%', marginBottom: 20 },
+    card: {
+        width: '100%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 28,
+        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        elevation: 2,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 12,
+    },
+    cardHovered: {
+        borderColor: '#7C3AED30',
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+        shadowOffset: { width: 0, height: 8 },
+    },
+    image: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100%',
+        height: '100%',
+    },
+    gradient: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+    },
+    topRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 20,
+    },
+    categoryBadge: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 10,
+        borderWidth: 1,
+    },
+    categoryText: {
+        fontSize: 10,
+        fontWeight: '900',
+        textTransform: 'uppercase',
+    },
+    bookmarkBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(0, 0, 0, 0.05)',
+    },
+    bookmarkBtnActive: {
+        backgroundColor: '#7C3AED08',
+        borderColor: '#7C3AED20',
+    },
+    bottomContent: {
+        flex: 1,
+        justifyContent: 'flex-end',
+        padding: 24,
+    },
+    tagRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        marginBottom: 12,
+        gap: 6,
+    },
+    tagText: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: '#7C3AED',
+        backgroundColor: '#7C3AED08',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
+    },
+    title: {
+        color: '#18181b',
+        fontWeight: '900',
+        lineHeight: 26,
+        marginBottom: 16,
+        letterSpacing: -0.5,
+    },
+    footer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    sourceBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#F8FAFC',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
+    },
+    sourceText: {
+        color: '#475569',
+        fontSize: 11,
+        fontWeight: '800',
+    },
+    dot: {
+        width: 3,
+        height: 3,
+        borderRadius: 1.5,
+        backgroundColor: '#CBD5E1',
+        marginHorizontal: 8,
+    },
+    timeText: {
+        color: '#94A3B8',
+        fontSize: 11,
+        fontWeight: '600',
+        marginLeft: 4,
+    },
+});

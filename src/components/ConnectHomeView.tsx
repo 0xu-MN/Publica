@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TouchableOpacity, useWindowDimensions, ScrollView, ActivityIndicator, Image, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ArrowRight, Sparkles, AlertCircle, Briefcase, Home, RefreshCcw, Users, Building2, Search, Filter, LayoutGrid, Plus, Bell, User as UserIcon, CheckCircle2 } from 'lucide-react-native';
 import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { fetchGrants } from '../services/grants';
 import { calculateGrantScore } from '../utils/scoring';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../contexts/AuthContext';
 import Footer from './Footer';
 import ElectricBorder from './ElectricBorder';
@@ -142,9 +143,9 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
 
     if (loading) {
         return (
-            <View className="flex-1 bg-[#020617] items-center justify-center">
-                <ActivityIndicator size="large" color="#3B82F6" />
-                <Text className="text-slate-400 mt-4 font-medium">Connect Hub 로딩 중...</Text>
+            <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
+                <ActivityIndicator size="large" color="#7C3AED" />
+                <Text style={{ color: '#64748B', marginTop: 16, fontWeight: '600' }}>Connect Hub 로딩 중...</Text>
             </View>
         );
     }
@@ -152,298 +153,170 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
     return (
         <ScrollView
             ref={scrollRef}
-            className="flex-1 w-full bg-[#020617]"
+            style={styles.container}
             contentContainerStyle={{ paddingBottom: 100 }}
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled={true}
         >
-            <View className="max-w-[1400px] mx-auto w-full p-6">
-                {/* Header */}
-                <View className="mb-8 pt-4 flex-row justify-between items-center">
+            <View style={styles.content}>
+                {/* Header Section */}
+                <View style={styles.headerRow}>
                     <View>
-                        <Text className="text-white text-5xl font-black tracking-tighter mb-2">CONNECT HUB</Text>
-                        <Text className="text-slate-400 text-lg">{nickname || '방문자'} 연구원님의 사업 아이템에 맞춘 최적의 기회입니다.</Text>
+                        <Text style={styles.headerTitle}>CONNECT HUB</Text>
+                        <Text style={styles.headerSubtitle}>{nickname || '방문자'} 연구원님의 아이템에 맞춘 최적의 기회입니다.</Text>
                     </View>
-                    <TouchableOpacity className="bg-white/5 px-4 py-2 rounded-xl border border-white/10 flex-row items-center">
+                    <TouchableOpacity style={styles.filterBtn}>
                         <Filter size={18} color="#94A3B8" />
-                        <Text className="text-slate-300 ml-2 font-medium">필터링</Text>
+                        <Text style={styles.filterText}>필터링</Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* Personalized Section (Unified for Visitor & User) */}
-                <View className="mb-12">
-                    {/* Profile Card */}
-                    <View className="bg-[#0F172A] rounded-[40px] p-8 border border-white/5 flex-row items-center justify-between mb-8 shadow-xl">
-                        {!user ? (
-                            /* Visitor Profile Card */
-                            <View className="flex-row items-center justify-between w-full">
-                                <View className="flex-row items-center gap-6">
-                                    <View className="w-24 h-24 rounded-full bg-slate-800 border-2 border-slate-700/50 items-center justify-center">
-                                        <UserIcon size={40} color="#475569" />
-                                    </View>
-                                    <View>
-                                        <Text className="text-white text-3xl font-bold mb-2">안녕하세요 방문자님!</Text>
-                                        <Text className="text-slate-400 font-medium">로그인 후에 더 많은 기능을 이용하실 수 있습니다.</Text>
-                                    </View>
+                {/* Profile Card Section */}
+                <View style={styles.profileCard}>
+                    {!user ? (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+                                <View style={styles.avatar}><UserIcon size={40} color="#94A3B8" /></View>
+                                <View>
+                                    <Text style={styles.profileTitle}>안녕하세요 방문자님!</Text>
+                                    <Text style={styles.profileKeywords}>로그인 후 더 많은 기능을 만나보세요.</Text>
                                 </View>
-                                <View className="flex-row gap-3">
-                                    <TouchableOpacity
-                                        onPress={onLoginPress}
-                                        className="bg-blue-600 px-6 py-3 rounded-2xl shadow-lg shadow-blue-500/20"
-                                    >
-                                        <Text className="text-white font-bold text-base">로그인</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={onLoginPress}
-                                        className="bg-white/5 px-6 py-3 rounded-2xl border border-white/10"
-                                    >
-                                        <Text className="text-slate-300 font-bold text-base">회원가입</Text>
-                                    </TouchableOpacity>
+                            </View>
+                            <View style={{ flexDirection: 'row', gap: 12 }}>
+                                <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
+                                    <Text style={styles.viewBtnText}>로그인</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#7C3AED30' }]}>
+                                    <Text style={[styles.viewBtnText, { color: '#7C3AED' }]}>회원가입</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    ) : (
+                        <>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+                                <View style={styles.avatarWrapper}>
+                                    <View style={styles.avatar}>
+                                        {imageUrl ? <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} /> : <UserIcon size={32} color="#94A3B8" />}
+                                    </View>
+                                    <View style={styles.onlineDot} />
                                 </View>
+                                <View>
+                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                        <Text style={styles.profileTitle}>{nickname} 연구원님</Text>
+                                        <View style={styles.roleBadge}><Text style={styles.roleText}>{role}</Text></View>
+                                    </View>
+                                    <Text style={styles.profileKeywords} numberOfLines={1}>
+                                        보유 기술: <Text style={{ color: '#7C3AED', fontWeight: '700' }}>{keywords.map((k: string) => `#${k}`).join(', ')}</Text> • 선호 분야: <Text style={{ color: '#10B981', fontWeight: '700' }}>{field}</Text>
+                                    </Text>
+                                </View>
+                            </View>
+                            <View style={styles.statsRow}>
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statLabel}>Match Score</Text>
+                                    <Text style={[styles.statValue, { color: '#7C3AED' }]}>98<Text style={styles.scoreUnit}>%</Text></Text>
+                                </View>
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statLabel}>Projects</Text>
+                                    <Text style={styles.statValue}>3<Text style={styles.scoreUnit}>건</Text></Text>
+                                </View>
+                                <TouchableOpacity onPress={onNavigateToWorkspace} style={styles.workspaceBtn}>
+                                    <LayoutGrid size={20} color="#7C3AED" />
+                                    <Text style={styles.workspaceText}>Workspace</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </>
+                    )}
+                </View>
+
+                {/* Top Recommendations */}
+                <View style={styles.recommendSection}>
+                    <View style={styles.recCardsRow}>
+                        {topGrants.length === 0 ? (
+                            <View style={[styles.recCard, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+                                <Search size={48} color="#94A3B8" style={{ opacity: 0.5, marginBottom: 20 }} />
+                                <Text style={{ color: '#18181b', fontSize: 24, fontWeight: '800', marginBottom: 8 }}>맞춤 지원사업 탐색 중</Text>
+                                <Text style={{ color: '#64748B', textAlign: 'center' }}>AI가 연구원님께 최적화된 공고를 선별하고 있습니다.</Text>
                             </View>
                         ) : (
-                            /* Logged-in User Profile Card */
-                            <>
-                                <View className="flex-row items-center gap-6">
-                                    <View className="relative">
-                                        <View className="w-24 h-24 rounded-full bg-slate-800 overflow-hidden border-2 border-blue-500/30">
-                                            {imageUrl ? (
-                                                <Image source={{ uri: imageUrl }} className="w-full h-full" />
-                                            ) : (
-                                                <View className="w-full h-full items-center justify-center">
-                                                    <UserIcon size={32} color="#475569" />
-                                                </View>
-                                            )}
+                            topGrants.slice(0, 2).map((grant, idx) => (
+                                <TouchableOpacity key={idx} style={styles.recCard} onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(grant)}>
+                                    <View style={styles.scoreContainer}>
+                                        <Text style={styles.scoreLabel}>Match Score</Text>
+                                        <Text style={styles.scoreValue}>{!user ? '??' : grant.score}<Text style={styles.scoreUnit}>%</Text></Text>
+                                    </View>
+                                    <View style={{ width: '70%' }}>
+                                        <Text style={styles.recAgency}>{grant.agency}</Text>
+                                        <Text style={styles.recTitle} numberOfLines={3}>{grant.title}</Text>
+                                    </View>
+                                    <View style={styles.badgeRow}>
+                                        <View style={styles.badgePurple}><Text style={styles.badgeTextPurple}>{grant.category}</Text></View>
+                                        <View style={styles.badgeGray}><Text style={styles.badgeTextGray}>{grant.d_day}</Text></View>
+                                    </View>
+                                    <View style={styles.recFooter}>
+                                        <View>
+                                            <Text style={styles.recFieldLabel}>지원 분야</Text>
+                                            <Text style={styles.recFieldValue}>{grant.tech_field}</Text>
                                         </View>
-                                        <View className="absolute bottom-0 right-0 bg-emerald-500 w-6 h-6 rounded-full border-4 border-[#0F172A] items-center justify-center">
-                                            <Plus size={12} color="white" strokeWidth={3} />
+                                        <View style={styles.viewBtn}>
+                                            <Sparkles size={18} color="#FFF" />
+                                            <Text style={styles.viewBtnText}>상세 보기</Text>
                                         </View>
                                     </View>
-                                    <View>
-                                        <View className="flex-row items-center gap-3 mb-2">
-                                            <Text className="text-white text-3xl font-bold">{nickname} 연구원님</Text>
-                                            <View className="bg-blue-600/20 px-3 py-1 rounded-full border border-blue-500/30">
-                                                <Text className="text-blue-400 text-xs font-bold uppercase">{role}</Text>
-                                            </View>
-                                        </View>
-                                        <Text className="text-slate-400 font-medium" numberOfLines={1}>
-                                            보유 기술: <Text className="text-blue-400">{keywords.map((k: string) => `#${k}`).join(', ')}</Text> • 선호 분야: <Text className="text-emerald-400">{field}</Text>
-                                        </Text>
-                                    </View>
-                                </View>
-                                <View className="flex-row items-center gap-10 pr-4">
-                                    <View className="items-center">
-                                        <Text className="text-slate-500 text-xs font-bold mb-1 uppercase tracking-widest">Match Optimization</Text>
-                                        <Text className="text-blue-400 text-4xl font-black">98 <Text className="text-lg">%</Text></Text>
-                                    </View>
-                                    <View className="items-center">
-                                        <Text className="text-slate-500 text-xs font-bold mb-1 uppercase tracking-widest">Active Projects</Text>
-                                        <Text className="text-white text-4xl font-black">3 <Text className="text-lg">건</Text></Text>
-                                    </View>
-
-                                    {/* My Workspace Shortcut */}
-                                    <TouchableOpacity
-                                        onPress={onNavigateToWorkspace}
-                                        className="bg-indigo-600/20 px-6 py-4 rounded-2xl border border-indigo-500/30 flex-row items-center gap-2"
-                                    >
-                                        <LayoutGrid size={20} color="#818CF8" />
-                                        <Text className="text-indigo-400 font-bold text-base">My Workspace</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </>
-                        )}
-                    </View>
-
-                    {/* Top 2 Recommendations (Visible for both, but blurred for guests) */}
-                    <View className="relative">
-                        <View className="flex-row gap-8">
-                            {topGrants.length === 0 ? (
-                                <ElectricBorder
-                                    color="#1E293B"
-                                    speed={0.2}
-                                    chaos={0.02}
-                                    borderRadius={48}
-                                    style={{ flex: 1, display: 'flex' }}
-                                >
-                                    <View className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-slate-800/50 relative overflow-hidden items-center justify-center min-h-[340px] w-full">
-                                        <Search size={48} color="#475569" className="mb-6 opacity-50" />
-                                        <Text className="text-white text-3xl font-black mb-4">최적의 맞춤 지원사업 탐색 중</Text>
-                                        <Text className="text-slate-400 text-lg text-center leading-relaxed max-w-2xl">
-                                            현재 DB에서 연구원님의 활동 지역(<Text className="text-blue-400 font-bold">{profile?.sido || profile?.location || '전국'}</Text>)과 산업 분야(<Text className="text-[#34D399] font-bold">{field}</Text>)에 일치하는 신규 공고를 AI가 분석하고 있습니다. 새로운 공고가 수집되면 가장 먼저 안내해 드립니다.
-                                        </Text>
-                                    </View>
-                                </ElectricBorder>
-                            ) : (
-                                <>
-                                    {/* Card 1 */}
-                                    {topGrants[0] && (
-                                        <ElectricBorder
-                                            color="#3B82F6"
-                                            speed={0.5}
-                                            chaos={0.05}
-                                            borderRadius={48}
-                                            style={{ flex: 1, display: 'flex' }}
-                                        >
-                                            <TouchableOpacity
-                                                onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(topGrants[0])}
-                                                className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
-                                            >
-                                                <View className="absolute top-0 right-0 p-8 z-10">
-                                                    <View className="items-end">
-                                                        <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
-                                                        <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[0].score}<Text className="text-2xl">%</Text></Text>
-                                                    </View>
-                                                </View>
-                                                <View className="w-[65%]">
-                                                    <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[0].agency}</Text>
-                                                    <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={3}>{topGrants[0].title}</Text>
-                                                </View>
-
-                                                <View className="flex-row gap-3 mb-10">
-                                                    <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[0].category}</Text></View>
-                                                    <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[0].d_day}</Text></View>
-                                                </View>
-
-                                                <View className="mt-auto flex-row items-center justify-between">
-                                                    <View>
-                                                        <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
-                                                        <Text className="text-[#34D399] text-xl font-bold">{topGrants[0].tech_field}</Text>
-                                                    </View>
-                                                    <View
-                                                        className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
-                                                    >
-                                                        <Sparkles size={18} color="white" />
-                                                        <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
-                                                    </View>
-                                                </View>
-                                            </TouchableOpacity>
-                                        </ElectricBorder>
-                                    )}
-
-                                    {/* Card 2 */}
-                                    {topGrants[1] && (
-                                        <ElectricBorder
-                                            color="#10B981"
-                                            speed={0.5}
-                                            chaos={0.05}
-                                            borderRadius={48}
-                                            style={{ flex: 1, display: 'flex' }}
-                                        >
-                                            <TouchableOpacity
-                                                onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(topGrants[1])}
-                                                className="flex-1 bg-[#0F172A] rounded-[48px] p-10 border border-white/5 relative overflow-hidden group shadow-lg min-h-[340px] w-full"
-                                            >
-                                                <View className="absolute top-0 right-0 p-8 z-10">
-                                                    <View className="items-end">
-                                                        <Text className="text-blue-500 text-xs font-bold mb-1 uppercase tracking-widest">Matching Score</Text>
-                                                        <Text className="text-white text-6xl font-black">{!user ? '??' : topGrants[1].score}<Text className="text-2xl">%</Text></Text>
-                                                    </View>
-                                                </View>
-                                                <View className="w-[65%]">
-                                                    <Text className="text-slate-400 font-bold mb-4 uppercase tracking-tighter">{topGrants[1].agency}</Text>
-                                                    <Text className="text-white text-3xl font-bold leading-tight mb-8" numberOfLines={3}>{topGrants[1].title}</Text>
-                                                </View>
-
-                                                <View className="flex-row gap-3 mb-10">
-                                                    <View className="bg-blue-500/10 px-4 py-2 rounded-xl"><Text className="text-blue-400 font-bold">{topGrants[1].category}</Text></View>
-                                                    <View className="bg-slate-800 px-4 py-2 rounded-xl"><Text className="text-slate-400 font-bold">{topGrants[1].d_day}</Text></View>
-                                                </View>
-
-                                                <View className="mt-auto flex-row items-center justify-between">
-                                                    <View>
-                                                        <Text className="text-slate-500 text-sm mb-1">지원 분야</Text>
-                                                        <Text className="text-[#34D399] text-xl font-bold">{topGrants[1].tech_field}</Text>
-                                                    </View>
-                                                    <View
-                                                        className="bg-blue-600 px-6 py-4 rounded-2xl flex-row items-center shadow-lg shadow-blue-500/20"
-                                                    >
-                                                        <Sparkles size={18} color="white" />
-                                                        <Text className="text-white font-bold ml-2 text-lg">상세 보기</Text>
-                                                    </View>
-                                                </View>
-                                            </TouchableOpacity>
-                                        </ElectricBorder>
-                                    )}
-                                </>
-                            )}
-                        </View>
-
-                        {/* Blur Overlay for Guest on Recommendations */}
-                        {!user && (
-                            <View className="absolute inset-0 bg-[#020617]/20 items-center justify-center rounded-[48px] border border-white/5 overflow-hidden">
-                                <View className="absolute inset-0 bg-[#020617]/20 backdrop-blur-lg" />
-                                <TouchableOpacity
-                                    onPress={onLoginPress}
-                                    className="bg-indigo-600 px-8 py-5 rounded-3xl shadow-2xl shadow-indigo-500/40 items-center"
-                                >
-                                    <Text className="text-white font-black text-xl mb-1">맞춤형 사업 추천받기</Text>
-                                    <Text className="text-indigo-200 text-sm font-bold">로그인 후 나에게 딱 맞는 사업을 확인하세요</Text>
                                 </TouchableOpacity>
-                            </View>
+                            ))
                         )}
                     </View>
-                </View>
-
-                {/* ROW SET 1: Gov Programs + New Opportunities */}
-                <View className="flex-row gap-8 mb-12">
-                    {/* Left: Government Info */}
-                    <View className="flex-[1.1]">
-                        <View className="flex-row items-center justify-between mb-6 px-2">
-                            <View className="flex-row items-center gap-2">
-                                <View className="bg-white/10 p-1.5 rounded-full">
-                                    <AlertCircle size={16} color="#94A3B8" />
-                                </View>
-                                <Text className="text-white text-xl font-bold">정부사업 안내</Text>
-                            </View>
-                            <TouchableOpacity
-                                onPress={() => !user ? onLoginPress?.() : onNavigateToGrantList?.()}
-                                className="bg-white/5 px-3 py-1.5 rounded-md border border-white/10"
-                            >
-                                <Text className="text-blue-400 text-[10px] font-bold">맞춤형 공고 전체보기 {'>'}</Text>
+                    {!user && (
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 20 }]}>
+                            <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { paddingHorizontal: 32, paddingVertical: 20 }]}>
+                                <Text style={[styles.viewBtnText, { fontSize: 18 }]}>로그인하고 맞춤 추천받기</Text>
                             </TouchableOpacity>
                         </View>
+                    )}
+                </View>
 
-                        <View className="w-full h-[500px] relative">
+                {/* Sub Sections Grid */}
+                <View style={styles.dualGridRow}>
+                    <View style={styles.carouselCol}>
+                        <View style={styles.sectionTitleRow}>
+                            <View style={styles.sectionLabelWrap}>
+                                <AlertCircle size={20} color="#7C3AED" />
+                                <Text style={styles.sectionLabel}>정부사업 안내</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToGrantList?.()}>
+                                <Text style={styles.moreBtn}>전체보기 {'>'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ height: 500 }}>
                             <VerticalStackCarousel
                                 data={govPrograms}
-                                renderItem={(item, index, progress, totalItems) => (
-                                    <GovernmentCard
-                                        item={item}
-                                        index={index}
-                                        progress={progress}
-                                        totalItems={totalItems}
-                                    />
-                                )}
                                 itemHeight={340}
                                 containerHeight={500}
+                                renderItem={(item, index, progress, totalItems) => (
+                                    <GovernmentCard item={item} index={index} progress={progress} totalItems={totalItems} />
+                                )}
                             />
                         </View>
                     </View>
 
-                    {/* Right: New Opportunities */}
-                    <View className="flex-1">
-                        <View className="bg-[#0F172A] p-10 rounded-[48px] border border-white/5 h-[570px] shadow-xl">
-                            <View className="flex-row items-center justify-between mb-8">
-                                <Text className="text-white text-xl font-black tracking-tight">NEW OPPORTUNITIES</Text>
-                                <TouchableOpacity>
-                                    <Text className="text-slate-500 text-[10px] font-black tracking-tighter uppercase">View All Projects</Text>
-                                </TouchableOpacity>
+                    <View style={styles.gridCol}>
+                        <View style={styles.oppsCard}>
+                            <View style={[styles.sectionTitleRow, { marginBottom: 32 }]}>
+                                <Text style={[styles.sectionLabel, { fontSize: 18 }]}>NEW OPPORTUNITIES</Text>
                             </View>
-                            <View className="flex-row flex-wrap gap-4">
+                            <View style={styles.oppsGrid}>
                                 {[1, 2, 3, 4].map(i => (
-                                    <View key={i} className="w-[47%] bg-slate-900/50 p-6 rounded-[28px] border border-white/5 h-[160px] justify-between">
+                                    <View key={i} style={styles.oppItem}>
                                         <View>
-                                            <View className="flex-row justify-between mb-2">
-                                                <Text className="text-slate-600 text-[8px] font-bold">중소벤처기업부</Text>
-                                                <Text className="text-[#34D399] text-[10px] font-black">D-12</Text>
+                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                                                <Text style={styles.oppAgency}>중소벤처기업부</Text>
+                                                <Text style={styles.oppDday}>D-12</Text>
                                             </View>
-                                            <Text className="text-white text-xs font-bold leading-5" numberOfLines={3}>
-                                                2026 글로벌 기술 매칭 펀드 및 바우처 지원사업 참여 기업 모집
-                                            </Text>
+                                            <Text style={styles.oppTitle} numberOfLines={3}>2026 글로벌 기술 매칭 펀드 및 바우처 지원사업</Text>
                                         </View>
-                                        <View className="flex-row gap-1">
-                                            <View className="bg-slate-800 px-1.5 py-0.5 rounded-sm"><Text className="text-slate-500 text-[7px]">자금</Text></View>
-                                            <View className="bg-slate-800 px-1.5 py-0.5 rounded-sm"><Text className="text-slate-500 text-[7px]">글로벌</Text></View>
+                                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                                            <View style={styles.badgeGray}><Text style={[styles.badgeTextGray, { fontSize: 8 }]}>자금</Text></View>
+                                            <View style={styles.badgeGray}><Text style={[styles.badgeTextGray, { fontSize: 8 }]}>글로벌</Text></View>
                                         </View>
                                     </View>
                                 ))}
@@ -452,116 +325,34 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                     </View>
                 </View>
 
-                {/* Horizontal Divider */}
-                <View className="w-full h-[1px] bg-white/5 mb-16 relative">
-                    <View className="absolute left-0 top-[-1px] w-24 h-[3px] bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-                </View>
+                <View style={styles.divider}><View style={styles.dividerAccent} /></View>
 
-                {/* ROW SET 2: Gov Funding + Funding & Grants */}
-                <View className="flex-row gap-8 mb-24">
-                    {/* Left: Government Funding Rotation */}
-                    <View className="flex-[1.1]">
-                        <View className="flex-row items-center justify-between mb-6 px-2">
-                            <View className="flex-row items-center gap-2">
-                                <View className="bg-white/10 p-1.5 rounded-full">
-                                    <Sparkles size={16} color="#A855F7" />
+                {/* Workspace Summary Section */}
+                <View style={{ marginBottom: 56 }}>
+                    <View style={styles.sectionTitleRow}>
+                        <View style={styles.sectionLabelWrap}>
+                            <Home size={22} color="#7C3AED" />
+                            <Text style={styles.sectionLabel}>My Workspace</Text>
+                        </View>
+                        <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToWorkspace?.()} >
+                            <Text style={styles.moreBtn}>상세보기 {'>'}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                        {[1, 2, 3].map(i => (
+                            <View key={i} style={[styles.recCard, { minHeight: 180, padding: 24 }]}>
+                                <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: '800', marginBottom: 8 }}>PROJECT 0{i}</Text>
+                                <Text style={{ color: '#18181b', fontSize: 15, fontWeight: '700', marginBottom: 12 }}>전략 에이전트 기반 사업 아이템 고도화 리포트</Text>
+                                <View style={{ marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                    <Text style={{ color: '#94A3B8', fontSize: 10 }}>2시간 전 업데이트</Text>
+                                    <View style={styles.postCategory}><Text style={styles.postCategoryText}>분석 완료</Text></View>
                                 </View>
-                                <Text className="text-white text-xl font-bold">정부지원금 로테이션</Text>
                             </View>
-                            <TouchableOpacity className="bg-white/5 px-2 py-0.5 rounded-md border border-white/10">
-                                <Text className="text-slate-500 text-[10px]">전체보기 {'>'}</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        <View className="w-full h-[500px] relative">
-                            <VerticalStackCarousel
-                                data={fundingPrograms}
-                                renderItem={(item, index, progress, totalItems) => (
-                                    <GovernmentCard
-                                        item={item}
-                                        index={index}
-                                        progress={progress}
-                                        totalItems={totalItems}
-                                    />
-                                )}
-                                itemHeight={340}
-                                containerHeight={500}
-                            />
-                        </View>
-                    </View>
-
-                    {/* Right: Funding & Grants */}
-                    <View className="flex-1">
-                        <View className="bg-[#0F172A] p-10 rounded-[48px] border border-white/5 h-[500px] shadow-xl">
-                            <View className="flex-row items-center gap-3 mb-8">
-                                <Sparkles size={20} color="#60A5FA" />
-                                <Text className="text-white text-xl font-black uppercase tracking-tight">Funding & Grants</Text>
-                            </View>
-                            <View className="gap-5">
-                                {[1, 2].map(i => (
-                                    <View key={i} className="bg-slate-900/80 p-6 rounded-[24px] border border-white/5 flex-row justify-between items-center transition-all hover:bg-slate-800/80">
-                                        <View className="flex-row items-center gap-5">
-                                            <View className="w-12 h-12 bg-blue-500/10 rounded-2xl items-center justify-center border border-blue-500/20">
-                                                <Briefcase size={22} color="#3B82F6" />
-                                            </View>
-                                            <View>
-                                                <Text className="text-white text-base font-bold mb-1">청년창업 활성화 융자 지원금</Text>
-                                                <Text className="text-slate-500 text-xs">중소벤처기업진흥공단 • 연 2.0% 고정금리</Text>
-                                            </View>
-                                        </View>
-                                        <View className="items-end">
-                                            <Text className="text-blue-400 text-lg font-black">최대 2.0억원</Text>
-                                            <Text className="text-slate-600 text-[8px]">선착순 마감 가능</Text>
-                                        </View>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-                {/* Horizontal Divider 2 */}
-                <View className="w-full h-[1px] bg-white/5 mb-16 relative">
-                    <View className="absolute left-0 top-[-1px] w-24 h-[3px] bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-                </View>
-
-                {/* Workspace Preview Section (New) */}
-                <View className="mb-24 px-2">
-                    <View className="flex-row items-center justify-between mb-8 px-2">
-                        <View className="flex-row items-center gap-3">
-                            <Home size={22} color="#3B82F6" />
-                            <Text className="text-white text-2xl font-black">My Workspace Summary</Text>
-                        </View>
-                        <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToWorkspace?.()} ><Text className="text-slate-500 text-sm font-bold">워크스페이스 이동 {'>'}</Text></TouchableOpacity>
-                    </View>
-
-                    <View className="relative">
-                        <View className="flex-row gap-6">
-                            {[1, 2, 3].map(i => (
-                                <View key={i} className="flex-1 bg-[#0F172A] p-8 rounded-[40px] border border-white/5 h-[180px] justify-between shadow-lg">
-                                    <View>
-                                        <Text className="text-blue-400 text-[10px] font-black uppercase mb-2">Project 0{i}</Text>
-                                        <Text className="text-white text-base font-bold leading-6">전략 에이전트 기반 사업 아이템 고도화 리포트</Text>
-                                    </View>
-                                    <View className="flex-row items-center justify-between">
-                                        <Text className="text-slate-500 text-[10px]">최종 업데이트: 2시간 전</Text>
-                                        <View className="bg-blue-500/10 px-3 py-1 rounded-lg">
-                                            <Text className="text-blue-400 text-[10px] font-bold">분석 완료</Text>
-                                        </View>
-                                    </View>
-                                </View>
-                            ))}
-                        </View>
-
-                        {/* Blur Overlay for Guest */}
+                        ))}
                         {!user && (
-                            <View className="absolute inset-0 bg-[#020617]/40 items-center justify-center rounded-[40px] border border-white/5 overflow-hidden">
-                                <View className="absolute inset-0 bg-[#020617]/40 backdrop-blur-md" />
-                                <TouchableOpacity
-                                    onPress={onLoginPress}
-                                    className="bg-blue-600 px-8 py-4 rounded-2xl shadow-2xl shadow-blue-500/40 items-center"
-                                >
-                                    <Text className="text-white font-black text-lg">로그인하고 내 사업 관리하기</Text>
+                            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10 }]}>
+                                <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
+                                    <Text style={styles.viewBtnText}>워크스페이스 시작하기</Text>
                                 </TouchableOpacity>
                             </View>
                         )}
@@ -569,72 +360,48 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                 </View>
 
                 {/* Lounge Section */}
-                <View className="mb-24 px-2">
-                    <View className="flex-row items-center justify-between mb-8 px-2">
-                        <View className="flex-row items-center gap-3">
-                            <Users size={22} color="#A855F7" />
-                            <Text className="text-white text-2xl font-black">Lounge</Text>
+                <View style={styles.loungeWrap}>
+                    <View style={styles.sectionTitleRow}>
+                        <View style={styles.sectionLabelWrap}>
+                            <Users size={24} color="#7C3AED" />
+                            <Text style={styles.sectionLabel}>Publica Lounge</Text>
                         </View>
-                        <TouchableOpacity
-                            onPress={() => {
-                                if (!user) {
-                                    onLoginPress?.();
-                                } else {
-                                    onNavigateToLounge?.();
-                                }
-                            }}
-                        >
-                            <Text className="text-slate-500 text-sm font-bold">전체보기 {'>'}</Text>
+                        <TouchableOpacity onPress={onNavigateToLounge}>
+                            <Text style={styles.moreBtn}>전체보기 {'>'}</Text>
                         </TouchableOpacity>
                     </View>
-
-                    <View className="relative">
-                        <View className="overflow-hidden">
-                            <Animated.View
-                                style={[{ flexDirection: 'row', gap: 24 }, animatedStyle]}
-                            >
-                                {[...communityPosts, ...communityPosts, ...communityPosts].map((post, i) => (
-                                    <TouchableOpacity
-                                        key={`${post.author}-${i}`}
-                                        onPress={() => {
-                                            if (!user) {
-                                                onLoginPress?.();
-                                            } else {
-                                                onNavigateToLounge?.();
-                                            }
-                                        }}
-                                        className="w-[420px] bg-[#0F172A] p-8 rounded-[40px] border border-white/5 min-h-[220px] justify-between shadow-xl"
-                                    >
-                                        <View>
-                                            <View className="flex-row items-center gap-3 mb-6">
-                                                <View className="w-10 h-10 rounded-full bg-slate-800 border border-white/10 overflow-hidden">
-                                                    <Image source={{ uri: `https://i.pravatar.cc/100?u=${post.author}` }} className="w-full h-full" />
-                                                </View>
-                                                <View>
-                                                    <Text className="text-white text-sm font-bold">{post.author}</Text>
-                                                    <Text className="text-slate-500 text-[10px]">{post.time}</Text>
-                                                </View>
-                                            </View>
-                                            <Text className="text-slate-200 text-base font-bold leading-7 mb-4" numberOfLines={2}>{post.title}</Text>
+                    <View style={{ position: 'relative' }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ overflow: 'visible' }}>
+                            <Animated.View style={[{ flexDirection: 'row', gap: 24, paddingLeft: 8 }, animatedStyle]}>
+                                {[...communityPosts, ...communityPosts].map((post, i) => (
+                                    <TouchableOpacity key={i} style={styles.loungeCard} onPress={() => !user ? onLoginPress?.() : onNavigateToLounge?.()}>
+                                        <View style={styles.authorRow}>
+                                            <View style={styles.authorThumb}><Image source={{ uri: `https://i.pravatar.cc/100?u=${post.author}` }} style={{ width: '100%', height: '100%' }} /></View>
+                                            <View><Text style={styles.authorName}>{post.author}</Text><Text style={styles.postTime}>{post.time}</Text></View>
                                         </View>
-                                        <View className="flex-row items-center gap-4 border-t border-white/5 pt-4">
-                                            <View className="flex-row items-center gap-1.5">
-                                                <Text className="text-slate-500 text-[10px]">💬 {post.comments}</Text>
-                                            </View>
-                                            <View className="flex-row items-center gap-1.5">
-                                                <Text className="text-slate-500 text-[10px]">👍 {post.likes}</Text>
-                                            </View>
-                                            <View className="ml-auto bg-purple-500/10 px-3 py-1 rounded-lg">
-                                                <Text className="text-purple-400 text-[10px] font-black uppercase">{post.category}</Text>
-                                            </View>
+                                        <Text style={styles.postTitle} numberOfLines={2}>{post.title}</Text>
+                                        <View style={styles.postStats}>
+                                            <Text style={styles.postStatText}>💬 {post.comments}</Text>
+                                            <Text style={styles.postStatText}>👍 {post.likes}</Text>
+                                            <View style={styles.postCategory}><Text style={styles.postCategoryText}>{post.category}</Text></View>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
                             </Animated.View>
-                        </View>
+                        </ScrollView>
 
-                        {/* Blur Overlay for Guest Removed - Content now visible */}
-
+                        <LinearGradient
+                            colors={['#FFFFFF', 'rgba(255, 255, 255, 0)']}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 80, zIndex: 10 }}
+                            pointerEvents="none"
+                        />
+                        <LinearGradient
+                            colors={['rgba(255, 255, 255, 0)', '#FFFFFF']}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                            style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, zIndex: 10 }}
+                            pointerEvents="none"
+                        />
                     </View>
                 </View>
             </View>
@@ -642,3 +409,78 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
         </ScrollView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    content: { maxWidth: 1400, alignSelf: 'center', width: '100%', padding: 24 },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
+    headerTitle: { color: '#18181b', fontSize: 48, fontWeight: '900', letterSpacing: -2 },
+    headerSubtitle: { color: '#64748B', fontSize: 18, fontWeight: '500' },
+    filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FDF8F3', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0' },
+    filterText: { color: '#475569', marginLeft: 8, fontWeight: '600' },
+
+    profileCard: { backgroundColor: '#FDF8F3', borderRadius: 32, padding: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40, borderWidth: 1, borderColor: '#7C3AED15', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 5 },
+    avatarWrapper: { position: 'relative', marginRight: 24 },
+    avatar: { width: 88, height: 88, borderRadius: 44, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#7C3AED30', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+    onlineDot: { position: 'absolute', bottom: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: '#10B981', borderColor: '#FDF8F3', borderWidth: 3 },
+    profileTitle: { color: '#18181b', fontSize: 28, fontWeight: '800', marginBottom: 4 },
+    roleBadge: { backgroundColor: '#7C3AED', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 99, marginLeft: 12 },
+    roleText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
+    profileKeywords: { color: '#64748B', fontSize: 14, fontWeight: '500' },
+    statsRow: { flexDirection: 'row', alignItems: 'center', gap: 32 },
+    statItem: { alignItems: 'center' },
+    statLabel: { color: '#94A3B8', fontSize: 10, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 4 },
+    statValue: { color: '#18181b', fontSize: 32, fontWeight: '900' },
+    workspaceBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 14, borderRadius: 18, borderWidth: 1, borderColor: '#7C3AED20', gap: 10 },
+    workspaceText: { color: '#7C3AED', fontWeight: '800', fontSize: 15 },
+
+    recommendSection: { marginBottom: 56 },
+    recCardsRow: { flexDirection: 'row', gap: 24 },
+    recCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 40, padding: 32, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 4, minHeight: 340 },
+    recAgency: { color: '#94A3B8', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 8 },
+    recTitle: { color: '#18181b', fontSize: 24, fontWeight: '800', lineHeight: 32, marginBottom: 24 },
+    badgeRow: { flexDirection: 'row', gap: 10, marginBottom: 32 },
+    badgePurple: { backgroundColor: '#F5F3FF', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#DDD6FE' },
+    badgeTextPurple: { color: '#7C3AED', fontWeight: '700', fontSize: 12 },
+    badgeGray: { backgroundColor: '#F8FAFC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0' },
+    badgeTextGray: { color: '#64748B', fontWeight: '700', fontSize: 12 },
+    scoreContainer: { position: 'absolute', top: 32, right: 32, alignItems: 'flex-end' },
+    scoreLabel: { color: '#7C3AED', fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginBottom: 2 },
+    scoreValue: { color: '#18181b', fontSize: 44, fontWeight: '900' },
+    scoreUnit: { fontSize: 18, fontWeight: '700' },
+    recFooter: { marginTop: 'auto', flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    recFieldLabel: { color: '#94A3B8', fontSize: 11, marginBottom: 4 },
+    recFieldValue: { color: '#10B981', fontSize: 16, fontWeight: '800' },
+    viewBtn: { backgroundColor: '#7C3AED', paddingHorizontal: 20, paddingVertical: 14, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 8, shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 5 }, shadowOpacity: 0.3, shadowRadius: 10 },
+    viewBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
+
+    sectionTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 24, paddingHorizontal: 8 },
+    sectionLabelWrap: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    sectionLabel: { color: '#18181b', fontSize: 22, fontWeight: '800' },
+    moreBtn: { color: '#7C3AED', fontSize: 12, fontWeight: '700' },
+
+    dualGridRow: { flexDirection: 'row', gap: 24, marginBottom: 48 },
+    carouselCol: { flex: 1.1 },
+    gridCol: { flex: 1 },
+    oppsCard: { backgroundColor: '#FDF8F3', padding: 32, borderRadius: 40, height: 570, borderWidth: 1, borderColor: '#7C3AED10' },
+    oppsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+    oppItem: { width: '48%', backgroundColor: '#FFFFFF', padding: 16, borderRadius: 20, height: 160, justifyContent: 'space-between', borderWidth: 1, borderColor: '#E2E8F0' },
+    oppAgency: { color: '#64748B', fontSize: 9, fontWeight: '700' },
+    oppDday: { color: '#7C3AED', fontSize: 10, fontWeight: '900' },
+    oppTitle: { color: '#18181b', fontSize: 13, fontWeight: '700', lineHeight: 18 },
+
+    divider: { width: '100%', height: 1, backgroundColor: '#F1F5F9', marginVertical: 48 },
+    dividerAccent: { width: 64, height: 4, backgroundColor: '#7C3AED', borderRadius: 99, position: 'absolute', top: -1.5, left: 0 },
+
+    loungeWrap: { marginBottom: 64 },
+    loungeCard: { width: 420, backgroundColor: '#FFFFFF', padding: 32, borderRadius: 32, borderWidth: 1, borderColor: '#E2E8F0', marginRight: 24 },
+    authorRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+    authorThumb: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#F1F5F9', overflow: 'hidden' },
+    authorName: { color: '#18181b', fontSize: 14, fontWeight: '700' },
+    postTime: { color: '#94A3B8', fontSize: 10 },
+    postTitle: { color: '#18181b', fontSize: 18, fontWeight: '700', lineHeight: 26, marginBottom: 16 },
+    postStats: { flexDirection: 'row', alignItems: 'center', gap: 16, borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 16 },
+    postStatText: { color: '#64748B', fontSize: 11 },
+    postCategory: { backgroundColor: '#F5F3FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginLeft: 'auto' },
+    postCategoryText: { color: '#7C3AED', fontSize: 10, fontWeight: '800' }
+});

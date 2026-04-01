@@ -22,7 +22,7 @@ export const RootNodeCard = ({ hypothesis, branchCount }: RootNodeCardProps) => 
         <Animated.View style={[styles.container, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <View style={styles.iconRow}>
                 <View style={styles.iconBg}>
-                    <Target size={16} color="#10B981" />
+                    <Target size={16} color="#7C3AED" />
                 </View>
                 <Text style={styles.label}>핵심 전략</Text>
             </View>
@@ -44,15 +44,15 @@ export const RootNodeCard = ({ hypothesis, branchCount }: RootNodeCardProps) => 
 const styles = StyleSheet.create({
     container: {
         width: 240,
-        backgroundColor: '#0A1628',
-        borderRadius: 8,
-        padding: 20,
-        borderWidth: 1.5,
-        borderColor: '#10B981',
-        shadowColor: '#10B981',
-        shadowOpacity: 0.15,
-        shadowRadius: 20,
-        shadowOffset: { width: 0, height: 4 },
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        padding: 24,
+        borderWidth: 2,
+        borderColor: '#7C3AED',
+        shadowColor: '#7C3AED',
+        shadowOpacity: 0.2,
+        shadowRadius: 25,
+        shadowOffset: { width: 0, height: 10 },
         marginRight: 60,
         alignSelf: 'center',
     },
@@ -63,31 +63,32 @@ const styles = StyleSheet.create({
         gap: 8,
     },
     iconBg: {
-        width: 28,
-        height: 28,
-        borderRadius: 6,
-        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+        width: 32,
+        height: 32,
+        borderRadius: 10,
+        backgroundColor: 'rgba(124, 58, 237, 0.1)',
         alignItems: 'center',
         justifyContent: 'center',
     },
     label: {
-        color: '#10B981',
+        color: '#7C3AED',
         fontSize: 10,
-        fontWeight: '800',
-        letterSpacing: 1,
+        fontWeight: '900',
+        letterSpacing: 1.5,
         textTransform: 'uppercase',
     },
     hypothesis: {
-        color: '#F1F5F9',
-        fontSize: 15,
-        fontWeight: '700',
-        lineHeight: 22,
-        marginBottom: 12,
+        color: '#27272a',
+        fontSize: 16,
+        fontWeight: '900',
+        lineHeight: 24,
+        marginBottom: 16,
+        letterSpacing: -0.5,
     },
     footer: {
         borderTopWidth: 1,
-        borderColor: 'rgba(16, 185, 129, 0.2)',
-        paddingTop: 10,
+        borderColor: 'rgba(124, 58, 237, 0.1)',
+        paddingTop: 12,
     },
     branchIndicator: {
         flexDirection: 'row',

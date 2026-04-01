@@ -226,11 +226,11 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
             {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={onBack} style={styles.backBtn}>
-                    <ChevronLeft size={24} color="white" />
+                    <ChevronLeft size={24} color="#27272a" />
                 </TouchableOpacity>
                 <Text style={styles.headerTitle}>Smart Match Finder</Text>
                 <TouchableOpacity style={styles.iconBtn}>
-                    <Bookmark size={20} color="#64748B" />
+                    <Bookmark size={20} color="#94A3B8" />
                 </TouchableOpacity>
             </View>
 
@@ -243,14 +243,14 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                             style={[styles.tab, activeTab === 'Rec' && styles.tabActive]}
                             onPress={() => { setActiveTab('Rec'); setSortOption('match'); }}
                         >
-                            <Sparkles size={16} color={activeTab === 'Rec' ? '#3B82F6' : '#64748B'} />
+                            <Sparkles size={16} color={activeTab === 'Rec' ? '#7C3AED' : '#64748B'} />
                             <Text style={[styles.tabText, activeTab === 'Rec' && styles.tabTextActive]}>AI 추천</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                             style={[styles.tab, activeTab === 'All' && styles.tabActive]}
                             onPress={() => { setActiveTab('All'); setSortOption('deadline'); }}
                         >
-                            <Filter size={16} color={activeTab === 'All' ? '#3B82F6' : '#64748B'} />
+                            <Filter size={16} color={activeTab === 'All' ? '#7C3AED' : '#64748B'} />
                             <Text style={[styles.tabText, activeTab === 'All' && styles.tabTextActive]}>전체 공고</Text>
                         </TouchableOpacity>
                     </View>
@@ -308,7 +308,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                                     style={[
                                         styles.filterChip,
                                         { marginBottom: 8 },
-                                        regionFilter === reg && { backgroundColor: '#581C87', borderColor: '#A855F7' }
+                                        regionFilter === reg && { backgroundColor: '#7C3AED', borderColor: '#7C3AED' }
                                     ]}
                                     onPress={() => setRegionFilter(reg)}
                                 >
@@ -452,7 +452,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                                             }
                                         }}
                                     >
-                                        <ExternalLink size={16} color="#60A5FA" />
+                                        <ExternalLink size={18} color="#64748B" />
                                         <Text style={styles.detailActionSecondaryText}>원문 보기</Text>
                                     </TouchableOpacity>
                                 )}
@@ -466,99 +466,162 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#020617', alignItems: 'center' as const },
-    header: { height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, borderBottomWidth: 1, borderColor: '#1E293B', width: '100%', maxWidth: 1200, alignSelf: 'center' as const },
-    backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-    headerTitle: { color: 'white', fontSize: 18, fontWeight: '800', letterSpacing: -0.5 },
-    iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    header: { 
+        height: 70, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'space-between', 
+        paddingHorizontal: 24, 
+        borderBottomWidth: 1, 
+        borderColor: '#E2E8F0', 
+        backgroundColor: '#FFFFFF', 
+        width: '100%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.02,
+        shadowRadius: 10,
+        zIndex: 10,
+    },
+    backBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    headerTitle: { color: '#27272a', fontSize: 20, fontWeight: '900', letterSpacing: -0.8 },
+    iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, backgroundColor: '#F8FAFC' },
 
-    tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginTop: 10, gap: 12 },
-    tab: { flex: 1, height: 44, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderRadius: 12, backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#1E293B' },
-    tabActive: { backgroundColor: '#1E293B', borderColor: '#3B82F6' },
-    tabText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
-    tabTextActive: { color: 'white' },
+    tabContainer: { flexDirection: 'row', paddingHorizontal: 24, marginTop: 24, gap: 12 },
+    tab: { 
+        flex: 1, 
+        height: 52, 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        justifyContent: 'center', 
+        gap: 10, 
+        borderRadius: 18, 
+        backgroundColor: '#FFFFFF', 
+        borderWidth: 1, 
+        borderColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.02,
+        shadowRadius: 8,
+    },
+    tabActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED', shadowOpacity: 0.2, shadowColor: '#7C3AED' },
+    tabText: { color: '#64748B', fontSize: 14, fontWeight: '800', letterSpacing: -0.2 },
+    tabTextActive: { color: '#FFFFFF' },
 
-    filterContainer: { paddingHorizontal: 20, paddingVertical: 15, gap: 12 },
-    sortRow: { flexDirection: 'row', gap: 8 },
-    sortChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#1E293B' },
-    sortChipActive: { backgroundColor: '#1E293B', borderColor: '#3B82F6' },
-    sortText: { color: '#64748B', fontSize: 12, fontWeight: '600' },
-    sortTextActive: { color: '#3B82F6' },
+    filterContainer: { paddingHorizontal: 24, paddingVertical: 20, gap: 16 },
+    sortRow: { flexDirection: 'row', gap: 10 },
+    sortChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+    sortChipActive: { backgroundColor: '#7C3AED10', borderColor: '#7C3AED' },
+    sortText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
+    sortTextActive: { color: '#7C3AED' },
 
-    searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F172A', borderRadius: 14, borderWidth: 1, borderColor: '#1E293B', paddingHorizontal: 12, height: 44, marginBottom: 4 },
-    searchIcon: { marginRight: 8 },
-    searchInput: { flex: 1, color: 'white', fontSize: 14, height: '100%' },
-    clearSearchBtn: { padding: 4 },
+    searchContainer: { 
+        flexDirection: 'row', 
+        alignItems: 'center', 
+        backgroundColor: '#FFFFFF', 
+        borderRadius: 20, 
+        borderWidth: 1, 
+        borderColor: '#E2E8F0', 
+        paddingHorizontal: 16, 
+        height: 56, 
+        marginBottom: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.03,
+        shadowRadius: 12,
+    },
+    searchIcon: { marginRight: 12 },
+    searchInput: { flex: 1, color: '#27272a', fontSize: 15, fontWeight: '600' },
+    clearSearchBtn: { padding: 8, backgroundColor: '#F1F5F9', borderRadius: 10 },
 
-    regionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4, paddingBottom: 10 },
+    regionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8, paddingBottom: 16 },
 
-    filterChip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#1E293B' },
-    filterChipActive: { backgroundColor: '#1E3A8A', borderColor: '#3B82F6' },
-    filterChipText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
-    filterChipTextActive: { color: 'white' },
+    filterChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+    filterChipActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
+    filterChipText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
+    filterChipTextActive: { color: '#FFFFFF' },
 
-    listContent: { paddingHorizontal: 20, paddingBottom: 20, gap: 16 },
-    card: { backgroundColor: '#0F172A', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: '#1E293B' },
-    // ... rest of shared card styles stay roughly same
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    matchBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
-    matchText: { fontSize: 11, fontWeight: 'bold' },
-    categoryText: { color: '#64748B', fontSize: 11, fontWeight: '700' },
-    titleText: { color: 'white', fontSize: 18, fontWeight: '700', lineHeight: 26, marginBottom: 12 },
-    metaRow: { flexDirection: 'row', gap: 16, marginBottom: 16 },
-    metaItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-    metaText: { color: '#94A3B8', fontSize: 12, fontWeight: '500' },
-    divider: { height: 1, backgroundColor: '#1E293B', marginBottom: 16 },
-    summaryText: { color: '#94A3B8', fontSize: 13, lineHeight: 20, marginBottom: 16 },
-    footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-    tagContainer: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-    tag: { backgroundColor: 'rgba(59, 130, 246, 0.1)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-    tagText: { color: '#3B82F6', fontSize: 11, fontWeight: '600' },
-    actionBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#1E293B', alignItems: 'center', justifyContent: 'center' },
-    reasoningBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#111827', padding: 12, borderRadius: 12 },
-    reasoningText: { color: '#475569', fontSize: 11, fontWeight: '500', flex: 1 },
+    listContent: { paddingHorizontal: 24, paddingBottom: 40, gap: 20 },
+    card: { 
+        backgroundColor: '#FFFFFF', 
+        borderRadius: 32, 
+        padding: 32, 
+        borderWidth: 1, 
+        borderColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.04,
+        shadowRadius: 20,
+    },
+    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+    matchBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1 },
+    matchText: { fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5 },
+    categoryText: { color: '#94A3B8', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1 },
+    titleText: { color: '#27272a', fontSize: 22, fontWeight: '900', lineHeight: 30, marginBottom: 16, letterSpacing: -0.8 },
+    metaRow: { flexDirection: 'row', gap: 20, marginBottom: 20 },
+    metaItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    metaText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
+    divider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 20 },
+    summaryText: { color: '#475569', fontSize: 14, lineHeight: 22, marginBottom: 20, fontWeight: '500' },
+    footer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+    tagContainer: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    tag: { backgroundColor: '#7C3AED08', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#7C3AED10' },
+    tagText: { color: '#7C3AED', fontSize: 12, fontWeight: '800' },
+    actionBtn: { width: 48, height: 48, borderRadius: 18, backgroundColor: '#F8FAFC', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+    reasoningBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#F8FAFC', padding: 16, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+    reasoningText: { color: '#64748B', fontSize: 12, fontWeight: '700', flex: 1, lineHeight: 18 },
 
-    // List Item Styles
-    listItem: { backgroundColor: '#0F172A', borderRadius: 16, padding: 20, borderWidth: 1, borderColor: '#1E293B' },
-    listMain: { gap: 8 },
+    // List Item Styles (Slim View)
+    listItem: { 
+        backgroundColor: '#FFFFFF', 
+        borderRadius: 24, 
+        padding: 24, 
+        borderWidth: 1, 
+        borderColor: '#E2E8F0',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.02,
+        shadowRadius: 10,
+    },
+    listMain: { gap: 10 },
     listHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    listAgency: { color: '#64748B', fontSize: 11, fontWeight: '700' },
-    listDDay: { color: '#94A3B8', fontSize: 12, fontWeight: '800' },
-    listTitle: { color: 'white', fontSize: 15, fontWeight: '700', lineHeight: 22 },
-    listFooter: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-    typeTag: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderWidth: 1, borderColor: '#1E293B' },
-    typeTagText: { color: '#94A3B8', fontSize: 10, fontWeight: '700' },
-    listMeta: { color: '#475569', fontSize: 11, fontWeight: '500' },
+    listAgency: { color: '#94A3B8', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+    listDDay: { color: '#EF4444', fontSize: 13, fontWeight: '900' },
+    listTitle: { color: '#27272a', fontSize: 17, fontWeight: '800', lineHeight: 24, letterSpacing: -0.5 },
+    listFooter: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 6 },
+    typeTag: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' },
+    typeTagText: { color: '#64748B', fontSize: 11, fontWeight: '800' },
+    listMeta: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
 
-    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 },
-    loadingText: { color: '#64748B', marginTop: 15, fontSize: 14, fontWeight: '500' },
-    emptyText: { color: '#64748B', fontSize: 14, textAlign: 'center' },
+    center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 60 },
+    loadingText: { color: '#94A3B8', marginTop: 20, fontSize: 15, fontWeight: '700' },
+    emptyText: { color: '#94A3B8', fontSize: 15, fontWeight: '700', textAlign: 'center' },
 
     // Main Layout (list + detail side by side)
-    mainLayout: { flex: 1, flexDirection: 'row' as const, width: '100%', maxWidth: 1200, alignSelf: 'center' as const },
+    mainLayout: { flex: 1, flexDirection: 'row', width: '100%', maxWidth: 1400, alignSelf: 'center' },
     listSection: { flex: 1 },
 
     // Detail Slide Panel
-    detailPanel: { overflow: 'hidden' as const, borderLeftWidth: 1, borderColor: '#1E293B', backgroundColor: '#0B1120' },
-    detailScroll: { flex: 1, padding: 20 },
-    detailHeader: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'center' as const, marginBottom: 16 },
-    detailHeaderTitle: { color: '#E2E8F0', fontSize: 16, fontWeight: '800' as const },
-    detailCloseBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center' as const, justifyContent: 'center' as const, backgroundColor: '#1E293B' },
-    detailBadgeRow: { flexDirection: 'row' as const, flexWrap: 'wrap' as const, gap: 8, marginBottom: 16 },
-    detailBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: '#3B82F6' },
-    detailBadgeText: { color: '#60A5FA', fontSize: 11, fontWeight: '700' as const },
-    detailTitle: { color: '#F1F5F9', fontSize: 18, fontWeight: '800' as const, lineHeight: 26, marginBottom: 20 },
-    detailMeta: { gap: 12 },
-    detailMetaItem: { flexDirection: 'row' as const, justifyContent: 'space-between' as const, alignItems: 'flex-start' as const },
-    detailMetaLabel: { color: '#64748B', fontSize: 12, fontWeight: '700' as const, width: 70 },
-    detailMetaValue: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' as const, flex: 1, textAlign: 'right' as const },
-    detailSectionLabel: { color: '#E2E8F0', fontSize: 14, fontWeight: '800' as const, marginBottom: 8 },
-    detailDescription: { color: '#94A3B8', fontSize: 13, lineHeight: 22 },
-    detailMatchBox: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 8, backgroundColor: 'rgba(245,158,11,0.08)', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.15)', marginTop: 16 },
-    detailMatchText: { color: '#F59E0B', fontSize: 13, fontWeight: '700' as const },
-    detailActions: { gap: 10, marginTop: 24, paddingBottom: 40 },
-    detailActionPrimary: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8, height: 48, borderRadius: 14, backgroundColor: '#4F46E5' },
-    detailActionPrimaryText: { color: '#FFF', fontSize: 14, fontWeight: '800' as const },
-    detailActionSecondary: { flexDirection: 'row' as const, alignItems: 'center' as const, justifyContent: 'center' as const, gap: 8, height: 44, borderRadius: 12, backgroundColor: '#111827', borderWidth: 1, borderColor: '#1E293B' },
-    detailActionSecondaryText: { color: '#60A5FA', fontSize: 13, fontWeight: '700' as const },
+    detailPanel: { overflow: 'hidden', borderLeftWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
+    detailScroll: { flex: 1, padding: 32 },
+    detailHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+    detailHeaderTitle: { color: '#27272a', fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+    detailCloseBtn: { width: 40, height: 40, borderRadius: 14, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F1F5F9' },
+    detailBadgeRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+    detailBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' },
+    detailBadgeText: { color: '#64748B', fontSize: 12, fontWeight: '800' },
+    detailTitle: { color: '#27272a', fontSize: 24, fontWeight: '900', lineHeight: 34, marginBottom: 28, letterSpacing: -1 },
+    detailMeta: { gap: 16, backgroundColor: '#FDF8F3', padding: 24, borderRadius: 28, borderWidth: 1, borderColor: '#E2E8F0' },
+    detailMetaItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    detailMetaLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '800', width: 80 },
+    detailMetaValue: { color: '#27272a', fontSize: 14, fontWeight: '800', flex: 1, textAlign: 'right', letterSpacing: -0.2 },
+    detailSectionLabel: { color: '#27272a', fontSize: 16, fontWeight: '900', marginBottom: 12, letterSpacing: -0.5 },
+    detailDescription: { color: '#475569', fontSize: 14, lineHeight: 24, fontWeight: '500' },
+    detailMatchBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#7C3AED08', padding: 20, borderRadius: 24, borderWidth: 1, borderColor: '#7C3AED15', marginTop: 24 },
+    detailMatchText: { color: '#7C3AED', fontSize: 15, fontWeight: '900' },
+    detailActions: { gap: 12, marginTop: 40, paddingBottom: 60 },
+    detailActionPrimary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 60, borderRadius: 20, backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 15, elevation: 8 },
+    detailActionPrimaryText: { color: '#FFF', fontSize: 15, fontWeight: '900' },
+    detailActionSecondary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+    detailActionSecondaryText: { color: '#64748B', fontSize: 14, fontWeight: '800' },
 });

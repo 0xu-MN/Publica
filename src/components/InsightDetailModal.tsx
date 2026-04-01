@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Modal, Pressable, Platform, Alert } from 'react-native';
+import { View, Modal, Pressable, Platform, Alert, StyleSheet } from 'react-native';
 import Animated, { SlideInUp } from 'react-native-reanimated';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthModal } from './AuthModal';
@@ -77,16 +77,15 @@ export const InsightDetailModal: React.FC<InsightDetailModalProps> = ({ item, vi
             statusBarTranslucent
         >
             <View
-                className="flex-1 justify-center items-center p-5"
-                style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)' }}
+                style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20, backgroundColor: 'rgba(253, 248, 243, 0.4)' }}
             >
-                <Pressable className="absolute inset-0" onPress={onClose} />
+                <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
 
                 <Animated.View
                     entering={SlideInUp.duration(400).springify()}
                     style={[
-                        { width: 500, maxHeight: '90%' },
-                        Platform.OS === 'web' ? { filter: 'drop-shadow(0px 10px 20px rgba(0,0,0,0.5))' } : { elevation: 10, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20 }
+                        { width: 500, maxHeight: '90%', borderRadius: 40, overflow: 'hidden', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
+                        Platform.OS === 'web' ? { filter: 'drop-shadow(0px 20px 40px rgba(0,0,0,0.1))' } : { elevation: 15, shadowColor: '#000', shadowOffset: { width: 0, height: 15 }, shadowOpacity: 0.1, shadowRadius: 30 }
                     ]}
                 >
                     <InsightDetailPane

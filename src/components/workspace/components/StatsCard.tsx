@@ -13,27 +13,31 @@ interface StatsCardProps {
 
 export const StatsCard = ({
     icon: Icon,
-    iconColor,
+    iconColor = '#7C3AED',
     title,
     value,
     subtitle,
-    valueColor = '#fff',
+    valueColor = '#27272a',
 }: StatsCardProps) => {
     return (
-        <View className="flex-1 bg-[#0F172A]/80 rounded-2xl p-4 border border-white/5">
-            <View className="flex-row items-center gap-2 mb-2">
-                <Icon size={16} color={iconColor} />
-                <Text className="text-slate-400 text-xs font-medium">{title}</Text>
+        <View className="flex-1 bg-white rounded-[28px] p-6 border border-[#E2E8F0] shadow-sm shadow-black/[0.02] active:scale-[0.98] transition-transform">
+            <View className="flex-row items-center gap-3 mb-4">
+                <View className="w-8 h-8 rounded-lg bg-[#7C3AED]/10 items-center justify-center">
+                    <Icon size={16} color={iconColor} strokeWidth={2.5} />
+                </View>
+                <Text className="text-[#94A3B8] text-[10px] font-black uppercase tracking-widest leading-none">{title}</Text>
             </View>
-            <Text
-                className="text-2xl font-bold mb-1"
-                style={{ color: valueColor }}
-            >
-                {value}
-            </Text>
-            {subtitle && (
-                <Text className="text-slate-500 text-xs">{subtitle}</Text>
-            )}
+            <View>
+                <Text
+                    className="text-3xl font-black mb-1.5 tracking-tighter"
+                    style={{ color: valueColor }}
+                >
+                    {value}
+                </Text>
+                {subtitle && (
+                    <Text className="text-[#64748B] text-[11px] font-bold leading-tight">{subtitle}</Text>
+                )}
+            </View>
         </View>
     );
 };

@@ -211,14 +211,14 @@ export const IdeaQuestionnaire: React.FC<Props> = ({
                         <View style={styles.navButtons}>
                             {!isFirst && (
                                 <TouchableOpacity style={styles.backBtn} onPress={handleBack}>
-                                    <Text style={styles.backBtnText}>← 이전</Text>
+                                    <Text style={styles.backBtnText}>이전</Text>
                                 </TouchableOpacity>
                             )}
                             <TouchableOpacity
                                 style={styles.skipQuestionBtn}
                                 onPress={handleSkipQuestion}
                             >
-                                <Text style={styles.skipQuestionText}>❓ 모르겠음</Text>
+                                <Text style={styles.skipQuestionText}>잘 모르겠음</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 style={[styles.nextBtn, !canProceed && styles.nextBtnDisabled]}
@@ -226,7 +226,7 @@ export const IdeaQuestionnaire: React.FC<Props> = ({
                                 disabled={!canProceed}
                             >
                                 <Text style={styles.nextBtnText}>
-                                    {isLast ? '분석 시작 🚀' : '다음 →'}
+                                    {isLast ? '전략 분석 시작 🚀' : '다음 단계 →'}
                                 </Text>
                             </TouchableOpacity>
                         </View>
@@ -253,52 +253,55 @@ const styles = StyleSheet.create({
     },
     modal: {
         width: '90%',
-        maxWidth: 520,
-        backgroundColor: '#111827',
-        borderRadius: 20,
+        maxWidth: 560,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 32,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#E2E8F0',
         overflow: 'hidden',
-        maxHeight: '80%',
+        maxHeight: '85%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 20 },
+        shadowOpacity: 0.15,
+        shadowRadius: 40,
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 20,
-        paddingBottom: 12,
+        padding: 24,
+        paddingBottom: 16,
         borderBottomWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#F1F5F9',
     },
     headerTitle: {
-        color: '#F8FAFC',
-        fontSize: 18,
-        fontWeight: '700',
+        color: '#27272a',
+        fontSize: 20,
+        fontWeight: '900',
+        letterSpacing: -0.5,
     },
     grantName: {
-        color: '#10B981',
+        color: '#7C3AED',
         fontSize: 13,
-        marginTop: 4,
-        fontWeight: '500',
+        marginTop: 6,
+        fontWeight: '700',
     },
     closeBtn: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#1E293B',
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#F1F5F9',
         justifyContent: 'center',
         alignItems: 'center',
     },
     progressContainer: {
-        height: 3,
-        backgroundColor: '#1E293B',
-        marginHorizontal: 20,
-        borderRadius: 2,
-        marginTop: 12,
+        height: 4,
+        backgroundColor: '#F1F5F9',
+        marginHorizontal: 0,
+        marginTop: 0,
     },
     progressBar: {
         height: '100%',
-        backgroundColor: '#10B981',
-        borderRadius: 2,
+        backgroundColor: '#7C3AED',
     },
     stepIndicator: {
         color: '#64748B',
@@ -308,37 +311,40 @@ const styles = StyleSheet.create({
         marginTop: 6,
     },
     content: {
-        padding: 20,
-        paddingTop: 16,
+        padding: 24,
+        paddingTop: 24,
     },
     questionIcon: {
-        fontSize: 36,
-        marginBottom: 10,
+        fontSize: 48,
+        marginBottom: 16,
     },
     questionTitle: {
-        color: '#F8FAFC',
-        fontSize: 20,
-        fontWeight: '700',
-        marginBottom: 6,
+        color: '#27272a',
+        fontSize: 24,
+        fontWeight: '900',
+        marginBottom: 8,
+        letterSpacing: -0.5,
     },
     questionSubtitle: {
-        color: '#94A3B8',
-        fontSize: 14,
-        marginBottom: 20,
-        lineHeight: 20,
+        color: '#64748B',
+        fontSize: 15,
+        marginBottom: 24,
+        lineHeight: 22,
+        fontWeight: '500',
     },
     input: {
-        backgroundColor: '#0F172A',
-        borderWidth: 1,
-        borderColor: '#334155',
-        borderRadius: 12,
-        color: '#F8FAFC',
-        fontSize: 15,
-        padding: 14,
-        lineHeight: 22,
+        backgroundColor: '#F8FAFC',
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
+        borderRadius: 16,
+        color: '#27272a',
+        fontSize: 16,
+        padding: 16,
+        lineHeight: 24,
+        fontWeight: '500',
     },
     inputMultiline: {
-        minHeight: 120,
+        minHeight: 140,
         textAlignVertical: 'top',
     },
     choicesContainer: {
@@ -347,36 +353,37 @@ const styles = StyleSheet.create({
     choiceButton: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#0F172A',
-        borderWidth: 1,
-        borderColor: '#334155',
-        borderRadius: 12,
-        padding: 14,
-        gap: 12,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
+        borderRadius: 16,
+        padding: 16,
+        gap: 14,
     },
     choiceButtonActive: {
-        borderColor: '#10B981',
-        backgroundColor: '#064E3B20',
+        borderColor: '#7C3AED',
+        backgroundColor: 'rgba(124, 58, 237, 0.05)',
     },
     choiceIcon: {
-        fontSize: 20,
+        fontSize: 24,
     },
     choiceLabel: {
-        color: '#94A3B8',
-        fontSize: 15,
-        fontWeight: '500',
+        color: '#64748B',
+        fontSize: 16,
+        fontWeight: '700',
     },
     choiceLabelActive: {
-        color: '#10B981',
+        color: '#7C3AED',
     },
     footer: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        padding: 20,
-        paddingTop: 12,
+        padding: 24,
+        paddingTop: 16,
         borderTopWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#F1F5F9',
+        backgroundColor: '#FFFFFF',
     },
     skipBtn: {
         paddingVertical: 8,
@@ -391,42 +398,45 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     backBtn: {
-        paddingVertical: 10,
-        paddingHorizontal: 16,
-        borderRadius: 10,
-        backgroundColor: '#1E293B',
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 14,
+        backgroundColor: '#F1F5F9',
     },
     backBtnText: {
-        color: '#94A3B8',
+        color: '#64748B',
         fontSize: 14,
-        fontWeight: '600',
+        fontWeight: '800',
     },
     nextBtn: {
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 10,
-        backgroundColor: '#10B981',
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 14,
+        backgroundColor: '#7C3AED',
+        shadowColor: '#7C3AED',
+        shadowOpacity: 0.3,
+        shadowRadius: 10,
     },
     nextBtnDisabled: {
-        backgroundColor: '#1E293B',
-        opacity: 0.5,
+        backgroundColor: '#E2E8F0',
+        shadowOpacity: 0,
     },
     nextBtnText: {
         color: '#FFFFFF',
         fontSize: 14,
-        fontWeight: '700',
+        fontWeight: '900',
     },
     skipQuestionBtn: {
-        paddingVertical: 10,
-        paddingHorizontal: 14,
-        borderRadius: 10,
-        backgroundColor: '#1E293B',
-        borderWidth: 1,
-        borderColor: '#334155',
+        paddingVertical: 12,
+        paddingHorizontal: 18,
+        borderRadius: 14,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1.5,
+        borderColor: '#E2E8F0',
     },
     skipQuestionText: {
         color: '#94A3B8',
-        fontSize: 13,
-        fontWeight: '500',
+        fontSize: 14,
+        fontWeight: '700',
     },
 });

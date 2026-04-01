@@ -177,7 +177,7 @@ export const AdminScreen = () => {
     if (loading) {
         return (
             <View style={styles.center}>
-                <ActivityIndicator color="#818CF8" />
+                <ActivityIndicator color="#7C3AED" />
             </View>
         );
     }
@@ -185,7 +185,7 @@ export const AdminScreen = () => {
     if (!isAdmin) {
         return (
             <View style={styles.center}>
-                <Shield size={40} color="#334155" />
+                <Shield size={40} color="#64748B" />
                 <Text style={styles.accessDenied}>접근 권한이 없습니다</Text>
                 <Text style={styles.accessSub}>{userEmail ? `(${userEmail})` : '로그인이 필요합니다'}</Text>
             </View>
@@ -197,8 +197,10 @@ export const AdminScreen = () => {
         <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
             {/* Header */}
             <View style={styles.header}>
-                <Shield size={20} color="#818CF8" />
-                <Text style={styles.headerTitle}>Insight 카드뉴스 관리자</Text>
+                <View style={styles.headerIconContainer}>
+                    <Shield size={20} color="#7C3AED" />
+                </View>
+                <Text style={styles.headerTitle}>인사이트 카드뉴스 관리자</Text>
                 <TouchableOpacity onPress={loadCards} style={styles.refreshBtn}>
                     <RefreshCw size={16} color="#64748B" />
                 </TouchableOpacity>
@@ -207,13 +209,16 @@ export const AdminScreen = () => {
 
             {/* ─ Write Form ─ */}
             <View style={styles.section}>
-                <Text style={styles.sectionTitle}>✍️ 새 카드 작성</Text>
+                <View style={styles.sectionTitleRow}>
+                    <View style={styles.sectionIndicator} />
+                    <Text style={styles.sectionTitle}>✍️ 새 카드 작성</Text>
+                </View>
 
                 <Text style={styles.label}>헤드라인 *</Text>
                 <TextInput
                     style={styles.input}
                     placeholder="예: 2026 스타트업 정부지원 총정리"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#94A3B8"
                     value={form.headline}
                     onChangeText={v => setForm(f => ({ ...f, headline: v }))}
                 />
@@ -222,7 +227,7 @@ export const AdminScreen = () => {
                 <TextInput
                     style={[styles.input, styles.textarea]}
                     placeholder="카드의 메인 본문 내용을 입력하세요"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#94A3B8"
                     value={form.body}
                     onChangeText={v => setForm(f => ({ ...f, body: v }))}
                     multiline
@@ -233,7 +238,7 @@ export const AdminScreen = () => {
                 <TextInput
                     style={[styles.input, styles.textarea]}
                     placeholder={"포인트 1\n포인트 2\n포인트 3"}
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#94A3B8"
                     value={form.bulletsRaw}
                     onChangeText={v => setForm(f => ({ ...f, bulletsRaw: v }))}
                     multiline
@@ -249,7 +254,7 @@ export const AdminScreen = () => {
                             onPress={() => setForm(f => ({ ...f, category: cat }))}
                         >
                             <Text style={[styles.catBtnText, form.category === cat && styles.catBtnActiveText]}>
-                                {cat === 'Economy' ? '📊 경제' : '🔬 과학'}
+                                {cat === 'Economy' ? '📈 경제' : '🔬 과학'}
                             </Text>
                         </TouchableOpacity>
                     ))}
@@ -259,7 +264,7 @@ export const AdminScreen = () => {
                 <TextInput
                     style={styles.input}
                     placeholder="https://images.unsplash.com/..."
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#94A3B8"
                     value={form.imageUrl}
                     onChangeText={v => setForm(f => ({ ...f, imageUrl: v }))}
                 />
@@ -268,7 +273,7 @@ export const AdminScreen = () => {
                 <TextInput
                     style={styles.input}
                     placeholder="예: 중소벤처기업부 공고"
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#94A3B8"
                     value={form.relatedTitle}
                     onChangeText={v => setForm(f => ({ ...f, relatedTitle: v }))}
                 />
@@ -277,7 +282,7 @@ export const AdminScreen = () => {
                 <TextInput
                     style={styles.input}
                     placeholder="https://..."
-                    placeholderTextColor="#475569"
+                    placeholderTextColor="#94A3B8"
                     value={form.relatedUrl}
                     onChangeText={v => setForm(f => ({ ...f, relatedUrl: v }))}
                 />
@@ -288,8 +293,8 @@ export const AdminScreen = () => {
                         style={styles.previewBtn}
                         onPress={() => setShowPreview(v => !v)}
                     >
-                        {showPreview ? <EyeOff size={16} color="#94A3B8" /> : <Eye size={16} color="#94A3B8" />}
-                        <Text style={styles.previewBtnText}>{showPreview ? '미리보기 닫기' : '미리보기'}</Text>
+                        {showPreview ? <EyeOff size={16} color="#64748B" /> : <Eye size={16} color="#64748B" />}
+                        <Text style={styles.previewBtnText}>{showPreview ? '미리보기 닫기' : '실시간 미리보기'}</Text>
                     </TouchableOpacity>
                 ) : null}
 
@@ -297,11 +302,16 @@ export const AdminScreen = () => {
                 {showPreview && (
                     <View style={styles.preview}>
                         <Text style={styles.previewHeadline}>{form.headline}</Text>
-                        <Text style={styles.previewTag}>{form.category === 'Economy' ? '📊 경제' : '🔬 과학'}</Text>
+                        <View style={styles.previewTagBadge}>
+                            <Text style={styles.previewTagText}>{form.category === 'Economy' ? '경제' : '과학'}</Text>
+                        </View>
                         <Text style={styles.previewBody}>{form.body}</Text>
                         {form.bulletsRaw.trim() ? (
                             form.bulletsRaw.split('\n').filter(Boolean).map((b, i) => (
-                                <Text key={i} style={styles.previewBullet}>• {b}</Text>
+                                <View key={i} style={styles.previewBulletRow}>
+                                    <View style={styles.bulletDot} />
+                                    <Text style={styles.previewBulletText}>{b}</Text>
+                                </View>
                             ))
                         ) : null}
                     </View>
@@ -317,15 +327,15 @@ export const AdminScreen = () => {
                         ? <ActivityIndicator size="small" color="#fff" />
                         : <PlusCircle size={18} color="#fff" />
                     }
-                    <Text style={styles.publishBtnText}>{publishing ? '게시 중...' : 'Insight에 게시하기'}</Text>
+                    <Text style={styles.publishBtnText}>{publishing ? '게시 중...' : '인사이트 발행하기'}</Text>
                 </TouchableOpacity>
             </View>
 
             {/* ─ Existing Cards ─ */}
-            <View style={styles.section}>
+            <View style={styles.listSection}>
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>📋 게시된 카드 ({cards.length}개)</Text>
-                    {fetchLoading && <ActivityIndicator size="small" color="#818CF8" />}
+                    {fetchLoading && <ActivityIndicator size="small" color="#7C3AED" />}
                 </View>
 
                 {cards.length === 0 && !fetchLoading && (
@@ -351,78 +361,102 @@ export const AdminScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#0A0F1E' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#0A0F1E', gap: 12 },
-    accessDenied: { color: '#E2E8F0', fontSize: 18, fontWeight: '700', marginTop: 16 },
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FDF8F3', gap: 12 },
+    accessDenied: { color: '#18181b', fontSize: 18, fontWeight: '700', marginTop: 16 },
     accessSub: { color: '#64748B', fontSize: 13 },
 
-    header: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 20, paddingBottom: 4 },
-    headerTitle: { color: '#E2E8F0', fontSize: 18, fontWeight: '800', flex: 1 },
-    headerSub: { color: '#475569', fontSize: 12, paddingHorizontal: 20, marginBottom: 16 },
-    refreshBtn: { padding: 6 },
+    header: { flexDirection: 'row', alignItems: 'center', gap: 10, padding: 24, paddingBottom: 4 },
+    headerIconContainer: {
+        width: 36, height: 36, borderRadius: 10, backgroundColor: '#F0E7FF',
+        justifyContent: 'center', alignItems: 'center'
+    },
+    headerTitle: { color: '#18181b', fontSize: 20, fontWeight: '800', flex: 1, letterSpacing: -0.5 },
+    headerSub: { color: '#64748B', fontSize: 14, paddingHorizontal: 24, marginBottom: 16 },
+    refreshBtn: { padding: 8, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0' },
 
     section: {
         marginHorizontal: 16,
-        marginBottom: 24,
-        backgroundColor: '#0F172A',
-        borderRadius: 16,
-        padding: 20,
+        marginBottom: 20,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 24,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
         borderWidth: 1,
-        borderColor: '#1E293B',
+        borderColor: '#F1F5F9',
     },
-    sectionTitle: { color: '#818CF8', fontSize: 15, fontWeight: '800', marginBottom: 20 },
+    sectionTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
+    sectionIndicator: { width: 4, height: 16, backgroundColor: '#7C3AED', borderRadius: 2 },
+    sectionTitle: { color: '#18181b', fontSize: 16, fontWeight: '800' },
     sectionHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
 
-    label: { color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 6, marginTop: 14 },
+    label: { color: '#475569', fontSize: 13, fontWeight: '600', marginBottom: 6, marginTop: 16 },
     input: {
-        backgroundColor: '#1E293B',
-        borderRadius: 10,
-        padding: 12,
-        color: '#E2E8F0',
+        backgroundColor: '#F8FAFC',
+        borderRadius: 12,
+        padding: 14,
+        color: '#1E293B',
         fontSize: 14,
         borderWidth: 1,
-        borderColor: '#334155',
+        borderColor: '#E2E8F0',
     },
-    textarea: { minHeight: 80, textAlignVertical: 'top' },
+    textarea: { minHeight: 100, textAlignVertical: 'top' },
 
     categoryRow: { flexDirection: 'row', gap: 10, marginTop: 4 },
     catBtn: {
-        flex: 1, paddingVertical: 10, borderRadius: 10,
-        borderWidth: 1, borderColor: '#334155',
-        backgroundColor: '#1E293B', alignItems: 'center',
+        flex: 1, paddingVertical: 12, borderRadius: 12,
+        borderWidth: 1, borderColor: '#E2E8F0',
+        backgroundColor: '#F8FAFC', alignItems: 'center',
     },
-    catBtnActive: { backgroundColor: '#312E81', borderColor: '#818CF8' },
-    catBtnText: { color: '#64748B', fontWeight: '600', fontSize: 13 },
-    catBtnActiveText: { color: '#818CF8' },
+    catBtnActive: { backgroundColor: '#F5F3FF', borderColor: '#7C3AED' },
+    catBtnText: { color: '#64748B', fontWeight: '600', fontSize: 14 },
+    catBtnActiveText: { color: '#7C3AED' },
 
     previewBtn: {
         flexDirection: 'row', alignItems: 'center', gap: 6,
-        paddingVertical: 10, marginTop: 16,
+        paddingVertical: 12, marginTop: 24, justifyContent: 'center',
+        backgroundColor: '#F1F5F9', borderRadius: 10
     },
-    previewBtnText: { color: '#94A3B8', fontSize: 13 },
+    previewBtnText: { color: '#475569', fontSize: 14, fontWeight: '600' },
 
     preview: {
-        backgroundColor: '#1E293B', borderRadius: 12, padding: 16,
-        borderWidth: 1, borderColor: '#334155', marginTop: 8,
+        backgroundColor: '#F8FAFC', borderRadius: 16, padding: 20,
+        borderWidth: 1, borderColor: '#E2E8F0', marginTop: 12,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03, shadowRadius: 4,
     },
-    previewHeadline: { color: '#E2E8F0', fontSize: 16, fontWeight: '800', marginBottom: 6 },
-    previewTag: { color: '#60A5FA', fontSize: 11, fontWeight: '600', marginBottom: 10 },
-    previewBody: { color: '#94A3B8', fontSize: 13, lineHeight: 20, marginBottom: 10 },
-    previewBullet: { color: '#CBD5E1', fontSize: 13, marginBottom: 4, lineHeight: 20 },
+    previewHeadline: { color: '#18181b', fontSize: 18, fontWeight: '800', marginBottom: 8 },
+    previewTagBadge: {
+        backgroundColor: '#F0E7FF', alignSelf: 'flex-start',
+        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, marginBottom: 12
+    },
+    previewTagText: { color: '#7C3AED', fontSize: 11, fontWeight: '700' },
+    previewBody: { color: '#475569', fontSize: 14, lineHeight: 22, marginBottom: 12 },
+    previewBulletRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+    bulletDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#7C3AED' },
+    previewBulletText: { color: '#334155', fontSize: 14, lineHeight: 22 },
 
     publishBtn: {
-        backgroundColor: '#4F46E5', borderRadius: 12, paddingVertical: 14,
+        backgroundColor: '#7C3AED', borderRadius: 14, paddingVertical: 16,
         flexDirection: 'row', justifyContent: 'center', alignItems: 'center',
         gap: 8, marginTop: 24,
+        shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2, shadowRadius: 8,
     },
-    publishBtnText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+    publishBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 16 },
 
+    listSection: { marginHorizontal: 16, marginBottom: 24 },
     cardRow: {
         flexDirection: 'row', alignItems: 'center',
-        paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#1E293B',
+        paddingVertical: 16, paddingHorizontal: 4,
+        borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
     },
-    cardRowTitle: { color: '#E2E8F0', fontSize: 14, fontWeight: '600' },
-    cardRowMeta: { color: '#475569', fontSize: 11, marginTop: 3 },
-    deleteBtn: { padding: 8 },
-    emptyText: { color: '#475569', fontSize: 13, textAlign: 'center', paddingVertical: 20 },
+    cardRowTitle: { color: '#1E293B', fontSize: 15, fontWeight: '600' },
+    cardRowMeta: { color: '#64748B', fontSize: 12, marginTop: 4 },
+    deleteBtn: { padding: 10, backgroundColor: '#FFF1F2', borderRadius: 10 },
+    emptyText: { color: '#94A3B8', fontSize: 14, textAlign: 'center', paddingVertical: 40 },
 });

@@ -72,72 +72,76 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
         const activeStyle = isAmber
             ? 'bg-amber-500/20 border border-amber-400/30'
-            : 'bg-blue-500/20 border border-blue-400/30';
-        const activeIconColor = isAmber ? '#FBBF24' : '#60A5FA';
+            : 'bg-[#7C3AED]/10 border border-[#7C3AED]/20 shadow-sm shadow-[#7C3AED]/5';
+        const activeIconColor = isAmber ? '#FBBF24' : '#7C3AED';
 
         return (
             <View key={item.id} style={{ position: 'relative' }}>
                 <TouchableOpacity
                     onPress={() => onTabChange(item.id)}
-                    className={`w-[48px] h-[48px] rounded-[16px] items-center justify-center ${extraClass || ''} ${isActive ? activeStyle : 'bg-slate-800/30'}`}
+                    className={`w-[48px] h-[48px] rounded-[18px] items-center justify-center ${extraClass || ''} ${isActive ? activeStyle : 'bg-transparent hover:bg-slate-50'}`}
                     style={{
-                        shadowColor: isActive ? (isAmber ? '#F59E0B' : '#3B82F6') : 'transparent',
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.3,
-                        shadowRadius: 8,
-                    }}
+                        transition: 'all 0.2s ease-in-out'
+                    } as any}
                     // Web hover via onMouseEnter/Leave (React Native Web supports these)
                     {...(isWeb ? {
-                        onMouseEnter: (e: any) => {
-                            const rect = e?.target?.getBoundingClientRect?.();
+                        onPointerEnter: (e: any) => {
+                            const el = e?.currentTarget || e?.target;
+                            const rect = el?.getBoundingClientRect?.();
                             setHoveredTab(item.id);
                             setHoveredLabel(item.label);
-                            // Get Y offset relative to sidebar container
                             if (rect) setHoveredY(rect.top);
                         },
-                        onMouseLeave: () => setHoveredTab(null),
+                        onPointerLeave: () => setHoveredTab(null),
                     } : {})}
                 >
                     <Icon
                         size={22}
                         color={isActive ? activeIconColor : '#94A3B8'}
-                        strokeWidth={2.5}
+                        strokeWidth={isActive ? 2.5 : 2}
                     />
+                    {isActive && (
+                        <View className="absolute left-[-12px] w-1 h-6 bg-[#7C3AED] rounded-r-full" />
+                    )}
                 </TouchableOpacity>
             </View>
         );
     };
 
     return (
-        <View className="h-full p-3" style={{ position: 'relative', zIndex: 50 }}>
-            <View className="w-[64px] h-full bg-[#0F172A]/80 backdrop-blur-xl rounded-[24px] flex-col items-center py-4 shadow-2xl border border-white/5">
+        <View className="h-full p-3" style={{ position: 'relative', zIndex: 100 }}>
+            <View className="w-[68px] h-full bg-white shadow-2xl shadow-black/5 rounded-[28px] flex-col items-center py-6 border border-[#E2E8F0]">
                 {/* Logo */}
-                <View className="w-[48px] h-[48px] rounded-[16px] bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center mb-4 shadow-lg">
-                    <Text className="text-xl font-bold text-white">✦</Text>
+                <View className="w-[48px] h-[48px] rounded-[18px] bg-[#7C3AED] items-center justify-center mb-8 shadow-lg shadow-[#7C3AED]/30">
+                    <Text className="text-2xl font-bold text-white">✦</Text>
                 </View>
 
                 {/* Top nav: Home + Profile */}
-                {NAV_ITEMS_TOP.map((item, i) =>
-                    renderItem(item, i === NAV_ITEMS_TOP.length - 1 ? 'mb-4' : 'mb-3')
-                )}
-
-                {/* Divider */}
-                <View className="w-8 h-[1px] bg-white/10 mb-4" />
-
-                {/* Workflow items */}
-                <View className="flex-1 gap-3">
-                    {NAV_ITEMS_WORKFLOW.map(renderItem)}
-                    <View className="w-8 h-[1px] bg-white/10 self-center" />
-                    {NAV_ITEMS_UTIL.map(renderItem)}
+                <View className="mb-6">
+                    {NAV_ITEMS_TOP.map((item, i) =>
+                        renderItem(item, i === NAV_ITEMS_TOP.length - 1 ? '' : 'mb-3')
+                    )}
                 </View>
 
                 {/* Divider */}
-                <View className="w-8 h-[1px] bg-white/10 mb-4" />
+                <View className="w-10 h-[1px] bg-[#F1F5F9] mb-6" />
+
+                {/* Workflow items */}
+                <View className="flex-1 gap-3 items-center">
+                    {NAV_ITEMS_WORKFLOW.map((item) => renderItem(item))}
+                    <View className="w-10 h-[1px] bg-[#F1F5F9] my-2" />
+                    {NAV_ITEMS_UTIL.map((item) => renderItem(item))}
+                </View>
+
+                {/* Divider */}
+                <View className="w-10 h-[1px] bg-[#F1F5F9] mb-6" />
 
                 {/* Bottom items: Pricing + Settings */}
-                {NAV_ITEMS_BOTTOM.map((item, i) =>
-                    renderItem(item, i === 0 ? 'mb-3' : '')
-                )}
+                <View className="gap-3">
+                    {NAV_ITEMS_BOTTOM.map((item) =>
+                        renderItem(item)
+                    )}
+                </View>
             </View>
 
             {/* Floating Tooltip — web only, shown on hover */}
@@ -153,15 +157,15 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 >
                     <View
                         style={{
-                            backgroundColor: '#1E293B',
-                            borderColor: 'rgba(255,255,255,0.1)',
+                            backgroundColor: '#FFFFFF',
+                            borderColor: '#E2E8F0',
                             borderWidth: 1,
                             borderRadius: 10,
                             paddingHorizontal: 12,
                             paddingVertical: 7,
                             shadowColor: '#000',
                             shadowOffset: { width: 0, height: 4 },
-                            shadowOpacity: 0.4,
+                            shadowOpacity: 0.1,
                             shadowRadius: 12,
                             flexDirection: 'row',
                             alignItems: 'center',
@@ -182,16 +186,15 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                                 borderRightWidth: 6,
                                 borderTopColor: 'transparent',
                                 borderBottomColor: 'transparent',
-                                borderRightColor: '#1E293B',
+                                borderRightColor: '#FFFFFF',
                             }}
                         />
                         <Text
-                            style={{
-                                color: '#F1F5F9',
+                            style={[{
+                                color: '#1E293B',
                                 fontSize: 12,
                                 fontWeight: '700',
-                                whiteSpace: 'nowrap' as any,
-                            }}
+                            }, { whiteSpace: 'nowrap' } as any]}
                         >
                             {hoveredLabel}
                         </Text>

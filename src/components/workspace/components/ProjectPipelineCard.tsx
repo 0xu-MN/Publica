@@ -20,37 +20,42 @@ export const ProjectPipelineCard = ({
     onViewReport
 }: ProjectPipelineCardProps) => {
     return (
-        <View className="bg-[#0F172A]/80 rounded-2xl p-5 border border-white/5">
+        <View className="bg-[#F8FAFC] rounded-[24px] p-6 border border-[#E2E8F0] shadow-sm active:border-[#7C3AED]/30 transition-all">
             {/* Header */}
-            <View className="mb-4">
-                <Text className="text-white font-bold text-base mb-1">{title}</Text>
-                {subtitle && <Text className="text-slate-500 text-xs">{subtitle}</Text>}
+            <View className="mb-5">
+                <Text className="text-[#27272a] font-black text-[15px] mb-1.5 leading-tight">{title}</Text>
+                {subtitle && (
+                    <View className="flex-row items-center gap-1.5">
+                        <View className="w-1.5 h-1.5 rounded-full bg-[#7C3AED]" />
+                        <Text className="text-[#64748B] text-[11px] font-bold uppercase tracking-wider">{subtitle}</Text>
+                    </View>
+                )}
             </View>
 
             {/* Progress */}
-            <View className="mb-4">
-                <View className="flex-row items-center justify-between mb-2">
-                    <Text className="text-slate-400 text-xs">진행률</Text>
-                    <Text className="text-blue-400 font-bold text-lg">{progress}%</Text>
+            <View className="mb-6">
+                <View className="flex-row items-center justify-between mb-2.5">
+                    <Text className="text-[#94A3B8] text-[11px] font-black uppercase tracking-widest">분석 진행률</Text>
+                    <Text className="text-[#7C3AED] font-black text-xl">{progress}%</Text>
                 </View>
-                <View className="h-2 bg-slate-800/50 rounded-full overflow-hidden">
+                <View className="h-2.5 bg-[#E2E8F0] rounded-full overflow-hidden shadow-inner">
                     <View
                         style={{ width: `${progress}%` }}
-                        className="h-full bg-blue-500 rounded-full"
+                        className="h-full bg-[#7C3AED] rounded-full shadow-sm"
                     />
                 </View>
             </View>
 
             {/* Stages */}
-            <View className="mb-4">
-                <Text className="text-green-400 text-xs font-semibold mb-2">현재 {currentStage}</Text>
-                <View className="flex-row gap-1">
+            <View className="mb-6">
+                <Text className="text-[#10B981] text-[10px] font-black uppercase mb-3 tracking-[2px]">현재 스테이지: {currentStage}</Text>
+                <View className="flex-row gap-2">
                     {stages.map((stage, index) => (
                         <View
                             key={index}
-                            className={`flex-1 h-1 rounded-full ${index <= stages.indexOf(currentStage)
-                                    ? 'bg-green-400'
-                                    : 'bg-slate-700'
+                            className={`flex-1 h-1.5 rounded-full ${index <= stages.indexOf(currentStage)
+                                    ? 'bg-[#10B981] shadow-sm shadow-emerald-500/20'
+                                    : 'bg-[#E2E8F0]'
                                 }`}
                         />
                     ))}
@@ -60,10 +65,10 @@ export const ProjectPipelineCard = ({
             {/* Action Button */}
             <TouchableOpacity
                 onPress={onViewReport}
-                className="bg-blue-600 py-3 rounded-xl flex-row items-center justify-center gap-2"
+                className="bg-[#7C3AED] py-4 rounded-2xl flex-row items-center justify-center gap-2.5 shadow-xl shadow-[#7C3AED]/20 active:opacity-90 transition-all"
             >
-                <Text className="text-white font-semibold text-sm">전략보고서 보기</Text>
-                <ArrowRight size={16} color="#fff" />
+                <Text className="text-white font-black text-xs uppercase tracking-widest">전략 분석 보고서</Text>
+                <ArrowRight size={16} color="#fff" strokeWidth={3} />
             </TouchableOpacity>
         </View>
     );

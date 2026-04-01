@@ -44,6 +44,7 @@ class PDFParseResult(BaseModel):
     numPages: int
     toc: List[TOCItem]
     sections: dict
+    summary: Optional[str] = None
 
 def get_body_font_size(words):
     if not words:
@@ -505,6 +506,7 @@ def health():
 
 @app.post("/api/upload-hwpx")
 async def process_hwpx(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(...),
     payload: str = Form("{}")
 ):
@@ -548,17 +550,19 @@ async def process_hwpx(
                     arcname = os.path.relpath(file_path, extract_dir)
                     zip_out.write(file_path, arcname)
 
-        return {
-            "status": "success",
-            "message": "HWPX successfully extracted and inspected in Primary Server",
-            "section0_preview": preview_text,
-            "payload_received": payload
-        }
+        # Return the built hwpx file
+        from fastapi.responses import FileResponse
+        # Use background_tasks to clean up the directory
+        background_tasks.add_task(shutil.rmtree, temp_dir, ignore_errors=True)
+        return FileResponse(
+            output_path, 
+            filename=f"filled_{file.filename}", 
+            media_type="application/haansofthwp"
+        )
         
     except Exception as e:
+        shutil.rmtree(temp_dir, ignore_errors=True)
         return JSONResponse(status_code=500, content={"error": str(e)})
-    finally:
-        shutil.rmtree(temp_dir)
 
 @app.post("/api/autofill-docx")
 async def process_docx(
@@ -568,11 +572,31 @@ async def process_docx(
 ):
     """
     1. Receives a .docx template and AI generated payload.
-    2. Runs the mapping algorithm via docx_mapper.py.
-    3. Returns the perfectly structured and filled .docx file.
+    2. Parses payload JSON to extract 'document_html' field.
+    3. Runs the mapping algorithm via docx_mapper.py.
+    4. Returns the perfectly structured and filled .docx file.
     """
+    import json as _json
+
     if not file.filename.endswith('.docx'):
         return JSONResponse(status_code=400, content={"error": "Only .docx files are supported here"})
+
+    # ─── Extract HTML from payload ───────────────────────────────────────────
+    # Frontend sends: JSON.stringify({ document_html: editorContent })
+    # We must extract the 'document_html' key before passing to docx_mapper.
+    payload_html = ""
+    try:
+        payload_data = _json.loads(payload)
+        payload_html = payload_data.get("document_html", "")
+        print(f"📄 Payload parsed OK. document_html length: {len(payload_html)} chars")
+    except (_json.JSONDecodeError, TypeError):
+        # Fallback: payload might already be raw HTML
+        payload_html = payload
+        print(f"⚠️  Payload is not valid JSON — using as raw HTML. Length: {len(payload_html)} chars")
+
+    if not payload_html or len(payload_html.strip()) < 10:
+        print("❌ Payload HTML is empty or too short. Aborting.")
+        return JSONResponse(status_code=400, content={"error": "document_html payload is empty. Please write content in the editor before exporting."})
 
     temp_dir = tempfile.mkdtemp()
     input_path = os.path.join(temp_dir, "input.docx")
@@ -580,15 +604,18 @@ async def process_docx(
 
     try:
         content = await file.read()
+        print(f"📁 Received file: {file.filename} ({len(content)} bytes)")
         with open(input_path, "wb") as f:
             f.write(content)
 
         # Execute Document Auto-Mapping
-        success = docx_mapper.fill_docx_template(input_path, payload, output_path)
+        print(f"🚀 Starting docx_mapper.fill_docx_template...")
+        success = docx_mapper.fill_docx_template(input_path, payload_html, output_path)
         
         if not success:
             return JSONResponse(status_code=500, content={"error": "Failed to map docx file. Check server logs."})
 
+        print(f"✅ DOCX mapping success. Sending file: {output_path}")
         # Return the built docx file and clean up background temp files
         background_tasks.add_task(shutil.rmtree, temp_dir, ignore_errors=True)
         return FileResponse(
@@ -598,5 +625,7 @@ async def process_docx(
         )
         
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         shutil.rmtree(temp_dir, ignore_errors=True)
         return JSONResponse(status_code=500, content={"error": str(e)})

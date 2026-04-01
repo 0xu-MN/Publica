@@ -21,7 +21,7 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
 
             {/* Always Visible Gradient Background */}
             <LinearGradient
-                colors={['#4C1D95', '#1E293B']} // Violet-900 to Slate-800
+                colors={['#DBC1DE', '#BD90C2']} // Soft Lavender to Muted Purple (#BD90C2)
                 className="absolute inset-0"
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -35,11 +35,11 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
                 <View className="flex-row items-center justify-between h-[60px] w-full px-2">
                     {/* Left: Agency | Title */}
                     <View className="flex-row items-center flex-[0.85] overflow-hidden">
-                        <Text className="text-purple-200 text-[12px] font-medium mr-2" numberOfLines={1}>
+                        <Text className="text-slate-800/70 text-[12px] font-medium mr-2" numberOfLines={1}>
                             {item.agency}
                         </Text>
-                        <View className="w-[1px] h-3 bg-white/20 mr-2" />
-                        <Text className="text-white text-[13px] font-bold tracking-wide flex-1" numberOfLines={1}>
+                        <View className="w-[1px] h-3 bg-slate-800/20 mr-2" />
+                        <Text className="text-[13px] font-bold tracking-wide flex-1" style={{ color: '#27272a' }} numberOfLines={1}>
                             {item.title}
                         </Text>
                     </View>
@@ -68,7 +68,7 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
 
                     {/* Row 2: Full Title Display */}
                     <View className="justify-center items-center flex-1 mb-4">
-                        <Text className="text-white text-[22px] font-bold text-center leading-8">
+                        <Text className="text-[22px] font-bold text-center leading-8" style={{ color: '#27272a' }}>
                             {item.title}
                         </Text>
                     </View>
@@ -76,15 +76,15 @@ export const GovernmentCard: React.FC<GovernmentCardProps> = ({ item }) => {
                     {/* Row 3: Info Grid */}
                     <View className="flex-row gap-3 h-[100px]">
                         {/* Info Box */}
-                        <View className="flex-[1.6] bg-slate-900/50 rounded-2xl p-4 justify-center border border-white/5 gap-1.5">
-                            <Text className="text-purple-200 text-[12px]" numberOfLines={1}>📅 접수: {item.application_period || '별도 공지시까지'}</Text>
-                            <Text className="text-purple-200 text-[12px]" numberOfLines={1}>🏛️ {item.department || item.agency}</Text>
+                        <View className="flex-[1.6] bg-white/30 rounded-2xl p-4 justify-center border border-black/5 gap-1.5">
+                            <Text className="text-[12px] font-medium" style={{ color: '#27272a' }} numberOfLines={1}>📅 접수: {item.application_period || '별도 공지시까지'}</Text>
+                            <Text className="text-[12px] font-medium" style={{ color: '#27272a' }} numberOfLines={1}>🏛️ {item.department || item.agency}</Text>
                         </View>
 
                         {/* Status Box */}
-                        <View className="flex-1 bg-slate-900/50 rounded-2xl p-4 justify-center items-center border border-white/5">
-                            <Text className="text-slate-400 text-[11px] mb-1">마감일</Text>
-                            <Text className="text-emerald-400 text-lg font-bold">{item.deadline_date || '상시접수'}</Text>
+                        <View className="flex-1 bg-white/30 rounded-2xl p-4 justify-center items-center border border-black/5">
+                            <Text className="text-[11px] mb-1 font-bold opacity-60" style={{ color: '#27272a' }}>마감일</Text>
+                            <Text className="text-lg font-black" style={{ color: '#27272a' }}>{item.deadline_date || '상시접수'}</Text>
                         </View>
                     </View>
                 </View>

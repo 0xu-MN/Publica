@@ -17,61 +17,69 @@ interface TodayScheduleWidgetProps {
 
 export const TodayScheduleWidget = ({ items, onToggleItem, onAddItem }: TodayScheduleWidgetProps) => {
     return (
-        <View className="bg-[#0F172A]/80 rounded-2xl p-8 border border-white/5 min-h-[280px]">
+        <View className="bg-white rounded-[40px] p-8 border border-[#E2E8F0] min-h-[320px] shadow-2xl shadow-black/[0.03]">
             {/* Prominent Date Display */}
-            <View className="mb-6 border-b border-white/10 pb-4">
-                <Text className="text-slate-400 text-xs font-semibold uppercase tracking-widest mb-1">TODAY</Text>
-                <Text className="text-white text-3xl font-black">
-                    {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
-                </Text>
-            </View>
-
-            {/* Header / List Title */}
-            <View className="flex-row items-center justify-between mb-6">
-                <View className="flex-row items-center gap-2">
-                    <Clock size={18} color="#F59E0B" />
-                    <Text className="text-slate-200 font-bold text-base">오늘의 일정</Text>
+            <View className="mb-8 items-center flex-row justify-between">
+                <View>
+                    <Text className="text-[#94A3B8] text-[10px] font-black uppercase tracking-widest mb-1">Schedule</Text>
+                    <Text className="text-[#27272a] text-2xl font-black tracking-tighter">
+                        {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                    </Text>
                 </View>
                 <TouchableOpacity
                     onPress={onAddItem}
-                    className="w-10 h-10 bg-blue-600 rounded-xl items-center justify-center shadow-lg shadow-blue-500/20"
+                    className="w-12 h-12 bg-[#7C3AED] rounded-2xl items-center justify-center shadow-xl shadow-[#7C3AED]/20 active:scale-95"
                 >
-                    <Plus size={20} color="#fff" />
+                    <Plus size={24} color="#fff" strokeWidth={3} />
                 </TouchableOpacity>
             </View>
 
+            {/* List Heading */}
+            <View className="flex-row items-center gap-2 mb-6">
+                <View className="w-1.5 h-6 rounded-full bg-[#7C3AED]" />
+                <Text className="text-[#27272a] font-black text-sm uppercase tracking-widest">To-do list</Text>
+            </View>
+
             {/* Schedule Items */}
-            <View className="gap-5">
+            <View className="gap-6">
                 {items.length === 0 ? (
-                    <Text className="text-slate-500 text-sm text-center py-4">
-                        일정이 없습니다
-                    </Text>
+                    <View className="items-center justify-center py-10 bg-[#F8FAFC]/50 rounded-[32px] border border-dashed border-[#E2E8F0]">
+                        <Clock size={24} color="#CBD5E1" strokeWidth={1.5} className="mb-2" />
+                        <Text className="text-[#94A3B8] text-xs font-bold text-center">
+                            오늘 예정된 일정이 없습니다
+                        </Text>
+                    </View>
                 ) : (
                     items.map((item) => (
                         <TouchableOpacity
                             key={item.id}
                             onPress={() => onToggleItem(item.id)}
-                            className="flex-row items-center gap-4 py-1"
+                            className="flex-row items-center gap-4 active:opacity-70"
                         >
                             <View
-                                className={`w-5 h-5 rounded border-2 items-center justify-center ${item.checked
-                                    ? 'bg-blue-500 border-blue-500'
-                                    : 'border-slate-600'
-                                    }`}
+                                className={`w-6 h-6 rounded-lg border-2 items-center justify-center ${item.checked
+                                    ? 'bg-[#7C3AED] border-[#7C3AED]'
+                                    : 'bg-white border-[#E2E8F0]'
+                                    } shadow-sm`}
                             >
-                                {item.checked && <Text className="text-white text-xs">✓</Text>}
+                                {item.checked && (
+                                    <View className="w-2.5 h-1.5 border-l-2 border-b-2 border-white -rotate-45 -mt-0.5" />
+                                )}
                             </View>
                             <View className="flex-1">
                                 <Text
-                                    className={`text-sm ${item.checked
-                                        ? 'text-slate-500 line-through'
-                                        : 'text-white'
+                                    className={`text-sm font-bold ${item.checked
+                                        ? 'text-[#CBD5E1] line-through'
+                                        : 'text-[#27272a]'
                                         }`}
                                 >
                                     {item.text}
                                 </Text>
                                 {item.dueDate && !item.checked && (
-                                    <Text className="text-red-400 text-xs mt-0.5">{item.dueDate}</Text>
+                                    <View className="flex-row items-center gap-1.5 mt-1">
+                                        <View className="w-1 h-1 rounded-full bg-red-500" />
+                                        <Text className="text-red-500 text-[10px] font-black uppercase tracking-tighter">{item.dueDate}</Text>
+                                    </View>
                                 )}
                             </View>
                         </TouchableOpacity>

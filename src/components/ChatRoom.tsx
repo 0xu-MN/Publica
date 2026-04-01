@@ -114,8 +114,8 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
 
     if (!targetUser) {
         return (
-            <View className="flex-1 items-center justify-center bg-[#1E293B] rounded-3xl border border-white/10">
-                <Text className="text-slate-500">대화 상대를 선택해주세요.</Text>
+            <View className="flex-1 items-center justify-center bg-white rounded-3xl border border-slate-200/60">
+                <Text className="text-slate-400 font-medium">대화 상대를 선택해주세요.</Text>
             </View>
         );
     }
@@ -123,22 +123,22 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
     return (
         <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1 bg-[#1E293B] rounded-3xl border border-white/10 overflow-hidden shadow-2xl"
+            className="flex-1 bg-white rounded-3xl border border-slate-200/60 overflow-hidden shadow-2xl"
         >
             {/* Header */}
-            <View className="px-5 py-4 bg-[#0F172A] border-b border-white/5 flex-row items-center justify-between">
+            <View className="px-5 py-4 bg-white border-b border-slate-100 flex-row items-center justify-between">
                 <View className="flex-row items-center">
-                    <View className="w-10 h-10 rounded-full bg-blue-500 items-center justify-center mr-3 relative overflow-hidden">
+                    <View className="w-10 h-10 rounded-full bg-purple-500/10 items-center justify-center mr-3 relative overflow-hidden">
                         {targetUser.imageUrl ? (
                             <Image source={{ uri: targetUser.imageUrl }} className="w-full h-full" resizeMode="cover" />
                         ) : (
-                            <Text className="text-white font-bold">{otherName[0]}</Text>
+                            <Text className="text-purple-600 font-bold">{otherName[0]}</Text>
                         )}
-                        <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0F172A]" />
+                        <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
                     </View>
                     <View>
-                        <Text className="text-white font-bold text-base">{otherName}</Text>
-                        <Text className="text-slate-400 text-xs">Online</Text>
+                        <Text className="text-[#27272a] font-bold text-base">{otherName}</Text>
+                        <Text className="text-slate-400 text-xs font-medium">Online</Text>
                     </View>
                 </View>
                 <TouchableOpacity className="p-2">
@@ -148,7 +148,7 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
 
             {/* Chat Area */}
             <ScrollView
-                className="flex-1 bg-[#050B14] p-4"
+                className="flex-1 bg-slate-50/30 p-4"
                 ref={scrollViewRef}
                 onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
@@ -156,16 +156,16 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
                 {messages.length === 0 && (
                     <View className="items-start mb-4">
                         <View className="flex-row items-end">
-                            <View className="w-8 h-8 rounded-full bg-blue-500 items-center justify-center mr-2 mb-4">
-                                <Text className="text-white text-xs font-bold">{otherName[0]}</Text>
+                            <View className="w-8 h-8 rounded-full bg-purple-500/10 items-center justify-center mr-2 mb-4">
+                                <Text className="text-purple-600 text-xs font-bold">{otherName[0]}</Text>
                             </View>
                             <View>
-                                <View className="p-3 rounded-2xl max-w-[280px] bg-[#1E293B] rounded-tl-none border border-white/5">
-                                    <Text className="text-slate-200 text-sm leading-5">
+                                <View className="p-3 rounded-2xl max-w-[280px] bg-white rounded-tl-none border border-slate-200/60 shadow-sm">
+                                    <Text className="text-slate-600 text-sm leading-5 font-medium">
                                         {`안녕하세요, ${otherName}입니다. 👋\n협업 제안이나 문의사항이 있으시면 언제든 메시지 남겨주세요.`}
                                     </Text>
                                 </View>
-                                <Text className="text-slate-500 text-[10px] mt-1 ml-1">
+                                <Text className="text-slate-400 text-[10px] mt-1 ml-1 font-medium">
                                     자동 메시지
                                 </Text>
                             </View>
@@ -177,24 +177,24 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
                     <View key={msg.id} className={`items-${msg.isMe ? 'end' : 'start'} mb-4`}>
                         <View className={`flex-row items-end ${msg.isMe ? 'justify-end' : ''}`}>
                             {!msg.isMe && (
-                                <View className="w-8 h-8 rounded-full bg-blue-500 items-center justify-center mr-2 mb-4 overflow-hidden">
+                                <View className="w-8 h-8 rounded-full bg-purple-500/10 items-center justify-center mr-2 mb-4 overflow-hidden shadow-sm">
                                     {targetUser.imageUrl ? (
                                         <Image source={{ uri: targetUser.imageUrl }} className="w-full h-full" resizeMode="cover" />
                                     ) : (
-                                        <Text className="text-white text-xs font-bold">{otherName[0]}</Text>
+                                        <Text className="text-purple-600 text-xs font-bold">{otherName[0]}</Text>
                                     )}
                                 </View>
                             )}
                             <View>
-                                <View className={`p-3 rounded-2xl max-w-[280px] ${msg.isMe
-                                    ? 'bg-blue-600 rounded-tr-none'
-                                    : 'bg-[#1E293B] rounded-tl-none border border-white/5'
+                                <View className={`p-3 rounded-2xl max-w-[280px] shadow-sm ${msg.isMe
+                                    ? 'bg-purple-600 rounded-tr-none'
+                                    : 'bg-white rounded-tl-none border border-slate-200/60'
                                     }`}>
-                                    <Text className={`${msg.isMe ? 'text-white' : 'text-slate-200'} text-sm leading-5`}>
+                                    <Text className={`${msg.isMe ? 'text-white' : 'text-slate-700'} text-sm leading-5 font-medium`}>
                                         {msg.text}
                                     </Text>
                                 </View>
-                                <Text className={`text-slate-500 text-[10px] mt-1 ${msg.isMe ? 'text-right mr-1' : 'ml-1'}`}>
+                                <Text className={`text-slate-400 text-[10px] mt-1 font-medium ${msg.isMe ? 'text-right mr-1' : 'ml-1'}`}>
                                     {msg.timestamp}
                                 </Text>
                             </View>
@@ -204,21 +204,22 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
             </ScrollView>
 
             {/* Input Area */}
-            <View className="p-4 bg-[#0F172A] border-t border-white/5">
-                <View className="flex-row items-center bg-[#1E293B] rounded-full px-4 py-2 border border-white/5">
+            <View className="p-4 bg-white border-t border-slate-100">
+                <View className="flex-row items-center bg-slate-50 rounded-full px-4 py-2 border border-slate-200">
                     <TouchableOpacity className="mr-3">
                         <Paperclip size={20} color="#94A3B8" />
                     </TouchableOpacity>
                     <TextInput
-                        className="flex-1 text-white py-2 text-sm max-h-24"
+                        className="flex-1 text-[#27272a] py-2 text-sm max-h-24 bg-transparent"
                         placeholder="메시지 보내기..."
-                        placeholderTextColor="#64748B"
+                        placeholderTextColor="#94A3B8"
                         multiline
                         value={message}
                         onChangeText={setMessage}
+                        style={{ outlineWidth: 0 } as any}
                     />
                     <TouchableOpacity
-                        className={`ml-3 p-2 rounded-full ${message.trim() ? 'bg-blue-600' : 'bg-slate-700'}`}
+                        className={`ml-3 p-2 rounded-full ${message.trim() ? 'bg-purple-600' : 'bg-slate-200'}`}
                         onPress={handleSend}
                         disabled={!message.trim()}
                     >

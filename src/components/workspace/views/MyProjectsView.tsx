@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { FolderKanban, FileText, Zap, FileEdit, Clock, ChevronRight, MoreVertical, Trash2, Calendar } from 'lucide-react-native';
 import { supabase } from '../../../lib/supabase';
+import Footer from '../../Footer';
 
 // ═══════════════════════════════════════════════════
 // Portfolio — My Projects View
@@ -62,13 +63,13 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
         const hasChat = (p.chat_history?.length || 0) > 2;
 
         if (hasEditor && hasBranches) {
-            return { stage: '서류 작성 중', percent: 75, color: '#10B981' };
+            return { stage: '최종 작성', percent: 85, color: '#7C3AED' };
         } else if (hasBranches && hasChat) {
-            return { stage: '브레인스톰 완료', percent: 50, color: '#3B82F6' };
+            return { stage: '아이디어 수립', percent: 55, color: '#7C3AED' };
         } else if (hasBranches) {
-            return { stage: '분석 진행 중', percent: 30, color: '#F59E0B' };
+            return { stage: '분석 진행', percent: 35, color: '#7C3AED' };
         }
-        return { stage: '시작됨', percent: 10, color: '#64748B' };
+        return { stage: '초기 기획', percent: 15, color: '#94A3B8' };
     };
 
     const getBranchCount = (p: ProjectSession): number => {
@@ -84,15 +85,15 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
         if (hours < 24) return `${hours}시간 전`;
         const days = Math.floor(hours / 24);
         if (days < 7) return `${days}일 전`;
-        return d.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' });
+        return d.toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' });
     };
 
     if (loading) {
         return (
             <View style={styles.container}>
                 <View style={styles.center}>
-                    <ActivityIndicator size="large" color="#818CF8" />
-                    <Text style={styles.loadingText}>프로젝트 불러오는 중...</Text>
+                    <ActivityIndicator size="large" color="#7C3AED" />
+                    <Text style={styles.loadingText}>당신의 혁신적인 프로젝트를 불러오는 중...</Text>
                 </View>
             </View>
         );
@@ -103,11 +104,16 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
             {/* Header */}
             <View style={styles.header}>
                 <View style={styles.headerLeft}>
-                    <FolderKanban size={20} color="#818CF8" />
-                    <Text style={styles.headerTitle}>My Portfolio</Text>
-                    <View style={styles.countBadge}>
-                        <Text style={styles.countText}>{projects.length}</Text>
+                    <View className="w-10 h-10 rounded-xl bg-[#7C3AED]/10 items-center justify-center mr-3">
+                        <FolderKanban size={20} color="#7C3AED" strokeWidth={2.5} />
                     </View>
+                    <View>
+                        <Text style={styles.headerTitle}>My Portfolio</Text>
+                        <Text className="text-[#94A3B8] text-[11px] font-bold uppercase tracking-widest">Workspace Archive</Text>
+                    </View>
+                </View>
+                <View style={styles.countBadge}>
+                    <Text style={styles.countText}>{projects.length} PROJECTS</Text>
                 </View>
             </View>
 
@@ -115,19 +121,23 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
             <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
                 {projects.length === 0 ? (
                     <View style={styles.emptyState}>
-                        <FolderKanban size={48} color="#1E293B" />
+                        <View className="w-24 h-24 rounded-[32px] bg-white border border-[#E2E8F0] items-center justify-center mb-6 shadow-sm">
+                            <FolderKanban size={48} color="#CBD5E1" strokeWidth={1} />
+                        </View>
                         <Text style={styles.emptyTitle}>아직 프로젝트가 없습니다</Text>
                         <Text style={styles.emptyDesc}>
-                            Smart Match Finder에서 공고를 선택하거나{'\n'}
-                            NEXUS-Flow에서 브레인스톰을 시작하세요
+                            공고를 탐색하여 당신만의 전략 분석을 시작해보세요.{'\n'}
+                            Publica AI가 든든한 연구 파트너가 되어드립니다.
                         </Text>
+                        <TouchableOpacity className="mt-8 bg-[#7C3AED] px-8 py-4 rounded-2xl shadow-xl shadow-[#7C3AED]/20">
+                            <Text className="text-white font-black uppercase text-xs tracking-widest">첫 프로젝트 시작하기</Text>
+                        </TouchableOpacity>
                     </View>
                 ) : (
                     <View style={styles.grid}>
                         {projects.map(p => {
                             const progress = getProgress(p);
                             const branchCount = getBranchCount(p);
-                            const chatCount = p.chat_history?.length || 0;
                             const editorChars = p.editor_content?.length || 0;
 
                             return (
@@ -140,23 +150,25 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
                                             style={styles.moreBtn}
                                             onPress={() => setDeleteConfirm(deleteConfirm === p.id ? null : p.id)}
                                         >
-                                            <MoreVertical size={14} color="#475569" />
+                                            <MoreVertical size={16} color="#94A3B8" />
                                         </TouchableOpacity>
                                     </View>
 
-                                    {/* Delete Confirm */}
+                                    {/* Delete Confirm Overlay (Simplified) */}
                                     {deleteConfirm === p.id && (
-                                        <TouchableOpacity
-                                            style={styles.deleteBtn}
-                                            onPress={() => handleDelete(p.id)}
-                                        >
-                                            <Trash2 size={12} color="#EF4444" />
-                                            <Text style={styles.deleteText}>삭제</Text>
-                                        </TouchableOpacity>
+                                        <View className="flex-row items-center justify-between bg-red-50 p-2 rounded-xl mb-3 border border-red-100">
+                                            <Text className="text-red-500 text-[10px] font-black uppercase ml-2">정말 삭제할까요?</Text>
+                                            <TouchableOpacity
+                                                className="bg-red-500 px-3 py-1.5 rounded-lg"
+                                                onPress={() => handleDelete(p.id)}
+                                            >
+                                                <Text className="text-white text-[10px] font-bold">삭제</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     )}
 
                                     {/* Title */}
-                                    <Text style={styles.cardTitle} numberOfLines={2}>{p.title || 'Untitled Project'}</Text>
+                                    <Text style={styles.cardTitle} numberOfLines={2}>{p.title || '무제한 프로젝트'}</Text>
 
                                     {/* Progress Bar */}
                                     <View style={styles.progressBarBg}>
@@ -166,118 +178,111 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
                                     {/* Stats */}
                                     <View style={styles.stats}>
                                         <View style={styles.statItem}>
-                                            <Zap size={12} color="#818CF8" />
-                                            <Text style={styles.statText}>{branchCount} 브랜치</Text>
+                                            <View className="w-6 h-6 rounded-lg bg-[#7C3AED]/5 items-center justify-center mr-1">
+                                                <Zap size={10} color="#7C3AED" />
+                                            </View>
+                                            <Text style={styles.statText}>{branchCount} <Text className="text-[#CBD5E1]">Nodes</Text></Text>
                                         </View>
                                         <View style={styles.statItem}>
-                                            <FileText size={12} color="#10B981" />
-                                            <Text style={styles.statText}>{editorChars > 0 ? `${Math.round(editorChars / 100) * 100}자` : '미작성'}</Text>
+                                            <View className="w-6 h-6 rounded-lg bg-emerald-50 items-center justify-center mr-1">
+                                                <FileText size={10} color="#10B981" />
+                                            </View>
+                                            <Text style={styles.statText}>{editorChars > 0 ? `${Math.round(editorChars / 100)}단락` : <Text className="text-[#CBD5E1]">미작성</Text>}</Text>
                                         </View>
                                     </View>
 
-                                    {/* Date */}
-                                    <View style={styles.dateRow}>
-                                        <Clock size={11} color="#475569" />
-                                        <Text style={styles.dateText}>{formatDate(p.updated_at)}</Text>
-                                    </View>
-
-                                    {/* Action Buttons */}
-                                    <View style={styles.actions}>
-                                        <TouchableOpacity
-                                            style={styles.actionBtn}
-                                            onPress={() => onNavigateToFlow?.(p.id)}
-                                        >
-                                            <Zap size={13} color="#818CF8" />
-                                            <Text style={styles.actionBtnText}>Flow</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity
-                                            style={[styles.actionBtn, styles.actionBtnPrimary]}
-                                            onPress={() => onNavigateToEdit?.(p.id)}
-                                        >
-                                            <FileEdit size={13} color="#FFF" />
-                                            <Text style={[styles.actionBtnText, styles.actionBtnPrimaryText]}>Edit</Text>
-                                        </TouchableOpacity>
+                                    {/* Footer Info */}
+                                    <View className="flex-row items-center justify-between border-t border-[#F1F5F9] pt-4 mt-2">
+                                        <View style={styles.dateRow}>
+                                            <Calendar size={12} color="#94A3B8" />
+                                            <Text style={styles.dateText}>{formatDate(p.updated_at)}</Text>
+                                        </View>
+                                        <View className="flex-row gap-2">
+                                            <TouchableOpacity
+                                                className="w-8 h-8 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] items-center justify-center active:bg-slate-50"
+                                                onPress={() => onNavigateToFlow?.(p.id)}
+                                            >
+                                                <Zap size={14} color="#7C3AED" />
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                className="w-8 h-8 rounded-lg bg-[#7C3AED] items-center justify-center shadow-lg shadow-[#7C3AED]/20 active:opacity-90"
+                                                onPress={() => onNavigateToEdit?.(p.id)}
+                                            >
+                                                <FileEdit size={14} color="#FFF" />
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 </View>
                             );
                         })}
                     </View>
                 )}
+                <Footer />
+                <View className="h-20" />
             </ScrollView>
         </View>
     );
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#020617' },
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
-    loadingText: { color: '#64748B', fontSize: 13, fontWeight: '500' },
+    loadingText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
 
     // Header
     header: {
-        height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 24, borderBottomWidth: 1, borderColor: '#1E293B',
+        height: 100, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+        paddingHorizontal: 32, borderBottomWidth: 1, borderColor: '#E2E8F0',
+        backgroundColor: '#FFFFFF', paddingTop: 20,
     },
-    headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    headerTitle: { color: '#E2E8F0', fontSize: 18, fontWeight: '800', letterSpacing: -0.5 },
+    headerLeft: { flexDirection: 'row', alignItems: 'center' },
+    headerTitle: { color: '#27272a', fontSize: 24, fontWeight: '900', letterSpacing: -1 },
     countBadge: {
-        paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10,
-        backgroundColor: 'rgba(129,140,248,0.12)', borderWidth: 1, borderColor: 'rgba(129,140,248,0.2)',
+        paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100,
+        backgroundColor: '#7C3AED10', borderWidth: 1, borderColor: '#7C3AED20',
     },
-    countText: { color: '#818CF8', fontSize: 11, fontWeight: '800' },
+    countText: { color: '#7C3AED', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
 
     // Scroll
     scroll: { flex: 1 },
-    scrollContent: { padding: 24 },
+    scrollContent: { padding: 32 },
 
     // Empty
-    emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 12 },
-    emptyTitle: { color: '#334155', fontSize: 18, fontWeight: '700' },
-    emptyDesc: { color: '#475569', fontSize: 13, textAlign: 'center', lineHeight: 20 },
+    emptyState: { alignItems: 'center', justifyContent: 'center', paddingVertical: 120 },
+    emptyTitle: { color: '#27272a', fontSize: 20, fontWeight: '900', marginBottom: 12 },
+    emptyDesc: { color: '#94A3B8', fontSize: 15, textAlign: 'center', lineHeight: 24, fontWeight: '500' },
 
     // Grid
-    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16 },
+    grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 24 },
 
     // Card
     card: {
-        width: 280, padding: 20, borderRadius: 16,
-        backgroundColor: '#0F172A', borderWidth: 1, borderColor: '#1E293B',
+        width: 320, padding: 28, borderRadius: 32,
+        backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0',
+        shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.03, shadowRadius: 20,
+        elevation: 10,
     },
-    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
-    progressDot: { width: 8, height: 8, borderRadius: 4 },
-    stageBadge: { color: '#94A3B8', fontSize: 11, fontWeight: '700', flex: 1 },
-    moreBtn: { width: 24, height: 24, alignItems: 'center', justifyContent: 'center' },
-    deleteBtn: {
-        flexDirection: 'row', alignItems: 'center', gap: 6,
-        alignSelf: 'flex-end', paddingHorizontal: 10, paddingVertical: 5,
-        borderRadius: 6, backgroundColor: 'rgba(239,68,68,0.1)',
-        borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)', marginBottom: 8,
-    },
-    deleteText: { color: '#EF4444', fontSize: 11, fontWeight: '700' },
-    cardTitle: { color: '#F1F5F9', fontSize: 15, fontWeight: '700', lineHeight: 22, marginBottom: 12 },
+    cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+    progressDot: { width: 10, height: 10, borderRadius: 5, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
+    stageBadge: { color: '#64748B', fontSize: 12, fontWeight: '800', flex: 1, textTransform: 'uppercase', letterSpacing: 0.5 },
+    moreBtn: { width: 32, height: 32, alignItems: 'center', justify: 'center', borderRadius: 8, backgroundColor: '#F8FAFC' },
+    cardTitle: { color: '#27272a', fontSize: 17, fontWeight: '900', lineHeight: 26, marginBottom: 20, letterSpacing: -0.5 },
 
     // Progress Bar
     progressBarBg: {
-        height: 4, borderRadius: 2, backgroundColor: '#1E293B', marginBottom: 14, overflow: 'hidden',
+        height: 6, borderRadius: 3, backgroundColor: '#F1F5F9', marginBottom: 20, overflow: 'hidden', shadowInner: true,
     },
-    progressBarFill: { height: '100%', borderRadius: 2 },
+    progressBarFill: { height: '100%', borderRadius: 3, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
 
     // Stats
-    stats: { flexDirection: 'row', gap: 16, marginBottom: 8 },
-    statItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-    statText: { color: '#64748B', fontSize: 11, fontWeight: '600' },
+    stats: { flexDirection: 'row', gap: 20, marginBottom: 16 },
+    statItem: { flexDirection: 'row', alignItems: 'center' },
+    statText: { color: '#475569', fontSize: 12, fontWeight: '800' },
 
     // Date
-    dateRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 14 },
-    dateText: { color: '#475569', fontSize: 10, fontWeight: '500' },
+    dateRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    dateText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },
 
     // Actions
-    actions: { flexDirection: 'row', gap: 8 },
-    actionBtn: {
-        flex: 1, height: 36, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-        borderRadius: 10, backgroundColor: '#111827', borderWidth: 1, borderColor: '#1E293B',
-    },
-    actionBtnText: { color: '#818CF8', fontSize: 12, fontWeight: '700' },
-    actionBtnPrimary: { backgroundColor: '#4F46E5', borderColor: '#6366F1' },
-    actionBtnPrimaryText: { color: '#FFF' },
+    actions: { flexDirection: 'row', gap: 10 },
 });

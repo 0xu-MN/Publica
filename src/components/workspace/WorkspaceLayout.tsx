@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, ActivityIndicator, Text, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { View, ActivityIndicator, Text, TouchableOpacity, ScrollView, Animated, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { Sidebar, WorkspaceTab } from './Sidebar';
@@ -77,6 +77,16 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     useEffect(() => {
         const loadTab = async () => {
             try {
+                // Check if Toss Payment test mode is active to auto-redirect to pricing
+                if (Platform.OS === 'web') {
+                    const hasTestMode = window.location.href.includes('mode=toss_test') || window.location.href.includes('mode=test');
+                    if (hasTestMode) {
+                        setActiveTabState('pricing');
+                        setIsLoaded(true);
+                        return;
+                    }
+                }
+
                 // If agentSession is provided via store, force agent tab
                 if (agentSession) {
                     console.log("🚀 Workspace Init with Store Session:", agentSession);
@@ -175,8 +185,8 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     const renderContent = () => {
         if (!isLoaded) {
             return (
-                <View className="flex-1 items-center justify-center bg-[#020617]">
-                    <ActivityIndicator size="large" color="#3B82F6" />
+                <View className="flex-1 items-center justify-center bg-[#FDF8F3]">
+                    <ActivityIndicator size="large" color="#7C3AED" />
                 </View>
             );
         }
@@ -237,8 +247,8 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                 return <AgentView initialSession={agentSession} onNavigateToEdit={() => setActiveTab('nexus-edit')} />;
             case 'chat':
                 return (
-                    <View className="flex-1 flex-row bg-[#020617]">
-                        <View className="w-80 border-r border-white/5">
+                    <View className="flex-1 flex-row bg-[#FDF8F3]">
+                        <View className="w-80 border-r border-[#E2E8F0]">
                             <ChatListView
                                 activeChatId={selectedChatUser?.id}
                                 onSelectChat={(user) => setSelectedChatUser(user)}
@@ -249,8 +259,8 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                                 <ChatRoom targetUser={selectedChatUser} />
                             ) : (
                                 <View className="flex-1 items-center justify-center">
-                                    <MessageSquare size={48} color="#334155" />
-                                    <Text className="text-slate-500 mt-4 text-base">대화를 선택하세요</Text>
+                                    <MessageSquare size={48} color="#CBD5E1" />
+                                    <Text className="text-[#94A3B8] mt-4 text-base font-medium">대화를 선택하세요</Text>
                                 </View>
                             )}
                         </View>
@@ -258,30 +268,30 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                 );
             case 'scraps':
                 return (
-                    <ScrollView className="flex-1 bg-[#020617]">
-                        <View className="p-6">
-                            <View className="flex-row justify-between items-center mb-6">
+                    <ScrollView className="flex-1 bg-[#FDF8F3]">
+                        <View className="p-8">
+                            <View className="flex-row justify-between items-center mb-8">
                                 <View>
-                                    <Text className="text-white text-3xl font-bold mb-2">스크랩</Text>
-                                    <Text className="text-slate-400 text-sm">저장한 인사이트 {scraps.length}개</Text>
+                                    <Text className="text-[#27272a] text-3xl font-bold mb-2">스크랩</Text>
+                                    <Text className="text-[#64748B] text-sm font-medium">저장한 인사이트 {scraps.length}개</Text>
                                 </View>
-                                <TouchableOpacity onPress={loadScraps} className="bg-slate-800 px-4 py-2 rounded-lg border border-white/10">
-                                    <RefreshCw size={20} color="#94A3B8" />
+                                <TouchableOpacity onPress={loadScraps} className="bg-white p-3 rounded-xl border border-[#E2E8F0] shadow-sm">
+                                    <RefreshCw size={20} color="#7C3AED" />
                                 </TouchableOpacity>
                             </View>
 
-                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-6">
-                                <View className="flex-row gap-2">
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-8">
+                                <View className="flex-row gap-3">
                                     {uniqueCategories.map((cat) => (
                                         <TouchableOpacity
                                             key={cat}
                                             onPress={() => setSelectedCategory(cat)}
-                                            className={`px-4 py-2 rounded-full border ${selectedCategory === cat
-                                                ? 'bg-blue-600 border-blue-500'
-                                                : 'bg-slate-800 border-white/10'
+                                            className={`px-5 py-2.5 rounded-full border transition-all ${selectedCategory === cat
+                                                ? 'bg-[#7C3AED] border-[#7C3AED] shadow-lg shadow-[#7C3AED]/20'
+                                                : 'bg-white border-[#E2E8F0] shadow-sm'
                                                 }`}
                                         >
-                                            <Text className={`text-sm font-semibold ${selectedCategory === cat ? 'text-white' : 'text-slate-400'
+                                            <Text className={`text-sm font-bold ${selectedCategory === cat ? 'text-white' : 'text-[#64748B]'
                                                 }`}>
                                                 {cat}
                                             </Text>
@@ -291,7 +301,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                             </ScrollView>
 
                             {filteredScraps.length > 0 ? (
-                                <View className="gap-4">
+                                <View className="gap-5">
                                     {filteredScraps.map((scrap) => (
                                         <InsightListItem
                                             key={scrap.id}
@@ -304,8 +314,8 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                                 </View>
                             ) : (
                                 <View className="items-center py-20">
-                                    <Bookmark size={48} color="#334155" />
-                                    <Text className="text-slate-500 mt-4 text-base">저장된 인사이트가 없습니다</Text>
+                                    <Bookmark size={48} color="#E2E8F0" />
+                                    <Text className="text-[#94A3B8] mt-4 text-base font-medium">저장된 인사이트가 없습니다</Text>
                                 </View>
                             )}
                         </View>
@@ -337,7 +347,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     };
 
     return (
-        <View className="flex-1 flex-row bg-[#020617]">
+        <View className="flex-1 flex-row bg-[#FDF8F3]">
             <Sidebar activeTab={showProfilePanel ? 'profile' : activeTab} onTabChange={setActiveTab} />
 
             {/* Animated Profile Panel */}
@@ -345,21 +355,25 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                 style={{
                     width: profilePanelWidth,
                     overflow: 'hidden',
+                    opacity: profilePanelWidth.interpolate({
+                        inputRange: [0, 20, 340],
+                        outputRange: [0, 1, 1],
+                    }),
                 }}
             >
                 <View className="h-full p-3 pr-0">
-                    <View className="h-full bg-[#0F172A]/80 backdrop-blur-xl rounded-[24px] border border-white/5 shadow-2xl">
+                    <View className="h-full bg-white rounded-[32px] border border-[#E2E8F0] shadow-2xl shadow-black/5">
                         {/* Close Button */}
                         <TouchableOpacity
                             onPress={() => setShowProfilePanel(false)}
-                            className="absolute top-6 right-6 z-10 w-10 h-10 rounded-full bg-slate-800/60 backdrop-blur-sm items-center justify-center border border-white/10"
+                            className="absolute top-6 right-6 z-10 w-10 h-10 rounded-full bg-[#F8FAFC] items-center justify-center border border-[#E2E8F0] shadow-sm active:bg-slate-100"
                             style={{ opacity: showProfilePanel ? 1 : 0 }}
                         >
-                            <X size={18} color="#94A3B8" strokeWidth={2.5} />
+                            <X size={18} color="#64748B" strokeWidth={2.5} />
                         </TouchableOpacity>
 
                         {/* Profile Content */}
-                        <View className="flex-1 p-6">
+                        <View className="flex-1 p-8">
                             {!showMyPosts ? (
                                 <ProfileCard
                                     onEditProfile={() => {
@@ -373,14 +387,14 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                                 />
                             ) : (
                                 <View className="flex-1">
-                                    <View className="flex-row items-center mb-6">
+                                    <View className="flex-row items-center mb-8">
                                         <TouchableOpacity
                                             onPress={() => setShowMyPosts(false)}
-                                            className="w-10 h-10 rounded-full bg-slate-800/50 items-center justify-center mr-3"
+                                            className="w-10 h-10 rounded-full bg-[#F8FAFC] items-center justify-center mr-4 border border-[#E2E8F0] shadow-sm"
                                         >
-                                            <ArrowLeft size={20} color="#94A3B8" />
+                                            <ArrowLeft size={20} color="#7C3AED" />
                                         </TouchableOpacity>
-                                        <Text className="text-white text-xl font-bold">게시글 목록</Text>
+                                        <Text className="text-[#27272a] text-xl font-bold">내 게시글</Text>
                                     </View>
 
                                     <ScrollView showsVerticalScrollIndicator={false}>
@@ -388,33 +402,33 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                                             posts
                                                 .filter(p => p.authorId === user?.id || (user?.email && p.author.includes(user.email.split('@')[0])))
                                                 .map(post => (
-                                                    <View key={post.id} className="mb-4 bg-slate-800/40 p-4 rounded-2xl border border-white/5 flex-row items-center justify-between">
+                                                    <View key={post.id} className="mb-4 bg-white p-5 rounded-[24px] border border-[#F1F5F9] shadow-sm flex-row items-center justify-between">
                                                         <View className="flex-1">
-                                                            <Text className="text-white font-bold text-sm mb-1">{post.title}</Text>
-                                                            <Text className="text-slate-400 text-xs" numberOfLines={1}>{post.content}</Text>
+                                                            <Text className="text-[#27272a] font-bold text-sm mb-1.5">{post.title}</Text>
+                                                            <Text className="text-[#94A3B8] text-xs font-medium" numberOfLines={1}>{post.content}</Text>
                                                         </View>
                                                         <View className="flex-row gap-2 ml-4">
                                                             <TouchableOpacity
-                                                                className="bg-blue-600/20 px-3 py-1.5 rounded-lg border border-blue-500/30"
+                                                                className="bg-[#7C3AED]/10 px-3 py-2 rounded-xl border border-[#7C3AED]/20 shadow-sm"
                                                                 onPress={() => console.log('Edit post:', post.id)}
                                                             >
-                                                                <Text className="text-blue-400 text-xs font-bold">수정</Text>
+                                                                <Text className="text-[#7C3AED] text-xs font-bold">수정</Text>
                                                             </TouchableOpacity>
                                                             <TouchableOpacity
-                                                                className="bg-red-500/20 px-3 py-1.5 rounded-lg border border-red-500/30"
+                                                                className="bg-red-50 px-3 py-2 rounded-xl border border-red-100 shadow-sm"
                                                                 onPress={() => deletePost(post.id)}
                                                             >
-                                                                <Text className="text-red-400 text-xs font-bold">삭제</Text>
+                                                                <Trash2 size={14} color="#F87171" />
                                                             </TouchableOpacity>
                                                         </View>
                                                     </View>
                                                 ))
                                         ) : (
                                             <View className="items-center py-20">
-                                                <View className="w-16 h-16 rounded-full bg-slate-800/50 items-center justify-center mb-4">
-                                                    <Database size={32} color="#475569" />
+                                                <View className="w-16 h-16 rounded-full bg-[#F8FAFC] items-center justify-center mb-4 border border-[#F1F5F9]">
+                                                    <Database size={32} color="#CBD5E1" />
                                                 </View>
-                                                <Text className="text-slate-500 text-base">작성한 게시글이 없습니다</Text>
+                                                <Text className="text-[#94A3B8] text-base font-medium">작성한 게시글이 없습니다</Text>
                                             </View>
                                         )}
                                     </ScrollView>
@@ -450,7 +464,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                     }}
                 >
                     <View className="h-full p-3 pl-0">
-                        <View className="h-full bg-[#0F172A]/95 backdrop-blur-xl rounded-[24px] border border-white/5 shadow-2xl">
+                        <View className="h-full bg-white rounded-[32px] border border-[#E2E8F0] shadow-2xl">
                             {/* Profile Edit Content */}
                             <View className="flex-1">
                                 {showProfileEdit && (

@@ -17,56 +17,69 @@ interface RecommendedBusinessCardProps {
 
 export const RecommendedBusinessCard = ({ items, onExploreAll, onApply }: RecommendedBusinessCardProps) => {
     return (
-        <View className="bg-[#0F172A]/80 rounded-2xl p-5 border border-white/5 flex-1">
+        <View className="bg-white rounded-[40px] p-8 border border-[#E2E8F0] flex-1 shadow-2xl shadow-black/[0.03]">
             {/* Header */}
-            <TouchableOpacity className="flex-row items-center justify-between mb-4">
-                <View className="flex-row items-center gap-2">
-                    <Sparkles size={18} color="#EC4899" />
-                    <Text className="text-white font-bold text-base">맞춤 사업 추천</Text>
+            <View className="flex-row items-center justify-between mb-8">
+                <View className="flex-row items-center gap-3">
+                    <View className="w-10 h-10 rounded-xl bg-[#7C3AED]/10 items-center justify-center">
+                        <Sparkles size={20} color="#7C3AED" strokeWidth={2.5} />
+                    </View>
+                    <View>
+                        <Text className="text-[#27272a] font-black text-lg tracking-tight">맞춤 사업 추천</Text>
+                        <Text className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-widest leading-none">AI Insight</Text>
+                    </View>
                 </View>
-                <ChevronRight size={18} color="#475569" />
-            </TouchableOpacity>
+                <TouchableOpacity onPress={onExploreAll} className="p-2 rounded-full bg-[#F8FAFC]">
+                    <ChevronRight size={20} color="#94A3B8" />
+                </TouchableOpacity>
+            </View>
 
             {/* List of Recommended Businesses */}
             {items.length > 0 ? (
-                <View className="gap-5 mb-4">
+                <View className="gap-6 mb-8">
                     {items.map((item) => (
                         <View
                             key={item.id}
-                            className="bg-black/20 rounded-xl p-6 border border-white/5"
+                            className="bg-[#F8FAFC]/50 rounded-[28px] p-6 border border-[#E2E8F0] shadow-sm relative overflow-hidden active:scale-[0.98] transition-transform"
                         >
-                            <View className="flex-row items-center justify-between mb-3">
-                                <Text className="text-white font-bold text-lg flex-1 mr-3" numberOfLines={2}>
-                                    {item.title}
-                                </Text>
-                                <View className="bg-pink-500/10 px-3 py-1 rounded-lg border border-pink-500/20 shadow-sm shadow-pink-500/10">
-                                    <Text className="text-pink-500 text-xs font-bold">D-{item.dDay}</Text>
+                            <View className="flex-row items-start justify-between mb-4">
+                                <View className="flex-1 mr-4">
+                                    <View className="bg-amber-500/10 self-start px-2.5 py-1 rounded-lg mb-2">
+                                        <Text className="text-amber-600 text-[10px] font-black uppercase">마감 D-{item.dDay}</Text>
+                                    </View>
+                                    <Text className="text-[#27272a] font-black text-base leading-tight" numberOfLines={2}>
+                                        {item.title}
+                                    </Text>
                                 </View>
                             </View>
-                            <View className="flex-row items-center justify-between">
+
+                            <View className="flex-row items-center justify-between border-t border-[#E2E8F0]/40 pt-4">
                                 <View className="flex-row items-center gap-2">
-                                    <Sparkles size={16} color="#6366F1" />
-                                    <Text className="text-[#6366F1] text-sm font-black uppercase tracking-[0.1em]">
+                                    <View className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
+                                    <Text className="text-[#10B981] text-[11px] font-black tracking-wider uppercase">
                                         MATCHING {item.matchingRate}%
                                     </Text>
                                 </View>
-                                <TouchableOpacity className="bg-blue-600 px-4 py-2 rounded-lg border border-blue-500/50" onPress={() => onApply?.(item)}>
-                                    <Text className="text-white text-xs font-bold">지원하기</Text>
+                                <TouchableOpacity 
+                                    className="bg-[#7C3AED] px-5 py-3 rounded-2xl shadow-lg shadow-[#7C3AED]/20 active:opacity-90" 
+                                    onPress={() => onApply?.(item)}
+                                >
+                                    <Text className="text-white text-xs font-black uppercase tracking-widest">분석 시작</Text>
                                 </TouchableOpacity>
                             </View>
                         </View>
                     ))}
                 </View>
             ) : (
-                <View className="bg-black/20 rounded-xl p-8 border border-white/5 items-center justify-center min-h-[220px] mb-4">
-                    <View className="w-16 h-16 rounded-full bg-blue-500/10 items-center justify-center mb-6">
-                        <Search size={28} color="#3B82F6" />
+                <View className="bg-[#F8FAFC]/30 rounded-[32px] p-12 border border-dashed border-[#E2E8F0] items-center justify-center min-h-[280px] mb-8">
+                    <View className="w-20 h-20 rounded-[30px] bg-white border border-[#E2E8F0] items-center justify-center mb-6 shadow-sm">
+                        <Search size={32} color="#CBD5E1" strokeWidth={1.5} />
                     </View>
-                    <Text className="text-white text-lg font-bold text-center mb-3">
-                        맞춤 공고 분석 중...
+                    <Text className="text-[#27272a] text-xl font-black text-center mb-3 tracking-tight">
+                        새로운 기회 분석 중
                     </Text>
-                    <Text className="text-slate-400 text-sm text-center leading-relaxed max-w-[80%]">
-                        현재 DB에서 연구원님의 활동 지역과 산업 분야에 일치하는 신규 공고를 AI가 분석하고 있습니다
+                    <Text className="text-[#94A3B8] text-sm text-center leading-relaxed font-bold">
+                        연구원님의 프로필에 최적화된{"\n"}전략 공고를 실시간 탐색하고 있습니다
                     </Text>
                 </View>
             )}
@@ -74,9 +87,9 @@ export const RecommendedBusinessCard = ({ items, onExploreAll, onApply }: Recomm
             {/* Footer Button */}
             <TouchableOpacity
                 onPress={onExploreAll}
-                className="bg-white/5 py-3 rounded-xl border border-white/5 items-center justify-center mt-auto"
+                className="bg-white py-4 rounded-2xl border border-[#E2E8F0] items-center justify-center shadow-sm active:bg-slate-50"
             >
-                <Text className="text-slate-400 text-xs font-semibold">전체 공고 탐색하기</Text>
+                <Text className="text-[#64748B] text-xs font-black uppercase tracking-widest">모든 지원사업 둘러보기</Text>
             </TouchableOpacity>
         </View>
     );

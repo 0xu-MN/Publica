@@ -106,26 +106,23 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: 'row',
-        backgroundColor: '#000'
+        backgroundColor: '#FDF8F3'
     },
     panel: {
         height: '100%',
         overflow: 'hidden'
     },
     resizer: {
-        width: 6,
-        backgroundColor: '#0F172A',
+        width: 12,
+        backgroundColor: 'transparent',
         justifyContent: 'center',
         alignItems: 'center',
         zIndex: 10,
-        borderLeftWidth: 1,
-        borderRightWidth: 1,
-        borderColor: '#1E293B',
     },
     resizerLine: {
-        width: 3,
-        height: 32,
-        backgroundColor: '#334155',
+        width: 4,
+        height: 40,
+        backgroundColor: '#E2E8F0',
         borderRadius: 2,
     }
 });

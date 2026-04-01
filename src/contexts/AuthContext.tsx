@@ -48,9 +48,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // --- TEMPORARY TEST LOGIN LOGIC (TOSS PAYMENTS) ---
         // ⚠️ 이 코드는 토스페이먼츠 심사/테스트 종료 후 반드시 삭제/주석처리 해야 합니다.
         if (Platform.OS === 'web') {
-            const urlParams = new URLSearchParams(window.location.search);
-            const mode = urlParams.get('mode');
-            if (mode === 'toss_test' || mode === 'test') {
+            const hasTestMode = window.location.href.includes('mode=toss_test') || window.location.href.includes('mode=test');
+            if (hasTestMode) {
                 isTestMode = true;
                 console.log('⚡ Toss Test Mode Detected: Auto-logging in...');
                 setLoading(true); // 로딩 유지

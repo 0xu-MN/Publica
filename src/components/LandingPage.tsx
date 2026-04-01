@@ -1,10 +1,8 @@
 import React, { useRef, useEffect } from 'react';
-import {
-    View, Text, ScrollView, TouchableOpacity,
-    useWindowDimensions, Animated, Image, Platform
-} from 'react-native';
-import { Icons } from '../utils/icons';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Animated, Image, StyleSheet, Platform, StatusBar } from 'react-native';
+import { ArrowRight, Sparkles, FileEdit, Download, CheckCircle2, ChevronRight, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Footer from './Footer';
 
 interface LandingPageProps {
     onLoginPress: () => void;
@@ -14,337 +12,240 @@ interface LandingPageProps {
 
 const FEATURES = [
     {
-        icon: 'Sparkles',
+        id: '01',
+        icon: <Sparkles size={24} color="#7C3AED" />,
         tag: 'AI 전략 수립',
         title: 'NEXUS Flow',
-        subtitle: 'AI가 공고를 분석하고\n맞춤형 합격 전략을 설계합니다',
-        description: '정부지원사업 공고문을 업로드하면 AI가 지원 자격, 가점 요소, 핵심 평가 항목을 자동 분석합니다. 브레인스토밍 결과를 시각적 전략 트리로 펼쳐 보여주어, 사업 아이디어를 체계적으로 구조화할 수 있습니다.',
-        gradient: ['#7C3AED', '#4F46E5'] as [string, string],
-        accentColor: '#A78BFA',
+        desc: '지원사업 공고를 1초 만에 분석하여, 제출해야 할 문서의 핵심 항목을 시각적 전략 트리로 전개합니다.',
+        active: true,
+        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop'
     },
     {
-        icon: 'FileEdit',
+        id: '02',
+        icon: <FileEdit size={24} color="#7C3AED" />,
         tag: '자동 작성',
         title: 'NEXUS Edit',
-        subtitle: '전략을 사업계획서로\n자동 변환합니다',
-        description: 'AI가 수립한 전략을 기반으로 PSST(문제인식-실현가능성-성장전략-팀구성) 프레임워크에 맞는 정식 사업계획서 초안을 자동 생성합니다. 리치 텍스트 에디터에서 즉시 수정 및 보완이 가능합니다.',
-        gradient: ['#0EA5E9', '#0284C7'] as [string, string],
-        accentColor: '#38BDF8',
+        desc: 'PSST 프레임워크에 특화된 사업계획서 텍스트 초안을 AI가 자동 작성하고 실시간으로 검수합니다.',
+        active: false
     },
     {
-        icon: 'Download',
+        id: '03',
+        icon: <Download size={24} color="#7C3AED" />,
         tag: '양식 매핑',
-        title: '공고 양식 자동 완성',
-        subtitle: '실제 정부 서식에\n내용을 자동으로 채워넣습니다',
-        description: '예비창업패키지, TIPS, 초기창업패키지 등 주요 정부지원사업의 실제 DOCX/HWP 양식 파일에 AI가 작성한 내용을 정확한 셀 좌표에 자동 삽입합니다. 양식 깨짐 없이 제출 가능한 완성 파일을 즉시 다운로드하세요.',
-        gradient: ['#10B981', '#059669'] as [string, string],
-        accentColor: '#34D399',
-    },
+        title: 'HWPX/DOCX 매핑',
+        desc: 'AI가 작성한 내용을 실제 서식 파일의 정확한 셀 좌표에 자동 병합하여 완성된 파일을 다운로드하세요.',
+        active: false
+    }
 ];
 
-const STATS = [
-    { number: '10분', label: '사업계획서 초안 완성' },
-    { number: '5개', label: '주요 공고 양식 지원' },
-    { number: '80%', label: '서류 작성 시간 절감' },
-];
-
-export const LandingPage: React.FC<LandingPageProps> = ({
-    onLoginPress,
-    onStartFree,
-    onNavigateToPricing,
-}) => {
+export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartFree }) => {
     const { width } = useWindowDimensions();
     const isDesktop = width >= 768;
-    const fadeAnims = useRef(FEATURES.map(() => new Animated.Value(0))).current;
-    const slideAnims = useRef(FEATURES.map(() => new Animated.Value(40))).current;
+    
+    // Animations
     const heroFade = useRef(new Animated.Value(0)).current;
     const heroSlide = useRef(new Animated.Value(30)).current;
+    const cardsOpacity = useRef(new Animated.Value(0)).current;
 
     useEffect(() => {
-        // Hero animation
         Animated.parallel([
-            Animated.timing(heroFade, { toValue: 1, duration: 800, useNativeDriver: true }),
-            Animated.timing(heroSlide, { toValue: 0, duration: 800, useNativeDriver: true }),
+            Animated.timing(heroFade, { toValue: 1, duration: 1000, useNativeDriver: true }),
+            Animated.timing(heroSlide, { toValue: 0, duration: 1000, useNativeDriver: true }),
+            Animated.timing(cardsOpacity, { toValue: 1, duration: 1000, delay: 400, useNativeDriver: true })
         ]).start();
-
-        // Stagger feature card animations
-        const featureAnimations = FEATURES.map((_, i) =>
-            Animated.parallel([
-                Animated.timing(fadeAnims[i], { toValue: 1, duration: 600, delay: 300 + i * 200, useNativeDriver: true }),
-                Animated.timing(slideAnims[i], { toValue: 0, duration: 600, delay: 300 + i * 200, useNativeDriver: true }),
-            ])
-        );
-        Animated.stagger(100, featureAnimations).start();
     }, []);
 
-    const renderIcon = (iconName: string, color: string, size: number = 24) => {
-        const IconComponent = (Icons as any)[iconName];
-        return IconComponent ? <IconComponent size={size} color={color} /> : null;
-    };
-
     return (
-        <ScrollView
-            className="flex-1 bg-[#020617]"
-            contentContainerStyle={{ paddingBottom: 80 }}
-            showsVerticalScrollIndicator={false}
-        >
+        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+            <StatusBar barStyle="dark-content" />
+            
             {/* ═══════════ HERO SECTION ═══════════ */}
-            <Animated.View
-                style={{ opacity: heroFade, transform: [{ translateY: heroSlide }] }}
-            >
-                <View className="w-full items-center pt-16 pb-20 px-6">
-                    <View className="max-w-[1200px] w-full items-center">
-                        {/* Badge */}
-                        <View className="bg-purple-500/15 border border-purple-500/30 px-4 py-1.5 rounded-full mb-8">
-                            <Text className="text-purple-300 text-xs font-bold tracking-wider">
-                                🚀 AI 기반 사업계획서 자동 완성 플랫폼
-                            </Text>
-                        </View>
+            <View style={styles.heroWrapper}>
+                <Animated.View style={[styles.heroCard, { opacity: heroFade, transform: [{ translateY: heroSlide }] }]}>
+                    <Image
+                        source={{ uri: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2564&auto=format&fit=crop' }}
+                        style={StyleSheet.absoluteFill}
+                        resizeMode="cover"
+                    />
+                    <LinearGradient
+                        colors={['rgba(253, 248, 243, 0.95)', 'rgba(253, 248, 243, 0.6)', 'rgba(253, 248, 243, 0.95)']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                        style={StyleSheet.absoluteFill}
+                    />
 
-                        {/* Main Headline */}
-                        <Text
-                            className="text-white font-extrabold text-center leading-tight mb-6"
-                            style={{ fontSize: isDesktop ? 52 : 32, lineHeight: isDesktop ? 64 : 42 }}
-                        >
+                    <View style={styles.heroContent}>
+                        <View style={styles.tagBadge}>
+                            <Text style={styles.tagText}>기업 맞춤형 최적의 공공사업 확보 솔루션</Text>
+                        </View>
+                        <Text style={[styles.heroTitle, { fontSize: isDesktop ? 64 : 40, lineHeight: isDesktop ? 76 : 52 }]}>
                             사업계획서,{'\n'}
-                            <Text style={{ color: '#A78BFA' }}>AI</Text>가 대신 써드립니다
+                            <Text style={styles.accentText}>AI</Text>가 대신 써드립니다
                         </Text>
-
-                        {/* Sub-headline */}
-                        <Text
-                            className="text-slate-400 text-center mb-10 leading-relaxed"
-                            style={{ fontSize: isDesktop ? 18 : 15, maxWidth: 600 }}
-                        >
-                            공고문을 업로드하면 AI가 분석하고, 맞춤형 전략을 수립하고,{'\n'}
-                            실제 정부 양식에 맞춰 완성된 문서를 바로 내보냅니다.
+                        <Text style={styles.heroSubtitle}>
+                            전국 30,000개 기관의 공고를 맞춤형으로 추천받고,{'\n'}
+                            공고 분석부터 작성까지 AI와 단 10분 만에 끝내세요.
                         </Text>
+                        
+                        <TouchableOpacity onPress={onStartFree} style={styles.ctaBtn}>
+                            <Text style={styles.ctaBtnText}>지금 무료로 체험하기</Text>
+                            <View style={styles.ctaIconBox}>
+                                <ArrowRight size={18} color="#FFF" />
+                            </View>
+                        </TouchableOpacity>
+                    </View>
+                </Animated.View>
+            </View>
 
-                        {/* CTA Buttons */}
-                        <View className={`${isDesktop ? 'flex-row' : 'flex-col'} items-center gap-4 mb-16`}>
-                            <TouchableOpacity
-                                onPress={onStartFree}
-                                className="bg-purple-600 hover:bg-purple-500 px-8 py-4 rounded-2xl shadow-lg shadow-purple-600/30 active:scale-95"
-                                style={{ minWidth: 200 }}
-                            >
-                                <Text className="text-white font-bold text-base text-center">
-                                    지금 무료로 시작하기
-                                </Text>
-                            </TouchableOpacity>
+            {/* ═══════════ FEATURES SECTION ═══════════ */}
+            <View style={styles.section}>
+                <View style={styles.contentContainer}>
+                    <View style={styles.sectionHeader}>
+                        <View>
+                            <Text style={styles.sectionTag}>[ PUBLIC SERVICES ]</Text>
+                            <Text style={styles.sectionTitle}>한 발 앞선 공공사업 성공 관리</Text>
+                        </View>
+                        <Text style={styles.sectionDesc}>
+                            기획 탈락의 위험을 줄이고 합격률을 압도적으로 높이는{'\n'}
+                            Publica만의 독자적인 AI 기술을 만나보세요.
+                        </Text>
+                    </View>
 
-                            <TouchableOpacity
-                                onPress={onNavigateToPricing}
-                                className="bg-white/5 border border-white/10 px-8 py-4 rounded-2xl hover:bg-white/10 active:scale-95"
-                                style={{ minWidth: 200 }}
-                            >
-                                <Text className="text-slate-300 font-bold text-base text-center">
-                                    요금 안내 보기
-                                </Text>
-                            </TouchableOpacity>
+                    <Animated.View style={[styles.featureGrid, { opacity: cardsOpacity }, isDesktop ? styles.row : styles.col]}>
+                        {FEATURES.map((feature, idx) => (
+                            <View key={idx} style={[styles.featureCard, isDesktop && styles.featureCardBorder]}>
+                                <View style={styles.featureIconBox}>
+                                    {feature.icon}
+                                </View>
+                                <Text style={styles.featureId}>{feature.id}</Text>
+                                <Text style={styles.featureLabel}>{feature.title}</Text>
+                                <Text style={styles.featureDesc}>{feature.desc}</Text>
+                                {feature.active && feature.image && (
+                                    <View style={styles.featureImageWrapper}>
+                                        <Image source={{ uri: feature.image }} style={styles.featureImage} />
+                                        <LinearGradient
+                                            colors={['transparent', 'rgba(255,255,255,0.8)']}
+                                            style={StyleSheet.absoluteFill}
+                                        />
+                                    </View>
+                                )}
+                            </View>
+                        ))}
+                    </Animated.View>
+                </View>
+            </View>
+
+            {/* ═══════════ PROCESS SECTION ═══════════ */}
+            <View style={[styles.section, { backgroundColor: '#FDF8F3' }]}>
+                <View style={styles.contentContainer}>
+                    <View style={styles.processLayout}>
+                        <View style={styles.processInfo}>
+                            <Text style={styles.sectionTag}>[ OUR PROCESS ]</Text>
+                            <Text style={styles.sectionTitle}>혁신적인{'\n'}프로세스</Text>
+                            <Text style={styles.processSub}>
+                                구조화된 4단계의 자동화 워크플로우를 통해{'\n'}복잡한 서류 작업을 가장 효율적으로 처리합니다.
+                            </Text>
+                            <View style={styles.checkList}>
+                                <CheckItem text="3만개 기관 공고 실시간 수집" />
+                                <CheckItem text="AI 기반 지원 전략 자동 수립" />
+                                <CheckItem text="정부 양식 100% 매핑 지원" />
+                            </View>
                         </View>
 
-                        {/* Stats Bar */}
-                        <View className={`${isDesktop ? 'flex-row' : 'flex-col'} bg-white/[0.03] border border-white/[0.06] rounded-2xl px-8 py-5 gap-8`}>
-                            {STATS.map((stat, i) => (
-                                <View key={i} className={`flex-row items-center ${i > 0 && isDesktop ? 'border-l border-white/10 pl-8' : ''}`}>
-                                    <Text className="text-purple-400 font-extrabold text-2xl mr-3">
-                                        {stat.number}
-                                    </Text>
-                                    <Text className="text-slate-400 text-sm">{stat.label}</Text>
+                        <View style={styles.processSteps}>
+                            {[
+                                { num: '01', title: '공고 분석', desc: '심사위원의 필수 평가 요소를 도출합니다.', icon: <Zap size={20} color="#7C3AED" /> },
+                                { num: '02', title: '전략 수립', desc: '독창적인 해결 가설을 구축합니다.', icon: <Sparkles size={20} color="#7C3AED" /> },
+                                { num: '03', title: '상세 작성', desc: '논리적인 본문을 자동 작성합니다.', icon: <FileEdit size={20} color="#7C3AED" /> },
+                                { num: '04', title: '최종 매핑', desc: '정부 서식에 픽셀 단위로 병합합니다.', icon: <Download size={20} color="#7C3AED" /> },
+                            ].map((step, idx) => (
+                                <View key={idx} style={styles.stepCard}>
+                                    <Text style={styles.stepNum}>{step.num}</Text>
+                                    <View style={styles.stepIcon}>{step.icon}</View>
+                                    <View>
+                                        <Text style={styles.stepTitle}>{step.title}</Text>
+                                        <Text style={styles.stepDesc}>{step.desc}</Text>
+                                    </View>
                                 </View>
                             ))}
                         </View>
                     </View>
                 </View>
-            </Animated.View>
-
-            {/* ═══════════ FEATURES SECTION ═══════════ */}
-            <View className="w-full items-center px-6 py-16">
-                <View className="max-w-[1200px] w-full">
-                    {/* Section Header */}
-                    <View className="items-center mb-16">
-                        <Text className="text-purple-400 text-sm font-bold tracking-widest mb-3">
-                            HOW IT WORKS
-                        </Text>
-                        <Text
-                            className="text-white font-extrabold text-center"
-                            style={{ fontSize: isDesktop ? 36 : 26 }}
-                        >
-                            3단계로 완성하는{'\n'}사업계획서
-                        </Text>
-                    </View>
-
-                    {/* Feature Cards */}
-                    {FEATURES.map((feature, idx) => (
-                        <Animated.View
-                            key={idx}
-                            style={{
-                                opacity: fadeAnims[idx],
-                                transform: [{ translateY: slideAnims[idx] }],
-                                marginBottom: 32,
-                            }}
-                        >
-                            <View
-                                className={`rounded-3xl border border-white/[0.06] overflow-hidden ${isDesktop ? 'flex-row' : 'flex-col'}`}
-                                style={{ backgroundColor: 'rgba(255,255,255,0.02)' }}
-                            >
-                                {/* Left: Visual */}
-                                <View
-                                    className={`${isDesktop ? 'w-[45%]' : 'w-full'} p-10 items-center justify-center`}
-                                    style={{ minHeight: isDesktop ? 300 : 200 }}
-                                >
-                                    <LinearGradient
-                                        colors={feature.gradient}
-                                        start={{ x: 0, y: 0 }}
-                                        end={{ x: 1, y: 1 }}
-                                        style={{
-                                            width: 80,
-                                            height: 80,
-                                            borderRadius: 24,
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            marginBottom: 20,
-                                        }}
-                                    >
-                                        {renderIcon(feature.icon, '#fff', 36)}
-                                    </LinearGradient>
-                                    <View className="bg-white/10 px-3 py-1 rounded-full mb-4">
-                                        <Text className="text-white/70 text-xs font-bold">
-                                            STEP {idx + 1}
-                                        </Text>
-                                    </View>
-                                    <Text
-                                        className="text-white/60 text-center leading-relaxed"
-                                        style={{ fontSize: isDesktop ? 20 : 17 }}
-                                    >
-                                        {feature.subtitle}
-                                    </Text>
-                                </View>
-
-                                {/* Right: Content */}
-                                <View className={`${isDesktop ? 'w-[55%]' : 'w-full'} p-10 justify-center`}>
-                                    <View
-                                        className="px-3 py-1 rounded-full self-start mb-4"
-                                        style={{ backgroundColor: feature.accentColor + '20' }}
-                                    >
-                                        <Text style={{ color: feature.accentColor, fontSize: 12, fontWeight: '700' }}>
-                                            {feature.tag}
-                                        </Text>
-                                    </View>
-                                    <Text
-                                        className="text-white font-extrabold mb-4"
-                                        style={{ fontSize: isDesktop ? 30 : 24 }}
-                                    >
-                                        {feature.title}
-                                    </Text>
-                                    <Text
-                                        className="text-slate-400 leading-relaxed"
-                                        style={{ fontSize: isDesktop ? 16 : 14, lineHeight: isDesktop ? 28 : 24 }}
-                                    >
-                                        {feature.description}
-                                    </Text>
-                                </View>
-                            </View>
-                        </Animated.View>
-                    ))}
-                </View>
             </View>
 
-            {/* ═══════════ SUPPORTED GRANTS SECTION ═══════════ */}
-            <View className="w-full items-center px-6 py-16" style={{ backgroundColor: 'rgba(255,255,255,0.01)' }}>
-                <View className="max-w-[1200px] w-full items-center">
-                    <Text className="text-emerald-400 text-sm font-bold tracking-widest mb-3">
-                        SUPPORTED TEMPLATES
-                    </Text>
-                    <Text
-                        className="text-white font-extrabold text-center mb-12"
-                        style={{ fontSize: isDesktop ? 32 : 24 }}
-                    >
-                        주요 정부지원사업 양식 지원
-                    </Text>
-
-                    <View className={`${isDesktop ? 'flex-row' : 'flex-col'} gap-4 w-full justify-center`}>
-                        {[
-                            { name: '예비창업패키지', status: '지원 중', color: '#10B981' },
-                            { name: 'TIPS', status: '준비 중', color: '#6366F1' },
-                            { name: '초기창업패키지', status: '준비 중', color: '#6366F1' },
-                            { name: '창업도약패키지', status: '준비 중', color: '#6366F1' },
-                            { name: '스마트공장', status: '준비 중', color: '#6366F1' },
-                        ].map((grant, i) => (
-                            <View
-                                key={i}
-                                className="flex-1 bg-white/[0.03] border border-white/[0.06] rounded-2xl p-5 items-center"
-                                style={{ minWidth: isDesktop ? 0 : '100%' }}
-                            >
-                                <View
-                                    className="w-10 h-10 rounded-xl items-center justify-center mb-3"
-                                    style={{ backgroundColor: grant.color + '20' }}
-                                >
-                                    <Icons.FileText size={20} color={grant.color} />
-                                </View>
-                                <Text className="text-white font-bold text-sm mb-1">{grant.name}</Text>
-                                <View
-                                    className="px-2 py-0.5 rounded-full"
-                                    style={{ backgroundColor: grant.color + '20' }}
-                                >
-                                    <Text style={{ color: grant.color, fontSize: 10, fontWeight: '700' }}>
-                                        {grant.status}
-                                    </Text>
-                                </View>
-                            </View>
-                        ))}
-                    </View>
-                </View>
-            </View>
-
-            {/* ═══════════ FINAL CTA SECTION ═══════════ */}
-            <View className="w-full items-center px-6 py-20">
-                <View className="max-w-[800px] w-full items-center">
-                    <Text
-                        className="text-white font-extrabold text-center mb-4"
-                        style={{ fontSize: isDesktop ? 36 : 26 }}
-                    >
-                        지금 바로 시작하세요
-                    </Text>
-                    <Text className="text-slate-400 text-center text-base mb-8 leading-relaxed">
-                        복잡한 사업계획서 작성, 더 이상 혼자 고민하지 마세요.{'\n'}
-                        Publica AI가 합격하는 사업계획서를 함께 만들어 드립니다.
-                    </Text>
-                    <TouchableOpacity
-                        onPress={onStartFree}
-                        className="bg-purple-600 hover:bg-purple-500 px-10 py-4 rounded-2xl shadow-lg shadow-purple-600/30 active:scale-95"
-                    >
-                        <Text className="text-white font-bold text-lg text-center">
-                            무료로 시작하기 →
-                        </Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            {/* ═══════════ FOOTER ═══════════ */}
-            <View className="w-full border-t border-white/5 px-6 py-10">
-                <View className="max-w-[1200px] w-full mx-auto">
-                    <View className={`${isDesktop ? 'flex-row justify-between' : 'flex-col gap-6'}`}>
-                        <View>
-                            <Text className="text-white font-bold text-lg mb-2">Publica</Text>
-                            <Text className="text-slate-500 text-xs leading-5">
-                                AI 기반 사업계획서 자동 완성 플랫폼{'\n'}
-                                © 2026 Publica. All rights reserved.
-                            </Text>
-                        </View>
-                        <View className={`${isDesktop ? 'flex-row gap-8' : 'flex-col gap-3'}`}>
-                            <TouchableOpacity>
-                                <Text className="text-slate-400 text-sm">이용약관</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity>
-                                <Text className="text-slate-400 text-sm">개인정보처리방침</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity>
-                                <Text className="text-slate-400 text-sm">문의하기</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </View>
+            <Footer />
         </ScrollView>
     );
 };
+
+const CheckItem = ({ text }: { text: string }) => (
+    <View style={styles.checkRow}>
+        <CheckCircle2 size={16} color="#7C3AED" />
+        <Text style={styles.checkText}>{text}</Text>
+    </View>
+);
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    heroWrapper: { width: '100%', alignItems: 'center', paddingVertical: 40 },
+    heroCard: {
+        width: '94%', maxWidth: 1400, height: 600, borderRadius: 48,
+        overflow: 'hidden', backgroundColor: '#FDF8F3', elevation: 15,
+        shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 30,
+        position: 'relative'
+    },
+    heroContent: { flex: 1, paddingLeft: '8%', justifyContent: 'center', zIndex: 10 },
+    tagBadge: {
+        backgroundColor: '#7C3AED', paddingHorizontal: 16, paddingVertical: 8,
+        borderRadius: 999, alignSelf: 'flex-start', marginBottom: 24
+    },
+    tagText: { color: '#FFF', fontWeight: '800', fontSize: 13, letterSpacing: 1 },
+    heroTitle: { color: '#18181b', fontWeight: '900', letterSpacing: -1 },
+    accentText: { color: '#7C3AED' },
+    heroSubtitle: { color: '#4b5563', fontSize: 18, marginTop: 32, lineHeight: 30, fontWeight: '500' },
+    ctaBtn: {
+        backgroundColor: '#18181b', paddingHorizontal: 32, paddingVertical: 20,
+        borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginTop: 48,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15,
+        alignSelf: 'flex-start'
+    },
+    ctaBtnText: { color: '#FFF', fontSize: 18, fontWeight: '800', marginRight: 16 },
+    ctaIconBox: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
+    
+    section: { paddingVertical: 120, width: '100%', alignItems: 'center' },
+    contentContainer: { width: '100%', maxWidth: 1400, paddingHorizontal: 32 },
+    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 80 },
+    sectionTag: { color: '#7C3AED', fontWeight: '800', letterSpacing: 2, fontSize: 12, marginBottom: 16 },
+    sectionTitle: { color: '#18181b', fontSize: 44, fontWeight: '900', letterSpacing: -1 },
+    sectionDesc: { color: '#64748B', fontSize: 16, textAlign: 'right', lineHeight: 28 },
+    
+    row: { flexDirection: 'row' },
+    col: { flexDirection: 'column' },
+    featureGrid: { borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+    featureCard: { flex: 1, padding: 40, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+    featureCardBorder: { borderRightWidth: 1, borderRightColor: '#F1F5F9' },
+    featureIconBox: { width: 56, height: 56, borderRadius: 18, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#7C3AED22' },
+    featureId: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 8 },
+    featureLabel: { color: '#18181b', fontSize: 24, fontWeight: '800', marginBottom: 16 },
+    featureDesc: { color: '#64748B', fontSize: 15, lineHeight: 24 },
+    featureImageWrapper: { height: 200, borderRadius: 24, marginTop: 40, overflow: 'hidden', borderWidth: 1, borderColor: '#F1F5F9' },
+    featureImage: { width: '100%', height: '100%' },
+
+    processLayout: { flexDirection: 'row', gap: 60, flexWrap: 'wrap' },
+    processInfo: { flex: 1, minWidth: 320 },
+    processSub: { color: '#475569', fontSize: 18, marginTop: 24, lineHeight: 32 },
+    checkList: { marginTop: 40, gap: 16 },
+    checkRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    checkText: { color: '#18181b', fontWeight: '600', fontSize: 16 },
+    
+    processSteps: { flex: 1.2, minWidth: 320, gap: 16 },
+    stepCard: {
+        backgroundColor: '#FFF', padding: 24, borderRadius: 24,
+        flexDirection: 'row', alignItems: 'center', gap: 20,
+        borderWidth: 1, borderColor: '#F1F5F9', elevation: 2,
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10
+    },
+    stepNum: { color: '#F1F5F9', fontSize: 40, fontWeight: '900', position: 'absolute', right: 24, top: 12 },
+    stepIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center' },
+    stepTitle: { color: '#18181b', fontSize: 18, fontWeight: '800', marginBottom: 4 },
+    stepDesc: { color: '#64748B', fontSize: 14 }
+});

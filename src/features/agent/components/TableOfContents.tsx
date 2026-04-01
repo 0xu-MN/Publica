@@ -27,7 +27,7 @@ const FONT_SIZE: Record<number, number> = { 1: 13, 2: 12, 3: 11 };
 // Font weight per level
 const FONT_WEIGHT: Record<number, '700' | '600' | '400'> = { 1: '700', 2: '600', 3: '400' };
 // Dot colour per level (accent)
-const DOT_COLOR: Record<number, string> = { 1: '#3B82F6', 2: '#94A3B8', 3: '#CBD5E1' };
+const DOT_COLOR: Record<number, string> = { 1: '#7C3AED', 2: '#94A3B8', 3: '#CBD5E1' };
 
 export const TableOfContents = ({ items, onItemClick, activeId }: TableOfContentsProps) => {
     if (!items || items.length === 0) {
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
         gap: 6,
     },
     activeItem: {
-        backgroundColor: '#EFF6FF',
+        backgroundColor: 'rgba(124, 58, 237, 0.05)',
     },
     dot: {
         width: 5,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
         flexShrink: 0,
     },
     numBadge: {
-        backgroundColor: '#3B82F6',
+        backgroundColor: '#7C3AED',
         borderRadius: 3,
         paddingHorizontal: 4,
         paddingVertical: 1,
@@ -169,12 +169,12 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     itemTitle: {
-        color: '#334155',
+        color: '#27272a',
         flex: 1,
         lineHeight: 16,
     },
     activeText: {
-        color: '#2563EB',
+        color: '#7C3AED',
     },
     itemPage: {
         fontSize: 10,

@@ -23,14 +23,14 @@ export const ModeDropdown = ({ currentMode, onSelectMode }: any) => {
                     {modes.map((mode) => (
                         <TouchableOpacity
                             key={mode.id}
-                            style={[styles.dropdownItem, currentMode === mode.id && { backgroundColor: '#334155' }]}
+                            style={[styles.dropdownItem, currentMode === mode.id && { backgroundColor: 'rgba(124, 58, 237, 0.1)' }]}
                             onPress={() => { onSelectMode(mode.id); setVisible(false); }}
                         >
                             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                 <View style={{ width: 24, alignItems: 'center' }}>{mode.icon}</View>
-                                <Text style={[styles.dropdownItemTitle, currentMode === mode.id && { color: 'white' }]}>{mode.id}</Text>
+                                <Text style={[styles.dropdownItemTitle, currentMode === mode.id && { color: '#27272a' }]}>{mode.id}</Text>
                             </View>
-                            {currentMode === mode.id && <Check size={14} color="#10B981" />}
+                            {currentMode === mode.id && <Check size={14} color="#7C3AED" />}
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -40,9 +40,9 @@ export const ModeDropdown = ({ currentMode, onSelectMode }: any) => {
 };
 
 const styles = StyleSheet.create({
-    modeTrigger: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#111', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#222' },
-    modeTriggerText: { color: 'white', fontSize: 13, fontWeight: '600', marginLeft: 8, marginRight: 8 },
-    dropdownMenu: { position: 'absolute', top: 45, left: 0, width: 220, backgroundColor: '#111', borderRadius: 8, borderWidth: 1, borderColor: '#333', padding: 4 },
-    dropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 10, borderRadius: 6 },
-    dropdownItemTitle: { color: '#94A3B8', fontSize: 13, marginLeft: 10 },
+    modeTrigger: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, borderWidth: 1.5, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
+    modeTriggerText: { color: '#27272a', fontSize: 13, fontWeight: '900', marginLeft: 10, marginRight: 10, letterSpacing: -0.3 },
+    dropdownMenu: { position: 'absolute', top: 50, left: 0, width: 240, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20 },
+    dropdownItem: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 12, borderRadius: 10 },
+    dropdownItemTitle: { color: '#64748B', fontSize: 13, marginLeft: 12, fontWeight: '700' },
 });
