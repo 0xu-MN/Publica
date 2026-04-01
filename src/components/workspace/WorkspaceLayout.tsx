@@ -461,6 +461,10 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                     style={{
                         flex: 1,
                         transform: [{ translateX: profileEditPanelWidth }],
+                        opacity: profileEditPanelWidth.interpolate({
+                            inputRange: [-900, -880, 0],
+                            outputRange: [0, 1, 1],
+                        }),
                     }}
                 >
                     <View className="h-full p-3 pl-0">
