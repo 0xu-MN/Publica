@@ -371,7 +371,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                         </TouchableOpacity>
                     </View>
                     <View style={{ position: 'relative' }}>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ overflow: 'visible' }}>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                             <Animated.View style={[{ flexDirection: 'row', gap: 24, paddingLeft: 8 }, animatedStyle]}>
                                 {[...communityPosts, ...communityPosts].map((post, i) => (
                                     <TouchableOpacity key={i} style={styles.loungeCard} onPress={() => !user ? onLoginPress?.() : onNavigateToLounge?.()}>
