@@ -267,7 +267,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                         )}
                     </View>
                     {!user && (
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 20 }]}>
+                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 20, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
                             <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { paddingHorizontal: 32, paddingVertical: 20 }]}>
                                 <Text style={[styles.viewBtnText, { fontSize: 18 }]}>로그인하고 맞춤 추천받기</Text>
                             </TouchableOpacity>
@@ -338,7 +338,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                             <Text style={styles.moreBtn}>상세보기 {'>'}</Text>
                         </TouchableOpacity>
                     </View>
-                    <View style={{ flexDirection: 'row', gap: 16 }}>
+                    <View style={{ flexDirection: 'row', gap: 16, position: 'relative' }}>
                         {[1, 2, 3].map(i => (
                             <View key={i} style={[styles.recCard, { minHeight: 180, padding: 24 }]}>
                                 <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: '800', marginBottom: 8 }}>PROJECT 0{i}</Text>
@@ -350,7 +350,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                             </View>
                         ))}
                         {!user && (
-                            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10 }]}>
+                            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
                                 <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
                                     <Text style={styles.viewBtnText}>워크스페이스 시작하기</Text>
                                 </TouchableOpacity>
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
     workspaceBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 14, borderRadius: 18, borderWidth: 1, borderColor: '#7C3AED20', gap: 10 },
     workspaceText: { color: '#7C3AED', fontWeight: '800', fontSize: 15 },
 
-    recommendSection: { marginBottom: 56 },
+    recommendSection: { marginBottom: 56, position: 'relative' },
     recCardsRow: { flexDirection: 'row', gap: 24 },
     recCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 40, padding: 32, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 4, minHeight: 340 },
     recAgency: { color: '#94A3B8', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 8 },
