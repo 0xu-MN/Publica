@@ -94,6 +94,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                         style={styles.headerLogo}
                         resizeMode="contain"
                     />
+                    <Text style={styles.logoText}>Publica</Text>
                 </TouchableOpacity>
 
                 {/* Centered Navigation (Desktop) */}
@@ -261,8 +262,9 @@ const styles = StyleSheet.create({
     headerContainer: { width: '100%', backgroundColor: '#FDF8F3', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', zIndex: 1000 },
     headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
     
-    logoWrapper: { height: '100%', justifyContent: 'center' },
-    headerLogo: { width: 72, height: 72 },
+    logoWrapper: { height: '100%', flexDirection: 'row', alignItems: 'center' },
+    headerLogo: { width: 84, height: 84 },
+    logoText: { marginLeft: 4, fontSize: 34, fontWeight: '900', color: '#18181B', letterSpacing: -1.5 },
 
     navCentered: { position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' },
     navRow: { flexDirection: 'row', alignItems: 'center', gap: 12, pointerEvents: 'auto' },
