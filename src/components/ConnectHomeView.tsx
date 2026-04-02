@@ -154,7 +154,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
         <ScrollView
             ref={scrollRef}
             style={styles.container}
-            contentContainerStyle={{ paddingBottom: 100 }}
+            contentContainerStyle={{ paddingBottom: 0 }}
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled={true}
         >
@@ -411,7 +411,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
     content: { maxWidth: 1400, alignSelf: 'center', width: '100%', padding: 24 },
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
     headerTitle: { color: '#18181b', fontSize: 48, fontWeight: '900', letterSpacing: -2 },
