@@ -50,10 +50,10 @@ const Footer = () => {
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
                         <Image
                             source={require('../../assets/p_logo.png')}
-                            style={{ height: 64, width: 38 }}
+                            style={{ height: 80, width: 48 }}
                             resizeMode="contain"
                         />
-                        <Text style={{ fontSize: 32, fontWeight: '900', color: '#27272a', marginLeft: 8, letterSpacing: -1 }}>Publica</Text>
+                        <Text style={{ fontSize: 40, fontWeight: '900', color: '#27272a', marginLeft: 12, letterSpacing: -1 }}>Publica</Text>
                     </View>
                     <Text className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-[500px] mb-6 font-medium">
                         기업을 위한 가장 완벽한 정부지원사업 맞춤형 솔루션.{'\n'}수많은 기업의 성공을 이끈 AI 자동화 기술을 먼저 경험하세요.
