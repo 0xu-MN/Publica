@@ -44,7 +44,7 @@ const Footer = () => {
     };
 
     return (
-        <View className="w-full bg-transparent border-t border-slate-200 dark:border-white/5 py-8 px-6 items-center">
+        <View className="w-full bg-[#FDF8F3] dark:bg-[#060B1A] border-t border-slate-200 dark:border-white/5 py-8 px-6 items-center">
             <View className="max-w-[1400px] w-full flex-col md:flex-row justify-between items-start gap-8">
                 <View className="flex-1">
                     <Text className="text-[#27272a] dark:text-white font-black text-xl mb-4 tracking-tighter uppercase">Publica</Text>

@@ -261,7 +261,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 };
 
 const styles = StyleSheet.create({
-    headerContainer: { width: '100%', backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', zIndex: 1000 },
+    headerContainer: { width: '100%', backgroundColor: '#FDF8F3', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', zIndex: 1000 },
     headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
     
     logoWrapper: { flexDirection: 'row', alignItems: 'center' },
