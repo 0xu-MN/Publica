@@ -92,7 +92,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <View style={styles.logoIcon}>
                         <Image
                             source={require('../../assets/publica logo.png')}
-                            style={{ width: 32, height: 32 }}
+                            style={{ width: 40, height: 40 }}
                             resizeMode="contain"
                         />
                     </View>
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
     
     logoWrapper: { flexDirection: 'row', alignItems: 'center' },
-    logoIcon: { width: 44, height: 44, borderRadius: 12, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#7C3AED15' },
+    logoIcon: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
     logoText: { marginLeft: 12, fontSize: 20, fontWeight: '900', color: '#18181B', letterSpacing: -1 },
 
     navCentered: { position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' },
