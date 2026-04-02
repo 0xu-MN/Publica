@@ -44,7 +44,7 @@ const Footer = () => {
     };
 
     return (
-        <View className="w-full bg-[#FDF8F3] dark:bg-[#060B1A] border-t border-slate-200 dark:border-white/5 py-8 px-6 items-center">
+        <View className="w-full bg-transparent border-t border-slate-200 dark:border-white/5 py-8 px-6 items-center">
             <View className="max-w-[1400px] w-full flex-col md:flex-row justify-between items-start gap-8">
                 <View className="flex-1">
                     <Text className="text-[#27272a] dark:text-white font-black text-xl mb-4 tracking-tighter uppercase">Publica</Text>
@@ -53,10 +53,10 @@ const Footer = () => {
                     </Text>
 
                     <View className="gap-1.5">
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-bold">(주)퍼블리카컴퍼니 | 대표 김퍼블</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">사업자등록번호: 123-45-67890 | 통신판매업신고: 2026-서울강남-1234</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">서울특별시 강남구 테헤란로 123, 4층</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">고객지원실: 1588-0000 | 이메일: support@publica.io</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-bold">상호명: (주)퍼블리카 | 대표자: 홍수민</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">사업자등록번호: 123-45-67890 | 통신판매업신고: 2026-서울강남-00000</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">주소: 서울특별시 강남구 테헤란로 123, 4층 (임시)</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">이메일: contact@publica.ai | hong56800@gmail.com</Text>
                     </View>
                 </View>
 
