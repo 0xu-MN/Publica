@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
     View, Text, ScrollView, TouchableOpacity, useWindowDimensions,
-    Animated, StyleSheet, Platform
+    Animated, StyleSheet, Platform, Image
 } from 'react-native';
 import {
     ArrowRight, Sparkles, FileEdit, Download, CheckCircle2,
@@ -141,8 +141,14 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
 
             {/* ════════════ HERO ════════════ */}
             <View style={styles.heroSection}>
+                {/* Background image */}
+                <Image
+                    source={{ uri: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2564&auto=format&fit=crop' }}
+                    style={StyleSheet.absoluteFill}
+                    resizeMode="cover"
+                />
                 <LinearGradient
-                    colors={['#FDF8F3', '#F5F3FF', '#FDF8F3']}
+                    colors={['rgba(253,248,243,0.97)', 'rgba(245,243,255,0.88)', 'rgba(253,248,243,0.97)']}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                     style={StyleSheet.absoluteFill}
                 />
@@ -331,18 +337,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
             </View>
 
             {/* ════════════ STATS ════════════ */}
-            <View style={[styles.section, { backgroundColor: '#7C3AED', paddingVertical: 80 }]}>
+            <View style={[styles.section, { backgroundColor: '#18181B', paddingVertical: 80 }]}>
                 <View style={styles.inner}>
-                    <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF', marginBottom: 16 }]}>숫자로 보는 Publica</Text>
-                    <Text style={[styles.sectionSubCenter, { color: '#C4B5FD', marginBottom: 56 }]}>
-                        실제 사용자 데이터와 검증된 결과입니다.
-                    </Text>
+                    <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF', marginBottom: 56 }]}>숫자로 보는 Publica</Text>
                     <View style={[styles.statsGrid, isDesktop && styles.statsGridRow]}>
                         {STATS.map((s, i) => {
                             const StatIcon = s.icon;
                             return (
                                 <View key={i} style={styles.statCard}>
-                                    <StatIcon size={28} color="#FFFFFF" style={{ opacity: 0.7, marginBottom: 16 }} />
+                                    <StatIcon size={28} color="#A78BFA" style={{ marginBottom: 16 }} />
                                     <Text style={styles.statVal}>{s.value}</Text>
                                     <Text style={styles.statLabel}>{s.label}</Text>
                                     <Text style={styles.statSub}>{s.sub}</Text>
@@ -471,13 +474,13 @@ const styles = StyleSheet.create({
     /* STATS */
     statsGrid: { gap: 16 },
     statsGridRow: { flexDirection: 'row' },
-    statCard: { flex: 1, alignItems: 'center', padding: 32, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' },
+    statCard: { flex: 1, alignItems: 'center', padding: 32, backgroundColor: '#27272A', borderRadius: 24, borderWidth: 1, borderColor: '#3F3F46' },
     statVal: { color: '#FFFFFF', fontSize: 44, fontWeight: '900', letterSpacing: -1 },
-    statLabel: { color: '#E9D5FF', fontSize: 14, fontWeight: '700', marginTop: 8, marginBottom: 4 },
-    statSub: { color: '#A78BFA', fontSize: 12 },
+    statLabel: { color: '#E4E4E7', fontSize: 14, fontWeight: '700', marginTop: 8, marginBottom: 4 },
+    statSub: { color: '#71717A', fontSize: 12 },
 
     /* PRICING TEASER */
-    pricingCard: { borderRadius: 40, padding: isDesktop => isDesktop ? 80 : 48, overflow: 'hidden', alignItems: 'center', minHeight: 360, justifyContent: 'center', padding: 64 } as any,
+    pricingCard: { borderRadius: 40, overflow: 'hidden', alignItems: 'center', minHeight: 360, justifyContent: 'center', padding: 64 } as any,
     pricingBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
     pricingBadgeText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
     pricingTitle: { color: '#FFFFFF', fontSize: 36, fontWeight: '900', letterSpacing: -1, textAlign: 'center', marginBottom: 16 },
