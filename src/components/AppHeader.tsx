@@ -89,14 +89,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     onPress={() => { setViewMode(user ? 'connect' : 'landing'); setActiveCategory('전체'); }}
                     style={styles.logoWrapper}
                 >
-                    <View style={styles.logoIcon}>
-                        <Image
-                            source={require('../../assets/publica logo.png')}
-                            style={{ width: 40, height: 40 }}
-                            resizeMode="contain"
-                        />
-                    </View>
-                    <Text style={styles.logoText}>PUBLICA</Text>
+                    <Image
+                        source={require('../../assets/p_logo.png')}
+                        style={styles.headerLogo}
+                        resizeMode="contain"
+                    />
                 </TouchableOpacity>
 
                 {/* Centered Navigation (Desktop) */}
@@ -264,9 +261,8 @@ const styles = StyleSheet.create({
     headerContainer: { width: '100%', backgroundColor: '#FDF8F3', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', zIndex: 1000 },
     headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
     
-    logoWrapper: { flexDirection: 'row', alignItems: 'center' },
-    logoIcon: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
-    logoText: { marginLeft: 12, fontSize: 20, fontWeight: '900', color: '#18181B', letterSpacing: -1 },
+    logoWrapper: { height: '100%', justifyContent: 'center' },
+    headerLogo: { width: 72, height: 72 },
 
     navCentered: { position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' },
     navRow: { flexDirection: 'row', alignItems: 'center', gap: 12, pointerEvents: 'auto' },
