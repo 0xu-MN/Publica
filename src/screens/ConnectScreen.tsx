@@ -256,7 +256,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                             nestedScrollEnabled={true}
                             showsVerticalScrollIndicator={false}
                         >
-                            <View className="pb-10">
+                            <View className="pb-10 w-full max-w-[850px]">
                                 {filteredPosts.map((item, index) => (
                                     <TimestampWrapper key={item.id} post={item} prevPost={filteredPosts[index - 1]}>
                                         <TimelinePost

@@ -53,10 +53,10 @@ const Footer = () => {
                     </Text>
 
                     <View className="gap-1.5">
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-bold">상호명: (주)퍼블리카 | 대표자: 홍수민</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">사업자등록번호: 123-45-67890 | 통신판매업신고: 2026-서울강남-00000</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">주소: 서울특별시 강남구 테헤란로 123, 4층 (임시)</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">이메일: contact@publica.ai | hong56800@gmail.com</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-bold">상호명: (주)헤일로포지 | 대표자: 홍수민</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">사업자등록번호: 846-04-03662 | 통신판매업신고: 2026-서울강남-00000</Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">주소: 경기도 안산시 단원구 고잔로 57-11 </Text>
+                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">이메일: publica@publica.ai.kr | haloforge@haloforge.kr</Text>
                     </View>
                 </View>
 
@@ -100,8 +100,8 @@ const Footer = () => {
                         <ScrollView style={styles.modalContent}>
                             <Text style={styles.modalText}>{getLegalContent()}</Text>
                         </ScrollView>
-                        <TouchableOpacity 
-                            style={styles.modalFooter} 
+                        <TouchableOpacity
+                            style={styles.modalFooter}
                             onPress={() => setLegalType(null)}
                         >
                             <Text style={styles.modalFooterText}>확인</Text>
