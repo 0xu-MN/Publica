@@ -158,250 +158,252 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
             showsVerticalScrollIndicator={false}
             nestedScrollEnabled={true}
         >
-            <View style={styles.content}>
-                {/* Header Section */}
-                <View style={styles.headerRow}>
-                    <View>
-                        <Text style={styles.headerTitle}>CONNECT HUB</Text>
-                        <Text style={styles.headerSubtitle}>{nickname || '방문자'} 연구원님의 아이템에 맞춘 최적의 기회입니다.</Text>
-                    </View>
-                    <TouchableOpacity style={styles.filterBtn}>
-                        <Filter size={18} color="#94A3B8" />
-                        <Text style={styles.filterText}>필터링</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {/* Profile Card Section */}
-                <View style={styles.profileCard}>
-                    {!user ? (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
-                                <View style={styles.avatar}><UserIcon size={40} color="#94A3B8" /></View>
-                                <View>
-                                    <Text style={styles.profileTitle}>안녕하세요 방문자님!</Text>
-                                    <Text style={styles.profileKeywords}>로그인 후 더 많은 기능을 만나보세요.</Text>
-                                </View>
-                            </View>
-                            <View style={{ flexDirection: 'row', gap: 12 }}>
-                                <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
-                                    <Text style={styles.viewBtnText}>로그인</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#7C3AED30' }]}>
-                                    <Text style={[styles.viewBtnText, { color: '#7C3AED' }]}>회원가입</Text>
-                                </TouchableOpacity>
-                            </View>
+            <View style={{ backgroundColor: '#FFFFFF', width: '100%' }}>
+                <View style={styles.content}>
+                    {/* Header Section */}
+                    <View style={styles.headerRow}>
+                        <View>
+                            <Text style={styles.headerTitle}>CONNECT HUB</Text>
+                            <Text style={styles.headerSubtitle}>{nickname || '방문자'} 연구원님의 아이템에 맞춘 최적의 기회입니다.</Text>
                         </View>
-                    ) : (
-                        <>
-                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
-                                <View style={styles.avatarWrapper}>
-                                    <View style={styles.avatar}>
-                                        {imageUrl ? <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} /> : <UserIcon size={32} color="#94A3B8" />}
-                                    </View>
-                                    <View style={styles.onlineDot} />
-                                </View>
-                                <View>
-                                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                                        <Text style={styles.profileTitle}>{nickname} 연구원님</Text>
-                                        <View style={styles.roleBadge}><Text style={styles.roleText}>{role}</Text></View>
-                                    </View>
-                                    <Text style={styles.profileKeywords} numberOfLines={1}>
-                                        보유 기술: <Text style={{ color: '#7C3AED', fontWeight: '700' }}>{keywords.map((k: string) => `#${k}`).join(', ')}</Text> • 선호 분야: <Text style={{ color: '#10B981', fontWeight: '700' }}>{field}</Text>
-                                    </Text>
-                                </View>
-                            </View>
-                            <View style={styles.statsRow}>
-                                <View style={styles.statItem}>
-                                    <Text style={styles.statLabel}>Match Score</Text>
-                                    <Text style={[styles.statValue, { color: '#7C3AED' }]}>98<Text style={styles.scoreUnit}>%</Text></Text>
-                                </View>
-                                <View style={styles.statItem}>
-                                    <Text style={styles.statLabel}>Projects</Text>
-                                    <Text style={styles.statValue}>3<Text style={styles.scoreUnit}>건</Text></Text>
-                                </View>
-                                <TouchableOpacity onPress={onNavigateToWorkspace} style={styles.workspaceBtn}>
-                                    <LayoutGrid size={20} color="#7C3AED" />
-                                    <Text style={styles.workspaceText}>Workspace</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </>
-                    )}
-                </View>
+                        <TouchableOpacity style={styles.filterBtn}>
+                            <Filter size={18} color="#94A3B8" />
+                            <Text style={styles.filterText}>필터링</Text>
+                        </TouchableOpacity>
+                    </View>
 
-                {/* Top Recommendations */}
-                <View style={styles.recommendSection}>
-                    <View style={styles.recCardsRow}>
-                        {topGrants.length === 0 ? (
-                            <View style={[styles.recCard, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
-                                <Search size={48} color="#94A3B8" style={{ opacity: 0.5, marginBottom: 20 }} />
-                                <Text style={{ color: '#18181b', fontSize: 24, fontWeight: '800', marginBottom: 8 }}>맞춤 지원사업 탐색 중</Text>
-                                <Text style={{ color: '#64748B', textAlign: 'center' }}>AI가 연구원님께 최적화된 공고를 선별하고 있습니다.</Text>
+                    {/* Profile Card Section */}
+                    <View style={styles.profileCard}>
+                        {!user ? (
+                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+                                    <View style={styles.avatar}><UserIcon size={40} color="#94A3B8" /></View>
+                                    <View>
+                                        <Text style={styles.profileTitle}>안녕하세요 방문자님!</Text>
+                                        <Text style={styles.profileKeywords}>로그인 후 더 많은 기능을 만나보세요.</Text>
+                                    </View>
+                                </View>
+                                <View style={{ flexDirection: 'row', gap: 12 }}>
+                                    <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
+                                        <Text style={styles.viewBtnText}>로그인</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#7C3AED30' }]}>
+                                        <Text style={[styles.viewBtnText, { color: '#7C3AED' }]}>회원가입</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
                         ) : (
-                            topGrants.slice(0, 2).map((grant, idx) => (
-                                <TouchableOpacity key={idx} style={styles.recCard} onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(grant)}>
-                                    <View style={styles.scoreContainer}>
-                                        <Text style={styles.scoreLabel}>Match Score</Text>
-                                        <Text style={styles.scoreValue}>{!user ? '??' : grant.score}<Text style={styles.scoreUnit}>%</Text></Text>
-                                    </View>
-                                    <View style={{ width: '70%' }}>
-                                        <Text style={styles.recAgency}>{grant.agency}</Text>
-                                        <Text style={styles.recTitle} numberOfLines={3}>{grant.title}</Text>
-                                    </View>
-                                    <View style={styles.badgeRow}>
-                                        <View style={styles.badgePurple}><Text style={styles.badgeTextPurple}>{grant.category}</Text></View>
-                                        <View style={styles.badgeGray}><Text style={styles.badgeTextGray}>{grant.d_day}</Text></View>
-                                    </View>
-                                    <View style={styles.recFooter}>
-                                        <View>
-                                            <Text style={styles.recFieldLabel}>지원 분야</Text>
-                                            <Text style={styles.recFieldValue}>{grant.tech_field}</Text>
+                            <>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
+                                    <View style={styles.avatarWrapper}>
+                                        <View style={styles.avatar}>
+                                            {imageUrl ? <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} /> : <UserIcon size={32} color="#94A3B8" />}
                                         </View>
-                                        <View style={styles.viewBtn}>
-                                            <Sparkles size={18} color="#FFF" />
-                                            <Text style={styles.viewBtnText}>상세 보기</Text>
-                                        </View>
+                                        <View style={styles.onlineDot} />
                                     </View>
-                                </TouchableOpacity>
-                            ))
+                                    <View>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+                                            <Text style={styles.profileTitle}>{nickname} 연구원님</Text>
+                                            <View style={styles.roleBadge}><Text style={styles.roleText}>{role}</Text></View>
+                                        </View>
+                                        <Text style={styles.profileKeywords} numberOfLines={1}>
+                                            보유 기술: <Text style={{ color: '#7C3AED', fontWeight: '700' }}>{keywords.map((k: string) => `#${k}`).join(', ')}</Text> • 선호 분야: <Text style={{ color: '#10B981', fontWeight: '700' }}>{field}</Text>
+                                        </Text>
+                                    </View>
+                                </View>
+                                <View style={styles.statsRow}>
+                                    <View style={styles.statItem}>
+                                        <Text style={styles.statLabel}>Match Score</Text>
+                                        <Text style={[styles.statValue, { color: '#7C3AED' }]}>98<Text style={styles.scoreUnit}>%</Text></Text>
+                                    </View>
+                                    <View style={styles.statItem}>
+                                        <Text style={styles.statLabel}>Projects</Text>
+                                        <Text style={styles.statValue}>3<Text style={styles.scoreUnit}>건</Text></Text>
+                                    </View>
+                                    <TouchableOpacity onPress={onNavigateToWorkspace} style={styles.workspaceBtn}>
+                                        <LayoutGrid size={20} color="#7C3AED" />
+                                        <Text style={styles.workspaceText}>Workspace</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
                         )}
                     </View>
-                    {!user && (
-                        <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 20, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
-                            <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { paddingHorizontal: 32, paddingVertical: 20 }]}>
-                                <Text style={[styles.viewBtnText, { fontSize: 18 }]}>로그인하고 맞춤 추천받기</Text>
-                            </TouchableOpacity>
-                        </View>
-                    )}
-                </View>
 
-                {/* Sub Sections Grid */}
-                <View style={styles.dualGridRow}>
-                    <View style={styles.carouselCol}>
+                    {/* Top Recommendations */}
+                    <View style={styles.recommendSection}>
+                        <View style={styles.recCardsRow}>
+                            {topGrants.length === 0 ? (
+                                <View style={[styles.recCard, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
+                                    <Search size={48} color="#94A3B8" style={{ opacity: 0.5, marginBottom: 20 }} />
+                                    <Text style={{ color: '#18181b', fontSize: 24, fontWeight: '800', marginBottom: 8 }}>맞춤 지원사업 탐색 중</Text>
+                                    <Text style={{ color: '#64748B', textAlign: 'center' }}>AI가 연구원님께 최적화된 공고를 선별하고 있습니다.</Text>
+                                </View>
+                            ) : (
+                                topGrants.slice(0, 2).map((grant, idx) => (
+                                    <TouchableOpacity key={idx} style={styles.recCard} onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(grant)}>
+                                        <View style={styles.scoreContainer}>
+                                            <Text style={styles.scoreLabel}>Match Score</Text>
+                                            <Text style={styles.scoreValue}>{!user ? '??' : grant.score}<Text style={styles.scoreUnit}>%</Text></Text>
+                                        </View>
+                                        <View style={{ width: '70%' }}>
+                                            <Text style={styles.recAgency}>{grant.agency}</Text>
+                                            <Text style={styles.recTitle} numberOfLines={3}>{grant.title}</Text>
+                                        </View>
+                                        <View style={styles.badgeRow}>
+                                            <View style={styles.badgePurple}><Text style={styles.badgeTextPurple}>{grant.category}</Text></View>
+                                            <View style={styles.badgeGray}><Text style={styles.badgeTextGray}>{grant.d_day}</Text></View>
+                                        </View>
+                                        <View style={styles.recFooter}>
+                                            <View>
+                                                <Text style={styles.recFieldLabel}>지원 분야</Text>
+                                                <Text style={styles.recFieldValue}>{grant.tech_field}</Text>
+                                            </View>
+                                            <View style={styles.viewBtn}>
+                                                <Sparkles size={18} color="#FFF" />
+                                                <Text style={styles.viewBtnText}>상세 보기</Text>
+                                            </View>
+                                        </View>
+                                    </TouchableOpacity>
+                                ))
+                            )}
+                        </View>
+                        {!user && (
+                            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 20, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
+                                <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { paddingHorizontal: 32, paddingVertical: 20 }]}>
+                                    <Text style={[styles.viewBtnText, { fontSize: 18 }]}>로그인하고 맞춤 추천받기</Text>
+                                </TouchableOpacity>
+                            </View>
+                        )}
+                    </View>
+
+                    {/* Sub Sections Grid */}
+                    <View style={styles.dualGridRow}>
+                        <View style={styles.carouselCol}>
+                            <View style={styles.sectionTitleRow}>
+                                <View style={styles.sectionLabelWrap}>
+                                    <AlertCircle size={20} color="#7C3AED" />
+                                    <Text style={styles.sectionLabel}>정부사업 안내</Text>
+                                </View>
+                                <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToGrantList?.()}>
+                                    <Text style={styles.moreBtn}>전체보기 {'>'}</Text>
+                                </TouchableOpacity>
+                            </View>
+                            <View style={{ height: 500 }}>
+                                <VerticalStackCarousel
+                                    data={govPrograms}
+                                    itemHeight={340}
+                                    containerHeight={500}
+                                    renderItem={(item, index, progress, totalItems) => (
+                                        <GovernmentCard item={item} index={index} progress={progress} totalItems={totalItems} />
+                                    )}
+                                />
+                            </View>
+                        </View>
+
+                        <View style={styles.gridCol}>
+                            <View style={styles.oppsCard}>
+                                <View style={[styles.sectionTitleRow, { marginBottom: 32 }]}>
+                                    <Text style={[styles.sectionLabel, { fontSize: 18 }]}>NEW OPPORTUNITIES</Text>
+                                </View>
+                                <View style={styles.oppsGrid}>
+                                    {[1, 2, 3, 4].map(i => (
+                                        <View key={i} style={styles.oppItem}>
+                                            <View>
+                                                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                                                    <Text style={styles.oppAgency}>중소벤처기업부</Text>
+                                                    <Text style={styles.oppDday}>D-12</Text>
+                                                </View>
+                                                <Text style={styles.oppTitle} numberOfLines={3}>2026 글로벌 기술 매칭 펀드 및 바우처 지원사업</Text>
+                                            </View>
+                                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                                                <View style={styles.badgeGray}><Text style={[styles.badgeTextGray, { fontSize: 8 }]}>자금</Text></View>
+                                                <View style={styles.badgeGray}><Text style={[styles.badgeTextGray, { fontSize: 8 }]}>글로벌</Text></View>
+                                            </View>
+                                        </View>
+                                    ))}
+                                </View>
+                            </View>
+                        </View>
+                    </View>
+
+                    <View style={styles.divider}><View style={styles.dividerAccent} /></View>
+
+                    {/* Workspace Summary Section */}
+                    <View style={{ marginBottom: 56 }}>
                         <View style={styles.sectionTitleRow}>
                             <View style={styles.sectionLabelWrap}>
-                                <AlertCircle size={20} color="#7C3AED" />
-                                <Text style={styles.sectionLabel}>정부사업 안내</Text>
+                                <Home size={22} color="#7C3AED" />
+                                <Text style={styles.sectionLabel}>My Workspace</Text>
                             </View>
-                            <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToGrantList?.()}>
+                            <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToWorkspace?.()} >
+                                <Text style={styles.moreBtn}>상세보기 {'>'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ flexDirection: 'row', gap: 16, position: 'relative' }}>
+                            {[1, 2, 3].map(i => (
+                                <View key={i} style={[styles.recCard, { minHeight: 180, padding: 24 }]}>
+                                    <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: '800', marginBottom: 8 }}>PROJECT 0{i}</Text>
+                                    <Text style={{ color: '#18181b', fontSize: 15, fontWeight: '700', marginBottom: 12 }}>전략 에이전트 기반 사업 아이템 고도화 리포트</Text>
+                                    <View style={{ marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <Text style={{ color: '#94A3B8', fontSize: 10 }}>2시간 전 업데이트</Text>
+                                        <View style={styles.postCategory}><Text style={styles.postCategoryText}>분석 완료</Text></View>
+                                    </View>
+                                </View>
+                            ))}
+                            {!user && (
+                                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
+                                    <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
+                                        <Text style={styles.viewBtnText}>워크스페이스 시작하기</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+
+                    {/* Lounge Section */}
+                    <View style={styles.loungeWrap}>
+                        <View style={styles.sectionTitleRow}>
+                            <View style={styles.sectionLabelWrap}>
+                                <Users size={24} color="#7C3AED" />
+                                <Text style={styles.sectionLabel}>Publica Lounge</Text>
+                            </View>
+                            <TouchableOpacity onPress={onNavigateToLounge}>
                                 <Text style={styles.moreBtn}>전체보기 {'>'}</Text>
                             </TouchableOpacity>
                         </View>
-                        <View style={{ height: 500 }}>
-                            <VerticalStackCarousel
-                                data={govPrograms}
-                                itemHeight={340}
-                                containerHeight={500}
-                                renderItem={(item, index, progress, totalItems) => (
-                                    <GovernmentCard item={item} index={index} progress={progress} totalItems={totalItems} />
-                                )}
+                        <View style={{ position: 'relative' }}>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                                <Animated.View style={[{ flexDirection: 'row', gap: 24, paddingLeft: 8 }, animatedStyle]}>
+                                    {[...communityPosts, ...communityPosts].map((post, i) => (
+                                        <TouchableOpacity key={i} style={styles.loungeCard} onPress={() => !user ? onLoginPress?.() : onNavigateToLounge?.()}>
+                                            <View style={styles.authorRow}>
+                                                <View style={styles.authorThumb}><Image source={{ uri: `https://i.pravatar.cc/100?u=${post.author}` }} style={{ width: '100%', height: '100%' }} /></View>
+                                                <View><Text style={styles.authorName}>{post.author}</Text><Text style={styles.postTime}>{post.time}</Text></View>
+                                            </View>
+                                            <Text style={styles.postTitle} numberOfLines={2}>{post.title}</Text>
+                                            <View style={styles.postStats}>
+                                                <Text style={styles.postStatText}>💬 {post.comments}</Text>
+                                                <Text style={styles.postStatText}>👍 {post.likes}</Text>
+                                                <View style={styles.postCategory}><Text style={styles.postCategoryText}>{post.category}</Text></View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </Animated.View>
+                            </ScrollView>
+
+                            <LinearGradient
+                                colors={['#FFFFFF', 'rgba(255, 255, 255, 0)']}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 80, zIndex: 10 }}
+                                pointerEvents="none"
+                            />
+                            <LinearGradient
+                                colors={['rgba(255, 255, 255, 0)', '#FFFFFF']}
+                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                                style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, zIndex: 10 }}
+                                pointerEvents="none"
                             />
                         </View>
-                    </View>
-
-                    <View style={styles.gridCol}>
-                        <View style={styles.oppsCard}>
-                            <View style={[styles.sectionTitleRow, { marginBottom: 32 }]}>
-                                <Text style={[styles.sectionLabel, { fontSize: 18 }]}>NEW OPPORTUNITIES</Text>
-                            </View>
-                            <View style={styles.oppsGrid}>
-                                {[1, 2, 3, 4].map(i => (
-                                    <View key={i} style={styles.oppItem}>
-                                        <View>
-                                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-                                                <Text style={styles.oppAgency}>중소벤처기업부</Text>
-                                                <Text style={styles.oppDday}>D-12</Text>
-                                            </View>
-                                            <Text style={styles.oppTitle} numberOfLines={3}>2026 글로벌 기술 매칭 펀드 및 바우처 지원사업</Text>
-                                        </View>
-                                        <View style={{ flexDirection: 'row', gap: 6 }}>
-                                            <View style={styles.badgeGray}><Text style={[styles.badgeTextGray, { fontSize: 8 }]}>자금</Text></View>
-                                            <View style={styles.badgeGray}><Text style={[styles.badgeTextGray, { fontSize: 8 }]}>글로벌</Text></View>
-                                        </View>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
-                    </View>
-                </View>
-
-                <View style={styles.divider}><View style={styles.dividerAccent} /></View>
-
-                {/* Workspace Summary Section */}
-                <View style={{ marginBottom: 56 }}>
-                    <View style={styles.sectionTitleRow}>
-                        <View style={styles.sectionLabelWrap}>
-                            <Home size={22} color="#7C3AED" />
-                            <Text style={styles.sectionLabel}>My Workspace</Text>
-                        </View>
-                        <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToWorkspace?.()} >
-                            <Text style={styles.moreBtn}>상세보기 {'>'}</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={{ flexDirection: 'row', gap: 16, position: 'relative' }}>
-                        {[1, 2, 3].map(i => (
-                            <View key={i} style={[styles.recCard, { minHeight: 180, padding: 24 }]}>
-                                <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: '800', marginBottom: 8 }}>PROJECT 0{i}</Text>
-                                <Text style={{ color: '#18181b', fontSize: 15, fontWeight: '700', marginBottom: 12 }}>전략 에이전트 기반 사업 아이템 고도화 리포트</Text>
-                                <View style={{ marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <Text style={{ color: '#94A3B8', fontSize: 10 }}>2시간 전 업데이트</Text>
-                                    <View style={styles.postCategory}><Text style={styles.postCategoryText}>분석 완료</Text></View>
-                                </View>
-                            </View>
-                        ))}
-                        {!user && (
-                            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
-                                <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
-                                    <Text style={styles.viewBtnText}>워크스페이스 시작하기</Text>
-                                </TouchableOpacity>
-                            </View>
-                        )}
-                    </View>
-                </View>
-
-                {/* Lounge Section */}
-                <View style={styles.loungeWrap}>
-                    <View style={styles.sectionTitleRow}>
-                        <View style={styles.sectionLabelWrap}>
-                            <Users size={24} color="#7C3AED" />
-                            <Text style={styles.sectionLabel}>Publica Lounge</Text>
-                        </View>
-                        <TouchableOpacity onPress={onNavigateToLounge}>
-                            <Text style={styles.moreBtn}>전체보기 {'>'}</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <View style={{ position: 'relative' }}>
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                            <Animated.View style={[{ flexDirection: 'row', gap: 24, paddingLeft: 8 }, animatedStyle]}>
-                                {[...communityPosts, ...communityPosts].map((post, i) => (
-                                    <TouchableOpacity key={i} style={styles.loungeCard} onPress={() => !user ? onLoginPress?.() : onNavigateToLounge?.()}>
-                                        <View style={styles.authorRow}>
-                                            <View style={styles.authorThumb}><Image source={{ uri: `https://i.pravatar.cc/100?u=${post.author}` }} style={{ width: '100%', height: '100%' }} /></View>
-                                            <View><Text style={styles.authorName}>{post.author}</Text><Text style={styles.postTime}>{post.time}</Text></View>
-                                        </View>
-                                        <Text style={styles.postTitle} numberOfLines={2}>{post.title}</Text>
-                                        <View style={styles.postStats}>
-                                            <Text style={styles.postStatText}>💬 {post.comments}</Text>
-                                            <Text style={styles.postStatText}>👍 {post.likes}</Text>
-                                            <View style={styles.postCategory}><Text style={styles.postCategoryText}>{post.category}</Text></View>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))}
-                            </Animated.View>
-                        </ScrollView>
-
-                        <LinearGradient
-                            colors={['#FFFFFF', 'rgba(255, 255, 255, 0)']}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                            style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 80, zIndex: 10 }}
-                            pointerEvents="none"
-                        />
-                        <LinearGradient
-                            colors={['rgba(255, 255, 255, 0)', '#FFFFFF']}
-                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                            style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 80, zIndex: 10 }}
-                            pointerEvents="none"
-                        />
                     </View>
                 </View>
             </View>
