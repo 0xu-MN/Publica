@@ -109,7 +109,7 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                 {/* Hero / Cover Section */}
                 <View style={styles.heroSection}>
                     <LinearGradient
-                        colors={['#7C3AED08', '#FDF8F3']}
+                        colors={['#7C3AED08', '#FFFFFF']}
                         style={StyleSheet.absoluteFillObject}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 0, y: 1 }}
@@ -332,10 +332,10 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     header: { 
         height: 64, 
-        backgroundColor: '#FFFFFF',
+        backgroundColor: '#FDF8F3',
         borderBottomWidth: 1,
         borderColor: '#F1F5F9'
     },
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
         bottom: 0, 
         left: 0, 
         right: 0, 
-        backgroundColor: '#FFFFFF', 
+        backgroundColor: '#FDF8F3', 
         paddingHorizontal: 24, 
         paddingTop: 16, 
         borderTopWidth: 1, 
