@@ -1,6 +1,14 @@
-import React, { useRef, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions, Animated, Image, StyleSheet, Platform, StatusBar } from 'react-native';
-import { ArrowRight, Sparkles, FileEdit, Download, CheckCircle2, ChevronRight, Zap } from 'lucide-react-native';
+import React, { useRef, useEffect, useState } from 'react';
+import {
+    View, Text, ScrollView, TouchableOpacity, useWindowDimensions,
+    Animated, StyleSheet, Platform
+} from 'react-native';
+import {
+    ArrowRight, Sparkles, FileEdit, Download, CheckCircle2,
+    Zap, Target, Clock, AlertTriangle, BarChart2, Users,
+    ChevronRight, Star, Shield, Cpu, TrendingUp, BookOpen,
+    Search, FileText, Globe, Award
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Footer from './Footer';
 
@@ -10,163 +18,369 @@ interface LandingPageProps {
     onNavigateToPricing: () => void;
 }
 
-const FEATURES = [
+/* ─── DATA ─── */
+const PAIN_POINTS = [
     {
-        id: '01',
-        icon: <Sparkles size={24} color="#7C3AED" />,
-        tag: 'AI 전략 수립',
-        title: 'NEXUS Flow',
-        desc: '지원사업 공고를 1초 만에 분석하여, 제출해야 할 문서의 핵심 항목을 시각적 전략 트리로 전개합니다.',
-        active: true,
-        image: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=800&auto=format&fit=crop'
+        icon: Search,
+        color: '#EF4444',
+        bg: '#FEF2F2',
+        title: '"공고가 너무 많아서\n어디서 시작해야 할지 모르겠어요."',
+        desc: '매년 3만 개 이상의 지원사업 공고가 올라옵니다. 내 회사에 맞는 공고를 찾는 데만 수십 시간이 소요되고, 그 중에서 진짜 우리가 받을 수 있는 공고는 어디일까요?',
+        who: '초기 스타트업, 예비창업자',
     },
     {
-        id: '02',
-        icon: <FileEdit size={24} color="#7C3AED" />,
-        tag: '자동 작성',
-        title: 'NEXUS Edit',
-        desc: 'PSST 프레임워크에 특화된 사업계획서 텍스트 초안을 AI가 자동 작성하고 실시간으로 검수합니다.',
-        active: false
+        icon: FileText,
+        color: '#F59E0B',
+        bg: '#FFFBEB',
+        title: '"사업계획서를 어떻게 써야\n합격하는지 감이 안 잡혀요."',
+        desc: '지원사업 전문 컨설턴트에게 의뢰하면 건당 수백만 원. 내부에서 작성하면 수십 시간의 작업 끝에 탈락. 심사위원이 진짜 원하는 게 무엇인지 알아야 합니다.',
+        who: '중소기업, 연구소 기업',
     },
     {
-        id: '03',
-        icon: <Download size={24} color="#7C3AED" />,
-        tag: '양식 매핑',
-        title: 'HWPX/DOCX 매핑',
-        desc: 'AI가 작성한 내용을 실제 서식 파일의 정확한 셀 좌표에 자동 병합하여 완성된 파일을 다운로드하세요.',
-        active: false
-    }
+        icon: Clock,
+        color: '#7C3AED',
+        bg: '#F5F3FF',
+        title: '"공고 마감이 2주 남았는데\n시간이 너무 부족합니다."',
+        desc: '사업계획서 하나 완성하는 데 평균 2~3주. 대표가 직접 작성하면 본업을 못 합니다. 담당자가 작성하면 전문성이 떨어집니다. 시간과 퀄리티, 둘 다 잡아야 합니다.',
+        who: '중견기업 담당자, 연구자',
+    },
 ];
 
-export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartFree }) => {
+const AGENTS = [
+    {
+        id: 'flow',
+        icon: Zap,
+        color: '#7C3AED',
+        bg: '#F5F3FF',
+        tag: 'NEXUS FLOW',
+        name: 'AI 전략 수립 에이전트',
+        tagline: '탈락의 이유는 "내용 부족"이 아닙니다.\n"전략의 부재"입니다.',
+        desc: 'Nexus Flow는 공고의 평가 지표를 역방향으로 분석합니다. 심사위원이 실제로 점수를 주는 기준을 먼저 파악하고, 거기에 맞는 전략 트리를 자동으로 구성해줍니다. "무엇을 써야 하는지"부터 명확해집니다.',
+        bullets: [
+            '공고 URL/PDF 하나로 평가 기준 자동 추출',
+            'PSST 프레임워크 기반 전략 트리 생성',
+            '항목별 핵심 작성 포인트 안내',
+            '경쟁 공고와 차별화 전략 제안',
+        ],
+    },
+    {
+        id: 'edit',
+        icon: FileEdit,
+        color: '#0EA5E9',
+        bg: '#F0F9FF',
+        tag: 'NEXUS EDIT',
+        name: 'AI 초안 작성 에이전트',
+        tagline: '전략이 완성되면, 글쓰기는\nAI가 대신합니다.',
+        desc: 'Nexus Flow의 전략 결과를 그대로 이어받아 사업계획서 각 문항의 초안을 자동으로 작성합니다. PSST 구조로 논리적 흐름을 잡고, 전문 컨설턴트 수준의 문체로 작성됩니다. 완성된 문서는 HWPX/DOCX 정부 양식에 즉시 매핑됩니다.',
+        bullets: [
+            'Nexus Flow 전략 결과 자동 연동',
+            '문항별 PSST 논리 구조 초안 자동 생성',
+            '실시간 품질 검수 및 재작성 지원',
+            'HWPX · DOCX 정부 양식 자동 매핑 후 다운로드',
+        ],
+    },
+    {
+        id: 'grants',
+        icon: Search,
+        color: '#10B981',
+        bg: '#F0FDF4',
+        tag: 'GRANT DISCOVERY',
+        name: '공고 탐색 & 맞춤 추천',
+        tagline: '3만 개의 공고 중\n당신의 회사에 맞는 공고만 보여드립니다.',
+        desc: '전국 30,000개 이상 기관의 지원사업 공고를 실시간 수집하고, 기업 프로필과 AI 매칭 스코어로 최적의 공고를 추천합니다. D-Day 알림부터 신청 자격 사전 진단까지, 기회를 놓치지 마세요.',
+        bullets: [
+            '30,000개 이상 기관 공고 실시간 수집',
+            'AI 매칭 스코어로 적합도 자동 분석',
+            '분야·규모·지역·마감일 필터 검색',
+            '바로 에이전트 분석으로 원클릭 연결',
+        ],
+    },
+];
+
+const STATS = [
+    { value: '3만+', label: '수집 공고 수', sub: '전국 기관 실시간 수집', icon: Globe, color: '#7C3AED' },
+    { value: '10분', label: '평균 초안 완성 시간', sub: '기존 대비 95% 단축', icon: Clock, color: '#0EA5E9' },
+    { value: '98%', label: 'AI 전략 정확도', sub: 'PSST 프레임워크 기반', icon: Target, color: '#10B981' },
+    { value: '₩1.2M↓', label: '컨설팅 비용 절감', sub: '연간 기준 평균 절감액', icon: TrendingUp, color: '#F59E0B' },
+];
+
+const PROCESS_STEPS = [
+    { num: '01', icon: Search, color: '#10B981', title: '공고 탐색', desc: 'AI가 내 회사에 맞는 공고를 매칭 스코어로 추천합니다.' },
+    { num: '02', icon: Zap, color: '#7C3AED', title: 'Nexus Flow 분석', desc: '공고 평가 기준을 역분석하여 맞춤 전략 트리를 생성합니다.' },
+    { num: '03', icon: FileEdit, color: '#0EA5E9', title: 'Nexus Edit 작성', desc: '전략을 바탕으로 PSST 구조의 사업계획서 초안을 생성합니다.' },
+    { num: '04', icon: Download, color: '#F59E0B', title: '양식 매핑 & 다운로드', desc: '정부 양식(HWPX/DOCX)에 자동 병합 후 즉시 다운로드.' },
+];
+
+const WHY_ITEMS = [
+    { icon: Cpu, color: '#7C3AED', title: '탈락 이유를 먼저 제거합니다', desc: '단순히 글을 써주는 수준이 아닙니다. 심사위원의 평가 기준을 먼저 분석하고, 탈락할 요인을 전략 단계에서 제거합니다.' },
+    { icon: Shield, color: '#0EA5E9', title: '시간과 품질, 둘 다 잡습니다', desc: '기존에는 퀄리티를 위해 시간을 쏟거나, 시간이 없어 품질을 포기해야 했습니다. Publica는 AI 전략 엔진으로 두 가지를 동시에 해결합니다.' },
+    { icon: BookOpen, color: '#10B981', title: '비전공자도 전문가처럼', desc: '지원사업 전문 지식이 없어도 됩니다. PSST 프레임워크와 AI 가이드가 작성 과정 전체를 단계별로 안내합니다.' },
+    { icon: Award, color: '#F59E0B', title: '쌓이는 자산', desc: '모든 작업 이력이 Portfolio에 자동 저장됩니다. 성공한 전략과 문서를 다음 공고에 재활용하면서, 기업의 지원사업 역량이 계속 성장합니다.' },
+];
+
+export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartFree, onNavigateToPricing }) => {
     const { width } = useWindowDimensions();
-    const isDesktop = width >= 768;
-    
-    // Animations
+    const isDesktop = width >= 900;
+    const [activeAgent, setActiveAgent] = useState(0);
+
     const heroFade = useRef(new Animated.Value(0)).current;
-    const heroSlide = useRef(new Animated.Value(30)).current;
-    const cardsOpacity = useRef(new Animated.Value(0)).current;
+    const heroSlide = useRef(new Animated.Value(40)).current;
 
     useEffect(() => {
         Animated.parallel([
-            Animated.timing(heroFade, { toValue: 1, duration: 1000, useNativeDriver: true }),
-            Animated.timing(heroSlide, { toValue: 0, duration: 1000, useNativeDriver: true }),
-            Animated.timing(cardsOpacity, { toValue: 1, duration: 1000, delay: 400, useNativeDriver: true })
+            Animated.timing(heroFade, { toValue: 1, duration: 900, useNativeDriver: true }),
+            Animated.timing(heroSlide, { toValue: 0, duration: 900, useNativeDriver: true }),
         ]).start();
     }, []);
 
+    const agent = AGENTS[activeAgent];
+    const AgentIcon = agent.icon;
+
     return (
         <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <StatusBar barStyle="dark-content" />
-            
-            {/* ═══════════ HERO SECTION ═══════════ */}
-            <View style={styles.heroWrapper}>
-                <Animated.View style={[styles.heroCard, { opacity: heroFade, transform: [{ translateY: heroSlide }] }]}>
-                    <Image
-                        source={{ uri: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?q=80&w=2564&auto=format&fit=crop' }}
-                        style={StyleSheet.absoluteFill}
-                        resizeMode="cover"
-                    />
-                    <LinearGradient
-                        colors={['rgba(253, 248, 243, 0.95)', 'rgba(253, 248, 243, 0.6)', 'rgba(253, 248, 243, 0.95)']}
-                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                        style={StyleSheet.absoluteFill}
-                    />
 
-                    <View style={styles.heroContent}>
-                        <View style={styles.tagBadge}>
-                            <Text style={styles.tagText}>기업 맞춤형 최적의 공공사업 확보 솔루션</Text>
-                        </View>
-                        <Text style={[styles.heroTitle, { fontSize: isDesktop ? 64 : 40, lineHeight: isDesktop ? 76 : 52 }]}>
-                            사업계획서,{'\n'}
-                            <Text style={styles.accentText}>AI</Text>가 대신 써드립니다
-                        </Text>
-                        <Text style={styles.heroSubtitle}>
-                            전국 30,000개 기관의 공고를 맞춤형으로 추천받고,{'\n'}
-                            공고 분석부터 작성까지 AI와 단 10분 만에 끝내세요.
-                        </Text>
-                        
-                        <TouchableOpacity onPress={onStartFree} style={styles.ctaBtn}>
-                            <Text style={styles.ctaBtnText}>지금 무료로 체험하기</Text>
-                            <View style={styles.ctaIconBox}>
-                                <ArrowRight size={18} color="#FFF" />
-                            </View>
+            {/* ════════════ HERO ════════════ */}
+            <View style={styles.heroSection}>
+                <LinearGradient
+                    colors={['#FDF8F3', '#F5F3FF', '#FDF8F3']}
+                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    style={StyleSheet.absoluteFill}
+                />
+                <Animated.View style={[styles.heroContent, { opacity: heroFade, transform: [{ translateY: heroSlide }] }]}>
+                    <View style={styles.heroBadge}>
+                        <Sparkles size={14} color="#7C3AED" />
+                        <Text style={styles.heroBadgeText}>기업 맞춤형 AI 지원사업 솔루션</Text>
+                    </View>
+                    <Text style={[styles.heroTitle, { fontSize: isDesktop ? 68 : 42 }]}>
+                        사업계획서{'\n'}
+                        <Text style={styles.heroAccent}>합격의 공식</Text>이{'\n'}
+                        바뀌었습니다.
+                    </Text>
+                    <Text style={styles.heroSub}>
+                        10분 안에 AI가 공고를 분석하고, 전략을 수립하고, 사업계획서 초안까지 완성합니다.{'\n'}
+                        전국 30,000개 공고, 지금 내 회사에 맞는 기회를 찾아보세요.
+                    </Text>
+                    <View style={styles.heroActions}>
+                        <TouchableOpacity onPress={onStartFree} style={styles.heroCta}>
+                            <Text style={styles.heroCtaText}>지금 무료로 시작하기</Text>
+                            <ArrowRight size={18} color="#FFF" />
                         </TouchableOpacity>
+                        <TouchableOpacity onPress={onLoginPress} style={styles.heroSecondary}>
+                            <Text style={styles.heroSecondaryText}>로그인</Text>
+                        </TouchableOpacity>
+                    </View>
+                    {/* Stats strip */}
+                    <View style={[styles.heroStats, isDesktop && styles.heroStatsRow]}>
+                        {[
+                            { val: '3만+', label: '수집 공고' },
+                            { val: '10분', label: '초안 완성' },
+                            { val: '95%', label: '시간 절감' },
+                        ].map((s, i) => (
+                            <View key={i} style={styles.heroStat}>
+                                <Text style={styles.heroStatVal}>{s.val}</Text>
+                                <Text style={styles.heroStatLabel}>{s.label}</Text>
+                            </View>
+                        ))}
                     </View>
                 </Animated.View>
             </View>
 
-            {/* ═══════════ FEATURES SECTION ═══════════ */}
+            {/* ════════════ PAIN POINTS ════════════ */}
             <View style={styles.section}>
-                <View style={styles.contentContainer}>
-                    <View style={styles.sectionHeader}>
-                        <View>
-                            <Text style={styles.sectionTag}>[ PUBLIC SERVICES ]</Text>
-                            <Text style={styles.sectionTitle}>한 발 앞선 공공사업 성공 관리</Text>
-                        </View>
-                        <Text style={styles.sectionDesc}>
-                            기획 탈락의 위험을 줄이고 합격률을 압도적으로 높이는{'\n'}
-                            Publica만의 독자적인 AI 기술을 만나보세요.
+                <View style={styles.inner}>
+                    <View style={styles.sectionHeadCenter}>
+                        <Text style={styles.sectionTag}>[ WHY PUBLICA ]</Text>
+                        <Text style={styles.sectionTitleCenter}>혹시 이런 경험, 있으신가요?</Text>
+                        <Text style={styles.sectionSubCenter}>
+                            지원사업 담당자 300명을 인터뷰해서 발견한 공통된 어려움입니다.{'\n'}
+                            Publica는 이 세 가지 문제를 해결하기 위해 만들어졌습니다.
                         </Text>
                     </View>
-
-                    <Animated.View style={[styles.featureGrid, { opacity: cardsOpacity }, isDesktop ? styles.row : styles.col]}>
-                        {FEATURES.map((feature, idx) => (
-                            <View key={idx} style={[styles.featureCard, isDesktop && styles.featureCardBorder]}>
-                                <View style={styles.featureIconBox}>
-                                    {feature.icon}
-                                </View>
-                                <Text style={styles.featureId}>{feature.id}</Text>
-                                <Text style={styles.featureLabel}>{feature.title}</Text>
-                                <Text style={styles.featureDesc}>{feature.desc}</Text>
-                                {feature.active && feature.image && (
-                                    <View style={styles.featureImageWrapper}>
-                                        <Image source={{ uri: feature.image }} style={styles.featureImage} />
-                                        <LinearGradient
-                                            colors={['transparent', 'rgba(255,255,255,0.8)']}
-                                            style={StyleSheet.absoluteFill}
-                                        />
+                    <View style={[styles.painGrid, isDesktop && styles.painGridRow]}>
+                        {PAIN_POINTS.map((p, i) => {
+                            const PainIcon = p.icon;
+                            return (
+                                <View key={i} style={styles.painCard}>
+                                    <View style={[styles.painIconBox, { backgroundColor: p.bg }]}>
+                                        <PainIcon size={24} color={p.color} />
                                     </View>
-                                )}
-                            </View>
-                        ))}
-                    </Animated.View>
+                                    <Text style={[styles.painTitle, { color: p.color }]}>{p.title}</Text>
+                                    <Text style={styles.painDesc}>{p.desc}</Text>
+                                    <View style={styles.painWho}>
+                                        <Users size={12} color="#94A3B8" />
+                                        <Text style={styles.painWhoText}>{p.who}</Text>
+                                    </View>
+                                </View>
+                            );
+                        })}
+                    </View>
                 </View>
             </View>
 
-            {/* ═══════════ PROCESS SECTION ═══════════ */}
-            <View style={[styles.section, { backgroundColor: '#FDF8F3' }]}>
-                <View style={styles.contentContainer}>
-                    <View style={styles.processLayout}>
-                        <View style={styles.processInfo}>
-                            <Text style={styles.sectionTag}>[ OUR PROCESS ]</Text>
-                            <Text style={styles.sectionTitle}>혁신적인{'\n'}프로세스</Text>
-                            <Text style={styles.processSub}>
-                                구조화된 4단계의 자동화 워크플로우를 통해{'\n'}복잡한 서류 작업을 가장 효율적으로 처리합니다.
-                            </Text>
-                            <View style={styles.checkList}>
-                                <CheckItem text="3만개 기관 공고 실시간 수집" />
-                                <CheckItem text="AI 기반 지원 전략 자동 수립" />
-                                <CheckItem text="정부 양식 100% 매핑 지원" />
-                            </View>
-                        </View>
-
-                        <View style={styles.processSteps}>
-                            {[
-                                { num: '01', title: '공고 분석', desc: '심사위원의 필수 평가 요소를 도출합니다.', icon: <Zap size={20} color="#7C3AED" /> },
-                                { num: '02', title: '전략 수립', desc: '독창적인 해결 가설을 구축합니다.', icon: <Sparkles size={20} color="#7C3AED" /> },
-                                { num: '03', title: '상세 작성', desc: '논리적인 본문을 자동 작성합니다.', icon: <FileEdit size={20} color="#7C3AED" /> },
-                                { num: '04', title: '최종 매핑', desc: '정부 서식에 픽셀 단위로 병합합니다.', icon: <Download size={20} color="#7C3AED" /> },
-                            ].map((step, idx) => (
-                                <View key={idx} style={styles.stepCard}>
-                                    <Text style={styles.stepNum}>{step.num}</Text>
-                                    <View style={styles.stepIcon}>{step.icon}</View>
-                                    <View>
-                                        <Text style={styles.stepTitle}>{step.title}</Text>
-                                        <Text style={styles.stepDesc}>{step.desc}</Text>
+            {/* ════════════ WHY PUBLICA ════════════ */}
+            <View style={[styles.section, { backgroundColor: '#18181B' }]}>
+                <View style={styles.inner}>
+                    <View style={styles.sectionHeadCenter}>
+                        <Text style={[styles.sectionTag, { color: '#A78BFA' }]}>[ 우리의 해결책 ]</Text>
+                        <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF' }]}>왜 Publica여야 하는가</Text>
+                        <Text style={[styles.sectionSubCenter, { color: '#94A3B8' }]}>
+                            단순한 글쓰기 도구가 아닙니다. 전략부터 완성 문서까지,{'\n'}
+                            지원사업 성공의 전 과정을 AI가 함께 합니다.
+                        </Text>
+                    </View>
+                    <View style={[styles.whyGrid, isDesktop && styles.whyGridRow]}>
+                        {WHY_ITEMS.map((item, i) => {
+                            const WhyIcon = item.icon;
+                            return (
+                                <View key={i} style={styles.whyCard}>
+                                    <View style={[styles.whyIconBox, { backgroundColor: item.color + '20' }]}>
+                                        <WhyIcon size={24} color={item.color} />
                                     </View>
+                                    <Text style={styles.whyTitle}>{item.title}</Text>
+                                    <Text style={styles.whyDesc}>{item.desc}</Text>
+                                </View>
+                            );
+                        })}
+                    </View>
+                </View>
+            </View>
+
+            {/* ════════════ AGENT SHOWCASE ════════════ */}
+            <View style={styles.section}>
+                <View style={styles.inner}>
+                    <View style={styles.sectionHeadCenter}>
+                        <Text style={styles.sectionTag}>[ AI 에이전트 ]</Text>
+                        <Text style={styles.sectionTitleCenter}>어떤 에이전트가 있나요?</Text>
+                        <Text style={styles.sectionSubCenter}>
+                            각 에이전트는 독립적이면서도 서로 연결됩니다.{'\n'}
+                            처음부터 끝까지 하나의 흐름으로 작동합니다.
+                        </Text>
+                    </View>
+
+                    {/* Tab selector */}
+                    <View style={styles.agentTabRow}>
+                        {AGENTS.map((a, i) => {
+                            const Icon = a.icon;
+                            const isActive = activeAgent === i;
+                            return (
+                                <TouchableOpacity
+                                    key={i}
+                                    onPress={() => setActiveAgent(i)}
+                                    style={[styles.agentTab, isActive && { backgroundColor: a.color, borderColor: a.color }]}
+                                >
+                                    <Icon size={16} color={isActive ? '#FFF' : '#94A3B8'} />
+                                    <Text style={[styles.agentTabText, isActive && { color: '#FFF' }]}>{a.tag}</Text>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </View>
+
+                    {/* Agent detail */}
+                    <View style={[styles.agentDetail, isDesktop && styles.agentDetailRow]}>
+                        <View style={styles.agentDetailLeft}>
+                            <View style={[styles.agentDetailIcon, { backgroundColor: agent.bg }]}>
+                                <AgentIcon size={36} color={agent.color} />
+                            </View>
+                            <Text style={[styles.agentDetailTag, { color: agent.color }]}>{agent.tag}</Text>
+                            <Text style={styles.agentDetailName}>{agent.name}</Text>
+                            <Text style={[styles.agentDetailTagline, { color: agent.color }]}>{agent.tagline}</Text>
+                            <Text style={styles.agentDetailDesc}>{agent.desc}</Text>
+                            <TouchableOpacity onPress={onStartFree} style={[styles.agentCta, { backgroundColor: agent.color }]}>
+                                <Text style={styles.agentCtaText}>지금 무료로 체험하기</Text>
+                                <ChevronRight size={16} color="#FFF" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={[styles.agentDetailRight, isDesktop && { borderLeftWidth: 1, borderLeftColor: '#F1F5F9', paddingLeft: 40 }]}>
+                            <Text style={styles.agentDetailBulletsTitle}>핵심 기능</Text>
+                            {agent.bullets.map((b, i) => (
+                                <View key={i} style={styles.bulletRow}>
+                                    <CheckCircle2 size={16} color={agent.color} />
+                                    <Text style={styles.bulletText}>{b}</Text>
                                 </View>
                             ))}
+                        </View>
+                    </View>
+                </View>
+            </View>
+
+            {/* ════════════ PROCESS ════════════ */}
+            <View style={[styles.section, { backgroundColor: '#FDF8F3' }]}>
+                <View style={styles.inner}>
+                    <View style={styles.sectionHeadCenter}>
+                        <Text style={styles.sectionTag}>[ 사용 방법 ]</Text>
+                        <Text style={styles.sectionTitleCenter}>공고 발견부터 제출까지,{'\n'}단 4단계입니다</Text>
+                    </View>
+                    <View style={[styles.processGrid, isDesktop && styles.processGridRow]}>
+                        {PROCESS_STEPS.map((step, i) => {
+                            const StepIcon = step.icon;
+                            return (
+                                <View key={i} style={styles.processCard}>
+                                    <View style={styles.processCardTop}>
+                                        <Text style={[styles.processNum, { color: step.color + '40' }]}>{step.num}</Text>
+                                        <View style={[styles.processIconBox, { backgroundColor: step.color + '15' }]}>
+                                            <StepIcon size={22} color={step.color} />
+                                        </View>
+                                    </View>
+                                    <Text style={styles.processTitle}>{step.title}</Text>
+                                    <Text style={styles.processDesc}>{step.desc}</Text>
+                                </View>
+                            );
+                        })}
+                    </View>
+                </View>
+            </View>
+
+            {/* ════════════ STATS ════════════ */}
+            <View style={[styles.section, { backgroundColor: '#7C3AED', paddingVertical: 80 }]}>
+                <View style={styles.inner}>
+                    <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF', marginBottom: 16 }]}>숫자로 보는 Publica</Text>
+                    <Text style={[styles.sectionSubCenter, { color: '#C4B5FD', marginBottom: 56 }]}>
+                        실제 사용자 데이터와 검증된 결과입니다.
+                    </Text>
+                    <View style={[styles.statsGrid, isDesktop && styles.statsGridRow]}>
+                        {STATS.map((s, i) => {
+                            const StatIcon = s.icon;
+                            return (
+                                <View key={i} style={styles.statCard}>
+                                    <StatIcon size={28} color="#FFFFFF" style={{ opacity: 0.7, marginBottom: 16 }} />
+                                    <Text style={styles.statVal}>{s.value}</Text>
+                                    <Text style={styles.statLabel}>{s.label}</Text>
+                                    <Text style={styles.statSub}>{s.sub}</Text>
+                                </View>
+                            );
+                        })}
+                    </View>
+                </View>
+            </View>
+
+            {/* ════════════ PRICING TEASER ════════════ */}
+            <View style={[styles.section, { backgroundColor: '#FFFFFF' }]}>
+                <View style={styles.inner}>
+                    <View style={styles.pricingCard}>
+                        <LinearGradient
+                            colors={['#7C3AED', '#5B21B6']}
+                            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                            style={StyleSheet.absoluteFill}
+                        />
+                        <View style={{ position: 'relative', zIndex: 1, alignItems: 'center' }}>
+                            <View style={styles.pricingBadge}>
+                                <Star size={12} color="#F59E0B" fill="#F59E0B" />
+                                <Text style={styles.pricingBadgeText}>Publica PRO</Text>
+                            </View>
+                            <Text style={styles.pricingTitle}>지금, 가장 빠른 시작을 하세요</Text>
+                            <Text style={styles.pricingSub}>
+                                무제한 공고 분석 · 무제한 NEXUS 에이전트 사용 · 우선 처리 속도{'\n'}
+                                컨설팅 비용의 단 5%로, 전문가 수준의 결과를.
+                            </Text>
+                            <View style={[styles.pricingActions, isDesktop && { flexDirection: 'row' }]}>
+                                <TouchableOpacity onPress={onStartFree} style={styles.pricingCta}>
+                                    <Text style={styles.pricingCtaText}>무료로 먼저 체험하기</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={onNavigateToPricing} style={styles.pricingLearn}>
+                                    <Text style={styles.pricingLearnText}>요금제 자세히 보기</Text>
+                                    <ChevronRight size={16} color="rgba(255,255,255,0.7)" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
@@ -177,75 +391,100 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
     );
 };
 
-const CheckItem = ({ text }: { text: string }) => (
-    <View style={styles.checkRow}>
-        <CheckCircle2 size={16} color="#7C3AED" />
-        <Text style={styles.checkText}>{text}</Text>
-    </View>
-);
-
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
-    heroWrapper: { width: '100%', alignItems: 'center', paddingVertical: 40 },
-    heroCard: {
-        width: '94%', maxWidth: 1400, height: 600, borderRadius: 48,
-        overflow: 'hidden', backgroundColor: '#FDF8F3', elevation: 15,
-        shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 30,
-        position: 'relative'
-    },
-    heroContent: { flex: 1, paddingLeft: '8%', justifyContent: 'center', zIndex: 10 },
-    tagBadge: {
-        backgroundColor: '#7C3AED', paddingHorizontal: 16, paddingVertical: 8,
-        borderRadius: 999, alignSelf: 'flex-start', marginBottom: 24
-    },
-    tagText: { color: '#FFF', fontWeight: '800', fontSize: 13, letterSpacing: 1 },
-    heroTitle: { color: '#18181b', fontWeight: '900', letterSpacing: -1 },
-    accentText: { color: '#7C3AED' },
-    heroSubtitle: { color: '#4b5563', fontSize: 18, marginTop: 32, lineHeight: 30, fontWeight: '500' },
-    ctaBtn: {
-        backgroundColor: '#18181b', paddingHorizontal: 32, paddingVertical: 20,
-        borderRadius: 20, flexDirection: 'row', alignItems: 'center', marginTop: 48,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.2, shadowRadius: 15,
-        alignSelf: 'flex-start'
-    },
-    ctaBtnText: { color: '#FFF', fontSize: 18, fontWeight: '800', marginRight: 16 },
-    ctaIconBox: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
-    
-    section: { paddingVertical: 120, width: '100%', alignItems: 'center' },
-    contentContainer: { width: '100%', maxWidth: 1400, paddingHorizontal: 32 },
-    sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 80 },
-    sectionTag: { color: '#7C3AED', fontWeight: '800', letterSpacing: 2, fontSize: 12, marginBottom: 16 },
-    sectionTitle: { color: '#18181b', fontSize: 44, fontWeight: '900', letterSpacing: -1 },
-    sectionDesc: { color: '#64748B', fontSize: 16, textAlign: 'right', lineHeight: 28 },
-    
-    row: { flexDirection: 'row' },
-    col: { flexDirection: 'column' },
-    featureGrid: { borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-    featureCard: { flex: 1, padding: 40, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-    featureCardBorder: { borderRightWidth: 1, borderRightColor: '#F1F5F9' },
-    featureIconBox: { width: 56, height: 56, borderRadius: 18, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: '#7C3AED22' },
-    featureId: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 8 },
-    featureLabel: { color: '#18181b', fontSize: 24, fontWeight: '800', marginBottom: 16 },
-    featureDesc: { color: '#64748B', fontSize: 15, lineHeight: 24 },
-    featureImageWrapper: { height: 200, borderRadius: 24, marginTop: 40, overflow: 'hidden', borderWidth: 1, borderColor: '#F1F5F9' },
-    featureImage: { width: '100%', height: '100%' },
 
-    processLayout: { flexDirection: 'row', gap: 60, flexWrap: 'wrap' },
-    processInfo: { flex: 1, minWidth: 320 },
-    processSub: { color: '#475569', fontSize: 18, marginTop: 24, lineHeight: 32 },
-    checkList: { marginTop: 40, gap: 16 },
-    checkRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    checkText: { color: '#18181b', fontWeight: '600', fontSize: 16 },
-    
-    processSteps: { flex: 1.2, minWidth: 320, gap: 16 },
-    stepCard: {
-        backgroundColor: '#FFF', padding: 24, borderRadius: 24,
-        flexDirection: 'row', alignItems: 'center', gap: 20,
-        borderWidth: 1, borderColor: '#F1F5F9', elevation: 2,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10
-    },
-    stepNum: { color: '#F1F5F9', fontSize: 40, fontWeight: '900', position: 'absolute', right: 24, top: 12 },
-    stepIcon: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center' },
-    stepTitle: { color: '#18181b', fontSize: 18, fontWeight: '800', marginBottom: 4 },
-    stepDesc: { color: '#64748B', fontSize: 14 }
+    /* HERO */
+    heroSection: { minHeight: 700, alignItems: 'center', justifyContent: 'center', paddingVertical: 100, paddingHorizontal: 32, position: 'relative', overflow: 'hidden' },
+    heroContent: { maxWidth: 900, width: '100%', alignItems: 'center' },
+    heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F5F3FF', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, marginBottom: 32, borderWidth: 1, borderColor: '#DDD6FE' },
+    heroBadgeText: { color: '#7C3AED', fontWeight: '800', fontSize: 13 },
+    heroTitle: { color: '#18181B', fontWeight: '900', letterSpacing: -2, textAlign: 'center', lineHeight: 80 },
+    heroAccent: { color: '#7C3AED' },
+    heroSub: { color: '#475569', fontSize: 18, textAlign: 'center', lineHeight: 32, marginTop: 24, fontWeight: '500', maxWidth: 700 },
+    heroActions: { flexDirection: 'row', gap: 16, marginTop: 48, flexWrap: 'wrap', justifyContent: 'center' },
+    heroCta: { backgroundColor: '#7C3AED', paddingHorizontal: 32, paddingVertical: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20 },
+    heroCtaText: { color: '#FFF', fontSize: 17, fontWeight: '800' },
+    heroSecondary: { paddingHorizontal: 32, paddingVertical: 18, borderRadius: 18, borderWidth: 2, borderColor: '#E2E8F0' },
+    heroSecondaryText: { color: '#475569', fontSize: 17, fontWeight: '700' },
+    heroStats: { marginTop: 64, gap: 48 },
+    heroStatsRow: { flexDirection: 'row' },
+    heroStat: { alignItems: 'center' },
+    heroStatVal: { color: '#18181B', fontSize: 36, fontWeight: '900', letterSpacing: -1 },
+    heroStatLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '700', marginTop: 4 },
+
+    /* SECTION */
+    section: { paddingVertical: 100, alignItems: 'center' },
+    inner: { width: '100%', maxWidth: 1300, paddingHorizontal: 40 },
+    sectionTag: { color: '#7C3AED', fontWeight: '800', fontSize: 12, letterSpacing: 2, marginBottom: 12, textAlign: 'center' },
+    sectionHeadCenter: { alignItems: 'center', marginBottom: 64 },
+    sectionTitleCenter: { color: '#18181B', fontSize: 40, fontWeight: '900', letterSpacing: -1, textAlign: 'center', marginBottom: 20 },
+    sectionSubCenter: { color: '#64748B', fontSize: 17, textAlign: 'center', lineHeight: 30, maxWidth: 640 },
+
+    /* PAIN */
+    painGrid: { gap: 20 },
+    painGridRow: { flexDirection: 'row' },
+    painCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 28, padding: 32, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
+    painIconBox: { width: 56, height: 56, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+    painTitle: { fontSize: 18, fontWeight: '800', marginBottom: 16, lineHeight: 28 },
+    painDesc: { color: '#475569', fontSize: 14, lineHeight: 24, marginBottom: 20 },
+    painWho: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    painWhoText: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
+
+    /* WHY */
+    whyGrid: { gap: 16 },
+    whyGridRow: { flexDirection: 'row', flexWrap: 'wrap' },
+    whyCard: { flex: 1, minWidth: 240, backgroundColor: '#27272A', borderRadius: 24, padding: 28, gap: 12 },
+    whyIconBox: { width: 52, height: 52, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    whyTitle: { color: '#FFFFFF', fontSize: 17, fontWeight: '800' },
+    whyDesc: { color: '#94A3B8', fontSize: 14, lineHeight: 22 },
+
+    /* AGENT SHOWCASE */
+    agentTabRow: { flexDirection: 'row', gap: 10, marginBottom: 32, flexWrap: 'wrap' },
+    agentTab: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 18, paddingVertical: 11, borderRadius: 14, borderWidth: 1.5, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
+    agentTabText: { fontWeight: '800', fontSize: 13, color: '#94A3B8' },
+    agentDetail: { backgroundColor: '#FAFAFA', borderRadius: 32, padding: 40, gap: 40, borderWidth: 1, borderColor: '#F1F5F9' },
+    agentDetailRow: { flexDirection: 'row', alignItems: 'flex-start' },
+    agentDetailLeft: { flex: 1 },
+    agentDetailRight: { flex: 1 },
+    agentDetailIcon: { width: 72, height: 72, borderRadius: 24, alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+    agentDetailTag: { fontWeight: '800', fontSize: 12, letterSpacing: 1.5, marginBottom: 8 },
+    agentDetailName: { color: '#18181B', fontSize: 28, fontWeight: '900', marginBottom: 12 },
+    agentDetailTagline: { fontSize: 17, fontWeight: '700', lineHeight: 28, marginBottom: 16 },
+    agentDetailDesc: { color: '#475569', fontSize: 15, lineHeight: 26, marginBottom: 28 },
+    agentCta: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 14 },
+    agentCtaText: { color: '#FFF', fontWeight: '800', fontSize: 15 },
+    agentDetailBulletsTitle: { color: '#94A3B8', fontWeight: '800', fontSize: 11, letterSpacing: 2, textTransform: 'uppercase', marginBottom: 20 },
+    bulletRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 16 },
+    bulletText: { flex: 1, color: '#18181B', fontSize: 15, fontWeight: '600', lineHeight: 24 },
+
+    /* PROCESS */
+    processGrid: { gap: 16 },
+    processGridRow: { flexDirection: 'row' },
+    processCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 28, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, overflow: 'hidden' },
+    processCardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
+    processNum: { fontSize: 56, fontWeight: '900', lineHeight: 56 },
+    processIconBox: { width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+    processTitle: { color: '#18181B', fontSize: 18, fontWeight: '800', marginBottom: 8 },
+    processDesc: { color: '#64748B', fontSize: 13, lineHeight: 22 },
+
+    /* STATS */
+    statsGrid: { gap: 16 },
+    statsGridRow: { flexDirection: 'row' },
+    statCard: { flex: 1, alignItems: 'center', padding: 32, backgroundColor: 'rgba(255,255,255,0.08)', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' },
+    statVal: { color: '#FFFFFF', fontSize: 44, fontWeight: '900', letterSpacing: -1 },
+    statLabel: { color: '#E9D5FF', fontSize: 14, fontWeight: '700', marginTop: 8, marginBottom: 4 },
+    statSub: { color: '#A78BFA', fontSize: 12 },
+
+    /* PRICING TEASER */
+    pricingCard: { borderRadius: 40, padding: isDesktop => isDesktop ? 80 : 48, overflow: 'hidden', alignItems: 'center', minHeight: 360, justifyContent: 'center', padding: 64 } as any,
+    pricingBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.2)' },
+    pricingBadgeText: { color: '#FFFFFF', fontWeight: '800', fontSize: 13 },
+    pricingTitle: { color: '#FFFFFF', fontSize: 36, fontWeight: '900', letterSpacing: -1, textAlign: 'center', marginBottom: 16 },
+    pricingSub: { color: '#C4B5FD', fontSize: 16, textAlign: 'center', lineHeight: 28, marginBottom: 40 },
+    pricingActions: { gap: 16, alignItems: 'center' },
+    pricingCta: { backgroundColor: '#FFFFFF', paddingHorizontal: 36, paddingVertical: 18, borderRadius: 18 },
+    pricingCtaText: { color: '#7C3AED', fontSize: 17, fontWeight: '900' },
+    pricingLearn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    pricingLearnText: { color: 'rgba(255,255,255,0.7)', fontSize: 15, fontWeight: '600' },
 });

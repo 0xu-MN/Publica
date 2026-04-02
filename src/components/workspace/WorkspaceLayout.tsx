@@ -23,6 +23,7 @@ import { NexusEditView } from '../../features/agent/NexusEditView';
 import { MyProjectsView } from './views/MyProjectsView';
 import { PricingPage } from './views/PricingPage';
 import { AdminScreen } from '../../screens/AdminScreen';
+import { GuideView } from './views/GuideView';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
@@ -243,6 +244,8 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                         onNavigateToEdit={() => setActiveTab('nexus-edit')}
                     />
                 );
+            case 'guide':
+                return <GuideView />;
             case 'agent':
                 return <AgentView initialSession={agentSession} onNavigateToEdit={() => setActiveTab('nexus-edit')} />;
             case 'chat':

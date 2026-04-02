@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Text, Platform } from 'react-native';
 import { Home, Zap, MessageSquare, Bookmark, Settings, User, ClipboardList, FileEdit, FolderKanban, Crown } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 
-export type WorkspaceTab = 'home' | 'agent' | 'nexus-edit' | 'projects' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge' | 'grants' | 'pricing' | 'admin';
+export type WorkspaceTab = 'home' | 'agent' | 'nexus-edit' | 'projects' | 'chat' | 'scraps' | 'settings' | 'profile' | 'files' | 'mainhub' | 'connect' | 'support' | 'insight_all' | 'insight_science' | 'insight_economy' | 'lounge' | 'grants' | 'pricing' | 'admin' | 'guide';
 
 interface SidebarProps {
     activeTab: WorkspaceTab;
@@ -111,10 +111,23 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
     return (
         <View className="h-full p-3" style={{ position: 'relative', zIndex: 100 }}>
             <View className="w-[68px] h-full bg-white shadow-2xl shadow-black/5 rounded-[28px] flex-col items-center py-6 border border-[#E2E8F0]">
-                {/* Logo */}
-                <View className="w-[48px] h-[48px] rounded-[18px] bg-[#7C3AED] items-center justify-center mb-8 shadow-lg shadow-[#7C3AED]/30">
+                {/* Logo / Guide Button */}
+                <TouchableOpacity
+                    onPress={() => onTabChange('guide')}
+                    className={`w-[48px] h-[48px] rounded-[18px] items-center justify-center mb-8 shadow-lg ${activeTab === 'guide' ? 'bg-[#5B21B6] shadow-[#7C3AED]/40' : 'bg-[#7C3AED] shadow-[#7C3AED]/30'}`}
+                    {...(isWeb ? {
+                        onPointerEnter: (e: any) => {
+                            const el = e?.currentTarget || e?.target;
+                            const rect = el?.getBoundingClientRect?.();
+                            setHoveredTab('guide');
+                            setHoveredLabel('에이전트 가이드');
+                            if (rect) setHoveredY(rect.top);
+                        },
+                        onPointerLeave: () => setHoveredTab(null),
+                    } : {})}
+                >
                     <Text className="text-2xl font-bold text-white">✦</Text>
-                </View>
+                </TouchableOpacity>
 
                 {/* Top nav: Home + Profile */}
                 <View className="mb-6">
