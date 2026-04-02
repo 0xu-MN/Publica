@@ -87,22 +87,25 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 
             {/* Header */}
             <View style={styles.header}>
-                <TouchableOpacity onPress={onBack} style={styles.headerIconBtn}>
-                    <ArrowLeft size={24} color="#27272a" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle} numberOfLines={1}>
-                    공고 상세 정보
-                </Text>
-                <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
-                    <Share2 size={22} color="#27272a" />
-                </TouchableOpacity>
+                <View style={styles.headerInner}>
+                    <TouchableOpacity onPress={onBack} style={styles.headerIconBtn}>
+                        <ArrowLeft size={24} color="#27272a" />
+                    </TouchableOpacity>
+                    <Text style={styles.headerTitle} numberOfLines={1}>
+                        공고 상세 정보
+                    </Text>
+                    <TouchableOpacity onPress={handleShare} style={styles.headerIconBtn}>
+                        <Share2 size={22} color="#27272a" />
+                    </TouchableOpacity>
+                </View>
             </View>
 
             <ScrollView 
                 style={styles.scroll} 
                 showsVerticalScrollIndicator={false} 
-                contentContainerStyle={{ paddingBottom: 140 }}
+                contentContainerStyle={{ paddingBottom: 140, alignItems: 'center' }}
             >
+                <View style={styles.innerContentWrapper}>
                 {/* Hero / Cover Section */}
                 <View style={styles.heroSection}>
                     <LinearGradient
@@ -275,6 +278,7 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                         </TouchableOpacity>
                     </View>
                 </View>
+                </View>
             </ScrollView>
 
             {/* Analysis Overlay */}
@@ -303,7 +307,8 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
 
             {/* Bottom Action Bar */}
             <View style={styles.bottomBar}>
-                <View style={styles.actionRow}>
+                <View style={styles.bottomBarInner}>
+                    <View style={styles.actionRow}>
                     <TouchableOpacity
                         onPress={handleOpenOriginal}
                         style={styles.secondaryBtn}
@@ -320,6 +325,7 @@ export const GovernmentDetailScreen: React.FC<GovernmentDetailScreenProps> = ({ 
                         <Text style={styles.primaryBtnText}>AI 전략 분석 시작</Text>
                     </TouchableOpacity>
                 </View>
+                </View>
             </View>
         </SafeAreaView>
     );
@@ -329,13 +335,23 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FDF8F3' },
     header: { 
         height: 64, 
+        backgroundColor: '#FFFFFF',
+        borderBottomWidth: 1,
+        borderColor: '#F1F5F9'
+    },
+    headerInner: {
+        flex: 1,
         flexDirection: 'row', 
         alignItems: 'center', 
         justifyContent: 'space-between', 
         paddingHorizontal: 20, 
-        backgroundColor: '#FFFFFF',
-        borderBottomWidth: 1,
-        borderColor: '#F1F5F9'
+        width: '100%',
+        maxWidth: 1000,
+        alignSelf: 'center'
+    },
+    innerContentWrapper: {
+        width: '100%',
+        maxWidth: 1000,
     },
     headerIconBtn: { width: 44, height: 44, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     headerTitle: { fontSize: 18, fontWeight: '900', color: '#27272a', letterSpacing: -0.5 },
@@ -427,6 +443,11 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: -10 },
         shadowOpacity: 0.05,
         shadowRadius: 20,
+        alignItems: 'center',
+    },
+    bottomBarInner: {
+        width: '100%',
+        maxWidth: 1000,
     },
     actionRow: { flexDirection: 'row', gap: 12 },
     secondaryBtn: { 
