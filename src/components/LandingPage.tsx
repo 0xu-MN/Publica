@@ -5,8 +5,8 @@ import {
 } from 'react-native';
 import {
     ArrowRight, Sparkles, FileEdit, Download, CheckCircle2,
-    Zap, Target, Clock, AlertTriangle, BarChart2, Users,
-    ChevronRight, Star, Shield, Cpu, TrendingUp, BookOpen,
+    Zap, Clock, Users,
+    ChevronRight, Star, Shield, Cpu, BookOpen,
     Search, FileText, Globe, Award
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -52,7 +52,7 @@ const AGENTS = [
         icon: Zap,
         color: '#7C3AED',
         bg: '#F5F3FF',
-        tag: 'NEXUS FLOW',
+        tag: '전략 수립',
         name: 'AI 전략 수립 에이전트',
         tagline: '탈락의 이유는 "내용 부족"이 아닙니다.\n"전략의 부재"입니다.',
         desc: 'Nexus Flow는 공고의 평가 지표를 역방향으로 분석합니다. 심사위원이 실제로 점수를 주는 기준을 먼저 파악하고, 거기에 맞는 전략 트리를 자동으로 구성해줍니다. "무엇을 써야 하는지"부터 명확해집니다.',
@@ -68,7 +68,7 @@ const AGENTS = [
         icon: FileEdit,
         color: '#0EA5E9',
         bg: '#F0F9FF',
-        tag: 'NEXUS EDIT',
+        tag: 'AI 초안 작성',
         name: 'AI 초안 작성 에이전트',
         tagline: '전략이 완성되면, 글쓰기는\nAI가 대신합니다.',
         desc: 'Nexus Flow의 전략 결과를 그대로 이어받아 사업계획서 각 문항의 초안을 자동으로 작성합니다. PSST 구조로 논리적 흐름을 잡고, 전문 컨설턴트 수준의 문체로 작성됩니다. 완성된 문서는 HWPX/DOCX 정부 양식에 즉시 매핑됩니다.',
@@ -84,7 +84,7 @@ const AGENTS = [
         icon: Search,
         color: '#10B981',
         bg: '#F0FDF4',
-        tag: 'GRANT DISCOVERY',
+        tag: '공고 탐색',
         name: '공고 탐색 & 맞춤 추천',
         tagline: '3만 개의 공고 중\n당신의 회사에 맞는 공고만 보여드립니다.',
         desc: '전국 30,000개 이상 기관의 지원사업 공고를 실시간 수집하고, 기업 프로필과 AI 매칭 스코어로 최적의 공고를 추천합니다. D-Day 알림부터 신청 자격 사전 진단까지, 기회를 놓치지 마세요.',
@@ -99,23 +99,23 @@ const AGENTS = [
 
 const STATS = [
     { value: '3만+', label: '수집 공고 수', sub: '전국 기관 실시간 수집', icon: Globe, color: '#7C3AED' },
-    { value: '10분', label: '평균 초안 완성 시간', sub: '기존 대비 95% 단축', icon: Clock, color: '#0EA5E9' },
-    { value: '98%', label: 'AI 전략 정확도', sub: 'PSST 프레임워크 기반', icon: Target, color: '#10B981' },
-    { value: '₩1.2M↓', label: '컨설팅 비용 절감', sub: '연간 기준 평균 절감액', icon: TrendingUp, color: '#F59E0B' },
+    { value: '10분', label: '평균 초안 완성 시간', sub: '직접 테스트 측정 결과', icon: Clock, color: '#0EA5E9' },
+    { value: '무제한', label: '에이전트 사용 횟수', sub: 'PRO 플랜 기준', icon: Zap, color: '#10B981' },
+    { value: '100%', label: '정부 양식 자동 매핑', sub: 'HWPX · DOCX 지원', icon: CheckCircle2, color: '#F59E0B' },
 ];
 
 const PROCESS_STEPS = [
-    { num: '01', icon: Search, color: '#10B981', title: '공고 탐색', desc: 'AI가 내 회사에 맞는 공고를 매칭 스코어로 추천합니다.' },
-    { num: '02', icon: Zap, color: '#7C3AED', title: 'Nexus Flow 분석', desc: '공고 평가 기준을 역분석하여 맞춤 전략 트리를 생성합니다.' },
-    { num: '03', icon: FileEdit, color: '#0EA5E9', title: 'Nexus Edit 작성', desc: '전략을 바탕으로 PSST 구조의 사업계획서 초안을 생성합니다.' },
-    { num: '04', icon: Download, color: '#F59E0B', title: '양식 매핑 & 다운로드', desc: '정부 양식(HWPX/DOCX)에 자동 병합 후 즉시 다운로드.' },
+    { num: '01', icon: Search, color: '#10B981', title: '공고 탐색', desc: 'AI가 내 회사 규모·분야·지역에 맞는 공고를 매칭 스코어로 자동 추천합니다.' },
+    { num: '02', icon: Zap, color: '#7C3AED', title: '전략 수립', desc: '심사위원이 실제로 점수를 주는 평가 기준을 역분석해, 맞춤 전략 트리를 만듭니다.' },
+    { num: '03', icon: FileEdit, color: '#0EA5E9', title: 'AI 초안 작성', desc: '전략을 바탕으로 PSST 논리 구조의 사업계획서 초안을 자동으로 작성합니다.' },
+    { num: '04', icon: Download, color: '#F59E0B', title: '양식 매핑 & 다운로드', desc: '정부 공식 양식(HWPX/DOCX)에 자동 매핑 후 즉시 다운로드. 바로 제출 가능합니다.' },
 ];
 
 const WHY_ITEMS = [
-    { icon: Cpu, color: '#7C3AED', title: '탈락 이유를 먼저 제거합니다', desc: '단순히 글을 써주는 수준이 아닙니다. 심사위원의 평가 기준을 먼저 분석하고, 탈락할 요인을 전략 단계에서 제거합니다.' },
-    { icon: Shield, color: '#0EA5E9', title: '시간과 품질, 둘 다 잡습니다', desc: '기존에는 퀄리티를 위해 시간을 쏟거나, 시간이 없어 품질을 포기해야 했습니다. Publica는 AI 전략 엔진으로 두 가지를 동시에 해결합니다.' },
-    { icon: BookOpen, color: '#10B981', title: '비전공자도 전문가처럼', desc: '지원사업 전문 지식이 없어도 됩니다. PSST 프레임워크와 AI 가이드가 작성 과정 전체를 단계별로 안내합니다.' },
-    { icon: Award, color: '#F59E0B', title: '쌓이는 자산', desc: '모든 작업 이력이 Portfolio에 자동 저장됩니다. 성공한 전략과 문서를 다음 공고에 재활용하면서, 기업의 지원사업 역량이 계속 성장합니다.' },
+    { icon: Cpu, color: '#7C3AED', title: '제출 후 "이게 맞나?" 불안이 없어집니다', desc: '심사위원이 실제로 점수를 주는 기준을 먼저 분석합니다. 탈락할 요인은 전략 단계에서 이미 제거됩니다.' },
+    { icon: Shield, color: '#0EA5E9', title: '마감 3일 전에 시작해도 완성본이 나옵니다', desc: '기존에는 퀄리티와 시간 중 하나를 포기해야 했습니다. Publica는 AI 전략 엔진으로 두 가지를 동시에 해결합니다.' },
+    { icon: BookOpen, color: '#10B981', title: '전문가 없이도, 전문가 수준으로', desc: '지원사업 지식이 없어도 됩니다. PSST 프레임워크와 AI 가이드가 처음부터 끝까지 단계별로 안내합니다.' },
+    { icon: Award, color: '#F59E0B', title: '쓸수록 더 강해지는 자산', desc: '모든 전략과 초안이 Portfolio에 자동 저장됩니다. 성공한 전략을 다음 공고에 재활용하면서 지원사업 역량이 계속 쌓입니다.' },
 ];
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartFree, onNavigateToPricing }) => {
@@ -158,17 +158,17 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                         <Text style={styles.heroBadgeText}>기업 맞춤형 AI 지원사업 솔루션</Text>
                     </View>
                     <Text style={[styles.heroTitle, { fontSize: isDesktop ? 68 : 42 }]}>
-                        사업계획서{'\n'}
-                        <Text style={styles.heroAccent}>합격의 공식</Text>이{'\n'}
-                        바뀌었습니다.
+                        탈락의 이유는{'\n'}
+                        <Text style={styles.heroAccent}>"내용 부족"</Text>이{'\n'}
+                        아닙니다.
                     </Text>
                     <Text style={styles.heroSub}>
-                        10분 안에 AI가 공고를 분석하고, 전략을 수립하고, 사업계획서 초안까지 완성합니다.{'\n'}
-                        전국 30,000개 공고, 지금 내 회사에 맞는 기회를 찾아보세요.
+                        심사위원이 원하는 전략을 먼저 파악하고, 10분 안에 사업계획서 초안까지 완성합니다.{'\n'}
+                        전국 30,000개 공고에서 지금 내 회사에 맞는 기회를 찾아보세요.
                     </Text>
                     <View style={styles.heroActions}>
                         <TouchableOpacity onPress={onStartFree} style={styles.heroCta}>
-                            <Text style={styles.heroCtaText}>지금 무료로 시작하기</Text>
+                            <Text style={styles.heroCtaText}>지금 바로 사업계획서 초안 만들기</Text>
                             <ArrowRight size={18} color="#FFF" />
                         </TouchableOpacity>
                         <TouchableOpacity onPress={onLoginPress} style={styles.heroSecondary}>
@@ -180,7 +180,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                         {[
                             { val: '3만+', label: '수집 공고' },
                             { val: '10분', label: '초안 완성' },
-                            { val: '95%', label: '시간 절감' },
+                            { val: '무료', label: '체험 가능' },
                         ].map((s, i) => (
                             <View key={i} style={styles.heroStat}>
                                 <Text style={styles.heroStatVal}>{s.val}</Text>
@@ -198,8 +198,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                         <Text style={styles.sectionTag}>[ WHY PUBLICA ]</Text>
                         <Text style={styles.sectionTitleCenter}>혹시 이런 경험, 있으신가요?</Text>
                         <Text style={styles.sectionSubCenter}>
-                            지원사업 담당자 300명을 인터뷰해서 발견한 공통된 어려움입니다.{'\n'}
-                            Publica는 이 세 가지 문제를 해결하기 위해 만들어졌습니다.
+                            예비창업자와 담당자들이 가장 많이 겪는 세 가지 어려움입니다.{'\n'}
+                            Publica는 이 문제들을 해결하기 위해 만들어졌습니다.
                         </Text>
                     </View>
                     <View style={[styles.painGrid, isDesktop && styles.painGridRow]}>
@@ -292,7 +292,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                             <Text style={[styles.agentDetailTagline, { color: agent.color }]}>{agent.tagline}</Text>
                             <Text style={styles.agentDetailDesc}>{agent.desc}</Text>
                             <TouchableOpacity onPress={onStartFree} style={[styles.agentCta, { backgroundColor: agent.color }]}>
-                                <Text style={styles.agentCtaText}>지금 무료로 체험하기</Text>
+                                <Text style={styles.agentCtaText}>지금 바로 사업계획서 초안 만들기</Text>
                                 <ChevronRight size={16} color="#FFF" />
                             </TouchableOpacity>
                         </View>
@@ -339,7 +339,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
             {/* ════════════ STATS ════════════ */}
             <View style={[styles.section, { backgroundColor: '#18181B', paddingVertical: 80 }]}>
                 <View style={styles.inner}>
-                    <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF', marginBottom: 56 }]}>숫자로 보는 Publica</Text>
+                    <View style={styles.sectionHeadCenter}>
+                        <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF', marginBottom: 8 }]}>숫자로 보는 Publica</Text>
+                        <Text style={[styles.sectionSubCenter, { color: '#71717A', marginBottom: 48 }]}>직접 측정하고 검증한 수치만 담았습니다</Text>
+                    </View>
                     <View style={[styles.statsGrid, isDesktop && styles.statsGridRow]}>
                         {STATS.map((s, i) => {
                             const StatIcon = s.icon;
@@ -372,12 +375,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                             </View>
                             <Text style={styles.pricingTitle}>지금, 가장 빠른 시작을 하세요</Text>
                             <Text style={styles.pricingSub}>
-                                무제한 공고 분석 · 무제한 NEXUS 에이전트 사용 · 우선 처리 속도{'\n'}
-                                컨설팅 비용의 단 5%로, 전문가 수준의 결과를.
+                                무제한 공고 분석 · AI 초안 작성 · 정부 양식 즉시 다운로드{'\n'}
+                                지원사업 성공의 전 과정을 AI와 함께 하세요.
                             </Text>
                             <View style={[styles.pricingActions, isDesktop && { flexDirection: 'row' }]}>
                                 <TouchableOpacity onPress={onStartFree} style={styles.pricingCta}>
-                                    <Text style={styles.pricingCtaText}>무료로 먼저 체험하기</Text>
+                                    <Text style={styles.pricingCtaText}>지금 바로 사업계획서 초안 만들기</Text>
                                 </TouchableOpacity>
                                 <TouchableOpacity onPress={onNavigateToPricing} style={styles.pricingLearn}>
                                     <Text style={styles.pricingLearnText}>요금제 자세히 보기</Text>
