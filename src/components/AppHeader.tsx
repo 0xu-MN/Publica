@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
 
     logoWrapper: { height: '100%', flexDirection: 'row', alignItems: 'center' },
-    headerLogo: { height: 125, width: 125, marginRight: 0 },
+    headerLogo: { height: 110, width: 110, marginRight: 0 },
 
     navCentered: { position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' },
     navRow: { flexDirection: 'row', alignItems: 'center', gap: 12, pointerEvents: 'auto' },
