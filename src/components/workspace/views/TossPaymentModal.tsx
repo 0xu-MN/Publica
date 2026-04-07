@@ -26,7 +26,8 @@ export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onC
 
         const initializeToss = async () => {
             try {
-                const customerKey = `customer_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+                // 빌링키 관리를 위해 이메일 기반의 고정된 customerKey 생성
+                const customerKey = `customer_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
                 const tossPayments = await loadTossPayments(clientKey);
                 const initializedWidgets = tossPayments.widgets({ customerKey });
                 
@@ -84,16 +85,18 @@ export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onC
         if (!widgets) return;
 
         try {
-            await widgets.requestPayment({
-                orderId: `order_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
-                orderName: planType === 'yearly' ? 'Publica Pro (연간)' : 'Publica Pro (월간)',
-                successUrl: window.location.origin + '/payment/success',
+            // 단건 결제(requestPayment)가 아닌 자동결제 빌링 인증(requestBillingAuth) 요청
+            // 성공 시 리다이렉트되어 백엔드에서 billingKey를 최종 발급받음
+            const customerKey = `customer_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            
+            // @ts-ignore - TossPaymentsWidgets SDK 타입 누락 대응
+            await (widgets as any).requestBillingAuth({
+                customerKey: customerKey,
+                successUrl: window.location.origin + `/payment/billing-success?plan=${planType}&price=${price}`,
                 failUrl: window.location.origin + '/payment/fail',
-                customerEmail: userEmail,
-                customerName: userName,
             });
         } catch (error) {
-            console.error('Payment request failed:', error);
+            console.error('Billing authorization request failed:', error);
         }
     };
 
@@ -160,7 +163,7 @@ export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onC
                         onPress={handlePaymentRequest}
                         disabled={!paymentReady || loading}
                     >
-                        <Text style={styles.payBtnText}>결제하기</Text>
+                        <Text style={styles.payBtnText}>카드 등록하기</Text>
                     </TouchableOpacity>
                 </View>
             </View>

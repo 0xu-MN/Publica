@@ -90,11 +90,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     style={styles.logoWrapper}
                 >
                     <Image
-                        source={require('../../assets/p_logo.png')}
+                        source={require('../../assets/p_logo_test_5.png')}
                         style={styles.headerLogo}
                         resizeMode="contain"
                     />
-                    <Text style={styles.logoText}>Publica</Text>
                 </TouchableOpacity>
 
                 {/* Centered Navigation (Desktop) */}
@@ -261,14 +260,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 const styles = StyleSheet.create({
     headerContainer: { width: '100%', backgroundColor: '#FDF8F3', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', zIndex: 1000 },
     headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
-    
+
     logoWrapper: { height: '100%', flexDirection: 'row', alignItems: 'center' },
-    headerLogo: { height: 80, width: 42, marginRight: 4 },
-    logoText: { fontSize: 36, fontWeight: '900', color: '#18181B', letterSpacing: -1.5 },
+    headerLogo: { height: 125, width: 125, marginRight: 0 },
 
     navCentered: { position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' },
     navRow: { flexDirection: 'row', alignItems: 'center', gap: 12, pointerEvents: 'auto' },
-    
+
     guestNav: { flexDirection: 'row', alignItems: 'center', gap: 32 },
     navItemText: { fontSize: 14, fontWeight: '700', color: '#94A3B8' },
     navItemActive: { color: '#18181B', fontWeight: '900' },
@@ -297,7 +295,7 @@ const styles = StyleSheet.create({
     utilityGroup: { flexDirection: 'row', alignItems: 'center', gap: 24 },
     notificationWrapper: { position: 'relative' },
     notificationDot: { position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', borderWidth: 2, borderColor: '#FFF' },
-    
+
     dropdownMenu: { position: 'absolute', top: 40, right: -40, width: 320, backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10, overflow: 'hidden', padding: 8 },
     dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
     dropdownHeaderText: { fontSize: 14, fontWeight: '800', color: '#18181B' },
