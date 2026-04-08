@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Platform, Modal } from 'react-native';
-import { X, ShieldCheck } from 'lucide-react-native';
-import { loadTossPayments, TossPaymentsWidgets } from '@tosspayments/tosspayments-sdk';
+import { X, ShieldCheck, CreditCard, Lock } from 'lucide-react-native';
+import { loadTossPayments } from '@tosspayments/tosspayments-sdk';
 
 interface TossPaymentModalProps {
     visible: boolean;
@@ -12,91 +12,36 @@ interface TossPaymentModalProps {
     userName: string;
 }
 
-const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY || 'test_gck_QbgMGZzorzjJAkvZvRo7rl5E1em4';
+// API 개별 연동 클라이언트 키 (payment.requestBillingAuth 방식)
+const clientKey = process.env.EXPO_PUBLIC_TOSS_CLIENT_KEY || 'live_ck_KNbdOvk5rko4YbeDpL92rn07xlzm';
 
 export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onClose, planType, price, userEmail, userName }) => {
-    const [widgets, setWidgets] = useState<TossPaymentsWidgets | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [paymentReady, setPaymentReady] = useState(false);
-    
-    useEffect(() => {
-        if (!visible || Platform.OS !== 'web') return;
+    const [loading, setLoading] = useState(false);
 
-        let isMounted = true;
-
-        const initializeToss = async () => {
-            try {
-                // 빌링키 관리를 위해 이메일 기반의 고정된 customerKey 생성
-                const customerKey = `customer_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-                const tossPayments = await loadTossPayments(clientKey);
-                const initializedWidgets = tossPayments.widgets({ customerKey });
-                
-                if (isMounted) {
-                    setWidgets(initializedWidgets);
-                }
-            } catch (err) {
-                console.error("Failed to load Toss Payments SDK:", err);
-                setLoading(false);
-            }
-        };
-
-        setLoading(true);
-        setPaymentReady(false);
-        initializeToss();
-
-        return () => {
-            isMounted = false;
-        };
-    }, [visible]);
-
-    useEffect(() => {
-        if (!widgets || Platform.OS !== 'web') return;
-
-        const renderWidgets = async () => {
-            try {
-                await widgets.setAmount({
-                    currency: 'KRW',
-                    value: price,
-                });
-
-                await Promise.all([
-                    widgets.renderPaymentMethods({
-                        selector: '#payment-method',
-                        variantKey: 'DEFAULT',
-                    }),
-                    widgets.renderAgreement({
-                        selector: '#agreement',
-                        variantKey: 'AGREEMENT',
-                    })
-                ]);
-                
-                setPaymentReady(true);
-                setLoading(false);
-            } catch (err) {
-                console.error("Failed to render Toss widgets:", err);
-                setLoading(false);
-            }
-        };
-
-        renderWidgets();
-    }, [widgets, price]);
+    // 빌링키 관리를 위해 이메일 기반의 고정된 customerKey 생성
+    const customerKey = `customer_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
 
     const handlePaymentRequest = async () => {
-        if (!widgets) return;
+        if (loading) return;
+        setLoading(true);
 
         try {
-            // 단건 결제(requestPayment)가 아닌 자동결제 빌링 인증(requestBillingAuth) 요청
-            // 성공 시 리다이렉트되어 백엔드에서 billingKey를 최종 발급받음
-            const customerKey = `customer_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
-            
-            // @ts-ignore - TossPaymentsWidgets SDK 타입 누락 대응
-            await (widgets as any).requestBillingAuth({
-                customerKey: customerKey,
+            const tossPayments = await loadTossPayments(clientKey);
+            // 빌링(정기결제): widgets가 아닌 payment 객체로 requestBillingAuth 호출
+            const payment = tossPayments.payment({ customerKey });
+
+            await payment.requestBillingAuth({
+                method: 'CARD',
                 successUrl: window.location.origin + `/payment/billing-success?plan=${planType}&price=${price}`,
                 failUrl: window.location.origin + '/payment/fail',
+                customerEmail: userEmail,
+                customerName: userName,
             });
+            // 정상 흐름에서는 이 줄에 도달하지 않음 (토스 페이지로 리다이렉트됨)
         } catch (error) {
             console.error('Billing authorization request failed:', error);
+            alert('결제 요청 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.');
+            setLoading(false);
         }
     };
 
@@ -138,18 +83,28 @@ export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onC
                 </View>
 
                 <View style={styles.content}>
-                    <View style={{ flex: 1, position: 'relative' }}>
-                        {loading && (
-                            <View style={[styles.loadingBox, { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 10, backgroundColor: '#FFFFFF' }]}>
-                                <ActivityIndicator size="large" color="#7C3AED" />
-                                <Text style={styles.loadingText}>보안 결제 모듈을 불러오고 있습니다...</Text>
-                            </View>
-                        )}
-                        
-                        <View style={{ flex: 1, backgroundColor: '#FFF', borderRadius: 24, padding: 8, minHeight: 400 }}>
-                            <View nativeID="payment-method" style={{ minHeight: 400, width: '100%' }} />
-                            <View nativeID="agreement" style={{ minHeight: 140, width: '100%' }} />
+                    <View style={styles.planCard}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                            <CreditCard size={20} color="#7C3AED" />
+                            <Text style={styles.planTitle}>
+                                {planType === 'monthly' ? '월간 구독' : '연간 구독'} 카드 등록
+                            </Text>
                         </View>
+                        <Text style={styles.planDesc}>
+                            카드를 등록하면 매 {planType === 'monthly' ? '월' : '년'}마다 자동으로 결제됩니다.
+                            언제든지 구독을 해지할 수 있습니다.
+                        </Text>
+                        <View style={styles.priceRow}>
+                            <Text style={styles.priceLabelInCard}>자동 결제 금액</Text>
+                            <Text style={styles.priceAmountInCard}>
+                                {price.toLocaleString('ko-KR')}원 / {planType === 'monthly' ? '월' : '년'}
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.secureNotice}>
+                        <Lock size={13} color="#94A3B8" />
+                        <Text style={styles.secureText}>토스페이먼츠 보안 결제로 카드 정보가 안전하게 처리됩니다.</Text>
                     </View>
                 </View>
 
@@ -158,12 +113,16 @@ export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onC
                         <Text style={styles.priceLabel}>최종 결제 금액</Text>
                         <Text style={styles.priceAmount}>{price.toLocaleString('ko-KR')}원</Text>
                     </View>
-                    <TouchableOpacity 
-                        style={[styles.payBtn, (!paymentReady || loading) && styles.payBtnDisabled]} 
+                    <TouchableOpacity
+                        style={[styles.payBtn, loading && styles.payBtnDisabled]}
                         onPress={handlePaymentRequest}
-                        disabled={!paymentReady || loading}
+                        disabled={loading}
                     >
-                        <Text style={styles.payBtnText}>카드 등록하기</Text>
+                        {loading ? (
+                            <ActivityIndicator size="small" color="#FFF" />
+                        ) : (
+                            <Text style={styles.payBtnText}>카드 등록하기</Text>
+                        )}
                     </TouchableOpacity>
                 </View>
             </View>
@@ -183,8 +142,7 @@ const styles = StyleSheet.create({
     },
     modalBox: {
         width: '100%',
-        maxWidth: 580,
-        maxHeight: '90%',
+        maxWidth: 480,
         backgroundColor: '#FFFFFF',
         borderRadius: 40,
         borderWidth: 1,
@@ -223,20 +181,56 @@ const styles = StyleSheet.create({
         borderRadius: 20,
     },
     content: {
-        flex: 1,
+        padding: 28,
+        gap: 16,
+    },
+    planCard: {
+        backgroundColor: '#F8F5FF',
+        borderRadius: 20,
         padding: 20,
-        overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: '#E9D5FF',
     },
-    loadingBox: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: 300,
+    planTitle: {
+        color: '#27272a',
+        fontSize: 16,
+        fontWeight: '800',
     },
-    loadingText: {
-        color: '#94A3B8',
-        marginTop: 16,
+    planDesc: {
+        color: '#64748B',
         fontSize: 13,
+        fontWeight: '500',
+        lineHeight: 20,
+        marginBottom: 16,
+    },
+    priceRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingTop: 16,
+        borderTopWidth: 1,
+        borderTopColor: '#DDD6FE',
+    },
+    priceLabelInCard: {
+        color: '#7C3AED',
+        fontSize: 12,
         fontWeight: '700',
+    },
+    priceAmountInCard: {
+        color: '#7C3AED',
+        fontSize: 15,
+        fontWeight: '900',
+    },
+    secureNotice: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+    },
+    secureText: {
+        color: '#94A3B8',
+        fontSize: 11,
+        fontWeight: '500',
+        flex: 1,
     },
     footer: {
         padding: 28,
@@ -271,9 +265,11 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 15,
         elevation: 5,
+        minWidth: 140,
+        alignItems: 'center',
     },
     payBtnDisabled: {
-        backgroundColor: '#E2E8F0',
+        backgroundColor: '#C4B5FD',
     },
     payBtnText: {
         color: '#FFF',
@@ -282,17 +278,17 @@ const styles = StyleSheet.create({
         letterSpacing: 0.5,
     },
     mobileOverlay: {
-        flex: 1, 
-        backgroundColor: 'rgba(2, 6, 23, 0.4)', 
-        alignItems: 'center', 
+        flex: 1,
+        backgroundColor: 'rgba(2, 6, 23, 0.4)',
+        alignItems: 'center',
         justifyContent: 'center',
         padding: 24,
     },
     mobileBox: {
-        backgroundColor: '#FFFFFF', 
-        padding: 32, 
-        borderRadius: 32, 
-        borderColor: '#E2E8F0', 
+        backgroundColor: '#FFFFFF',
+        padding: 32,
+        borderRadius: 32,
+        borderColor: '#E2E8F0',
         borderWidth: 1,
         shadowColor: '#000',
         shadowOpacity: 0.1,
@@ -301,11 +297,11 @@ const styles = StyleSheet.create({
         maxWidth: 400,
     },
     closeBtn: {
-        backgroundColor: '#7C3AED', 
+        backgroundColor: '#7C3AED',
         paddingHorizontal: 32,
-        paddingVertical: 14, 
-        borderRadius: 16, 
-        marginTop: 24, 
+        paddingVertical: 14,
+        borderRadius: 16,
+        marginTop: 24,
         alignItems: 'center',
         width: '100%',
     }
