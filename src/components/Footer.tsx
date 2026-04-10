@@ -44,36 +44,35 @@ const Footer = () => {
     };
 
     return (
-        <View className="w-full bg-[#FDF8F3] dark:bg-[#060B1A] border-t border-slate-200 dark:border-white/5 py-8 px-6 items-center">
+        <View className="w-full bg-[#FAFAFA] dark:bg-[#020617] border-t border-slate-100 dark:border-white/[0.03] py-20 px-6 items-center">
             <View className="max-w-[1400px] w-full flex-col md:flex-row justify-between items-start gap-8">
                 <View className="flex-1">
-                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 20 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
                         <Image
                             source={require('../../assets/p_logo_test_6.png')}
-                            style={{ height: 90, width: 200 }}
+                            style={{ height: 40, width: 140 }}
                             resizeMode="contain"
                         />
-
                     </View>
-                    <Text className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed max-w-[500px] mb-6 font-medium">
+                    <Text className="text-slate-600 dark:text-slate-400 text-[15px] leading-[26px] max-w-[480px] mb-8 font-semibold tracking-tight">
                         기업을 위한 가장 완벽한 정부지원사업 맞춤형 솔루션.{'\n'}수많은 기업의 성공을 이끈 AI 자동화 기술을 먼저 경험하세요.
                     </Text>
 
-                    <View className="gap-1.5">
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-bold">상호명: (주)헤일로포지 | 대표자: 홍수민</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">사업자등록번호: 846-04-03662 | 통신판매업신고: 2026-서울강남-00000</Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">주소: 경기도 안산시 단원구 고잔로 57-11 </Text>
-                        <Text className="text-slate-400 dark:text-slate-500 text-[10px]">이메일: publica@publica.ai.kr | haloforge@haloforge.kr</Text>
+                    <View className="gap-2 opacity-60">
+                        <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-bold">상호명: (주)헤일로포지 | 대표자: 홍수민</Text>
+                        <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-medium">사업자등록번호: 846-04-03662 | 통신판매업신고: 2026-서울강남-00000</Text>
+                        <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-medium">주소: 경기도 안산시 단원구 고잔로 57-11, 510</Text>
+                        <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-medium">TEL. 031-501-4523 | Email: publica@publica.ai.kr</Text>
                     </View>
                 </View>
 
                 <View className="flex-row gap-16 md:gap-32">
                     <View>
                         <Text className="text-[#27272a] dark:text-slate-300 font-black text-xs uppercase tracking-widest mb-6">법적 안내</Text>
-                        <View className="gap-4">
-                            <TouchableOpacity onPress={() => setLegalType('terms')}><Text className="text-slate-500 dark:text-slate-400 text-sm font-bold">이용약관</Text></TouchableOpacity>
-                            <TouchableOpacity onPress={() => setLegalType('privacy')}><Text className="text-slate-500 dark:text-slate-400 text-sm font-bold">개인정보처리방침</Text></TouchableOpacity>
-                            <TouchableOpacity onPress={() => setLegalType('policy')}><Text className="text-slate-500 dark:text-slate-400 text-sm font-bold">운영정책</Text></TouchableOpacity>
+                        <View className="gap-5">
+                            <TouchableOpacity onPress={() => setLegalType('terms')}><Text className="text-slate-600 dark:text-slate-400 text-[13px] font-bold hover:text-[#7C3AED]">이용약관</Text></TouchableOpacity>
+                            <TouchableOpacity onPress={() => setLegalType('privacy')}><Text className="text-slate-600 dark:text-slate-400 text-[13px] font-bold hover:text-[#7C3AED]">개인정보처리방침</Text></TouchableOpacity>
+                            <TouchableOpacity onPress={() => setLegalType('policy')}><Text className="text-slate-600 dark:text-slate-400 text-[13px] font-bold hover:text-[#7C3AED]">운영정책</Text></TouchableOpacity>
                         </View>
                     </View>
                 </View>

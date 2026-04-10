@@ -27,22 +27,22 @@ Deno.serve(async (req) => {
         const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
         if (!supabaseUrl || !supabaseKey || !TOSS_API_SECRET_KEY) {
-            console.error("Missing essential environment variables:", { 
-                hasUrl: !!supabaseUrl, 
-                hasKey: !!supabaseKey, 
-                hasSecret: !!TOSS_API_SECRET_KEY 
+            console.error("Missing essential environment variables:", {
+                hasUrl: !!supabaseUrl,
+                hasKey: !!supabaseKey,
+                hasSecret: !!TOSS_API_SECRET_KEY
             });
             throw new Error("서버 환경 설정이 올바르지 않습니다.");
         }
 
         const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
-        
+
         // 인증 토큰 체크 (프런트에서 넘어온 Bearer token)
         const authHeader = req.headers.get('Authorization');
         if (!authHeader) throw new Error("인증 토큰이 없습니다.");
 
         const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(authHeader.replace('Bearer ', ''));
-        
+
         if (authError || !user) {
             console.error("Auth Error:", authError);
             throw new Error("인증되지 않은 요청입니다.");
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
         // 3. 토스페이먼츠 빌링키 발급 API 호출
         // Authorization: Basic 인코딩 (시크릿키: 를 base64로 인코딩)
         const encodedAuth = btoa(`${TOSS_API_SECRET_KEY}:`);
-        
+
         const tossIssueResponse = await fetch("https://api.tosspayments.com/v1/billing/authorizations/issue", {
             method: "POST",
             headers: {
@@ -90,7 +90,7 @@ Deno.serve(async (req) => {
         } else {
             console.log(`[Billing] Processing initial payment of ${amount} won...`);
             const orderId = `order_${Date.now()}_${user.id.substring(0, 6)}`;
-            
+
             const paymentResponse = await fetch(`https://api.tosspayments.com/v1/billing/${billingKey}`, {
                 method: "POST",
                 headers: {
@@ -106,9 +106,9 @@ Deno.serve(async (req) => {
                     taxFreeAmount: 0
                 }),
             });
-            
+
             const paymentData = await paymentResponse.json();
-            
+
             if (!paymentResponse.ok) {
                 console.error("Toss Initial Payment Error:", paymentData);
                 // 빌링키는 발급되었으나 첫 결제에서 실패한 경우에 대한 처리가 필요할 수 있음

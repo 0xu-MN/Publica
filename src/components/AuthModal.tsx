@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, Text, View, Pressable, Platform } from 'react-native';
+import { Modal, Text, View, Pressable, Platform, Image } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { X } from 'lucide-react-native';
 import Animated, { SlideInDown } from 'react-native-reanimated';
@@ -58,11 +58,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
                     </Pressable>
 
                     <View className="mb-10 items-center">
-                        <View className="w-16 h-16 bg-[#7C3AED]/10 rounded-2xl items-center justify-center mb-6">
-                            <Text className="text-3xl font-black text-[#7C3AED]">P</Text>
-                        </View>
-                        <Text className="text-2xl font-bold text-[#27272a] mb-3 tracking-tight">반갑습니다</Text>
-                        <Text className="text-sm text-[#64748B] text-center leading-[22px] font-medium">
+                        <Image
+                            source={require('../../assets/p_logo_test_5.png')}
+                            style={{ width: 140, height: 40 }}
+                            resizeMode="contain"
+                        />
+                        <View className="h-4" />
+                        <Text className="text-[26px] font-black text-[#0f172a] mb-3 tracking-tighter">반갑습니다</Text>
+                        <Text className="text-[15px] text-[#334155] text-center leading-[24px] font-semibold">
                             Publica에 로그인하고{'\n'}나만의 인사이트를 발견하세요.
                         </Text>
                     </View>
