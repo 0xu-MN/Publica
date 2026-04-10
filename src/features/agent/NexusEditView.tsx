@@ -43,6 +43,9 @@ export const NexusEditView = () => {
     const [templateLoading, setTemplateLoading] = useState(false);
     const [draftGenerating, setDraftGenerating] = useState(false);
     const [draftCompleted, setDraftCompleted] = useState(false); // Track if AI has generated content
+    const [draftCurrentStep, setDraftCurrentStep] = useState<{ current: number; total: number; label: string } | null>(null); // 순차 작성 진행 상태
+    const [draftBranchLabels, setDraftBranchLabels] = useState<string[]>([]); // 실제 브랜치 라벨 목록
+    const [draftCompletedSteps, setDraftCompletedSteps] = useState<Set<number>>(new Set()); // 완료된 스텝 인덱스 집합
     const [hwpxLoading, setHwpxLoading] = useState(false);
     // 🔑 Key counter to force NotionEditor remount when content changes externally
     const [editorKey, setEditorKey] = useState(0);
@@ -111,14 +114,10 @@ export const NexusEditView = () => {
     const generateAutoDraft = async (session: any) => {
         if (!session) return;
         setDraftGenerating(true);
-        console.log('📝 generateAutoDraft START', {
-            title: session.title,
-            hasBrainstorm: !!session.brainstorm_content,
-            workspaceDataLen: session.workspace_data?.length,
-        });
+        setDraftCurrentStep(null);
+        setDraftCompletedSteps(new Set());
 
         try {
-            // 1. Template metadata (for progress tracker only)
             const defaultSections = getDefaultPSSTTemplate();
             const mockTemplate: GrantTemplate = {
                 id: 'default', grant_id: 'default', sections: defaultSections, source_markdown: null, parsed_at: new Date().toISOString()
@@ -134,21 +133,23 @@ export const NexusEditView = () => {
                 }
             }
 
-            console.log('📝 Found branches for AI drafting:', allBranches.length);
+            // 오른쪽 진행 플로우를 실제 브랜치 라벨로 세팅
+            setDraftBranchLabels(allBranches.map(b => b.label || ''));
+
             const docTitle = session.title || '사업계획서';
-            
             let draftHtml = `<h1>${docTitle}</h1>`;
 
             if (allBranches.length > 0) {
                 const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-                if (!geminiKey) throw new Error("GEMINI_API_KEY가 없습니다.");
+                if (!geminiKey) throw new Error('GEMINI_API_KEY가 없습니다.');
 
-                // 🌟 순차적(Progressive) 작성 로직
-                // 한 번에 전부 요청하지 않고, 플로우 카드별로 하나씩 작성하여 에디터에 순차적으로 보여줍니다.
+                // 🌟 플로우 카드별 순차 작성
                 for (let i = 0; i < allBranches.length; i++) {
                     const branch = allBranches[i];
-                    
-                    // 채팅 UI에 현재 진행 상태 표시
+
+                    // 진행 스텝 업데이트 (오른쪽 플로우 트래커 + 로딩 오버레이)
+                    setDraftCurrentStep({ current: i + 1, total: allBranches.length, label: branch.label });
+
                     setChatMessages(prev => [...prev, {
                         role: 'assistant',
                         content: `⏳ [${i + 1}/${allBranches.length}] '${branch.label}' 구역을 작성하고 있습니다...`
@@ -164,113 +165,79 @@ export const NexusEditView = () => {
 **[지시사항]**
 1. 이 주제에 대해 충분한 분량의 상세하고 전문적인 사업계획서 문단(섹션)을 작성하세요.
 2. 인사말이나 부연 설명 없이 오직 본문만 출력해야 합니다.
-3. 큰 섹션 제목은 <h2>, 소제목은 <h3> 태그를 사용하고 중요 키워드는 마크다운(**키워드**) 문법으로 강조하세요.
+3. 큰 섹션 제목은 <h2>, 소제목은 <h3> 태그를 사용하고 중요 키워드는 **굵은 글씨** 문법으로 강조하세요.
 4. 표기할 항목이 3개 이상이거나 비교 데이터가 있다면 반드시 <table>, <thead>, <tbody>, <tr>, <th>, <td> 태그를 사용하여 표로 만드세요.
-5. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다.
-{
-    "document_html": "결과물 HTML 문자열"
-}
-`;
+5. 반드시 아래 순수 JSON 포맷으로만 응답하세요.
+{"document_html": "결과물 HTML 문자열"}`;
 
-                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-                                generationConfig: { temperature: 0.2 }
-                            })
-                        });
+                        const response = await fetch(
+                            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`,
+                            {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+                                    generationConfig: { temperature: 0.2 }
+                                })
+                            }
+                        );
 
                         const data = await response.json();
-                        if (data.candidates && data.candidates[0].content.parts[0].text) {
-                            let aiResponseText = data.candidates[0].content.parts[0].text;
-                            const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
-                            
+                        if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
+                            const aiText = data.candidates[0].content.parts[0].text;
+                            const jsonMatch = aiText.match(/\{[\s\S]*\}/);
                             if (jsonMatch) {
-                                const parsed = JSON.parse(jsonMatch[0]);
-                                if (parsed.document_html) {
-                                    draftHtml += parsed.document_html;
+                                try {
+                                    const parsed = JSON.parse(jsonMatch[0]);
+                                    if (parsed.document_html) draftHtml += parsed.document_html;
+                                } catch {
+                                    draftHtml += `<h2>${branch.label}</h2><p>${branch.description || ''}</p>`;
                                 }
                             } else {
-                                // Fallback: try to extract HTML if JSON parsing fails
-                                const htmlMatch = aiResponseText.match(/<h[2-6].*/s);
-                                if (htmlMatch) {
-                                    draftHtml += htmlMatch[0];
-                                } else {
-                                    draftHtml += `<h2>${branch.label}</h2><p>${branch.description}</p>`;
-                                }
+                                const htmlMatch = aiText.match(/<h[2-6][\s\S]*/i);
+                                draftHtml += htmlMatch ? htmlMatch[0] : `<h2>${branch.label}</h2><p>${branch.description || ''}</p>`;
                             }
                         } else {
-                            throw new Error("Invalid Gemini response");
+                            throw new Error('Invalid Gemini response');
                         }
                     } catch (apiError) {
-                        console.error(`Gemini API Error at branch ${i}:`, apiError);
-                        // 에러 시 기존 내용만 렌더링
+                        console.error(`Branch ${i} error:`, apiError);
                         draftHtml += `<h2>${branch.label}</h2><p>${branch.description || ''}</p>`;
                     }
 
-                    // 1개의 분량이 완성될 때마다 에디터 강제 업데이트 (실시간 타이핑 효과)
+                    // 완료된 스텝 추가 (체크 표시)
+                    setDraftCompletedSteps(prev => new Set([...prev, i]));
+
+                    // 에디터 실시간 업데이트
                     setEditorContent(draftHtml);
                     setEditorMarkdown(draftHtml);
-                    
+                    pendingDraftRef.current = draftHtml;
                     if (Platform.OS === 'web') {
-                        (window as any).__nexusDraft = draftHtml;
-                        (window as any).__nexusDraftExpiry = Date.now() + 5000;
                         const editorEl = document.getElementById('nexus-editor-content');
                         if (editorEl) editorEl.innerHTML = draftHtml;
                     }
-                } // End of For loop
+                }
 
             } else if (!session.brainstorm_content) {
-                // No data at all — use template
                 draftHtml = templateToEditorHtml(mockTemplate, docTitle);
             }
 
-            console.log('📝 Generated draft HTML length:', draftHtml.length);
-
-            // ── DEFINITIVE STRATEGY: window global + interval watchdog ──
+            // 완료 처리 (remount 없이 상태만 업데이트)
             setEditorContent(draftHtml);
             setEditorMarkdown(draftHtml);
+            pendingDraftRef.current = draftHtml;
             setDraftCompleted(true);
             setHasUnsavedChanges(true);
-            
-            if (Platform.OS === 'web') {
-                (window as any).__nexusDraft = draftHtml;
-                (window as any).__nexusDraftExpiry = Date.now() + 5000; 
-                
-                const watchdog = setInterval(() => {
-                    if (!(window as any).__nexusDraft) {
-                        clearInterval(watchdog);
-                        return;
-                    }
-                    if (Date.now() > (window as any).__nexusDraftExpiry) {
-                        (window as any).__nexusDraft = null;
-                        clearInterval(watchdog);
-                        return;
-                    }
-                    const editorEl = document.getElementById('nexus-editor-content');
-                    if (editorEl) {
-                        const targetHtml = (window as any).__nexusDraft;
-                        if (editorEl.innerHTML !== targetHtml) {
-                            editorEl.innerHTML = targetHtml;
-                        }
-                    }
-                }, 200);
-                
-                // Final remount NotionEditor once to clear state inconsistencies
-                setTimeout(() => {
-                    setEditorKey(prev => prev + 1);
-                }, 300);
-            }
+            setDraftCurrentStep(null); // 로딩 오버레이 종료
 
-            // Chat confirmation
             setChatMessages(prev => [...prev, {
                 role: 'assistant',
-                content: `✅ 초안 작성이 완료되었습니다! 총 ${allBranches.length}개의 브레인스톰 섹션을 문서로 변환했습니다.`
+                content: `✅ 초안 작성 완료! 총 ${allBranches.length}개 섹션을 문서로 변환했습니다.`
             }]);
 
         } catch (err) {
             console.error('📝 Draft generation failed:', err);
+            setDraftCurrentStep(null);
             loadTemplateForSession(session, false);
         } finally {
             setDraftGenerating(false);
@@ -812,34 +779,30 @@ ${brainstormContext}
                                     placeholder="/ 를 입력하여 블록 타입을 선택하세요..."
                                 />
 
-                                {/* Loading Overlay during Auto Draft Generation */}
-                                {draftGenerating && (
+                                {/* Loading Overlay — 순차 작성 중 현재 단계 표시 */}
+                                {draftGenerating && draftCurrentStep && (
                                     <View style={styles.draftLoadingOverlay as any}>
                                         <ActivityIndicator size="large" color="#818CF8" />
-                                        <Text style={styles.draftLoadingText}>✨ AI 통합 초안 작성 중...</Text>
-                                        <Text style={styles.draftLoadingSubtext}>브레인스톰 메모와 마인드맵을 바탕으로{'\n'}사업계획서를 구성하고 있습니다.</Text>
+                                        <Text style={styles.draftLoadingText}>
+                                            ✨ [{draftCurrentStep.current}/{draftCurrentStep.total}] 작성 중...
+                                        </Text>
+                                        <Text style={styles.draftLoadingSubtext}>
+                                            {draftCurrentStep.label}
+                                        </Text>
                                     </View>
                                 )}
                             </View>
-                            {/* Progress Tracker Strip */}
+                            {/* Progress Tracker Strip — 실제 브랜치 라벨 기반 동적 렌더링 */}
                             <View style={styles.progressStrip}>
                                 <Text style={styles.progressStripTitle}>작성 진행</Text>
-                                {[
-                                    { id: 1, label: '문제인식', key: '문제인식' },
-                                    { id: 2, label: '실현가능성', key: '실현가능성' },
-                                    { id: 3, label: '성장전략', key: '성장전략' },
-                                    { id: 4, label: '팀 구성', key: '팀' },
-                                    { id: 5, label: '사업비', key: '사업비' },
-                                ].map((step, idx, arr) => {
-                                    const isCompleted = editorContent.toLowerCase().includes(step.key.toLowerCase()) && editorContent.length > 100;
-                                    const isActive = !isCompleted && (idx === 0 || editorContent.toLowerCase().includes(arr[idx - 1]?.key.toLowerCase()));
+                                {(draftBranchLabels.length > 0 ? draftBranchLabels : ['문제인식', '실현가능성', '성장전략', '팀 구성', '사업비']).map((label, idx, arr) => {
+                                    const isCompleted = draftCompletedSteps.has(idx) || (!draftGenerating && draftCompleted);
+                                    const isActive = draftGenerating && draftCurrentStep?.current === idx + 1;
                                     return (
-                                        <View key={step.id} style={styles.progressStep}>
-                                            {/* Connecting Line (above) */}
+                                        <View key={idx} style={styles.progressStep}>
                                             {idx > 0 && (
                                                 <View style={[styles.progressLine, isCompleted && styles.progressLineCompleted]} />
                                             )}
-                                            {/* Circle */}
                                             <View style={[
                                                 styles.progressCircle,
                                                 isCompleted && styles.progressCircleCompleted,
@@ -847,17 +810,17 @@ ${brainstormContext}
                                             ]}>
                                                 {isCompleted ? (
                                                     <Text style={styles.progressCheckmark}>✓</Text>
+                                                ) : isActive ? (
+                                                    <ActivityIndicator size="small" color="#818CF8" />
                                                 ) : (
-                                                    <Text style={[styles.progressNumber, isActive && { color: '#818CF8' }]}>{step.id}</Text>
+                                                    <Text style={[styles.progressNumber, isActive && { color: '#818CF8' }]}>{idx + 1}</Text>
                                                 )}
                                             </View>
-                                            {/* Label */}
                                             <Text style={[
                                                 styles.progressLabel,
                                                 isCompleted && styles.progressLabelCompleted,
                                                 isActive && styles.progressLabelActive,
-                                            ]}>{step.label}</Text>
-                                            {/* Connecting Line (below) */}
+                                            ]} numberOfLines={2}>{label}</Text>
                                             {idx < arr.length - 1 && (
                                                 <View style={[styles.progressLineBelow, isCompleted && styles.progressLineCompleted]} />
                                             )}
