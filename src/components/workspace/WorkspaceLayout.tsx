@@ -237,11 +237,34 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
             case 'projects':
                 return (
                     <MyProjectsView
-                        onNavigateToFlow={(sessionId) => {
-                            useProjectStore.getState().setProject(null, { title: '', workspace_data: [], grant_url: '', grant_title: '', pdf_url: '' });
+                        onNavigateToFlow={(session: any) => {
+                            useProjectStore.getState().setProject(null, {
+                                id: session.id,
+                                title: session.title || '',
+                                mode: session.mode || 'Grant Strategist',
+                                workspace_data: session.workspace_data || [],
+                                chat_history: session.chat_history || [],
+                                auto_run_query: session.auto_run_query || '',
+                                grant_url: session.grant_url || session.original_url || '',
+                                grant_title: session.title || '',
+                                pdf_url: session.pdf_url || '',
+                            });
                             setActiveTab('agent');
                         }}
-                        onNavigateToEdit={() => setActiveTab('nexus-edit')}
+                        onNavigateToEdit={(session: any) => {
+                            useProjectStore.getState().setProject(null, {
+                                id: session.id,
+                                title: session.title || '',
+                                mode: session.mode || 'Grant Strategist',
+                                workspace_data: session.workspace_data || [],
+                                chat_history: session.chat_history || [],
+                                auto_run_query: session.auto_run_query || '',
+                                grant_url: session.grant_url || session.original_url || '',
+                                grant_title: session.title || '',
+                                pdf_url: session.pdf_url || '',
+                            });
+                            setActiveTab('nexus-edit');
+                        }}
                     />
                 );
             case 'guide':

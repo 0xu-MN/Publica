@@ -11,8 +11,8 @@ import Footer from '../../Footer';
 // ═══════════════════════════════════════════════════
 
 interface MyProjectsViewProps {
-    onNavigateToFlow?: (sessionId: string) => void;
-    onNavigateToEdit?: (sessionId: string) => void;
+    onNavigateToFlow?: (session: any) => void;
+    onNavigateToEdit?: (session: any) => void;
 }
 
 interface ProjectSession {
@@ -200,13 +200,13 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
                                         <View className="flex-row gap-2">
                                             <TouchableOpacity
                                                 className="w-8 h-8 rounded-lg bg-[#F8FAFC] border border-[#E2E8F0] items-center justify-center active:bg-slate-50"
-                                                onPress={() => onNavigateToFlow?.(p.id)}
+                                                onPress={() => onNavigateToFlow?.(p)}
                                             >
                                                 <Zap size={14} color="#7C3AED" />
                                             </TouchableOpacity>
                                             <TouchableOpacity
                                                 className="w-8 h-8 rounded-lg bg-[#7C3AED] items-center justify-center shadow-lg shadow-[#7C3AED]/20 active:opacity-90"
-                                                onPress={() => onNavigateToEdit?.(p.id)}
+                                                onPress={() => onNavigateToEdit?.(p)}
                                             >
                                                 <FileEdit size={14} color="#FFF" />
                                             </TouchableOpacity>
