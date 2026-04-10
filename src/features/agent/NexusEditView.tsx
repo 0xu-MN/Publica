@@ -125,10 +125,6 @@ export const NexusEditView = () => {
             };
             setActiveTemplate(mockTemplate);
 
-            // ──────────────────────────────────────────────────────────
-            // 🔥 AI 초안 생성: Gemini API 직접 호출 (백엔드 에러 원천 차단)
-            // 브레인스톰 내용을 기반으로 "살을 붙여서" 정식 사업계획서 작성
-            // ──────────────────────────────────────────────────────────
             const allBranches: any[] = [];
             if (session.workspace_data && Array.isArray(session.workspace_data)) {
                 for (const col of session.workspace_data) {
@@ -141,84 +137,90 @@ export const NexusEditView = () => {
             console.log('📝 Found branches for AI drafting:', allBranches.length);
             const docTitle = session.title || '사업계획서';
             
-            let draftHtml = `<h1>${docTitle}</h1><p>초안 생성에 실패했습니다. 내용을 직접 작성해주세요.</p>`;
+            let draftHtml = `<h1>${docTitle}</h1>`;
 
             if (allBranches.length > 0) {
-                try {
-                    const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
-                    if (!geminiKey) throw new Error("GEMINI_API_KEY가 없습니다.");
+                const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+                if (!geminiKey) throw new Error("GEMINI_API_KEY가 없습니다.");
 
-                    const brainstormText = allBranches.map(b => `[${b.label}]\n${b.description || '내용 없음'}`).join('\n\n');
+                // 🌟 순차적(Progressive) 작성 로직
+                // 한 번에 전부 요청하지 않고, 플로우 카드별로 하나씩 작성하여 에디터에 순차적으로 보여줍니다.
+                for (let i = 0; i < allBranches.length; i++) {
+                    const branch = allBranches[i];
                     
-                    const systemPrompt = `당신은 대한민국 최고 수준의 공공/정부지원사업 사업계획서 대필 전문가(AI 에이전트)입니다.
-사용자가 제공한 [브레인스톰 내용]을 바탕으로, 반드시 아래의 **4가지 필수 구역**으로만 나누어 정식 사업계획서 본문(초안)을 작성해주세요.
+                    // 채팅 UI에 현재 진행 상태 표시
+                    setChatMessages(prev => [...prev, {
+                        role: 'assistant',
+                        content: `⏳ [${i + 1}/${allBranches.length}] '${branch.label}' 구역을 작성하고 있습니다...`
+                    }]);
 
-[필수 작성 구역]
-1. 문제인식
-2. 실현가능성
-3. 성장전략
-4. 팀구성
+                    try {
+                        const systemPrompt = `당신은 대한민국 최고 수준의 공공/정부지원사업 사업계획서 대필 전문가(AI 에이전트)입니다.
+사용자의 전체 사업계획서 중 다음 구역을 전담해서 작성해주세요.
 
-각 구역에 전문적인 살을 붙여 내용을 풍성하게 만들어주세요.
+[작성할 주제]: ${branch.label}
+[핵심 내용요약]: ${branch.description || '내용 없음'}
 
-**[매우 중요한 지시사항]**
-1. 사용자의 인사말이나 부연 설명 없이, 오직 완성된 문서만 출력해야 합니다.
-2. 큰 섹션 제목은 HTML(<h2>, <h3>) 태그를 쓰되, **소항목 제목과 중요 키워드는 반드시 마크다운 굵은 글씨(**키워드:**) 문법을 적극적으로 사용하여 시각적인 구분을 명확하게 하세요.**
-3. 경쟁사와 비교, 일정, 예산 계획, 기대효과 등 복잡한 데이터나 구조화가 필요한 부분은 반드시 <table>, <thead>, <tbody>, <tr>, <th>, <td> 태그를 사용하여 깔끔하게 도표화(시각화) 하세요.
-4. 문체는 '명사형 맺음(~함, ~임, ~구축 계획임)' 또는 '정중한 비즈니스 경어(~합니다)'로 일관성 있게 작성하세요.
-5. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다. 코멘트나 마크다운 블록(\`\`\`json) 조차 넣지 말고 오직 중괄호 {} 로 시작하고 끝나는 JSON만 출력하세요.
-
-응답 JSON 규격:
+**[지시사항]**
+1. 이 주제에 대해 충분한 분량의 상세하고 전문적인 사업계획서 문단(섹션)을 작성하세요.
+2. 인사말이나 부연 설명 없이 오직 본문만 출력해야 합니다.
+3. 큰 섹션 제목은 <h2>, 소제목은 <h3> 태그를 사용하고 중요 키워드는 마크다운(**키워드**) 문법으로 강조하세요.
+4. 표기할 항목이 3개 이상이거나 비교 데이터가 있다면 반드시 <table>, <thead>, <tbody>, <tr>, <th>, <td> 태그를 사용하여 표로 만드세요.
+5. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다.
 {
-    "document_html": "앞서 지시한 완벽한 순수 HTML 코드의 전체 문자열"
+    "document_html": "결과물 HTML 문자열"
 }
+`;
 
-[브레인스톰 내용]\n${brainstormText}`;
+                        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
+                                generationConfig: { temperature: 0.2 }
+                            })
+                        });
 
-                    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            contents: [{ role: 'user', parts: [{ text: systemPrompt }] }],
-                            generationConfig: { temperature: 0.2 }
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (data.candidates && data.candidates[0].content.parts[0].text) {
-                        let aiResponseText = data.candidates[0].content.parts[0].text;
-                        
-                        try {
+                        const data = await response.json();
+                        if (data.candidates && data.candidates[0].content.parts[0].text) {
+                            let aiResponseText = data.candidates[0].content.parts[0].text;
                             const jsonMatch = aiResponseText.match(/\{[\s\S]*\}/);
-                            if (!jsonMatch) throw new Error("No JSON object found in response");
                             
-                            const parsed = JSON.parse(jsonMatch[0]);
-                            if (parsed.document_html) {
-                                draftHtml = parsed.document_html;
+                            if (jsonMatch) {
+                                const parsed = JSON.parse(jsonMatch[0]);
+                                if (parsed.document_html) {
+                                    draftHtml += parsed.document_html;
+                                }
                             } else {
-                                throw new Error("JSON payload missing document_html");
+                                // Fallback: try to extract HTML if JSON parsing fails
+                                const htmlMatch = aiResponseText.match(/<h[2-6].*/s);
+                                if (htmlMatch) {
+                                    draftHtml += htmlMatch[0];
+                                } else {
+                                    draftHtml += `<h2>${branch.label}</h2><p>${branch.description}</p>`;
+                                }
                             }
-                        } catch (e) {
-                            console.error("Draft JSON Parse Error:", e, aiResponseText);
-                            // Fallback heuristic: Try to extract HTML directly 
-                            const htmlMatch = aiResponseText.match(/<h[1-6].*/s);
-                            if (htmlMatch) {
-                                draftHtml = htmlMatch[0];
-                            } else {
-                                throw new Error("Could not extract HTML from generative response");
-                            }
+                        } else {
+                            throw new Error("Invalid Gemini response");
                         }
-                    } else {
-                        throw new Error("Gemini 응답 구조가 올바르지 않습니다.");
+                    } catch (apiError) {
+                        console.error(`Gemini API Error at branch ${i}:`, apiError);
+                        // 에러 시 기존 내용만 렌더링
+                        draftHtml += `<h2>${branch.label}</h2><p>${branch.description || ''}</p>`;
                     }
-                } catch (apiError) {
-                    console.error("Gemini API Error:", apiError);
-                    draftHtml = `<h1>${docTitle}</h1><p>AI 초안 작성 중 오류가 발생했습니다. 브레인스톰 내용만 단순 결합합니다.</p>`;
-                    // Fallback: 단순 복붙
-                    allBranches.forEach((b: any) => {
-                        draftHtml += `<h2>${b.label}</h2><p>${b.description || ''}</p>`;
-                    });
-                }
+
+                    // 1개의 분량이 완성될 때마다 에디터 강제 업데이트 (실시간 타이핑 효과)
+                    setEditorContent(draftHtml);
+                    setEditorMarkdown(draftHtml);
+                    
+                    if (Platform.OS === 'web') {
+                        (window as any).__nexusDraft = draftHtml;
+                        (window as any).__nexusDraftExpiry = Date.now() + 5000;
+                        const editorEl = document.getElementById('nexus-editor-content');
+                        if (editorEl) editorEl.innerHTML = draftHtml;
+                    }
+                } // End of For loop
+
             } else if (!session.brainstorm_content) {
                 // No data at all — use template
                 draftHtml = templateToEditorHtml(mockTemplate, docTitle);
@@ -227,45 +229,35 @@ export const NexusEditView = () => {
             console.log('📝 Generated draft HTML length:', draftHtml.length);
 
             // ── DEFINITIVE STRATEGY: window global + interval watchdog ──
-            // This CANNOT be overwritten by React re-renders because it runs continuously
-            
-            // Step 1: Store in ref + React state
-            pendingDraftRef.current = draftHtml;
             setEditorContent(draftHtml);
             setEditorMarkdown(draftHtml);
             setDraftCompleted(true);
             setHasUnsavedChanges(true);
             
             if (Platform.OS === 'web') {
-                // Step 2: Write to window global (survives React re-renders)
                 (window as any).__nexusDraft = draftHtml;
-                (window as any).__nexusDraftExpiry = Date.now() + 5000; // 5 second window
+                (window as any).__nexusDraftExpiry = Date.now() + 5000; 
                 
-                // Step 3: Watchdog interval — re-injects every 200ms for 5 seconds
-                // This guarantees the draft always wins, even if React template overwrites it
                 const watchdog = setInterval(() => {
                     if (!(window as any).__nexusDraft) {
                         clearInterval(watchdog);
                         return;
                     }
                     if (Date.now() > (window as any).__nexusDraftExpiry) {
-                        console.log('📝 Watchdog: expiry reached, stopping');
                         (window as any).__nexusDraft = null;
                         clearInterval(watchdog);
                         return;
                     }
                     const editorEl = document.getElementById('nexus-editor-content');
                     if (editorEl) {
-                        const currentLen = editorEl.innerHTML.length;
                         const targetHtml = (window as any).__nexusDraft;
                         if (editorEl.innerHTML !== targetHtml) {
-                            console.log(`📝 Watchdog: injecting draft (current=${currentLen} target=${targetHtml.length})`);
                             editorEl.innerHTML = targetHtml;
                         }
                     }
                 }, 200);
                 
-                // Step 4: Also remount NotionEditor once
+                // Final remount NotionEditor once to clear state inconsistencies
                 setTimeout(() => {
                     setEditorKey(prev => prev + 1);
                 }, 300);
@@ -274,7 +266,7 @@ export const NexusEditView = () => {
             // Chat confirmation
             setChatMessages(prev => [...prev, {
                 role: 'assistant',
-                content: `✅ 초안 작성이 완료되었습니다! ${allBranches.length}개의 브레인스톰 섹션을 문서로 변환했습니다. 오른쪽 에디터 패널에 표시됩니다.`
+                content: `✅ 초안 작성이 완료되었습니다! 총 ${allBranches.length}개의 브레인스톰 섹션을 문서로 변환했습니다.`
             }]);
 
         } catch (err) {
