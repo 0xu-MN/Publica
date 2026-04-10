@@ -18,14 +18,14 @@ serve(async (req) => {
 
         if (!apiKey) throw new Error("GEMINI_API_KEY is missing");
 
-        // 안정성을 위해 15,000자 제한 (gemini-pro 최적화)
+        // 안정성을 위해 15,000자 제한
         const truncatedMarkdown = markdown ? markdown.substring(0, 15000) : "";
-        console.log(`🧠 [Brain] Processing ${truncatedMarkdown.length} chars using gemini-pro...`);
+        console.log(`🧠 [Brain] Processing ${truncatedMarkdown.length} chars using gemini-2.0-flash...`);
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // 범용적으로 사용 가능한 gemini-pro 모델로 변경 (404 에러 방지)
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        // gemini-2.0-flash (안정적, 구 gemini-pro 대체)
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         const prompt = `
     You are an expert startup strategist specializing in Korean government grants.
