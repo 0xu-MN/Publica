@@ -382,9 +382,11 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                             }];
                         }
                         const updated = [...prev];
+                        const existingIds = new Set((updated[0].branches || []).map((b: any) => b.id));
+                        const uniqueNewBranches = chatBranches.filter((b: any) => !existingIds.has(b.id));
                         updated[0] = {
                             ...updated[0],
-                            branches: [...(updated[0].branches || []), ...chatBranches]
+                            branches: [...(updated[0].branches || []), ...uniqueNewBranches]
                         };
                         return updated;
                     });
@@ -398,11 +400,13 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                             c.sourceColumnIndex === (colIdx !== -1 ? colIdx : 0) && c.parentIndex === bIdx
                         );
                         if (existingChildIdx !== -1) {
-                            // MERGE: append chat branches to existing child column
+                            // MERGE: append chat branches, filtering out duplicates by ID
                             const updated = [...prev];
+                            const existingIds = new Set((updated[existingChildIdx].branches || []).map((b: any) => b.id));
+                            const uniqueNewBranches = chatBranches.filter((b: any) => !existingIds.has(b.id));
                             updated[existingChildIdx] = {
                                 ...updated[existingChildIdx],
-                                branches: [...(updated[existingChildIdx].branches || []), ...chatBranches],
+                                branches: [...(updated[existingChildIdx].branches || []), ...uniqueNewBranches],
                             };
                             return updated;
                         }
@@ -696,11 +700,11 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                             c.sourceColumnIndex === colIdx && c.parentIndex === bIdx
                         );
                         if (existingChildIdx !== -1) {
-                            // MERGE: append Deep Dive branches to existing child column (preserve siblings)
+                            // REPLACE: Deep Dive replaces existing child branches (prevents duplication on repeat)
                             const updated = [...prev];
                             updated[existingChildIdx] = {
                                 ...updated[existingChildIdx],
-                                branches: [...(updated[existingChildIdx].branches || []), ...deepDiveBranches],
+                                branches: deepDiveBranches,
                             };
                             return updated;
                         }
@@ -760,11 +764,11 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
                             c.sourceColumnIndex === colIdx && c.parentIndex === bIdx
                         );
                         if (existingChildIdx !== -1) {
-                            // MERGE: append Branching results to existing child column (preserve siblings)
+                            // REPLACE: Branch replaces existing child branches (prevents duplication on repeat)
                             const updated = [...prev];
                             updated[existingChildIdx] = {
                                 ...updated[existingChildIdx],
-                                branches: [...(updated[existingChildIdx].branches || []), ...newBranches],
+                                branches: newBranches,
                             };
                             return updated;
                         }
