@@ -27,7 +27,7 @@ export const NexusEditView = () => {
     const [editorContent, setEditorContent] = useState('');
     const [editorMarkdown, setEditorMarkdown] = useState('');
     const [chatInput, setChatInput] = useState('');
-    const [chatMessages, setChatMessages] = useState<{ role: string; content: string }[]>([]);
+    const [chatMessages, setChatMessages] = useState<{ role: string; content: string; files?: {name: string; url: string}[] }[]>([]);
     const [chatLoading, setChatLoading] = useState(false);
     const [isLeftPanelOpen, setIsLeftPanelOpen] = useState(true);
     const [showSessionList, setShowSessionList] = useState(true);
@@ -510,10 +510,14 @@ ${userMsg}`;
             document.body.removeChild(a);
             setTimeout(() => {
                 window.URL.revokeObjectURL(url);
-            }, 1000);
+            }, 15000); // 비동기 차단 및 파일 용량을 대비해 파기 시간 넉넉히 15초 부여
             
-            alert(`🎉 ${isDocx ? 'DOCX' : 'HWPX'} 병합본 내보내기 성공!\n설명: AI 초안이 매핑된 파일이 다운로드 폴더에 저장되었습니다.`);
-            setChatMessages(prev => [...prev, { role: 'assistant', content: `✅ ${isDocx ? 'DOCX' : 'HWPX'} 자동 완성본 병합이 완료되어 다운로드 되었습니다!` }]);
+            alert(`🎉 ${isDocx ? 'DOCX' : 'HWPX'} 병합본 내보내기 성공!\n설명: AI 초안이 매핑된 파일이 다운로드 폴더에 자동 저장되었습니다.`);
+            setChatMessages(prev => [...prev, { 
+                role: 'assistant', 
+                content: `✅ ${isDocx ? 'DOCX' : 'HWPX'} 문서 매핑이 완료되었습니다. 혹시 브라우저 팝업 차단으로 인해 자동 다운로드가 안 되었다면, 아래 버튼을 눌러 수동으로 받아주세요. (링크는 15초간 유효합니다)`,
+                files: [{ name: safeName, url: url }]
+            }]);
         } catch (error: any) {
             console.error("Document Processing error:", error);
             alert(`문서 변환 실패: ${error.message}\n(Python 백엔드 서버가 켜져 있는지 메인 터미널을 확인해주세요)`);
@@ -733,12 +737,28 @@ ${userMsg}`;
                                     {chatMessages.map((msg, i) => (
                                         <View key={i} style={[styles.chatBubble, msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAI]}>
                                             {msg.role === 'assistant' && <Bot size={14} color="#818CF8" style={{ marginRight: 6, marginTop: 2 }} />}
-                                            <Text style={[
-                                                styles.chatBubbleText, 
-                                                msg.role === 'user' && { color: '#000000', fontWeight: '800' } // 사용자 폰트 블랙 및 볼드 처리
-                                            ]}>
-                                                {msg.content}
-                                            </Text>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={[
+                                                    styles.chatBubbleText, 
+                                                    msg.role === 'user' && { color: '#000000', fontWeight: '800' } // 사용자 폰트 블랙 및 볼드 처리
+                                                ]}>
+                                                    {msg.content}
+                                                </Text>
+                                                {/* Fallback 다운로드 링크 UI 제공 */}
+                                                {msg.files && msg.files.map((f, fi) => (
+                                                    <View key={fi} style={{ marginTop: 8, alignSelf: 'flex-start' }}>
+                                                        {Platform.OS === 'web' ? (
+                                                            <a href={f.url} download={f.name} style={{ display: 'flex', alignItems: 'center', gap: 4, textDecoration: 'none', backgroundColor: '#818CF8', padding: '6px 12px', borderRadius: 6, color: 'white', fontSize: 12, fontWeight: '700' }}>
+                                                                <Upload size={14} color="white" style={{ transform: [{ rotate: '180deg' }] }} /> {f.name} 다운로드
+                                                            </a>
+                                                        ) : (
+                                                            <View style={{ backgroundColor: '#818CF8', padding: 6, borderRadius: 6 }}>
+                                                                <Text style={{ color: 'white', fontSize: 12 }}>다운로드: {f.name}</Text>
+                                                            </View>
+                                                        )}
+                                                    </View>
+                                                ))}
+                                            </View>
                                         </View>
                                     ))}
                                     {chatLoading && (
