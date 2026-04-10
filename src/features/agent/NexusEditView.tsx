@@ -356,29 +356,30 @@ export const NexusEditView = () => {
             
             const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
             
-            const prompt = `당신은 대한민국 최고 수준의 공공/정부지원사업 사업계획서 대필 전문가(AI 에이전트)입니다.
-사용자의 요청에 따라 사업계획서를 직접 수정해 주어야 합니다.
+            const prompt = `당신은 대한민국 최고 수준의 공공/정부지원사업 사업계획서 대필 전문가이자 에디터 보조 AI입니다.
+사용자가 기존 사업계획서를 부분 수정해 달라고 요청했습니다.
 
-[작업 지시사항]
-1. 사용자의 요청이 원본 문서(현재 에디터 내용)의 특정 부분 수정/추가/삭제를 원한다면, 해당 부분을 정밀하게 반영하여 **전체 HTML 코드**를 다시 작성해 \`modified_html\` 필드에 담아주세요.
-2. 만약 수정 요청이 아니라 단순 질문이나 대화라면, \`modified_html\`은 null로 설정하세요.
-3. **[가장 중요]** \`modified_html\`안에는 절대로 마크다운(#, **)이나 인사말을 넣지 마세요! 반드시 <h1>, <h2>, <p>, <ul>, <table>, <thead>, <tbody>, <tr>, <th>, <td> 태그만을 사용한 **순수 HTML**로만 작성하세요.
-4. 경쟁사와 비교, 일정, 예산 계획, 기대효과 등 구조화가 필요한 부분은 **반드시 <table> 태그를 사용하여 깔끔한 표(Table)로 시각화** 하세요.
-5. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다. 코멘트나 마크다운 블록(\`\`\`json) 조차 넣지 말고 오직 중괄호 {} 로 시작하고 끝나는 JSON만 출력하세요.
+[가장 중요한 수정 원칙 - 엄격 준수]
+1. 타겟 수정: 사용자가 요청한 **특정 구역이나 특정 문단만** 집중적으로 자세하게 살을 붙이거나 수정하세요.
+2. 기존 내용 보존: 사용자가 언급하지 않은 **나머지 모든 기존 내용(섹션 제목, 기존 글, 구조 등)은 절대로 임의로 갈아엎거나 축약/삭제하지 마세요.** 원본을 100% 그대로 유지해야 합니다.
+3. 전체 문서 반환: 부분 수정된 내용을 기존 내용과 다시 합쳐서 **하나의 완성된 전체 HTML 코드**로 반환하세요. 이 코드가 에디터 전체를 덮어씌울 것이므로 기존에 있던 다른 구역이 누락되면 절대 안 됩니다.
+4. 순수 HTML: <h1>, <h2>, <p>, <table> 등 순수 HTML 태그만 사용하고, 마크다운 기호(#, **)는 쓰지 마세요.
+5. 반드시 아래의 순수 JSON 포맷으로만 응답해야 합니다. 어떤 코멘트도 앞뒤에 붙이지 마세요.
 
 응답 JSON 규격:
 {
-    "reply": "사용자에게 할 친절한 채팅 답변 (예: 네, 요청하신 대로 성장전략 표를 추가했습니다.)",
-    "modified_html": "HTML 코드 (수정이 필요 없는 경우 null)"
+    "reply": "사용자에게 할 친절한 채팅 답변 (예: 네, 요청하신 부분만 더 구체적으로 확장하여 텍스트를 보강했습니다. 나머지 부분은 원본을 유지했습니다.)",
+    "modified_html": "부분 수정이 반영된 전체 문서의 HTML 코드 문자열 (수정이 필요 없는 답변일 경우 null)"
 }
 
-[현재 에디터 내용 (HTML)]
+[현재 에디터 내용 (HTML 본문 원본)]
 ${editorContext}
 
 [관련 브레인스톰 데이터]
 ${brainstormContext}
 
-사용자 요청: ${userMsg}`;
+[사용자의 구체적 수정 요청사항]
+${userMsg}`;
 
             const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
                 method: 'POST',
@@ -732,7 +733,12 @@ ${brainstormContext}
                                     {chatMessages.map((msg, i) => (
                                         <View key={i} style={[styles.chatBubble, msg.role === 'user' ? styles.chatBubbleUser : styles.chatBubbleAI]}>
                                             {msg.role === 'assistant' && <Bot size={14} color="#818CF8" style={{ marginRight: 6, marginTop: 2 }} />}
-                                            <Text style={styles.chatBubbleText}>{msg.content}</Text>
+                                            <Text style={[
+                                                styles.chatBubbleText, 
+                                                msg.role === 'user' && { color: '#000000', fontWeight: '800' } // 사용자 폰트 블랙 및 볼드 처리
+                                            ]}>
+                                                {msg.content}
+                                            </Text>
                                         </View>
                                     ))}
                                     {chatLoading && (
@@ -1121,7 +1127,9 @@ const styles = StyleSheet.create({
         maxWidth: '90%',
     },
     chatBubbleUser: {
-        backgroundColor: '#7C3AED',
+        backgroundColor: 'rgba(124, 58, 237, 0.15)', // 가독성을 위해 연한 보라색 배경으로 조정
+        borderWidth: 1,
+        borderColor: 'rgba(124, 58, 237, 0.3)',
         alignSelf: 'flex-end',
     },
     chatBubbleAI: {
