@@ -47,6 +47,11 @@ export const NexusEditView = () => {
     const [draftBranchLabels, setDraftBranchLabels] = useState<string[]>([]); // 실제 브랜치 라벨 목록
     const [draftCompletedSteps, setDraftCompletedSteps] = useState<Set<number>>(new Set()); // 완료된 스텝 인덱스 집합
     const [hwpxLoading, setHwpxLoading] = useState(false);
+    // RFP 맞춤 생성 모달 상태
+    const [showRfpModal, setShowRfpModal] = useState(false);
+    const [rfpTitle, setRfpTitle] = useState('');
+    const [rfpText, setRfpText] = useState('');
+    const [rfpAnalyzing, setRfpAnalyzing] = useState(false);
     // 🔑 Key counter to force NotionEditor remount when content changes externally
     const [editorKey, setEditorKey] = useState(0);
     // 🔑 Ref that holds the definitive draft HTML — bypasses state batching issues
@@ -109,6 +114,72 @@ export const NexusEditView = () => {
             useProjectStore.getState().clearProject();
         };
     }, []);
+
+    // --- RFP / Notice Custom Flow Generator ---
+    const handleGenerateRfpFlow = async () => {
+        if (!rfpTitle.trim() || !rfpText.trim()) return alert("사업명과 공고문 내용을 모두 입력해주세요.");
+        setRfpAnalyzing(true);
+        try {
+            const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+            const prompt = `사용자가 아래의 지원사업 공고문을 텍스트로 붙여넣었습니다.
+이 공고문의 핵심 [평가 기준]과 [필수 제출 항목]을 완벽히 심층 분석하세요.
+그리고 사용자가 사업계획서 작성을 준비할 수 있도록, PSST(문제인식, 실현가능성, 성장전략, 팀구성) 프레임워크에 맞춘 4개의 컬럼 구조에 들어갈 세부 '브레인스토밍 질문 카드(Branch)'들을 JSON 포맷으로 생성해주세요.
+
+각 브랜치의 label(제목)에는 해당 공고에서 주로 가점이나 핵심 키워드로 뽑고 있는 특징이 즉시 드러나도록 작성하고, description(설명)에는 사용자가 이 브랜치 메모에 무엇을 써야 할지(어떻게 써야만 합격률이 올라갈지 평가기준과 연계하여) 2~3줄로 안내해주세요.
+
+반드시 오직 아래 JSON 형태(배열)로만 응답하세요. 어떠한 앞뒤 텍스트나 마크다운 블록(\`\`\`)도 붙이지 마세요!
+[
+  {
+    "id": "col-1",
+    "title": "문제인식 (Problem)",
+    "color": "#EF4444",
+    "branches": [
+      { "id": "b-1", "label": "과제의 시급성 및 공고 부합성", "description": "공고에서 요구하는 '핵심 키워드'에 귀하의 과제가 왜 부합하며 지금 시급한지 적어주세요." }
+    ]
+  },
+  { "id": "col-2", "title": "실현가능성 (Solution)", "color": "#3B82F6", "branches": [] },
+  { "id": "col-3", "title": "성장전략 (Scale-up)", "color": "#10B981", "branches": [] },
+  { "id": "col-4", "title": "팀 구성 (Team)", "color": "#F59E0B", "branches": [] }
+]
+
+[공고문 텍스트]
+${rfpText}`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${geminiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                    generationConfig: { temperature: 0.2 }
+                })
+            });
+
+            const data = await response.json();
+            const aiResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+            const jsonMatch = aiResponseText.match(/\[\s*\{[\s\S]*\}\s*\]/);
+            
+            if (!jsonMatch) throw new Error("JSON 파싱 에러");
+            
+            const generatedColumns = JSON.parse(jsonMatch[0]);
+            
+            // Save as a new session!
+            const success = await saveSession(rfpTitle + ' (맞춤형 작성 준비)', 'edit', generatedColumns, []);
+            
+            if (success) {
+                setShowRfpModal(false);
+                setRfpTitle('');
+                setRfpText('');
+                alert("🎉 공고 맞춤형 초안 작성이 준비되었습니다! 생성된 브랜치 질문 카드에 답변을 채우고 AI 자동 작성을 실행하세요.");
+            } else {
+                throw new Error("세션 저장 실패");
+            }
+        } catch (e: any) {
+            console.error(e);
+            alert("공고문 분석에 실패했습니다. 다시 시도해주세요. " + e?.message);
+        } finally {
+            setRfpAnalyzing(false);
+        }
+    };
 
     // --- AI Auto Draft Generation (100% LOCAL — no gateway dependency) ---
     const generateAutoDraft = async (session: any) => {
@@ -597,6 +668,59 @@ ${userMsg}`;
                 </View>
             </View>
 
+            {/* ─── RFP 분기 모달 (Option B) ─── */}
+            {showRfpModal && (
+                <View style={styles.draftLoadingOverlay as any}>
+                    <View style={{ backgroundColor: '#FFF', width: '90%', maxWidth: 640, borderRadius: 16, padding: 24, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                                <Sparkles size={20} color="#7C3AED" />
+                                <Text style={{ fontSize: 18, fontWeight: '800', color: '#27272a' }}>AI 공고 맞춤형 분석</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => !rfpAnalyzing && setShowRfpModal(false)}>
+                                <X size={20} color="#94A3B8" />
+                            </TouchableOpacity>
+                        </View>
+                        <Text style={{ color: '#64748B', fontSize: 13, marginBottom: 16, lineHeight: 20 }}>
+                            지원하고자 하는 사업의 공고문이나 평가 기준을 붙여넣으세요. AI가 핵심 평가 지표를 완벽히 분석하여, 합격률을 폭발적으로 높일 수 있는 **맞춤형 작성 가이드 카드**를 자동 생성해 드립니다.
+                        </Text>
+                        
+                        <View style={{ marginBottom: 12 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 6 }}>사업명 (프로젝트 이름)</Text>
+                            <TextInput
+                                style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, backgroundColor: '#F8FAFC', fontSize: 14 }}
+                                placeholder="예: 2024 예비창업패키지 지원사업"
+                                value={rfpTitle}
+                                onChangeText={setRfpTitle}
+                                editable={!rfpAnalyzing}
+                            />
+                        </View>
+                        <View style={{ marginBottom: 24 }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#334155', marginBottom: 6 }}>공고문 내용 (모집요강 본문, 자격 요건 등 붙여넣기)</Text>
+                            <textarea
+                                style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 12, backgroundColor: '#F8FAFC', fontSize: 13, minHeight: 200, resize: 'vertical' } as any}
+                                placeholder="공고의 평가 항목, 핵심 우대사항, 필수 요건 등의 텍스트를 쭉 복사해서 붙여넣으세요..."
+                                value={rfpText}
+                                onChange={(e: any) => setRfpText(e.target.value)}
+                                disabled={rfpAnalyzing}
+                            />
+                        </View>
+                        
+                        <TouchableOpacity
+                            style={{ backgroundColor: '#7C3AED', paddingVertical: 14, borderRadius: 10, alignItems: 'center', opacity: rfpAnalyzing ? 0.7 : 1 }}
+                            onPress={handleGenerateRfpFlow}
+                            disabled={rfpAnalyzing}
+                        >
+                            {rfpAnalyzing ? (
+                                <ActivityIndicator size="small" color="#FFF" />
+                            ) : (
+                                <Text style={{ color: '#FFF', fontWeight: '800', fontSize: 15 }}>공고문 분석 및 맞춤 플로우 생성하기</Text>
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            )}
+
             {/* ─── Main Content ─── */}
             <View style={styles.main}>
                 {/* ─── Left Panel: Brainstorm + Chat ─── */}
@@ -630,10 +754,24 @@ ${userMsg}`;
                             {/* Session List or Brainstorm Viewer */}
                             {showSessionList ? (
                                 <View style={styles.sessionListContainer}>
-                                    <View style={styles.sectionHeader}>
-                                        <FolderOpen size={16} color="#818CF8" />
-                                        <Text style={styles.sectionTitle}>브레인스톰 프로젝트</Text>
+                                    <View style={[styles.sectionHeader, { justifyContent: 'space-between' }]}>
+                                        <View style={{flexDirection: 'row', alignItems: 'center', gap: 6}}>
+                                            <FolderOpen size={16} color="#818CF8" />
+                                            <Text style={styles.sectionTitle}>브레인스톰 프로젝트</Text>
+                                        </View>
                                     </View>
+                                    
+                                    <TouchableOpacity 
+                                        style={{ marginHorizontal: 16, marginBottom: 16, backgroundColor: 'rgba(124, 58, 237, 0.1)', borderWidth: 1, borderColor: '#7C3AED', borderRadius: 8, padding: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}
+                                        onPress={() => setShowRfpModal(true)}
+                                    >
+                                        <Upload size={16} color="#7C3AED" />
+                                        <View>
+                                            <Text style={{ color: '#7C3AED', fontSize: 13, fontWeight: '800' }}>📄 새 공고 맞춤형 초안 자동 세팅</Text>
+                                            <Text style={{ color: '#64748B', fontSize: 11, marginTop: 2 }}>공고문을 붙여넣으면 합격 기준에 맞춘 가이드를 생성합니다</Text>
+                                        </View>
+                                    </TouchableOpacity>
+
                                     <ScrollView style={styles.sessionScroll}>
                                         {sessions.length === 0 ? (
                                             <View style={styles.emptyState}>
