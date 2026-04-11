@@ -46,7 +46,7 @@ const Footer = () => {
     return (
         <View 
             style={{ backgroundColor: '#FDF8F3' }}
-            className="w-full border-t border-slate-100 py-20 px-6 items-center"
+            className="w-full border-t border-slate-100 py-12 px-6 items-center"
         >
             <View className="max-w-[1400px] w-full flex-col md:flex-row justify-between items-start gap-8">
                 <View className="flex-1">
@@ -81,7 +81,7 @@ const Footer = () => {
                 </View>
             </View>
 
-            <View className="w-full max-w-[1400px] mt-10 pt-6 border-t border-slate-200 dark:border-white/5 flex-row justify-between items-center">
+            <View className="w-full max-w-[1400px] mt-8 pt-6 border-t border-slate-200 dark:border-white/5 flex-row justify-between items-center">
                 <Text className="text-slate-400 dark:text-slate-500 text-[10px] font-medium">
                     © {new Date().getFullYear()} Publica Inc. All rights reserved.
                 </Text>
