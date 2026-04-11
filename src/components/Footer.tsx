@@ -44,7 +44,10 @@ const Footer = () => {
     };
 
     return (
-        <View className="w-full bg-[#FDF8F3] dark:bg-[#0F172A] border-t border-slate-100 dark:border-white/[0.03] py-20 px-6 items-center">
+        <View 
+            style={{ backgroundColor: '#FDF8F3' }}
+            className="w-full border-t border-slate-100 py-20 px-6 items-center"
+        >
             <View className="max-w-[1400px] w-full flex-col md:flex-row justify-between items-start gap-8">
                 <View className="flex-1">
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 24 }}>
