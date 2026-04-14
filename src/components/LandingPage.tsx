@@ -148,7 +148,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                     resizeMode="cover"
                 />
                 <LinearGradient
-                    colors={['rgba(253,248,243,0.97)', 'rgba(245,243,255,0.88)', 'rgba(253,248,243,0.97)']}
+                    colors={['rgba(253,248,243,1)', 'rgba(253,248,243,0.8)', 'rgba(253,248,243,1)']}
                     start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
                     style={StyleSheet.absoluteFill}
                 />
@@ -398,7 +398,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    container: { flex: 1, backgroundColor: '#FDF8F3' },
 
     /* HERO */
     heroSection: { minHeight: 700, alignItems: 'center', justifyContent: 'center', paddingVertical: 100, paddingHorizontal: 32, position: 'relative', overflow: 'hidden' },

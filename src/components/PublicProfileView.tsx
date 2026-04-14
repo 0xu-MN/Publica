@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
-import { X, Briefcase, Award, Activity, Users, Heart, MessageCircle } from 'lucide-react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
+import { X, Briefcase, Award, Activity, Users, MessageCircle, UserCheck, UserPlus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 interface PublicProfileViewProps {
@@ -38,78 +39,151 @@ interface UserProfile {
 
 export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
-    const [followers, setFollowers] = useState(1240);
-    const [likes, setLikes] = useState(482);
+    const [loading, setLoading] = useState(true);
+    const [followers, setFollowers] = useState(0);
+    const [isFollowing, setIsFollowing] = useState(false);
+    const [followLoading, setFollowLoading] = useState(false);
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
     useEffect(() => {
-        loadUserProfile();
+        supabase.auth.getUser().then(({ data }) => {
+            setCurrentUserId(data.user?.id || null);
+        });
+    }, []);
+
+    useEffect(() => {
+        if (userId) loadUserProfile();
     }, [userId]);
 
+    useEffect(() => {
+        if (currentUserId && userId) checkFollowStatus();
+    }, [currentUserId, userId]);
+
     const loadUserProfile = async () => {
+        setLoading(true);
         try {
-            // In a real app, fetch user profile by userId from backend/AsyncStorage
-            // For now, use mock data
-            const mockProfile: UserProfile = {
-                nickname: 'hong56800',
-                realName: '안녕안녕',
-                bio: '전자기술로 안녕하세요! 나누고 있는 AI 서비스를 기획하고 개발합니다. 고객 경험을 중심으로 데이터 기반의 혁신적인 솔루션을 만듭니다.',
-                imageUrl: '',
-                job: 'AI/Computer Science',
-                interests: ['AI/ML', 'Quantum', 'FinTech', 'Biotech'],
-                careers: [
-                    {
-                        id: '1',
-                        company: 'nollyungwoo 회사1(메인)',
-                        role: '고객대리인',
-                        period: '2019.04 - 현재(진행중)',
-                        description: 'AI 기반 고객 서비스 플랫폼 개발 및 운영, 데이터 분석을 통한 서비스 개선'
-                    },
-                    {
-                        id: '2',
-                        company: 'nollyungwoo 회사2(경력)',
-                        role: '선임개발자',
-                        period: '2016.03 - 2019.03',
-                        description: '웹 애플리케이션 개발 및 시스템 아키텍처 설계'
-                    }
-                ],
-                qualifications: [
-                    {
-                        id: '1',
-                        type: 'certification',
-                        title: '정보처리기사',
-                        issuer: '한국산업인력공단',
-                        date: '2018.06'
-                    },
-                    {
-                        id: '2',
-                        type: 'activity',
-                        title: 'AI 스타트업 멘토링',
-                        issuer: '서울창업허브',
-                        date: '2022.01 - 2023.12'
-                    },
-                    {
-                        id: '3',
-                        type: 'award',
-                        title: '우수 AI 서비스 대상',
-                        issuer: 'AI 협회',
-                        date: '2023.11'
-                    }
-                ]
+            // Supabase profiles 테이블에서 실제 데이터 조회
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', userId)
+                .single();
+
+            if (error || !data) throw new Error('프로필을 불러올 수 없습니다.');
+
+            // AsyncStorage에서 추가 정보 (경력, 자격증 등) 조회
+            let asyncProfile: any = {};
+            try {
+                const stored = await AsyncStorage.getItem(`public_profile_${userId}`);
+                if (stored) asyncProfile = JSON.parse(stored);
+            } catch { /* 없으면 기본값 사용 */ }
+
+            const mapped: UserProfile = {
+                nickname: data.full_name || data.id?.slice(0, 8) || '익명',
+                realName: data.full_name || '',
+                bio: data.item_one_liner || data.item_description || asyncProfile.bio || '',
+                imageUrl: data.avatar_url || '',
+                job: data.industry || data.major_category || data.expertise || asyncProfile.job || '',
+                interests: data.research_keywords || asyncProfile.interests || [],
+                careers: asyncProfile.careers || [],
+                qualifications: asyncProfile.qualifications || [],
             };
 
-            setProfile(mockProfile);
+            setProfile(mapped);
+            setFollowers(data.followers_count || 0);
         } catch (e) {
-            console.error('Failed to load user profile', e);
+            console.error('프로필 로드 실패:', e);
+            // 최소한의 fallback — userId 기반
+            setProfile({
+                nickname: userId.slice(0, 8),
+                realName: '',
+                bio: '',
+                imageUrl: '',
+                job: '',
+                interests: [],
+                careers: [],
+                qualifications: [],
+            });
+        } finally {
+            setLoading(false);
         }
     };
 
-    if (!profile) {
+    const checkFollowStatus = async () => {
+        if (!currentUserId || currentUserId === userId) return;
+        try {
+            const { data } = await supabase
+                .from('follows')
+                .select('id')
+                .eq('follower_id', currentUserId)
+                .eq('following_id', userId)
+                .maybeSingle();
+            setIsFollowing(!!data);
+        } catch {
+            // follows 테이블 없으면 AsyncStorage fallback
+            const stored = await AsyncStorage.getItem(`following_${userId}`);
+            setIsFollowing(stored === 'true');
+        }
+    };
+
+    const handleFollowToggle = async () => {
+        if (!currentUserId || currentUserId === userId || followLoading) return;
+        setFollowLoading(true);
+        try {
+            if (isFollowing) {
+                // 언팔로우
+                await supabase.from('follows').delete()
+                    .eq('follower_id', currentUserId)
+                    .eq('following_id', userId);
+                await supabase.from('profiles')
+                    .update({ followers_count: Math.max(0, followers - 1) })
+                    .eq('id', userId);
+                setFollowers(f => Math.max(0, f - 1));
+                setIsFollowing(false);
+                await AsyncStorage.setItem(`following_${userId}`, 'false');
+            } else {
+                // 팔로우
+                await supabase.from('follows').insert({
+                    follower_id: currentUserId,
+                    following_id: userId,
+                    created_at: new Date().toISOString(),
+                });
+                await supabase.from('profiles')
+                    .update({ followers_count: followers + 1 })
+                    .eq('id', userId);
+                setFollowers(f => f + 1);
+                setIsFollowing(true);
+                await AsyncStorage.setItem(`following_${userId}`, 'true');
+            }
+        } catch (e) {
+            // DB 에러시 로컬 상태만 토글
+            const next = !isFollowing;
+            setIsFollowing(next);
+            setFollowers(f => next ? f + 1 : Math.max(0, f - 1));
+            await AsyncStorage.setItem(`following_${userId}`, String(next));
+        } finally {
+            setFollowLoading(false);
+        }
+    };
+
+    const handleMessage = () => {
+        Alert.alert(
+            '메시지 기능',
+            '메시지 기능은 곧 출시될 예정입니다.\n팔로우하고 업데이트를 기다려주세요!',
+            [{ text: '확인' }]
+        );
+    };
+
+    if (loading) {
         return (
-            <View className="flex-1 bg-[#020617] items-center justify-center">
-                <Text className="text-slate-400">Loading...</Text>
+            <View className="flex-1 bg-[#020617] items-center justify-center gap-3">
+                <ActivityIndicator size="large" color="#818CF8" />
+                <Text className="text-slate-400 text-sm">프로필 불러오는 중...</Text>
             </View>
         );
     }
+
+    if (!profile) return null;
 
     const certifications = profile.qualifications.filter(q => q.type === 'certification');
     const activities = profile.qualifications.filter(q => q.type === 'activity');
@@ -155,13 +229,6 @@ export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) =
                             </View>
                             <Text className="text-slate-500 text-xs">팔로워</Text>
                         </View>
-                        <View className="items-center">
-                            <View className="flex-row items-center gap-1.5 mb-1">
-                                <Heart size={16} color="#94A3B8" />
-                                <Text className="text-white text-xl font-bold">{likes.toLocaleString()}</Text>
-                            </View>
-                            <Text className="text-slate-500 text-xs">좋아요</Text>
-                        </View>
                     </View>
 
                     {/* Interests */}
@@ -179,17 +246,38 @@ export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) =
                     )}
 
                     {/* Action Buttons */}
-                    <View className="gap-3">
-                        <TouchableOpacity className="bg-blue-600 py-4 rounded-2xl items-center shadow-lg shadow-blue-500/30">
-                            <Text className="text-white font-bold text-base">팔로우</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity className="bg-[#0F172A] py-4 rounded-2xl items-center border border-white/10">
-                            <View className="flex-row items-center gap-2">
-                                <MessageCircle size={18} color="white" />
-                                <Text className="text-white font-bold text-base">메시지 보내기</Text>
-                            </View>
-                        </TouchableOpacity>
-                    </View>
+                    {currentUserId !== userId && (
+                        <View className="gap-3">
+                            <TouchableOpacity
+                                onPress={handleFollowToggle}
+                                disabled={followLoading}
+                                className={`py-4 rounded-2xl items-center ${isFollowing ? 'bg-white/10 border border-white/20' : 'bg-blue-600 shadow-lg'}`}
+                            >
+                                {followLoading ? (
+                                    <ActivityIndicator size="small" color={isFollowing ? '#94A3B8' : 'white'} />
+                                ) : (
+                                    <View className="flex-row items-center gap-2">
+                                        {isFollowing
+                                            ? <UserCheck size={18} color="#94A3B8" />
+                                            : <UserPlus size={18} color="white" />
+                                        }
+                                        <Text className={`font-bold text-base ${isFollowing ? 'text-slate-400' : 'text-white'}`}>
+                                            {isFollowing ? '팔로잉' : '팔로우'}
+                                        </Text>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleMessage}
+                                className="bg-[#0F172A] py-4 rounded-2xl items-center border border-white/10"
+                            >
+                                <View className="flex-row items-center gap-2">
+                                    <MessageCircle size={18} color="white" />
+                                    <Text className="text-white font-bold text-base">메시지 보내기</Text>
+                                </View>
+                            </TouchableOpacity>
+                        </View>
+                    )}
                 </ScrollView>
             </View>
 

@@ -5,7 +5,7 @@ import { ArrowRight, Sparkles, AlertCircle, Briefcase, Home, RefreshCcw, Users, 
 import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cancelAnimation } from 'react-native-reanimated';
 import Animated from 'react-native-reanimated';
 import { fetchGrants } from '../services/grants';
-import { calculateGrantScore } from '../utils/scoring';
+import { getTopRecommendedGrants } from '../utils/scoring';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../contexts/AuthContext';
 import Footer from './Footer';
@@ -70,30 +70,17 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
         try {
             // 1. Fetch & Score Grants
             const allGrants = await fetchGrants();
-            let scoredGrants = allGrants.map(g => ({
-                ...g,
-                // If profile is not loaded yet, score is 0
-                score: profile ? calculateGrantScore(g, profile) : 0
-            }));
-
-            // Sort by Score DESC
-            scoredGrants.sort((a, b) => b.score - a.score);
-
-            // Removed strict year filtering that was accidentally wiping out crawled API data due to format parsing issues.
-            const activeGrants = scoredGrants;
+            const recommended = getTopRecommendedGrants(allGrants, profile, 10);
 
             // Set Top 2 for the Main Cards
-            let topTwo = activeGrants.slice(0, 2);
-            setTopGrants(topTwo);
+            setTopGrants(recommended.slice(0, 2));
 
             // Set Carousel items (Projects)
-            let rndApps = activeGrants.filter(g => g.grant_type === 'project' || !g.grant_type);
-            rndApps = rndApps.slice(0, 5);
+            const rndApps = recommended.filter(g => g.grant_type === 'project' || !g.grant_type).slice(0, 5);
             setGovPrograms(rndApps);
 
             // Set Funding items (Strictly Subsidies)
-            let fundApps = activeGrants.filter(g => g.grant_type === 'subsidy');
-            fundApps = fundApps.slice(0, 5);
+            const fundApps = recommended.filter(g => g.grant_type === 'subsidy').slice(0, 5);
             setFundingPrograms(fundApps);
 
 

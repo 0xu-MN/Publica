@@ -1,6 +1,6 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { View, Platform } from 'react-native';
 import { Home, FlaskConical, TrendingUp, User, Heart } from 'lucide-react-native';
 
@@ -15,6 +15,14 @@ import { ActivityIndicator } from 'react-native';
 
 const Tab = createBottomTabNavigator();
 
+const MyTheme = {
+    ...DefaultTheme,
+    colors: {
+        ...DefaultTheme.colors,
+        background: '#FDF8F3',
+    },
+};
+
 export const RootNavigator = () => {
     const { session, profileComplete, loading } = useAuth();
 
@@ -27,7 +35,10 @@ export const RootNavigator = () => {
     }
 
     return (
-        <NavigationContainer documentTitle={{ formatter: () => 'Publica' }}>
+        <NavigationContainer 
+            documentTitle={{ formatter: () => 'Publica' }}
+            theme={MyTheme}
+        >
             <FeedScreen />
         </NavigationContainer>
     );

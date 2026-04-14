@@ -23,16 +23,17 @@ export const useSessionManager = (userId: string | undefined) => {
     }, [userId]);
 
     // 2. 저장하기 (Auto-Save or Manual Save) — Flow용
-    // 🌟 editorContent, editorMarkdown 파라미터 추가
     const saveSession = async (
-        title: string, 
-        mode: string, 
-        columns: any[], 
-        chatHistory: any[], 
-        pdfUrl?: string, 
+        title: string,
+        mode: string,
+        columns: any[],
+        chatHistory: any[],
+        pdfUrl?: string,
         brainstormContent?: string,
         editorContent?: string,
-        editorMarkdown?: string
+        editorMarkdown?: string,
+        announcementAnalysis?: any,
+        announcementText?: string,
     ) => {
         if (!userId) return;
 
@@ -45,13 +46,17 @@ export const useSessionManager = (userId: string | undefined) => {
             updated_at: new Date().toISOString()
         };
 
-        const extendedPayload = {
+        const extendedPayload: any = {
             ...payload,
             pdf_url: pdfUrl || null,
             brainstorm_content: brainstormContent || '',
             editor_content: editorContent || null,
-            editor_markdown: editorMarkdown || null
+            editor_markdown: editorMarkdown || null,
         };
+
+        // 공고 분석 결과 저장 (SQL 마이그레이션 완료된 컬럼)
+        if (announcementAnalysis) extendedPayload.announcement_analysis = announcementAnalysis;
+        if (announcementText) extendedPayload.announcement_text = announcementText.slice(0, 5000);
 
         let result;
         if (currentSessionId) {
@@ -86,10 +91,10 @@ export const useSessionManager = (userId: string | undefined) => {
             setCurrentSessionId(result.data[0].id);
             fetchSessions();
             console.log("Session Saved Successfully!");
-            return true;
+            return result.data[0];
         }
 
-        return false;
+        return null;
     };
 
     // 2-B. 에디터 콘텐츠 저장 (NEXUS-Edit용)

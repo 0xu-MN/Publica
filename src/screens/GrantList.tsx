@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicat
 import { ChevronLeft, Info, Zap, Filter, Search, ArrowRight, Share2, Bookmark, Sparkles, ExternalLink, FileText, X } from 'lucide-react-native';
 import { fetchGrants, Grant } from '../services/grants';
 import { useAuth } from '../contexts/AuthContext';
-import { calculateGrantScore } from '../utils/scoring';
+import { calculateGrantScore, getTopRecommendedGrants } from '../utils/scoring';
 import { Icons } from '../utils/icons';
 
 interface GrantListProps {
@@ -20,6 +20,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
     const [regionFilter, setRegionFilter] = useState<string>('All');
     const [searchQuery, setSearchQuery] = useState<string>('');
     const [selectedGrant, setSelectedGrant] = useState<Grant | null>(null);
+    const [showFilters, setShowFilters] = useState(false); // 필터 접기/펼치기
     const detailPanelWidth = useRef(new Animated.Value(0)).current;
     const { user, profile } = useAuth();
 
@@ -65,6 +66,11 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
     };
 
     const getSortedGrants = () => {
+        // AI 추천 탭: 공유 유틸로 동일한 순서 보장
+        if (activeTab === 'Rec') {
+            return getTopRecommendedGrants(grants, profile, 50);
+        }
+
         let filtered = grants.filter(g => filter === 'All' || g.category === filter);
 
         // Region filter
@@ -255,7 +261,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Sorting & Filter Bar */}
+                    {/* 검색 + 필터 바 — 항상 표시되는 부분은 최소화 */}
                     <View style={styles.filterContainer}>
                         {/* Search Bar */}
                         <View style={styles.searchContainer}>
@@ -272,52 +278,64 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                                     <X size={16} color="#94A3B8" />
                                 </TouchableOpacity>
                             )}
-                        </View>
-
-                        <View style={styles.sortRow}>
-                            <TouchableOpacity onPress={() => setSortOption('match')} style={[styles.sortChip, sortOption === 'match' && styles.sortChipActive]}>
-                                <Text style={[styles.sortText, sortOption === 'match' && styles.sortTextActive]}>매칭률 높은순</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => setSortOption('deadline')} style={[styles.sortChip, sortOption === 'deadline' && styles.sortChipActive]}>
-                                <Text style={[styles.sortText, sortOption === 'deadline' && styles.sortTextActive]}>마감 임박순</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity onPress={() => setSortOption('recent')} style={[styles.sortChip, sortOption === 'recent' && styles.sortChipActive]}>
-                                <Text style={[styles.sortText, sortOption === 'recent' && styles.sortTextActive]}>최근 공고순</Text>
+                            <TouchableOpacity
+                                onPress={() => setShowFilters(v => !v)}
+                                style={{ marginLeft: 8, paddingHorizontal: 10, paddingVertical: 6, backgroundColor: showFilters ? '#7C3AED' : '#F1F5F9', borderRadius: 8 }}
+                            >
+                                <Text style={{ color: showFilters ? '#FFF' : '#475569', fontSize: 12, fontWeight: '700' }}>
+                                    {showFilters ? '필터 닫기' : '필터'}
+                                </Text>
                             </TouchableOpacity>
                         </View>
 
-                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 10 }}>
-                            {['All', 'R&D', 'Commercialization', 'Voucher', 'Policy Fund'].map((cat) => (
-                                <TouchableOpacity
-                                    key={cat}
-                                    style={[styles.filterChip, filter === cat && styles.filterChipActive]}
-                                    onPress={() => setFilter(cat as any)}
-                                >
-                                    <Text style={[styles.filterChipText, filter === cat && styles.filterChipTextActive]}>
-                                        {cat === 'All' ? '전체' : cat === 'Commercialization' ? '사업화' : cat === 'Voucher' ? '바우처' : cat === 'Policy Fund' ? '정책자금' : cat}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </ScrollView>
+                        {/* 접힌 필터 영역 */}
+                        {showFilters && (
+                            <View>
+                                <View style={styles.sortRow}>
+                                    {[
+                                        { key: 'match', label: '매칭률 높은순' },
+                                        { key: 'deadline', label: '마감 임박순' },
+                                        { key: 'recent', label: '최근 공고순' },
+                                    ].map(opt => (
+                                        <TouchableOpacity
+                                            key={opt.key}
+                                            onPress={() => setSortOption(opt.key as any)}
+                                            style={[styles.sortChip, sortOption === opt.key && styles.sortChipActive]}
+                                        >
+                                            <Text style={[styles.sortText, sortOption === opt.key && styles.sortTextActive]}>{opt.label}</Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
 
-                        {/* Region Filter (Wrapped Grid instead of Horizontal Scroll) */}
-                        <View style={styles.regionGrid}>
-                            {['All', '전국', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map((reg) => (
-                                <TouchableOpacity
-                                    key={reg}
-                                    style={[
-                                        styles.filterChip,
-                                        { marginBottom: 8 },
-                                        regionFilter === reg && { backgroundColor: '#7C3AED', borderColor: '#7C3AED' }
-                                    ]}
-                                    onPress={() => setRegionFilter(reg)}
-                                >
-                                    <Text style={[styles.filterChipText, regionFilter === reg && styles.filterChipTextActive]}>
-                                        {reg === 'All' ? '📍 전체 지역' : reg}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 8 }}>
+                                    {['All', 'R&D', 'Commercialization', 'Voucher', 'Policy Fund'].map((cat) => (
+                                        <TouchableOpacity
+                                            key={cat}
+                                            style={[styles.filterChip, filter === cat && styles.filterChipActive]}
+                                            onPress={() => setFilter(cat as any)}
+                                        >
+                                            <Text style={[styles.filterChipText, filter === cat && styles.filterChipTextActive]}>
+                                                {cat === 'All' ? '전체' : cat === 'Commercialization' ? '사업화' : cat === 'Voucher' ? '바우처' : cat === 'Policy Fund' ? '정책자금' : cat}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 4 }}>
+                                    {['All', '전국', '서울', '경기', '인천', '부산', '대구', '광주', '대전', '울산', '세종', '강원', '충북', '충남', '전북', '전남', '경북', '경남', '제주'].map((reg) => (
+                                        <TouchableOpacity
+                                            key={reg}
+                                            style={[styles.filterChip, regionFilter === reg && { backgroundColor: '#7C3AED', borderColor: '#7C3AED' }]}
+                                            onPress={() => setRegionFilter(reg)}
+                                        >
+                                            <Text style={[styles.filterChipText, regionFilter === reg && styles.filterChipTextActive]}>
+                                                {reg === 'All' ? '📍 전체 지역' : reg}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </ScrollView>
+                            </View>
+                        )}
                     </View>
 
                     {loading ? (
@@ -475,7 +493,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24, 
         borderBottomWidth: 1, 
         borderColor: '#E2E8F0', 
-        backgroundColor: '#FFFFFF', 
+        backgroundColor: '#FDF8F3', 
         width: '100%',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },

@@ -7,9 +7,6 @@ Two modes:
   2. HEURISTIC MODE: For unrecognized forms, fallback to keyword-scanning heuristics.
 """
 import docx
-import os
-import tempfile
-import json
 import re
 from bs4 import BeautifulSoup
 from docx.document import Document
@@ -17,10 +14,9 @@ from docx.oxml.table import CT_Tbl
 from docx.oxml.text.paragraph import CT_P
 from docx.table import Table, _Cell
 from docx.text.paragraph import Paragraph
-from docx.shared import Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_LINE_SPACING
-from docx.enum.table import WD_ROW_HEIGHT_RULE
-from template_registry import detect_template, normalize_section_key, get_unique_cells, SECTION_ALIASES
+from docx.shared import Pt
+from docx.enum.text import WD_LINE_SPACING
+from template_registry import detect_template, normalize_section_key, get_unique_cells, analyze_template_with_ai
 
 
 # ─────────────────────────────────────────────
@@ -504,37 +500,152 @@ def _fix_table_xml(doc):
 
 
 # ─────────────────────────────────────────────
+# MODE 3: AI Dynamic Fill (처음 보는 양식 전용)
+# ─────────────────────────────────────────────
+
+def ai_dynamic_fill(doc, input_path: str, payload_html: str, output_path: str, gemini_api_key: str, announcement_sections: list = None) -> bool:
+    """
+    AI가 양식 구조를 분석하여 자동으로 섹션 매핑을 생성하고 내용을 삽입.
+    처음 보는 모든 양식에 대응 가능.
+    """
+    try:
+        template_config = analyze_template_with_ai(doc, input_path, gemini_api_key, announcement_sections)
+        if not template_config:
+            print("⚠️ AI 동적 분석 실패 — Heuristic 모드로 전환")
+            return False
+
+        print(f"🤖 AI 동적 매핑 사용: {template_config.get('_template_name', 'Unknown')}")
+
+        # AI가 생성한 섹션 매핑의 키 이름을 normalize하여 HTML 파싱 결과와 매칭
+        sections, all_elements = parse_html_into_sections(payload_html)
+        style_config = template_config.get("style", {})
+        section_map = template_config.get("sections", {})
+        mapped_keys = set()
+
+        print(f"📋 AI 분석 섹션: {list(section_map.keys())}")
+        print(f"📋 HTML 파싱 섹션: {list(sections.keys())}")
+
+        for ai_section_key, coord in section_map.items():
+            t_idx = coord.get("table_index", 0)
+            r_idx = coord.get("content_row", 0)
+            c_idx = coord.get("content_col", 1)
+
+            if t_idx >= len(doc.tables):
+                print(f"⚠️ 테이블 {t_idx} 범위 초과")
+                continue
+
+            table = doc.tables[t_idx]
+            if r_idx >= len(table.rows):
+                print(f"⚠️ 행 {r_idx} 범위 초과 (테이블 {t_idx})")
+                continue
+
+            unique_cells = get_unique_cells(table.rows[r_idx])
+            if c_idx >= len(unique_cells):
+                print(f"⚠️ 열 {c_idx} 범위 초과")
+                continue
+
+            target_cell = unique_cells[c_idx]
+
+            # AI 섹션 키 → HTML 섹션 키 매핑 시도 (normalize 사용)
+            # 1) 직접 매칭
+            matched_html_key = None
+            if ai_section_key in sections:
+                matched_html_key = ai_section_key
+            else:
+                # 2) normalize로 유사 매칭
+                from template_registry import normalize_section_key
+                norm_ai = normalize_section_key(ai_section_key)
+                for html_key in sections:
+                    norm_html = normalize_section_key(html_key)
+                    if norm_ai and norm_html and norm_ai == norm_html:
+                        matched_html_key = html_key
+                        break
+                # 3) label로도 시도
+                if not matched_html_key:
+                    label = coord.get("label", "")
+                    norm_label = normalize_section_key(label) if label else None
+                    for html_key in sections:
+                        norm_html = normalize_section_key(html_key)
+                        if norm_label and norm_html and norm_label == norm_html:
+                            matched_html_key = html_key
+                            break
+
+            if matched_html_key and sections.get(matched_html_key):
+                print(f"✅ AI매핑 '{ai_section_key}' → HTML '{matched_html_key}' → Table {t_idx}, Row {r_idx}, Col {c_idx}")
+                _insert_html_into_cell(target_cell, sections[matched_html_key], style_config)
+                mapped_keys.add(matched_html_key)
+            else:
+                print(f"⚠️ '{ai_section_key}' 에 매칭되는 HTML 섹션 없음")
+
+        if not mapped_keys:
+            print("⚠️ AI 동적 매핑: 매핑된 섹션 없음 → Heuristic 전환")
+            return False
+
+        # 미매핑 섹션 추가
+        unmapped = [k for k in sections if k not in mapped_keys and k != "도입부"]
+        if unmapped:
+            print(f"📎 미매핑 섹션 추가: {unmapped}")
+            doc.add_page_break()
+            p = doc.add_paragraph()
+            r = p.add_run("=== 추가 AI 분석 내용 ===")
+            r.bold = True
+            r.font.size = Pt(13)
+            for k in unmapped:
+                insert_elements_into_container(doc, sections[k], style_config)
+
+        _fix_table_xml(doc)
+        doc.save(output_path)
+        print(f"✅ AI 동적 fill 완료 → {output_path}")
+        return True
+
+    except Exception as e:
+        import traceback
+        print(f"❌ AI 동적 fill 오류: {e}")
+        traceback.print_exc()
+        return False
+
+
+# ─────────────────────────────────────────────
 # Main Entry Point
 # ─────────────────────────────────────────────
 
-def fill_docx_template(input_path: str, payload_html: str, output_path: str) -> bool:
+def fill_docx_template(input_path: str, payload_html: str, output_path: str, gemini_api_key: str = None, announcement_sections: list = None) -> bool:
     """
-    Master function: detects template type and dispatches to the right mode.
+    마스터 함수: 3단계 전략으로 최적 모드를 자동 선택.
+
+    1단계: 하드코딩 레지스트리 (알려진 양식 → 최고 정밀도)
+    2단계: AI 동적 분석 (처음 보는 양식 → Gemini가 구조 파악)
+    3단계: 휴리스틱 (AI 불가 시 → 키워드 스캔 폴백)
     """
     try:
         doc = docx.Document(input_path)
-        template_config = detect_template(doc)
 
+        # ── 1단계: 하드코딩 레지스트리 ──
+        template_config = detect_template(doc)
         if template_config:
-            # 1. Try coordinate fill mode
             success = coordinate_based_fill(doc, template_config, payload_html, output_path)
             if success:
                 return True
-            else:
-                # 2. Fallback to heuristic if coords completely failed
-                print("🔄 Coordinate mode failed. Switching to Heuristic mode.")
-                # We must reload doc because the target cells might be corrupted by partial edits/clears
-                doc = docx.Document(input_path)
-                return heuristic_fill(doc, payload_html, output_path)
+            print("🔄 좌표 모드 실패 → 다음 단계로")
+            doc = docx.Document(input_path)
+
+        # ── 2단계: AI 동적 분석 ──
+        if gemini_api_key:
+            success = ai_dynamic_fill(doc, input_path, payload_html, output_path, gemini_api_key, announcement_sections)
+            if success:
+                return True
+            print("🔄 AI 동적 분석 실패 → Heuristic으로 전환")
+            doc = docx.Document(input_path)
         else:
-            return heuristic_fill(doc, payload_html, output_path)
+            print("⚠️ Gemini API 키 없음 → AI 동적 분석 스킵")
+
+        # ── 3단계: 휴리스틱 폴백 ──
+        return heuristic_fill(doc, payload_html, output_path)
 
     except Exception as e:
         import traceback
         trace_str = traceback.format_exc()
-        print(f"❌ DOCX processing error: {e}")
-        
+        print(f"❌ DOCX 처리 오류: {e}")
         with open('/tmp/insightflow_error.log', 'w') as f:
             f.write(trace_str)
-            
         return False

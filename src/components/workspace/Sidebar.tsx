@@ -71,18 +71,19 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
         const isAmber = item.color === 'amber';
 
         const activeStyle = isAmber
-            ? 'bg-amber-500/20 border border-amber-400/30'
-            : 'bg-[#7C3AED]/10 border border-[#7C3AED]/20 shadow-sm shadow-[#7C3AED]/5';
+            ? { backgroundColor: 'rgba(245, 158, 11, 0.2)', borderColor: 'rgba(251, 191, 36, 0.3)', borderWidth: 1 }
+            : { backgroundColor: 'rgba(124, 58, 237, 0.1)', borderColor: 'rgba(124, 58, 237, 0.2)', borderWidth: 1, shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 };
         const activeIconColor = isAmber ? '#FBBF24' : '#7C3AED';
 
         return (
             <View key={item.id} style={{ position: 'relative' }}>
                 <TouchableOpacity
                     onPress={() => onTabChange(item.id)}
-                    className={`w-[48px] h-[48px] rounded-[18px] items-center justify-center ${extraClass || ''} ${isActive ? activeStyle : 'bg-transparent hover:bg-slate-50'}`}
-                    style={{
-                        transition: 'all 0.2s ease-in-out'
-                    } as any}
+                    className={`w-[48px] h-[48px] rounded-[18px] items-center justify-center ${extraClass || ''} ${!isActive ? 'bg-transparent hover:bg-slate-50' : ''}`}
+                    style={[
+                        isActive ? activeStyle : {},
+                        { transition: 'all 0.2s ease-in-out' } as any
+                    ]}
                     // Web hover via onMouseEnter/Leave (React Native Web supports these)
                     {...(isWeb ? {
                         onPointerEnter: (e: any) => {
@@ -101,7 +102,7 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                         strokeWidth={isActive ? 2.5 : 2}
                     />
                     {isActive && (
-                        <View className="absolute left-[-12px] w-1 h-6 bg-[#7C3AED] rounded-r-full" />
+                        <View className="absolute left-[-12px] w-1 h-6 rounded-r-full" style={{ backgroundColor: '#7C3AED' }} />
                     )}
                 </TouchableOpacity>
             </View>
@@ -110,11 +111,18 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
     return (
         <View className="h-full p-3" style={{ position: 'relative', zIndex: 100 }}>
-            <View className="w-[68px] h-full bg-white shadow-2xl shadow-black/5 rounded-[28px] flex-col items-center py-6 border border-[#E2E8F0]">
+            <View className="w-[68px] h-full shadow-2xl shadow-black/5 rounded-[28px] flex-col items-center py-6 border border-[#E2E8F0]" style={{ backgroundColor: '#FDF8F3' }}>
                 {/* Logo / Guide Button */}
                 <TouchableOpacity
                     onPress={() => onTabChange('guide')}
-                    className={`w-[48px] h-[48px] rounded-[18px] items-center justify-center mb-8 shadow-lg ${activeTab === 'guide' ? 'bg-[#5B21B6] shadow-[#7C3AED]/40' : 'bg-[#7C3AED] shadow-[#7C3AED]/30'}`}
+                    className={`w-[48px] h-[48px] rounded-[18px] items-center justify-center mb-8 shadow-lg`}
+                    style={{ 
+                        backgroundColor: activeTab === 'guide' ? '#5B21B6' : '#7C3AED',
+                        shadowColor: '#7C3AED',
+                        shadowOffset: { width: 0, height: 4 },
+                        shadowOpacity: activeTab === 'guide' ? 0.4 : 0.3,
+                        shadowRadius: 10
+                    }}
                     {...(isWeb ? {
                         onPointerEnter: (e: any) => {
                             const el = e?.currentTarget || e?.target;
@@ -142,12 +150,12 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
                 {/* Workflow items */}
                 <View className="flex-1 gap-3 items-center">
                     {NAV_ITEMS_WORKFLOW.map((item) => renderItem(item))}
-                    <View className="w-10 h-[1px] bg-[#F1F5F9] my-2" />
+                    <View className="w-10 h-[1px] my-2" style={{ backgroundColor: '#F1F5F9' }} />
                     {NAV_ITEMS_UTIL.map((item) => renderItem(item))}
                 </View>
 
                 {/* Divider */}
-                <View className="w-10 h-[1px] bg-[#F1F5F9] mb-6" />
+                <View className="w-10 h-[1px] mb-6" style={{ backgroundColor: '#F1F5F9' }} />
 
                 {/* Bottom items: Pricing + Settings */}
                 <View className="gap-3">

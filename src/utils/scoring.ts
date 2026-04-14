@@ -199,3 +199,39 @@ export const calculateGrantScore = (grant: Grant, user: UserProfile): number => 
 
     return Math.max(0, Math.min(100, score));
 };
+
+/**
+ * 추천 공고 정렬 — 모든 페이지에서 동일한 순서를 보장하기 위한 공유 유틸
+ * WorkspaceDashboard / ConnectHomeView / GrantList 모두 이 함수를 사용해야 함
+ */
+export const getTopRecommendedGrants = (
+    allGrants: Grant[],
+    profile: UserProfile | null | undefined,
+    limit: number = 5
+): (Grant & { matching_score: number })[] => {
+    const currentYear = new Date().getFullYear();
+
+    const scored = allGrants.map(g => ({
+        ...g,
+        matching_score: profile ? calculateGrantScore(g, profile) : 0,
+    }));
+
+    // 기한 지난 공고 제거 (년도 기준)
+    const active = scored.filter(g => {
+        if (!g.deadline_date) return true;
+        const year = parseInt(g.deadline_date.split('-')[0], 10);
+        return isNaN(year) || year >= currentYear;
+    });
+
+    // 1차: matching_score 내림차순
+    // 2차: score 동점이면 마감 임박(D-day 숫자 작을수록) 우선
+    active.sort((a, b) => {
+        const scoreDiff = b.matching_score - a.matching_score;
+        if (scoreDiff !== 0) return scoreDiff;
+        const dA = parseInt((a.d_day || '999').replace('D-', '')) || 999;
+        const dB = parseInt((b.d_day || '999').replace('D-', '')) || 999;
+        return dA - dB;
+    });
+
+    return active.slice(0, limit);
+};

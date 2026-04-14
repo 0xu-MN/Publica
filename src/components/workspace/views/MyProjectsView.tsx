@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
     header: {
         height: 100, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: 32, borderBottomWidth: 1, borderColor: '#E2E8F0',
-        backgroundColor: '#FFFFFF', paddingTop: 20,
+        backgroundColor: '#FDF8F3', paddingTop: 20,
     },
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
     headerTitle: { color: '#27272a', fontSize: 24, fontWeight: '900', letterSpacing: -1 },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
     progressDot: { width: 10, height: 10, borderRadius: 5, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
     stageBadge: { color: '#64748B', fontSize: 12, fontWeight: '800', flex: 1, textTransform: 'uppercase', letterSpacing: 0.5 },
-    moreBtn: { width: 32, height: 32, alignItems: 'center', justify: 'center', borderRadius: 8, backgroundColor: '#F8FAFC' },
+    moreBtn: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center', borderRadius: 8, backgroundColor: '#F8FAFC' },
     cardTitle: { color: '#27272a', fontSize: 17, fontWeight: '900', lineHeight: 26, marginBottom: 20, letterSpacing: -0.5 },
 
     // Progress Bar

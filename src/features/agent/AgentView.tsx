@@ -23,6 +23,7 @@ const PDFViewerPanel = React.lazy(() => import('./components/PDFViewerPanel').th
 import { LAYOUT } from './AgentLayout';
 import { useSessionManager } from './hooks/useSessionManager';
 import { useProjectStore } from '../../store/useProjectStore';
+import { useAuth } from '../../contexts/AuthContext';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 
@@ -38,6 +39,8 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
     useEffect(() => {
         supabase.auth.getUser().then(({ data }) => setUser(data.user));
     }, []);
+    // AI 프로필 — IdeaQuestionnaire 자동 채움 + AI 프롬프트 주입에 사용
+    const { profile: userProfile } = useAuth();
 
     // 세션 매니저 (저장/불러오기 담당)
     const { sessions, currentSessionId, setCurrentSessionId, saveSession, loadSession, fetchSessions, deleteSession } = useSessionManager(user?.id);
@@ -231,27 +234,106 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
 
         } catch (e: any) {
             console.error("AI Error:", e);
+
+            // 🌟 GEMINI DIRECT FALLBACK: Edge Function 실패 시 Gemini API 직접 호출
+            try {
+                const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
+                if (!geminiKey) throw new Error("no key");
+
+                const p = userProfile as any;
+                const profileSnippet = p ? `사용자 아이템: ${p.item_one_liner || ''}\n핵심 기술: ${p.core_technology || ''}\n목표 시장: ${p.target_market || ''}` : '';
+
+                const fallbackPrompt = `당신은 한국 정부 지원사업 전문 컨설턴트입니다.
+${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
+[요청]\n${text}${context ? `\n\n[맥락]\n${context.substring(0, 3000)}` : ''}
+
+반드시 아래 JSON 형식으로만 응답하세요 (마크다운 코드블록 없이):
+{
+  "workspace_data": {
+    "root_node": "핵심 전략 한 줄 요약",
+    "branches": [
+      {"id":"b-1","step_number":1,"label":"단계 제목","description":"구체적인 실행 내용 (2-3문장)","type":"research"},
+      {"id":"b-2","step_number":2,"label":"단계 제목","description":"구체적인 실행 내용 (2-3문장)","type":"research"},
+      {"id":"b-3","step_number":3,"label":"단계 제목","description":"구체적인 실행 내용 (2-3문장)","type":"strategy"},
+      {"id":"b-4","step_number":4,"label":"단계 제목","description":"구체적인 실행 내용 (2-3문장)","type":"documentation"}
+    ]
+  },
+  "suggested_actions": [
+    {"label":"세부 계획 수립","type":"PLAN","query":"세부 실행 계획을 수립해주세요"},
+    {"label":"근거 자료 검색","type":"VERIFY","query":"관련 근거 자료를 찾아주세요"}
+  ],
+  "chat_message": "분석 완료"
+}`;
+
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: fallbackPrompt }] }], generationConfig: { temperature: 0.7 } })
+                });
+
+                const json = await resp.json();
+                const raw = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+                const parsed = JSON.parse(cleaned);
+
+                if (parsed?.workspace_data?.branches?.length > 0) {
+                    setChatHistory(prev => [...prev, { text: "AI가 맞춤형 전략을 생성했습니다.", sender: 'ai' }]);
+                    return parsed;
+                }
+                throw new Error("empty branches");
+            } catch (fallbackErr) {
+                console.error("Gemini fallback also failed:", fallbackErr);
+            }
+
+            // 🛡️ LAST-RESORT FALLBACK: API 전부 실패 시 사용자 데이터 기반 템플릿 생성
+            // → 항상 브랜치 카드를 표시하여 blank/welcome 화면 방지
+            const p = userProfile as any;
+            const grantName = pendingGrantTitle || text.split('\n')[0].substring(0, 40) || '지원사업';
+            const itemName = p?.item_one_liner || p?.company_name || '아이템';
+            const tech = p?.core_technology || '핵심 기술';
+            const market = p?.target_market || '목표 시장';
+            const industry = p?.industry || p?.major_category || '해당 업종';
+
             setChatHistory(prev => [...prev, {
-                text: `⚠️ [시스템 알림] AI 서비스 연결에 실패하여 사전 학습된 공고 분석 모델(Mock)로 전환합니다.\n(사유: ${e.message || 'Network Error'})`,
+                text: `📋 AI 서버 연결이 원활하지 않아 기본 전략 프레임워크를 불러왔습니다.\n브랜치를 클릭하여 AI 심층 분석을 진행할 수 있습니다.`,
                 sender: 'ai'
             }]);
 
-            // 🌟 ROBUST FALLBACK: Use high-quality Mock data to prevent UI from disappearing
             return {
                 workspace_data: {
-                    root_node: "2025 예비창업패키지: AI 기반 소셜 임팩트와 기술 독창성 강조 전략",
+                    root_node: `${grantName} — ${itemName} 맞춤 전략`,
                     branches: [
-                        { id: 'f-1', step_number: 1, label: '지원 자격 및 제외 대상 검토', description: "공고문 3페이지의 '신청 자격' 요건을 정밀 검토하였습니다. 현재 대표님의 이력은 '일반 분야' 지원에 적합하며, 기창업 이력이 없으므로 감점 요인은 없습니다.", type: 'research' },
-                        { id: 'f-2', step_number: 2, label: '가점 확보 전략 (최대 3점)', description: "만 29세 이하 청년 가점(1점)과 지역 주력 산업 관련 가점(1점)을 확보할 수 있습니다. 사업계획서 5번 항목에 이를 명시하여 서류 평가 우위를 점해야 합니다.", type: 'research' },
-                        { id: 'f-3', step_number: 3, label: 'PSST 사업계획서 차별화', description: "'문제 인식(Problem)' 파트에서 기존 경쟁사 대비 기술적 진보성을 강조하고, 구체적인 시장 검증 데이터를 포함하여 '실현 가능성' 점수를 높여야 합니다.", type: 'research' },
-                        { id: 'f-4', step_number: 4, label: '제출 서류 체크리스트', description: "사업자등록증명원, 국세/지방세 완납증명서 등 필수 서류 7종의 누락 없는 준비가 필요합니다. 특히 가점 관련 증빙을 잊지 마세요.", type: 'documentation' }
+                        {
+                            id: 'lr-1', step_number: 1,
+                            label: '지원 자격 및 적합성 검토',
+                            description: `${grantName}의 신청 자격 요건을 ${industry} 분야 기준으로 검토합니다. 사업자 유형, 업력, 지역 제한 등 필수 조건을 확인하고 가점 항목을 파악합니다.`,
+                            type: 'research'
+                        },
+                        {
+                            id: 'lr-2', step_number: 2,
+                            label: '핵심 차별성 어필 전략',
+                            description: `${tech}을 중심으로 기존 시장 대비 기술적 독창성을 부각합니다. 평가 위원이 주목하는 '문제 인식 → 솔루션 → 임팩트' 스토리라인을 구성합니다.`,
+                            type: 'strategy'
+                        },
+                        {
+                            id: 'lr-3', step_number: 3,
+                            label: '시장성 및 사업화 계획',
+                            description: `${market}을 대상으로 한 구체적인 매출 계획과 BM을 수립합니다. TAM/SAM/SOM 분석과 3년 성장 로드맵을 수치 기반으로 작성합니다.`,
+                            type: 'strategy'
+                        },
+                        {
+                            id: 'lr-4', step_number: 4,
+                            label: '제출 서류 체크리스트',
+                            description: `${grantName} 제출을 위한 필수 서류 목록을 점검합니다. 사업계획서, 재무제표, 팀원 이력서 등 누락 시 감점·탈락으로 이어지는 항목을 우선 확인합니다.`,
+                            type: 'documentation'
+                        }
                     ]
                 },
                 suggested_actions: [
-                    { label: "세부 실행 계획 수립", type: "PLAN", "query": "위 브랜치의 세부 실행 계획을 수립해주세요" },
-                    { label: "근거 자료 검색", type: "VERIFY", "query": "위 브랜치와 관련된 신뢰할 수 있는 근거 자료를 찾아주세요" }
+                    { label: '심층 분석', type: 'PLAN', query: `${grantName}에 대해 더 자세한 전략을 수립해주세요` },
+                    { label: '서류 준비 가이드', type: 'VERIFY', query: `${grantName} 제출 서류를 구체적으로 안내해주세요` }
                 ],
-                chat_message: '사전 정의된 전략 모델을 불러왔습니다.'
+                chat_message: '기본 전략 프레임워크 로드 완료'
             };
         }
     };
@@ -325,8 +407,34 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
         setShowQuestionnaire(false);
         setLoading(true); setColumns([]); setActiveNode(null); setSuggestions([]);
 
-        // 사업 아이디어를 포함한 강화된 프롬프트
-        const enhancedQuery = `${grantQuery}\n\n## 사용자 사업 아이디어 (User Business Idea)\n- 아이디어: ${businessIdea.description}\n- 팀 구성: ${businessIdea.teamComposition}\n- 현재 단계: ${businessIdea.currentStage}\n- 타겟 시장: ${businessIdea.targetMarket}\n- 차별점: ${businessIdea.differentiator}\n\nIMPORTANT: Incorporate the user's specific business idea into your strategy. Make the analysis personalized to THEIR idea, team, and market. 각 브랜치의 description은 할루시네이션(거짓 정보) 없이 구체적이고 실질적인 3~4문장의 실행 계획으로 작성하세요.`;
+        // ── 회사 AI 프로필 블록 (Step 3에서 입력한 정보) ──────────────────────
+        const p = userProfile as any;
+        const companyProfileSection = p ? [
+            p.company_name ? `• 회사/아이템명: ${p.company_name}` : '',
+            p.item_one_liner ? `• 핵심 정의: ${p.item_one_liner}` : '',
+            p.core_technology ? `• 핵심 기술/차별점: ${p.core_technology}` : '',
+            p.current_achievements ? `• 현재 성과: ${p.current_achievements}` : '',
+            p.team_background ? `• 팀 역량: ${p.team_background}` : '',
+            p.target_market ? `• 목표 시장: ${p.target_market}` : '',
+            p.industry ? `• 업종: ${p.industry}` : '',
+        ].filter(Boolean).join('\n') : '';
+
+        // ── 사업 아이디어를 포함한 강화된 프롬프트 ──────────────────────────
+        const enhancedQuery = [
+            grantQuery,
+            '',
+            '## 사용자 사업 정보',
+            companyProfileSection,
+            `- 아이디어 설명: ${businessIdea.description || '(미입력)'}`,
+            `- 팀 구성: ${businessIdea.teamComposition || '(미입력)'}`,
+            `- 현재 단계: ${businessIdea.currentStage || '(미입력)'}`,
+            `- 타겟 시장: ${businessIdea.targetMarket || '(미입력)'}`,
+            `- 핵심 차별점: ${businessIdea.differentiator || '(미입력)'}`,
+            '',
+            'IMPORTANT: 위 사용자의 실제 사업 정보를 핵심 근거로 사용하여 이 공고에 최적화된 전략을 수립하세요.',
+            '각 브랜치의 description은 이 회사/아이디어에 맞는 구체적이고 실질적인 3~4문장 실행 계획으로 작성하세요.',
+            '절대 일반적인 예시나 할루시네이션 없이, 위 정보에 기반한 맞춤형 내용만 작성하세요.',
+        ].filter(l => l !== undefined).join('\n');
 
         setChatHistory(prev => [...prev, {
             text: `📝 사업 아이디어가 반영된 맞춤형 분석을 시작합니다...\n• 아이디어: ${businessIdea.description}\n• 팀: ${businessIdea.teamComposition}\n• 단계: ${businessIdea.currentStage}`,
@@ -1522,6 +1630,13 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             <IdeaQuestionnaire
                 visible={showQuestionnaire}
                 grantTitle={pendingGrantTitle}
+                profileDefaults={userProfile ? {
+                    description: (userProfile as any).item_description || (userProfile as any).item_one_liner || '',
+                    teamComposition: (userProfile as any).team_background || '',
+                    currentStage: (userProfile as any).business_years ? '매출 발생' : '',
+                    targetMarket: (userProfile as any).target_market || '',
+                    differentiator: (userProfile as any).core_technology || '',
+                } : undefined}
                 onComplete={(businessIdea) => {
                     handleStartWithIdea(pendingGrantQuery, businessIdea);
                 }}
@@ -1581,9 +1696,9 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FDF8F3' },
-    header: { height: 60, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, zIndex: 100, borderBottomWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
+    header: { height: 60, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, zIndex: 100, borderBottomWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FDF8F3' },
     logo: { color: '#27272a', fontWeight: '900', fontSize: 20, letterSpacing: -0.5 },
-    contextBar: { backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderColor: '#E2E8F0', paddingVertical: 12, paddingHorizontal: 24, zIndex: 90 },
+    contextBar: { backgroundColor: '#FDF8F3', borderBottomWidth: 1, borderColor: '#E2E8F0', paddingVertical: 12, paddingHorizontal: 24, zIndex: 90 },
     canvasViewport: { flex: 1, overflow: 'hidden', backgroundColor: '#FDF8F3' },
     canvasWorld: { padding: 100, flexDirection: 'row', alignItems: 'flex-start' },
     zoomContainer: { position: 'absolute', bottom: 30, left: 30, flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 8, alignItems: 'center', zIndex: 40, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10 },
@@ -1621,7 +1736,7 @@ const styles = StyleSheet.create({
     },
 
     // Sidebar Styles
-    historySidebar: { position: 'absolute', top: 0, left: 0, bottom: 0, width: 320, backgroundColor: '#FFFFFF', zIndex: 200, borderRightWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 10, height: 0 }, shadowOpacity: 0.05, shadowRadius: 20 },
+    historySidebar: { position: 'absolute', top: 0, left: 0, bottom: 0, width: 320, backgroundColor: '#FDF8F3', zIndex: 200, borderRightWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 10, height: 0 }, shadowOpacity: 0.05, shadowRadius: 20 },
     sidebarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
     sidebarTitle: { color: '#27272a', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
     sessionItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: '#F1F5F9' },

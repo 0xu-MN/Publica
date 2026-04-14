@@ -504,6 +504,194 @@ async def parse_pdf(file: UploadFile = File(...)):
 def health():
     return {"status": "ok"}
 
+
+# ═══════════════════════════════════════════════════════════════
+# 공고문 분석 엔드포인트
+# 공고 텍스트 → 평가기준 / 배점 / 필수섹션 / 작성전략 자동 추출
+# ═══════════════════════════════════════════════════════════════
+
+class AnnouncementAnalysisRequest(BaseModel):
+    announcement_text: str
+    gemini_api_key: str
+
+@app.post("/api/analyze-announcement")
+async def analyze_announcement(request: AnnouncementAnalysisRequest):
+    """
+    공고문 텍스트를 분석하여 평가기준, 배점, 필수 섹션, 작성 힌트를 반환.
+    프론트엔드에서 브레인스토밍/초안 작성 시 이 분석 결과를 프롬프트에 주입.
+    """
+    from template_registry import analyze_announcement_with_ai
+
+    if not request.announcement_text or len(request.announcement_text.strip()) < 50:
+        return JSONResponse(status_code=400, content={"error": "공고문 텍스트가 너무 짧습니다."})
+
+    if not request.gemini_api_key:
+        return JSONResponse(status_code=400, content={"error": "Gemini API 키가 필요합니다."})
+
+    result = analyze_announcement_with_ai(request.announcement_text, request.gemini_api_key)
+    if not result:
+        return JSONResponse(status_code=500, content={"error": "공고문 분석에 실패했습니다. 다시 시도해주세요."})
+
+    return JSONResponse(content=result)
+
+
+# ═══════════════════════════════════════════════════════════════
+# DOCX 양식 AI 분석 엔드포인트
+# 처음 보는 양식도 AI가 구조를 읽고 섹션 매핑 자동 생성
+# ═══════════════════════════════════════════════════════════════
+
+@app.post("/api/analyze-docx-template")
+async def analyze_docx_template(
+    file: UploadFile = File(...),
+    gemini_api_key: str = Form(...),
+    announcement_sections: str = Form("[]"),
+):
+    """
+    업로드된 DOCX 양식을 AI로 분석하여 섹션 → 셀 좌표 매핑 반환.
+    내보내기 전에 호출하여 동적 매핑 테이블을 생성.
+    """
+    import json as _json
+    from template_registry import analyze_template_with_ai
+    import docx as _docx
+
+    if not file.filename.endswith('.docx'):
+        return JSONResponse(status_code=400, content={"error": "DOCX 파일만 지원됩니다."})
+
+    try:
+        sections_list = _json.loads(announcement_sections) if announcement_sections else []
+    except Exception:
+        sections_list = []
+
+    temp_dir = tempfile.mkdtemp()
+    input_path = os.path.join(temp_dir, "template.docx")
+
+    try:
+        content = await file.read()
+        with open(input_path, "wb") as f:
+            f.write(content)
+
+        doc = _docx.Document(input_path)
+        config = analyze_template_with_ai(doc, input_path, gemini_api_key, sections_list if sections_list else None)
+
+        if not config:
+            return JSONResponse(status_code=422, content={"error": "AI가 양식 구조를 인식하지 못했습니다. 하드코딩 레지스트리나 휴리스틱 모드로 처리됩니다."})
+
+        return JSONResponse(content={
+            "template_name": config.get("_template_name", "Unknown"),
+            "sections": config.get("sections", {}),
+            "style": config.get("style", {}),
+        })
+    finally:
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+# ═══════════════════════════════════════════════════════════════
+# HWPX 실제 XML 삽입 구현
+# ═══════════════════════════════════════════════════════════════
+
+def _hwpx_plain_text(html_content: str) -> str:
+    """HTML → 순수 텍스트 변환 (HWPX 삽입용)."""
+    from bs4 import BeautifulSoup as _BS
+    soup = _BS(html_content, "html.parser")
+    lines = []
+    for elem in soup.find_all(['h1','h2','h3','h4','p','li']):
+        text = elem.get_text().strip()
+        if text:
+            if elem.name in ['h1','h2','h3','h4']:
+                lines.append(f"\n[{text}]\n")
+            elif elem.name == 'li':
+                lines.append(f"  • {text}")
+            else:
+                lines.append(text)
+    return "\n".join(lines) if lines else html_content
+
+
+def _build_hwp_paragraph(text: str, ns: str) -> "etree.Element":
+    """HWP XML 단락 요소 생성."""
+    para = etree.Element(f"{ns}p")
+    run = etree.SubElement(para, f"{ns}run")
+    char_elem = etree.SubElement(run, f"{ns}t")
+    char_elem.text = text
+    return para
+
+
+def _insert_hwpx_content(section_xml_path: str, sections_content: dict) -> bool:
+    """
+    HWPX section0.xml의 테이블 셀에 내용 삽입.
+    빈 셀을 찾아 AI가 추출한 섹션 내용을 순서대로 배치.
+    """
+    try:
+        tree = etree.parse(section_xml_path)
+        root = tree.getroot()
+
+        # HWPX 네임스페이스 동적 감지
+        ns_map = root.nsmap
+        # 주요 네임스페이스 후보
+        hp_ns = None
+        for prefix, uri in ns_map.items():
+            if 'hwpml' in uri.lower() or 'hml' in uri.lower() or (prefix in ('hp', 'hc', None) and 'para' in uri.lower()):
+                hp_ns = uri
+                break
+        if not hp_ns:
+            # 폴백: 첫 번째 non-None 네임스페이스
+            for prefix, uri in ns_map.items():
+                if prefix is not None:
+                    hp_ns = uri
+                    break
+
+        ns = f"{{{hp_ns}}}" if hp_ns else ""
+
+        # 테이블 찾기 (다양한 네임스페이스 대응)
+        tables = root.findall(f".//{ns}tbl") or root.findall(".//tbl")
+        if not tables:
+            # 모든 하위 요소 중 'tbl' 포함하는 태그 검색
+            tables = [e for e in root.iter() if e.tag.endswith('tbl')]
+
+        print(f"📄 HWPX: {len(tables)}개 테이블 발견")
+
+        content_list = list(sections_content.values())
+        content_idx = 0
+
+        for tbl in tables:
+            # 셀 찾기
+            cells = [e for e in tbl.iter() if e.tag.endswith('tc')]
+            for cell in cells:
+                if content_idx >= len(content_list):
+                    break
+
+                # 현재 셀 내용 확인 (짧거나 비어있으면 입력 대상)
+                cell_text = "".join(e.text or "" for e in cell.iter() if e.text)
+                if len(cell_text.strip()) > 200:
+                    # 이미 내용이 있는 레이블 셀 — 스킵
+                    continue
+
+                # 기존 단락 제거 후 새 내용 삽입
+                paras = [e for e in cell if e.tag.endswith('p')]
+                for p in paras:
+                    cell.remove(p)
+
+                # 새 텍스트를 줄 단위로 단락 분할하여 삽입
+                new_text = content_list[content_idx]
+                for line in new_text.split('\n'):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    p_elem = _build_hwp_paragraph(line, ns)
+                    cell.append(p_elem)
+
+                print(f"✅ HWPX 셀 삽입 완료 (섹션 {content_idx + 1})")
+                content_idx += 1
+
+        tree.write(section_xml_path, encoding='utf-8', xml_declaration=True)
+        return True
+
+    except Exception as e:
+        import traceback
+        print(f"❌ HWPX XML 삽입 오류: {e}")
+        traceback.print_exc()
+        return False
+
+
 @app.post("/api/upload-hwpx")
 async def process_hwpx(
     background_tasks: BackgroundTasks,
@@ -511,12 +699,14 @@ async def process_hwpx(
     payload: str = Form("{}")
 ):
     """
-    1. Receives a .hwpx file and AI generated payload.
-    2. Unzips the .hwpx (which is just a zip of XMLs).
-    3. Parses Contents/section0.xml.
-    4. (Future) Maps payload into the XML tables.
-    5. Zips it back and returns the file.
+    HWPX 양식에 AI 초안 내용 삽입.
+    1. ZIP 압축 해제
+    2. Contents/section0.xml 파싱
+    3. 빈 테이블 셀에 HTML→텍스트 변환 후 삽입
+    4. 재압축하여 반환
     """
+    import json as _json
+
     if not file.filename.endswith('.hwpx'):
         return JSONResponse(status_code=400, content={"error": "Only .hwpx files are supported"})
 
@@ -532,37 +722,77 @@ async def process_hwpx(
 
         with zipfile.ZipFile(input_path, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
-        
-        section0_path = os.path.join(extract_dir, 'Contents', 'section0.xml')
-        has_section0 = os.path.exists(section0_path)
-        
-        preview_text = "No section0.xml found"
-        if has_section0:
-            with open(section0_path, 'r', encoding='utf-8') as f:
-                xml_content = f.read()
-            preview_text = xml_content[:200]
 
-        # For PoC: Just re-zip it exactly as is
+        section0_path = os.path.join(extract_dir, 'Contents', 'section0.xml')
+        if not os.path.exists(section0_path):
+            # 대체 경로 탐색
+            for root_dir, dirs, files in os.walk(extract_dir):
+                for fname in files:
+                    if 'section' in fname.lower() and fname.endswith('.xml'):
+                        section0_path = os.path.join(root_dir, fname)
+                        break
+
+        # 페이로드에서 HTML 추출
+        payload_html = ""
+        try:
+            payload_data = _json.loads(payload)
+            payload_html = payload_data.get("document_html", "")
+        except Exception:
+            payload_html = payload
+
+        if payload_html and os.path.exists(section0_path):
+            # HTML → 섹션별 텍스트로 변환
+            from bs4 import BeautifulSoup as _BS
+            soup = _BS(payload_html, "html.parser")
+            sections_content = {}
+            current_key = "본문"
+            current_texts = []
+
+            for elem in soup.find_all(['h1','h2','h3','h4','p','ul','ol']):
+                if elem.name in ['h1','h2','h3','h4']:
+                    if current_texts:
+                        sections_content[current_key] = "\n".join(current_texts)
+                    current_key = elem.get_text().strip()
+                    current_texts = [f"[{current_key}]"]
+                elif elem.name in ['ul','ol']:
+                    for li in elem.find_all('li'):
+                        current_texts.append(f"• {li.get_text().strip()}")
+                else:
+                    text = elem.get_text().strip()
+                    if text:
+                        current_texts.append(text)
+            if current_texts:
+                sections_content[current_key] = "\n".join(current_texts)
+
+            if sections_content:
+                insert_ok = _insert_hwpx_content(section0_path, sections_content)
+                print(f"{'✅' if insert_ok else '⚠️'} HWPX 내용 삽입: {'성공' if insert_ok else '실패 (원본 구조 유지)'}")
+
+        # 재압축
         with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zip_out:
-            for root, _, files in os.walk(extract_dir):
+            for root_dir, _, files in os.walk(extract_dir):
                 for f_name in files:
-                    file_path = os.path.join(root, f_name)
+                    file_path = os.path.join(root_dir, f_name)
                     arcname = os.path.relpath(file_path, extract_dir)
                     zip_out.write(file_path, arcname)
 
-        # Return the built hwpx file
-        from fastapi.responses import FileResponse
-        # Use background_tasks to clean up the directory
         background_tasks.add_task(shutil.rmtree, temp_dir, ignore_errors=True)
         return FileResponse(
-            output_path, 
-            filename=f"filled_{file.filename}", 
+            output_path,
+            filename=f"filled_{file.filename}",
             media_type="application/haansofthwp"
         )
-        
+
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         shutil.rmtree(temp_dir, ignore_errors=True)
         return JSONResponse(status_code=500, content={"error": str(e)})
+
+
+# ═══════════════════════════════════════════════════════════════
+# DOCX 자동 완성 (3단계 전략: 하드코딩 → AI동적 → 휴리스틱)
+# ═══════════════════════════════════════════════════════════════
 
 @app.post("/api/autofill-docx")
 async def process_docx(
@@ -571,32 +801,32 @@ async def process_docx(
     payload: str = Form("{}")
 ):
     """
-    1. Receives a .docx template and AI generated payload.
-    2. Parses payload JSON to extract 'document_html' field.
-    3. Runs the mapping algorithm via docx_mapper.py.
-    4. Returns the perfectly structured and filled .docx file.
+    DOCX 양식에 AI 초안 내용 자동 매핑.
+    1. 하드코딩 레지스트리 (알려진 양식)
+    2. AI 동적 분석 (처음 보는 양식)
+    3. 휴리스틱 폴백
     """
     import json as _json
 
     if not file.filename.endswith('.docx'):
         return JSONResponse(status_code=400, content={"error": "Only .docx files are supported here"})
 
-    # ─── Extract HTML from payload ───────────────────────────────────────────
-    # Frontend sends: JSON.stringify({ document_html: editorContent })
-    # We must extract the 'document_html' key before passing to docx_mapper.
     payload_html = ""
+    gemini_api_key = None
+    announcement_sections = None
+
     try:
         payload_data = _json.loads(payload)
         payload_html = payload_data.get("document_html", "")
-        print(f"📄 Payload parsed OK. document_html length: {len(payload_html)} chars")
+        gemini_api_key = payload_data.get("gemini_api_key")
+        announcement_sections = payload_data.get("announcement_sections")
+        print(f"📄 Payload 파싱 완료. HTML 길이: {len(payload_html)}자, Gemini키: {'있음' if gemini_api_key else '없음'}")
     except (_json.JSONDecodeError, TypeError):
-        # Fallback: payload might already be raw HTML
         payload_html = payload
-        print(f"⚠️  Payload is not valid JSON — using as raw HTML. Length: {len(payload_html)} chars")
+        print(f"⚠️ JSON 아님 — raw HTML 사용. 길이: {len(payload_html)}자")
 
     if not payload_html or len(payload_html.strip()) < 10:
-        print("❌ Payload HTML is empty or too short. Aborting.")
-        return JSONResponse(status_code=400, content={"error": "document_html payload is empty. Please write content in the editor before exporting."})
+        return JSONResponse(status_code=400, content={"error": "document_html이 비어있습니다. 에디터에 내용을 작성 후 내보내기를 시도하세요."})
 
     temp_dir = tempfile.mkdtemp()
     input_path = os.path.join(temp_dir, "input.docx")
@@ -604,26 +834,28 @@ async def process_docx(
 
     try:
         content = await file.read()
-        print(f"📁 Received file: {file.filename} ({len(content)} bytes)")
+        print(f"📁 파일 수신: {file.filename} ({len(content)} bytes)")
         with open(input_path, "wb") as f:
             f.write(content)
 
-        # Execute Document Auto-Mapping
-        print(f"🚀 Starting docx_mapper.fill_docx_template...")
-        success = docx_mapper.fill_docx_template(input_path, payload_html, output_path)
-        
-        if not success:
-            return JSONResponse(status_code=500, content={"error": "Failed to map docx file. Check server logs."})
+        print(f"🚀 docx_mapper.fill_docx_template 시작 (3단계 전략)...")
+        success = docx_mapper.fill_docx_template(
+            input_path, payload_html, output_path,
+            gemini_api_key=gemini_api_key,
+            announcement_sections=announcement_sections
+        )
 
-        print(f"✅ DOCX mapping success. Sending file: {output_path}")
-        # Return the built docx file and clean up background temp files
+        if not success:
+            return JSONResponse(status_code=500, content={"error": "문서 매핑 실패. 서버 로그를 확인하세요."})
+
+        print(f"✅ DOCX 매핑 성공 → {output_path}")
         background_tasks.add_task(shutil.rmtree, temp_dir, ignore_errors=True)
         return FileResponse(
-            output_path, 
-            filename=f"filled_{file.filename}", 
+            output_path,
+            filename=f"filled_{file.filename}",
             media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
         )
-        
+
     except Exception as e:
         import traceback
         traceback.print_exc()

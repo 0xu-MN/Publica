@@ -6,7 +6,7 @@ const WidgetCard = ({ title, icon: Icon, children, color = '#7C3AED', className 
     <View className={`bg-white rounded-[32px] border border-[#E2E8F0] p-6 shadow-sm shadow-black/[0.02] ${className}`}>
         <View className="flex-row items-center justify-between mb-6">
             <View className="flex-row items-center gap-3">
-                <View className="w-10 h-10 rounded-xl bg-[#7C3AED]/10 items-center justify-center">
+                <View className="w-10 h-10 rounded-xl items-center justify-center" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)' }}>
                     <Icon size={20} color={color} strokeWidth={2.5} />
                 </View>
                 <Text className="text-[#27272a] font-black text-sm uppercase tracking-widest">{title}</Text>
@@ -21,11 +21,11 @@ const WidgetCard = ({ title, icon: Icon, children, color = '#7C3AED', className 
 
 export const HomeView = () => {
     return (
-        <ScrollView className="flex-1 bg-[#FDF8F3]">
+        <ScrollView style={{ flex: 1, backgroundColor: '#FDF8F3' }}>
             <View className="p-10 max-w-[1400px] w-full mx-auto">
                 {/* Welcome Header */}
                 <View className="mb-12">
-                    <View className="bg-[#7C3AED] self-start px-3 py-1 rounded-full mb-4 shadow-lg shadow-[#7C3AED]/20">
+                    <View className="self-start px-3 py-1 rounded-full mb-4" style={{ backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}>
                         <Text className="text-white text-[10px] font-black uppercase tracking-widest">Dashboard Hub</Text>
                     </View>
                     <Text className="text-[#27272a] text-4xl font-black mb-3 tracking-tighter">안녕하세요, 홍길동 연구원님 👋</Text>
@@ -53,7 +53,7 @@ export const HomeView = () => {
                             </WidgetCard>
                             <WidgetCard title="완료된 리포트" icon={CheckCircle2} color="#10B981" className="flex-1">
                                 <Text className="text-4xl font-black text-[#27272a] mb-2">12<Text className="text-base font-bold text-[#94A3B8] ml-2">건</Text></Text>
-                                <View className="bg-[#7C3AED]/10 px-3 py-1.5 rounded-xl self-start border border-[#7C3AED]/10">
+                                <View className="px-3 py-1.5 rounded-xl self-start border" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)', borderColor: 'rgba(124, 58, 237, 0.1)' }}>
                                     <Text className="text-[#7C3AED] text-[11px] font-black uppercase tracking-tighter">지난달 대비 20% ▲</Text>
                                 </View>
                             </WidgetCard>
@@ -67,9 +67,10 @@ export const HomeView = () => {
                                     { time: '02:00 PM', title: '정부 지원 사업 서류 검토', tag: 'Document Review', active: false },
                                     { time: '04:00 PM', title: 'AI 기반 시장성 분석', tag: 'Market Insight', active: false },
                                 ].map((item, idx) => (
-                                    <View key={idx} className={`flex-row items-center p-5 rounded-2xl border ${item.active ? 'bg-[#7C3AED]/5 border-[#7C3AED]/20 shadow-sm' : 'bg-[#F8FAFC]/50 border-[#E2E8F0]'}`}>
+                                    <View key={idx} className={`flex-row items-center p-5 rounded-2xl border ${item.active ? '' : 'bg-[#F8FAFC]/50 border-[#E2E8F0]'}`} 
+                                        style={item.active ? { backgroundColor: 'rgba(124, 58, 237, 0.05)', borderColor: 'rgba(124, 58, 237, 0.2)', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 } : {}}>
                                         <Text className={`text-xs font-black w-24 uppercase tracking-widest ${item.active ? 'text-[#7C3AED]' : 'text-[#94A3B8]'}`}>{item.time}</Text>
-                                        <View className={`w-1 h-10 mx-5 rounded-full ${item.active ? 'bg-[#7C3AED]' : 'bg-[#E2E8F0]'}`} />
+                                        <View className={`w-1 h-10 mx-5 rounded-full`} style={{ backgroundColor: item.active ? '#7C3AED' : '#E2E8F0' }} />
                                         <View className="flex-1">
                                             <Text className={`text-base font-bold ${item.active ? 'text-[#27272a]' : 'text-[#64748B]'}`}>{item.title}</Text>
                                             <Text className="text-[11px] text-[#94A3B8] font-black uppercase mt-1 tracking-widest">{item.tag}</Text>
@@ -96,7 +97,7 @@ export const HomeView = () => {
                                             <Text className="text-[#27272a] text-sm font-black">{p.name}</Text>
                                             <Text className="text-[#7C3AED] text-[11px] font-black uppercase tracking-widest">{p.progress}%</Text>
                                         </View>
-                                        <View className="h-2 bg-[#F1F5F9] rounded-full overflow-hidden shadow-inner">
+                                        <View className="h-2 rounded-full overflow-hidden shadow-inner" style={{ backgroundColor: '#F1F5F9' }}>
                                             <View className="h-full rounded-full shadow-sm" style={{ width: `${p.progress}%`, backgroundColor: p.color }} />
                                         </View>
                                     </View>
@@ -112,18 +113,18 @@ export const HomeView = () => {
                                     { name: '중기부 혁신 데이터 바우처', dday: 'D-5', tag: '최대 7천만 규모' },
                                     { name: '생성형 AI 서비스 바우처', dday: 'D-20', tag: '최대 3억 지원' },
                                 ].map((g, i) => (
-                                    <TouchableOpacity key={i} className="flex-row items-center justify-between p-4 rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] active:bg-slate-50">
+                                    <TouchableOpacity key={i} className="flex-row items-center justify-between p-4 rounded-2xl border active:bg-slate-50" style={{ backgroundColor: '#F8FAFC', borderColor: '#E2E8F0' }}>
                                         <View className="flex-1 mr-3">
                                             <Text className="text-[#27272a] text-sm font-black truncate mb-1" numberOfLines={1}>{g.name}</Text>
                                             <Text className="text-[#D946EF] text-[10px] font-black uppercase tracking-widest">{g.tag}</Text>
                                         </View>
-                                        <View className="bg-white px-2 py-1 rounded-lg border border-[#E2E8F0] items-center justify-center">
+                                        <View className="px-2 py-1 rounded-lg border items-center justify-center" style={{ backgroundColor: '#FFFFFF', borderColor: '#E2E8F0' }}>
                                             <Text className="text-[10px] text-[#64748B] font-black uppercase">{g.dday}</Text>
                                         </View>
                                     </TouchableOpacity>
                                 ))}
                             </View>
-                            <TouchableOpacity className="mt-6 py-4 bg-[#7C3AED] rounded-2xl items-center shadow-lg shadow-[#7C3AED]/20 active:opacity-90">
+                            <TouchableOpacity className="mt-6 py-4 rounded-2xl items-center active:opacity-90" style={{ backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8 }}>
                                 <Text className="text-white text-xs font-black uppercase tracking-widest">맞춤 공고 더보기</Text>
                             </TouchableOpacity>
                         </WidgetCard>

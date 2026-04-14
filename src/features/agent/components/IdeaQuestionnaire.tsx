@@ -21,6 +21,8 @@ interface Props {
     onComplete: (data: BusinessIdeaData) => void;
     onSkip: () => void;
     onClose: () => void;
+    // 프로필에서 가져온 기본값 — 있으면 자동 채움
+    profileDefaults?: Partial<BusinessIdeaData>;
 }
 
 const QUESTIONS = [
@@ -81,17 +83,86 @@ export const IdeaQuestionnaire: React.FC<Props> = ({
     onComplete,
     onSkip,
     onClose,
+    profileDefaults,
 }) => {
     const [step, setStep] = useState(0);
     const [answers, setAnswers] = useState<BusinessIdeaData>({
-        description: '',
-        teamComposition: '',
-        currentStage: '',
-        targetMarket: '',
-        differentiator: '',
+        description: profileDefaults?.description || '',
+        teamComposition: profileDefaults?.teamComposition || '',
+        currentStage: profileDefaults?.currentStage || '',
+        targetMarket: profileDefaults?.targetMarket || '',
+        differentiator: profileDefaults?.differentiator || '',
     });
 
+    // 프로필 기본값이 바뀌면 answers 갱신
+    React.useEffect(() => {
+        if (profileDefaults && visible) {
+            setAnswers({
+                description: profileDefaults.description || '',
+                teamComposition: profileDefaults.teamComposition || '',
+                currentStage: profileDefaults.currentStage || '',
+                targetMarket: profileDefaults.targetMarket || '',
+                differentiator: profileDefaults.differentiator || '',
+            });
+        }
+    }, [profileDefaults, visible]);
+
+    // 모든 핵심 필드가 프로필에서 채워진 경우 → 질문 없이 바로 완료
+    const allPrefilled = !!(
+        profileDefaults?.description &&
+        profileDefaults?.targetMarket &&
+        profileDefaults?.differentiator
+    );
+
     if (!visible) return null;
+
+    // 프로필로 이미 채워진 경우 → 간단한 확인 화면으로 대체
+    if (allPrefilled) {
+        return (
+            <View style={styles.overlay}>
+                <View style={[styles.modal, { paddingVertical: 32 }]}>
+                    <View style={styles.header}>
+                        <Text style={styles.headerTitle}>✅ 프로필 정보 확인</Text>
+                        <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
+                            <Text style={{ color: '#94A3B8', fontSize: 18 }}>✕</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <Text style={{ color: '#64748B', fontSize: 13, marginHorizontal: 20, marginBottom: 16, lineHeight: 20 }}>
+                        등록된 AI 프로필 정보로 자동 완성됩니다.{'\n'}수정이 필요하면 직접 편집하세요.
+                    </Text>
+                    {/* 프리뷰 */}
+                    {[
+                        { label: '아이디어', value: profileDefaults.description },
+                        { label: '타겟 시장', value: profileDefaults.targetMarket },
+                        { label: '차별점', value: profileDefaults.differentiator },
+                        profileDefaults.teamComposition ? { label: '팀 구성', value: profileDefaults.teamComposition } : null,
+                    ].filter(Boolean).map((item: any, idx) => (
+                        <View key={idx} style={{ marginHorizontal: 20, marginBottom: 10, padding: 12, backgroundColor: '#F8FAFC', borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                            <Text style={{ color: '#7C3AED', fontSize: 11, fontWeight: '700', marginBottom: 4 }}>{item.label}</Text>
+                            <Text style={{ color: '#334155', fontSize: 13 }} numberOfLines={2}>{item.value}</Text>
+                        </View>
+                    ))}
+                    <View style={{ flexDirection: 'row', gap: 10, marginHorizontal: 20, marginTop: 16 }}>
+                        <TouchableOpacity
+                            style={{ flex: 1, backgroundColor: '#F1F5F9', paddingVertical: 14, borderRadius: 10, alignItems: 'center' }}
+                            onPress={() => { setStep(0); /* 수동 입력 모드 진입 */ }}
+                        >
+                            <Text style={{ color: '#475569', fontWeight: '700' }}>직접 입력</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={{ flex: 2, backgroundColor: '#7C3AED', paddingVertical: 14, borderRadius: 10, alignItems: 'center' }}
+                            onPress={() => {
+                                onComplete(answers);
+                                setStep(0);
+                            }}
+                        >
+                            <Text style={{ color: '#FFF', fontWeight: '800' }}>이대로 시작하기 →</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </View>
+        );
+    }
 
     const currentQ = QUESTIONS[step];
     const isLast = step === QUESTIONS.length - 1;

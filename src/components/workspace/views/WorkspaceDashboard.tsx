@@ -21,7 +21,7 @@ interface WorkspaceDashboardProps {
 
 import { fetchProjects, Project } from '../../../services/projects';
 import { fetchGrants } from '../../../services/grants';
-import { calculateGrantScore, normalizeRegion } from '../../../utils/scoring';
+import { getTopRecommendedGrants } from '../../../utils/scoring';
 import { useAuth } from '../../../contexts/AuthContext';
 
 // ... (imports)
@@ -60,49 +60,11 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
 
             // 3. Fetch & Score Grants for Recommendations
             const allGrants = await fetchGrants();
-            let scoredGrants = allGrants.map(g => ({
+            const recommended = getTopRecommendedGrants(allGrants, profile, 3).map(g => ({
                 ...g,
-                dDay: g.d_day ? g.d_day.replace('D-', '') : '30', // Normalize dDay for UI
-                matchingRate: profile ? calculateGrantScore(g, profile) : 0
+                matchingRate: g.matching_score,
+                dDay: g.d_day ? g.d_day.replace('D-', '') : '30',
             }));
-
-            // Sort by Score DESC
-            scoredGrants.sort((a, b) => b.matchingRate - a.matchingRate);
-
-            // Filter out old historical data
-            const currentYear = new Date().getFullYear();
-            const activeGrants = scoredGrants.filter(g => {
-                if (!g.deadline_date) return true;
-                const deadlineYear = parseInt(g.deadline_date.split('-')[0], 10);
-                return deadlineYear >= currentYear;
-            });
-
-            // Sort active grants based on regional and industry affinity
-            activeGrants.sort((a, b) => {
-                let scoreA = a.matchingRate || 0;
-                let scoreB = b.matchingRate || 0;
-
-                // Priority: Region Match using normalized comparison
-                const userRegion = normalizeRegion(profile?.location || profile?.sido || '');
-                const regionA = normalizeRegion(a.region || '');
-                const regionB = normalizeRegion(b.region || '');
-
-                if (regionA === userRegion && userRegion) scoreA += 500;
-                else if (regionA === '전국') scoreA += 100;
-
-                if (regionB === userRegion && userRegion) scoreB += 500;
-                else if (regionB === '전국') scoreB += 100;
-
-                // Priority: Industry/Category Match
-                const userIndustry = profile?.industry || profile?.major_category || '';
-                if (userIndustry && a.category && a.category.includes(userIndustry)) scoreA += 300;
-                if (userIndustry && b.category && b.category.includes(userIndustry)) scoreB += 300;
-
-                return scoreB - scoreA;
-            });
-
-            // Take Top 3 (Without injecting mock data)
-            let recommended = activeGrants.slice(0, 3);
             setRecommendedBusinesses(recommended);
 
             // 4. Fetch Saved Agent Sessions (workspace_sessions)
@@ -162,7 +124,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
 
     return (
         <ScrollView
-            className="flex-1 bg-[#FDF8F3]"
+            style={{ flex: 1, backgroundColor: '#FDF8F3' }}
             contentContainerStyle={{ padding: 24, paddingTop: 60 }}
         >
             <View className="max-w-[1400px] w-full mx-auto">
@@ -172,7 +134,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                         안녕하세요, {nickname}님 👋
                     </Text>
                     <View className="flex-row items-center gap-2">
-                        <View className="px-2.5 py-1 rounded-full bg-[#7C3AED]/10 border border-[#7C3AED]/20">
+                        <View className="px-2.5 py-1 rounded-full border" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)', borderColor: 'rgba(124, 58, 237, 0.2)' }}>
                             <Text className="text-[#7C3AED] text-[11px] font-bold uppercase tracking-wider">Professional Planner</Text>
                         </View>
                         <Text className="text-[#64748B] text-sm font-medium">
@@ -186,7 +148,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                     <View className="mb-10 bg-white border border-[#E2E8F0] rounded-[40px] p-8 shadow-xl shadow-black/[0.03]">
                         <View className="flex-row items-center justify-between mb-6">
                             <View className="flex-row items-center gap-3">
-                                <View className="w-10 h-10 rounded-2xl bg-[#7C3AED] items-center justify-center shadow-lg shadow-[#7C3AED]/30">
+                                <View className="w-10 h-10 rounded-2xl items-center justify-center" style={{ backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 10 }}>
                                     <Zap size={20} color="#FFFFFF" fill="#FFFFFF" />
                                 </View>
                                 <View>
@@ -200,8 +162,8 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                         </View>
                         <View className="gap-3">
                             {briefings.map((briefing, index) => (
-                                <View key={briefing.id} className="flex-row items-center bg-[#FDF8F3] p-4 rounded-2xl border border-[#7C3AED]/10">
-                                    <View className="w-2 h-2 rounded-full bg-[#7C3AED] mr-4 shadow-sm shadow-[#7C3AED]/50" />
+                                <View key={briefing.id} className="flex-row items-center p-4 rounded-2xl border" style={{ backgroundColor: '#FDF8F3', borderColor: 'rgba(124, 58, 237, 0.1)' }}>
+                                    <View className="w-2 h-2 rounded-full mr-4" style={{ backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.5, shadowRadius: 2 }} />
                                     <Text className="flex-1 text-[#475569] text-[14px] font-bold leading-relaxed">
                                         {briefing.message}
                                     </Text>
@@ -218,7 +180,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                         {/* Header */}
                         <TouchableOpacity className="flex-row items-center justify-between mb-8">
                             <View className="flex-row items-center gap-3">
-                                <View className="w-8 h-8 rounded-xl bg-[#7C3AED]/10 items-center justify-center">
+                                <View className="w-8 h-8 rounded-xl items-center justify-center" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)' }}>
                                     <Layers size={18} color="#7C3AED" strokeWidth={2.5} />
                                 </View>
                                 <Text className="text-[#27272a] font-black text-base uppercase tracking-wider">Active Strategy Pipeline</Text>
@@ -240,7 +202,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                                     />
                                 ))
                             ) : (
-                                <View className="py-12 items-center justify-center bg-[#F8FAFC] rounded-3xl border border-dashed border-[#CBD5E1]">
+                                <View className="py-12 items-center justify-center rounded-3xl border border-dashed border-[#CBD5E1]" style={{ backgroundColor: '#F8FAFC' }}>
                                     <Layers size={32} color="#CBD5E1" strokeWidth={1.5} className="mb-3" />
                                     <Text className="text-[#94A3B8] text-sm font-medium">진행 중인 프로젝트가 없습니다</Text>
                                 </View>
@@ -249,7 +211,8 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
 
                         {/* Footer Button */}
                         <TouchableOpacity
-                            className="bg-[#F8FAFC] py-4 rounded-[20px] border border-[#E2E8F0] items-center justify-center mt-auto active:bg-slate-50 transition-all"
+                            className="py-4 rounded-[20px] border border-[#E2E8F0] items-center justify-center mt-auto active:bg-slate-50 transition-all"
+                            style={{ backgroundColor: '#F8FAFC' }}
                         >
                             <Text className="text-[#64748B] text-xs font-black uppercase tracking-widest">전체 파이프라인 상세보기</Text>
                         </TouchableOpacity>
@@ -327,7 +290,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                 <View className="mb-10">
                     <View className="flex-row items-center justify-between mb-8">
                         <View className="flex-row items-center gap-3">
-                            <View className="w-8 h-8 rounded-xl bg-[#7C3AED]/10 items-center justify-center">
+                            <View className="w-8 h-8 rounded-xl items-center justify-center" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)' }}>
                                 <CheckCircle size={18} color="#7C3AED" strokeWidth={2.5} />
                             </View>
                             <Text className="text-[#27272a] font-black text-2xl tracking-tighter">
