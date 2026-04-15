@@ -79,7 +79,15 @@ export const SplitLayout = ({
     return (
         <View ref={containerRef} style={styles.container}>
             {/* Left Panel */}
-            <View style={[styles.panel, { width: isLeftMinimized ? 56 : leftWidth, minWidth: isLeftMinimized ? 56 : minLeftWidth }]}>
+            <View style={[
+                styles.panel,
+                {
+                    width: isLeftMinimized ? 56 : Math.max(leftWidth, minLeftWidth),
+                    minWidth: isLeftMinimized ? 56 : minLeftWidth,
+                    maxWidth: isLeftMinimized ? 56 : maxLeftWidth,
+                    flexShrink: 0,
+                }
+            ]}>
                 {leftNode}
             </View>
 

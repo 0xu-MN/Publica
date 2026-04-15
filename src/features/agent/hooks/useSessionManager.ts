@@ -34,8 +34,10 @@ export const useSessionManager = (userId: string | undefined) => {
         editorMarkdown?: string,
         announcementAnalysis?: any,
         announcementText?: string,
+        forceSessionId?: string,   // Portfolio에서 불러온 세션 ID 명시적 전달용
     ) => {
         if (!userId) return;
+        const activeSessionId = forceSessionId || currentSessionId;
 
         const payload: any = {
             user_id: userId,
@@ -59,16 +61,16 @@ export const useSessionManager = (userId: string | undefined) => {
         if (announcementText) extendedPayload.announcement_text = announcementText.slice(0, 5000);
 
         let result;
-        if (currentSessionId) {
+        if (activeSessionId) {
             result = await supabase
                 .from('workspace_sessions')
                 .update(extendedPayload)
-                .eq('id', currentSessionId)
+                .eq('id', activeSessionId)
                 .select();
 
             if (result.error) {
                 console.warn("Extended payload failed, retrying with core payload...", result.error);
-                result = await supabase.from('workspace_sessions').update(payload).eq('id', currentSessionId).select();
+                result = await supabase.from('workspace_sessions').update(payload).eq('id', activeSessionId).select();
             }
         } else {
             result = await supabase

@@ -101,7 +101,14 @@ export const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
         <View
             ref={containerRef}
             style={styles.container}
-            onLayout={(e) => { containerWidthRef.current = e.nativeEvent.layout.width; }}
+            onLayout={(e) => {
+                containerWidthRef.current = e.nativeEvent.layout.width;
+                // 컨테이너가 좁아질 때 inspectorWidth를 자동으로 clamp
+                const maxInspector = Math.max(200, e.nativeEvent.layout.width - 220);
+                if (inspectorWidth > maxInspector) {
+                    setInspectorWidth(maxInspector);
+                }
+            }}
         >
             {/* ====== DRAWER 1: ContextDock (에디터/원문/PDF) ====== */}
             {!isEditorMinimized ? (
@@ -145,7 +152,7 @@ export const UnifiedPanel: React.FC<UnifiedPanelProps> = ({
             {isInspectorOpen && (
                 <View style={[
                     styles.inspectorDrawer,
-                    { width: isEditorMinimized ? undefined : inspectorWidth },
+                    { width: isEditorMinimized ? undefined : Math.min(inspectorWidth, Math.max(200, containerWidthRef.current - 220)) },
                     isEditorMinimized && { flex: 1 },
                 ]}>
                     <DetailPanel

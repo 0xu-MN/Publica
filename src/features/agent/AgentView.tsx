@@ -156,16 +156,18 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
 
     // 🌟 Auto-Save Logic — Only update EXISTING sessions, never create phantom new ones
     useEffect(() => {
-        if (columns.length > 0 && user && currentSessionId) {
+        // initialSession.id를 fallback으로 사용 (currentSessionId가 아직 state에 반영 안됐을 경우 대비)
+        const sessionId = currentSessionId || initialSession?.id || null;
+        if (columns.length > 0 && user && sessionId) {
             const timer = setTimeout(() => {
-                // 🌟 FIX: projectTitle이 있으면 그것을 최우선으로 사용, 없을 때만 root_node 사용 (오버라이트 방지)
                 const derivedTitle = columns[0]?.root_node || "Untitled Project";
                 const titleToSave = projectTitle.trim() || derivedTitle;
-                saveSession(titleToSave, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent);
+                saveSession(titleToSave, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent,
+                    undefined, undefined, undefined, undefined, sessionId);
             }, 5000);
             return () => clearTimeout(timer);
         }
-    }, [columns, chatHistory, currentSessionId, brainstormContent, pdfUrl, agentMode, projectTitle]);
+    }, [columns, chatHistory, currentSessionId, brainstormContent, pdfUrl, agentMode, projectTitle, initialSession]);
 
     const panResponder = useRef(
         PanResponder.create({
@@ -693,9 +695,13 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
         if (columns.length === 0) { Alert.alert("알림", "빈 화면은 저장할 수 없습니다."); return; }
 
         const defaultTitle = pendingGrantTitle || columns[0]?.root_node || "Untitled Project";
-        const finalTitle = projectTitle.trim() || defaultTitle; // 🌟 FIX: window.prompt 제거, UI 입력된 projectTitle 우선 적용
+        const finalTitle = projectTitle.trim() || defaultTitle;
 
-        // Pass pdfUrl as 5th argument, brainstormContent as 6th
+        // Portfolio에서 불러온 세션의 ID가 아직 currentSessionId에 반영 안됐을 경우 fallback
+        if (!currentSessionId && initialSession?.id) {
+            setCurrentSessionId(initialSession.id);
+        }
+
         const success = await saveSession(finalTitle, agentMode, columns, chatHistory, pdfUrl || undefined, brainstormContent);
 
         if (success) {
