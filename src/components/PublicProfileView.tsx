@@ -111,26 +111,46 @@ export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) =
 
     const checkFollowStatus = async () => {
         if (!currentUserId || currentUserId === userId) return;
+
+        // AsyncStorage를 항상 먼저 확인 (즉각 반영, 오프라인 대응)
+        const stored = await AsyncStorage.getItem(`following_${currentUserId}_${userId}`);
+        if (stored !== null) {
+            setIsFollowing(stored === 'true');
+        }
+
+        // Supabase에서 최신 상태 동기화 (follows 테이블 있을 때만)
         try {
-            const { data } = await supabase
+            const { data, error } = await supabase
                 .from('follows')
                 .select('id')
                 .eq('follower_id', currentUserId)
                 .eq('following_id', userId)
                 .maybeSingle();
-            setIsFollowing(!!data);
+
+            if (!error) {
+                // 테이블 조회 성공 시 DB 상태가 정답 (RLS 정상 작동 경우)
+                const dbFollowing = !!data;
+                setIsFollowing(dbFollowing);
+                await AsyncStorage.setItem(`following_${currentUserId}_${userId}`, String(dbFollowing));
+            }
+            // error 있으면 (테이블 없음/RLS) → AsyncStorage 값 유지
         } catch {
-            // follows 테이블 없으면 AsyncStorage fallback
-            const stored = await AsyncStorage.getItem(`following_${userId}`);
-            setIsFollowing(stored === 'true');
+            // 네트워크 오류 등 → AsyncStorage 값 유지
         }
     };
 
     const handleFollowToggle = async () => {
         if (!currentUserId || currentUserId === userId || followLoading) return;
         setFollowLoading(true);
+
+        const next = !isFollowing;
+        // 즉각 UI 반영
+        setIsFollowing(next);
+        setFollowers(f => next ? f + 1 : Math.max(0, f - 1));
+        await AsyncStorage.setItem(`following_${currentUserId}_${userId}`, String(next));
+
         try {
-            if (isFollowing) {
+            if (!next) {
                 // 언팔로우
                 await supabase.from('follows').delete()
                     .eq('follower_id', currentUserId)
@@ -138,9 +158,6 @@ export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) =
                 await supabase.from('profiles')
                     .update({ followers_count: Math.max(0, followers - 1) })
                     .eq('id', userId);
-                setFollowers(f => Math.max(0, f - 1));
-                setIsFollowing(false);
-                await AsyncStorage.setItem(`following_${userId}`, 'false');
             } else {
                 // 팔로우
                 await supabase.from('follows').insert({
@@ -151,16 +168,9 @@ export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) =
                 await supabase.from('profiles')
                     .update({ followers_count: followers + 1 })
                     .eq('id', userId);
-                setFollowers(f => f + 1);
-                setIsFollowing(true);
-                await AsyncStorage.setItem(`following_${userId}`, 'true');
             }
-        } catch (e) {
-            // DB 에러시 로컬 상태만 토글
-            const next = !isFollowing;
-            setIsFollowing(next);
-            setFollowers(f => next ? f + 1 : Math.max(0, f - 1));
-            await AsyncStorage.setItem(`following_${userId}`, String(next));
+        } catch {
+            // DB 실패해도 UI/AsyncStorage 상태는 이미 반영됨 → 무시
         } finally {
             setFollowLoading(false);
         }

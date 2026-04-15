@@ -3,6 +3,7 @@ import { View, Text, Image } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Animated, { SharedValue, useAnimatedStyle, interpolate, Extrapolate } from 'react-native-reanimated';
 import { ArrowRight } from 'lucide-react-native';
+import BorderGlow from './ui/BorderGlow';
 
 interface TopNewsHeroCardProps {
     item: any; // NewsItem
@@ -176,10 +177,12 @@ export const TopNewsHeroCard: React.FC<TopNewsHeroCardProps> = ({ item, index, p
                             ))}
                         </View>
 
-                        <View className="flex-row items-center bg-purple-600 px-4 py-2 rounded-full shadow-lg shadow-purple-600/30">
-                            <Text className="text-white text-xs font-bold mr-1">Read Now</Text>
-                            <ArrowRight size={12} color="#fff" />
-                        </View>
+                        <BorderGlow borderRadius={99} glowColor="hsl(262, 83%, 58%)" glowIntensity={0.9}>
+                            <View className="flex-row items-center bg-purple-600 px-4 py-2 rounded-full">
+                                <Text className="text-white text-xs font-bold mr-1">Read Now</Text>
+                                <ArrowRight size={12} color="#fff" />
+                            </View>
+                        </BorderGlow>
                     </View>
                 </View>
             </View>

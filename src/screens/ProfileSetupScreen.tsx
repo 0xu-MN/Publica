@@ -1,11 +1,41 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, TextInput, StyleSheet, SafeAreaView, Alert, Modal, ActivityIndicator } from 'react-native';
-import { Briefcase, Rocket, Beaker, User as UserIcon, Check, ChevronRight, ChevronLeft, Search, FileText, X, Zap, Building, Sparkles, Cpu, TrendingUp, Users, Target, MapPin, CreditCard, GraduationCap, Info, Lightbulb } from 'lucide-react-native';
+import {
+    View,
+    Text,
+    StyleSheet,
+    TouchableOpacity,
+    ScrollView,
+    TextInput,
+    Alert,
+    SafeAreaView,
+    ActivityIndicator,
+    Modal
+} from 'react-native';
+import { 
+    X, 
+    Check, 
+    Briefcase, 
+    Rocket, 
+    Beaker, 
+    User as UserIcon, 
+    MapPin, 
+    GraduationCap, 
+    Info, 
+    Sparkles, 
+    Search,
+    Building,
+    Cpu,
+    TrendingUp,
+    Lightbulb,
+    FileText,
+    Zap
+} from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
-import { JOB_CATEGORIES, BUSINESS_TYPES } from '../utils/profileConstants';
+import { JOB_CATEGORIES } from '../utils/profileConstants';
+import Stepper, { Step } from '../components/ui/Stepper';
 
 type UserType = 'business' | 'pre_entrepreneur' | 'researcher' | 'other';
 
@@ -40,43 +70,70 @@ const RESEARCHER_TYPES = [
 
 const MAJOR_CATEGORIES = Object.keys(JOB_CATEGORIES);
 const INDUSTRY_CATEGORIES = Object.keys(JOB_CATEGORIES);
-// business/pre_entrepreneur는 3단계, 나머지는 2단계
-const getSteps = (userType: UserType | null) => {
-    const base = [
-        { id: 1, title: '유형 선택', icon: <UserIcon size={18} color="#64748B" /> },
-        { id: 2, title: '기본 정보', icon: <FileText size={18} color="#64748B" /> },
-    ];
-    if (userType === 'business' || userType === 'pre_entrepreneur') {
-        base.push({ id: 3, title: 'AI 프로필', icon: <Zap size={18} color="#64748B" /> });
-    }
-    return base;
-};
 
-const Stepper = ({ currentStep, userType }: { currentStep: number; userType: UserType | null }) => {
-    const steps = getSteps(userType);
-    return (
-        <View style={styles.stepperContainer}>
-            {steps.map((s, index) => (
-                <View key={s.id} style={styles.stepWrapper}>
-                    <View style={styles.stepContent}>
-                        <View style={[styles.stepIconBox, currentStep >= s.id && styles.stepIconBoxActive]}>
-                            {React.cloneElement(s.icon as any, {
-                                color: currentStep >= s.id ? '#FFFFFF' : '#64748B',
-                                size: 16
-                            })}
-                        </View>
-                        <Text style={[styles.stepLabel, currentStep >= s.id && styles.stepLabelActive]}>
-                            {s.title}
-                        </Text>
-                    </View>
-                    {index < steps.length - 1 && (
-                        <View style={[styles.stepLine, currentStep > s.id && styles.stepLineActive]} />
-                    )}
-                </View>
-            ))}
-        </View>
-    );
-};
+// 예비창업가 창업 분야 - 실제 정부 창업 지원사업 분류 기준
+const STARTUP_INDUSTRY_CATEGORIES = [
+    'ICT / 소프트웨어',
+    'AI / 빅데이터',
+    '바이오 / 의료',
+    '핀테크 / 금융',
+    '제조 / 하드웨어',
+    '유통 / 이커머스',
+    '교육 / 에듀테크',
+    '푸드 / 농업',
+    '환경 / 에너지',
+    '문화 / 콘텐츠',
+    '게임 / 엔터테인먼트',
+    '패션 / 뷰티',
+    '부동산 / 건설',
+    '물류 / 모빌리티',
+    '소셜 / 커뮤니티',
+    '헬스케어 / 웰니스',
+    '법률 / 행정 서비스',
+    '소비재 / 생활용품',
+    '기타',
+];
+
+// 프리랜서 관심 키워드 드롭박스 옵션
+const FREELANCER_INTEREST_OPTIONS = [
+    '마케팅 / 광고',
+    '디자인 / UI·UX',
+    '개발 / 프로그래밍',
+    '영상 / 사진',
+    '글쓰기 / 카피라이팅',
+    '번역 / 통역',
+    '컨설팅 / 기획',
+    '강의 / 교육',
+    '세무 / 회계',
+    '법률 / 특허',
+    '음악 / 공연',
+    '공예 / 수공예',
+    '기타',
+];
+
+const BUSINESS_TYPES = [
+    '농업, 임업 및 어업',
+    '광업',
+    '제조업',
+    '전기, 가스, 증기 및 공기 조절 공급업',
+    '수도, 하수 및 폐기물 처리, 원료 재생업',
+    '건설업',
+    '도매 및 소매업',
+    '운수 및 창고업',
+    '숙박 및 음식점업',
+    '정보통신업',
+    '금융 및 보험업',
+    '부동산업',
+    '전문, 과학 및 기술 서비스업',
+    '사업시설 관리, 사업 지원 및 임대 서비스업',
+    '공공 행정, 국방 및 사회보장 행정',
+    '교육 서비스업',
+    '보건업 및 사회복지 서비스업',
+    '예술, 스포츠 및 여가관련 서비스업',
+    '협회 및 단체, 수리 및 기타 개인 서비스업',
+    '가구 내 고용활동 및 달리 분류되지 않은 자가 소비 생산활동',
+    '국제 및 외국기관'
+];
 
 interface ProfileSetupProps {
     isEditing?: boolean;
@@ -85,7 +142,7 @@ interface ProfileSetupProps {
 
 export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupProps) => {
     const { user, profile, refreshProfile, setProfileState } = useAuth();
-    const [step, setStep] = useState(1);
+    const [, setStep] = useState(1);
     const [userType, setUserType] = useState<UserType | null>(null);
 
     // Form States
@@ -103,7 +160,8 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     const [hasStartupIntent, setHasStartupIntent] = useState(false);
     const [majorCategory, setMajorCategory] = useState('');
     const [expertise, setExpertise] = useState('');
-    // ── Step 3: AI 작성 기반 프로필 ──────────────────────────────────────────
+    
+    // Step 3: AI 작성 기반 프로필
     const [companyName, setCompanyName] = useState('');
     const [itemOneLiner, setItemOneLiner] = useState('');
     const [itemDescription, setItemDescription] = useState('');
@@ -114,9 +172,9 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
 
     const [isSaving, setIsSaving] = useState(false);
     const [isAutoFilling, setIsAutoFilling] = useState(false);
-    const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'expertise' | 'industryCategory' | 'businessType' }>({ visible: false, type: 'sido' });
+    const [freelancerInterestCustom, setFreelancerInterestCustom] = useState('');
+    const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'expertise' | 'industryCategory' | 'businessType' | 'freelancerInterest' }>({ visible: false, type: 'sido' });
 
-    // Populate data if editing or existing profile
     useEffect(() => {
         if (profile) {
             if (profile.user_type) setUserType(profile.user_type as UserType);
@@ -140,7 +198,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             if (profile.has_startup_intent) setHasStartupIntent(profile.has_startup_intent);
             if (profile.major_category) setMajorCategory(profile.major_category);
             if (profile.expertise) setExpertise(profile.expertise);
-            // Step 3 필드
+            
             if (profile.company_name) setCompanyName(profile.company_name);
             if (profile.item_one_liner) setItemOneLiner(profile.item_one_liner);
             if (profile.item_description) setItemDescription(profile.item_description);
@@ -166,7 +224,6 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                 if (data.data.sido) setSido(data.data.sido);
                 if (data.data.sigungu) setSigungu(data.data.sigungu);
                 if (data.data.industry) setIndustry(data.data.industry);
-                // Step 3 자동 채우기 — 사업자번호로 가져온 상호명/업종 활용
                 if (data.data.companyName) setCompanyName(data.data.companyName);
                 if (data.data.companyName && !itemOneLiner) {
                     setItemOneLiner(`${data.data.companyName}의 ${data.data.industry || ''} 서비스/제품`);
@@ -190,7 +247,6 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
         performAutoFill({ businessNumber: businessRegNo });
     };
 
-
     const isFormValid = () => {
         if (!userType) return false;
         if (userType === 'business') {
@@ -207,74 +263,46 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             return researcherType !== '' && keywords !== '' && affiliation !== '' && majorCategory !== '' && expertise !== '';
         }
         if (userType === 'other') {
-            return sido !== '' && sigungu !== '' && keywords !== '';
+            const interestValid = keywords !== '' && (keywords !== '기타' || freelancerInterestCustom.trim() !== '');
+            return sido !== '' && sigungu !== '' && interestValid;
         }
         return false;
     };
 
     const handleSave = async () => {
-        console.log('handleSave triggered', { user: !!user, userType });
-        if (!user || !userType) {
-            console.error('Missing user or userType', { user: !!user, userType });
+        if (!user || !userType) return;
+        if (!isFormValid()) {
+            Alert.alert('알림', '필수 항목을 모두 입력해주세요.');
             return;
         }
 
-        if (!isFormValid()) {
-            let missing = "";
-            if (userType === 'business') {
-                if (!sido || !sigungu) missing = "활동 지역";
-                else if (!industry) missing = "산업 분야";
-                else if (!businessYears) missing = "사업 업력";
-            } else if (userType === 'researcher') {
-                if (!researcherType) missing = "연구원 구분";
-                else if (!affiliation) missing = "소속 기관";
-                else if (!majorCategory) missing = "전공 분야";
-                else if (!expertise) missing = "상세 분야";
-                else if (!keywords) missing = "연구 키워드";
-                else if ((researcherType === '대학생' || researcherType === '대학원생') && !studentId) missing = "학번";
-            } else if (userType === 'pre_entrepreneur') {
-                if (!sido || !sigungu) missing = "활동 지역";
-                else if (!industry) missing = "창업 분야";
-            } else if (userType === 'other') {
-                if (!sido || !sigungu) missing = "활동 지역";
-                else if (!keywords) missing = "관심 키워드";
-            }
-
-            if (missing) {
-                console.log('Validation failed: missing field', missing);
-                Alert.alert('알림', `항목을 모두 입력해주세요: ${missing}`);
-                return;
-            }
-        }
-        console.log('Validation passed, starting save...');
-
         setIsSaving(true);
         const fullLocation = sido && sigungu ? `${sido} ${sigungu}` : sido;
+        // 프리랜서 기타 선택 시 직접 입력값 사용
+        const resolvedKeywords = (userType === 'other' && keywords === '기타')
+            ? freelancerInterestCustom.trim()
+            : keywords;
 
         try {
             const updates: any = {
                 id: user.id,
                 user_type: userType,
                 updated_at: new Date().toISOString(),
-                location: fullLocation, // DB column is 'location', not 'sido'
+                location: fullLocation,
                 industry: (userType === 'business' || userType === 'pre_entrepreneur') ? industry : null,
-                research_keywords: keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
+                research_keywords: resolvedKeywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
             };
 
             if (userType === 'business') {
                 updates.business_years = businessYears;
                 updates.business_reg_no = businessRegNo || null;
             }
-
             if (userType === 'pre_entrepreneur') {
                 updates.birth_year = birthYear ? parseInt(birthYear) : null;
             }
-
             if (userType === 'other') {
                 updates.affiliation = affiliation;
             }
-
-            // Step 3: AI 작성 기반 프로필 (business/pre_entrepreneur)
             if (userType === 'business' || userType === 'pre_entrepreneur') {
                 updates.company_name = companyName || null;
                 updates.item_one_liner = itemOneLiner || null;
@@ -285,61 +313,32 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                 updates.target_market = targetMarket || null;
             }
 
-            // Also sync to AsyncStorage for workspace consistency
             const finalJob = majorCategory || industry;
             const profileData = {
                 nickname: user.email?.split('@')[0],
                 realName: profile?.full_name || '',
                 bio: '',
                 imageUrl: profile?.avatar_url || '',
-                interests: keywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
+                interests: resolvedKeywords.split(',').map((k: string) => k.trim()).filter((k: string) => k !== ''),
                 job: finalJob,
                 careers: [],
                 qualifications: []
             };
             await AsyncStorage.setItem('user_profile', JSON.stringify(profileData));
 
-            // ⚠️ ULTRA-ROBUST SAVE LOGIC
-            console.log('Attempting full save...', updates);
             let { error: upsertError } = await supabase.from('profiles').upsert(updates);
+            if (upsertError) throw upsertError;
 
-            if (upsertError) {
-                console.warn('Full save failed (likely missing columns), attempting safe bare-minimum save...', upsertError);
-                // retry with only the pillars
-                const safeUpdates = {
-                    id: user.id,
-                    user_type: userType,
-                    updated_at: new Date().toISOString()
-                };
-                const { error: retryError } = await supabase.from('profiles').upsert(safeUpdates);
-
-                if (retryError) {
-                    console.error('Safe save failed:', retryError);
-                    throw retryError;
-                }
-                console.log('Safe save succeeded.');
-            } else {
-                console.log('Full save succeeded.');
-            }
-
-            // 4. Update Local State IMMEDIATELY for Instant Redirection
             setProfileState(updates);
-
-            // 5. Sync to Auth Metadata (Non-blocking fallback)
-            supabase.auth.updateUser({
-                data: { user_role: finalJob }
-            }).catch(e => console.error("Metadata sync failed:", e));
-
             if (onClose) onClose();
 
             Alert.alert(
                 isEditing ? '수정 완료' : '환영합니다!',
-                isEditing ? '프로필이 업데이트되었습니다.' : '프로필 설정이 완료되었습니다.',
-                [{ text: '확인' }]
+                isEditing ? '프로필이 업데이트되었습니다.' : '프로필 설정이 완료되었습니다.'
             );
         } catch (e: any) {
             console.error('Save Profile Error:', e);
-            Alert.alert('오류', `프로필 저장 중 문제가 발생했습니다: ${e.message || '알 수 없는 오류'}`);
+            Alert.alert('오류', `프로필 저장 중 문제가 발생했습니다: ${e.message}`);
         } finally {
             setIsSaving(false);
         }
@@ -376,459 +375,330 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                             <Text style={styles.subText}>{isEditing ? '변경할 정보를 확인해주세요.' : 'AI 맞춤 매칭을 위해 필수 정보를 확인해주세요.'}</Text>
                         </View>
 
-                        <Stepper currentStep={step} userType={userType} />
-
-                        {step === 1 ? (
-                            <View style={styles.stepContainer}>
-                                <View style={styles.cardGrid}>
-                                    {renderTypeCard('business', '기존 사업자', '사업자 등록증 보유', <Briefcase size={22} color={userType === 'business' ? '#7C3AED' : '#64748B'} />)}
-                                    {renderTypeCard('pre_entrepreneur', '예비 창업자', '창업 준비/아이디어', <Rocket size={22} color={userType === 'pre_entrepreneur' ? '#7C3AED' : '#64748B'} />)}
-                                    {renderTypeCard('researcher', '연구원 / 학생', 'R&D 및 학술 연구', <Beaker size={22} color={userType === 'researcher' ? '#7C3AED' : '#64748B'} />)}
-                                    {renderTypeCard('other', '프리랜서 / 기타', 'N잡러, 창작자 등', <UserIcon size={22} color={userType === 'other' ? '#7C3AED' : '#64748B'} />)}
+                        <Stepper
+                            key={`stepper-${isEditing ? 'edit' : 'new'}-${userType || 'none'}`}
+                            initialStep={isEditing ? 2 : 1}
+                            onStepChange={setStep}
+                            onFinalStepCompleted={handleSave}
+                            nextButtonText="다음으로"
+                            backButtonText="이전으로"
+                            disableStepIndicators={false}
+                        >
+                            <Step>
+                                <View style={styles.stepContainer}>
+                                    <View style={styles.cardGrid}>
+                                        {renderTypeCard('business', '기존 사업자', '사업자 등록증 보유', <Briefcase size={22} color={userType === 'business' ? '#7C3AED' : '#64748B'} />)}
+                                        {renderTypeCard('pre_entrepreneur', '예비 창업자', '창업 준비/아이디어', <Rocket size={22} color={userType === 'pre_entrepreneur' ? '#7C3AED' : '#64748B'} />)}
+                                        {renderTypeCard('researcher', '연구원 / 학생', 'R&D 및 학술 연구', <Beaker size={22} color={userType === 'researcher' ? '#7C3AED' : '#64748B'} />)}
+                                        {renderTypeCard('other', '프리랜서 / 기타', 'N잡러, 창작자 등', <UserIcon size={22} color={userType === 'other' ? '#7C3AED' : '#64748B'} />)}
+                                    </View>
                                 </View>
+                            </Step>
 
-                                <TouchableOpacity
-                                    style={[styles.nextBtn, !userType && styles.btnDisabled]}
-                                    disabled={!userType}
-                                    onPress={() => setStep(2)}
-                                >
-                                    <Text style={styles.nextBtnText}>다음으로</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ) : step === 2 ? (
-                            <View style={styles.stepContainer}>
-
-                                 {(userType === 'business' || userType === 'pre_entrepreneur' || userType === 'other') && (
-                                    <View style={styles.premiumCard}>
-                                        <View style={styles.cardHeader}>
-                                            <MapPin size={18} color="#7C3AED" />
-                                            <Text style={styles.cardHeaderTitle}>활동 거점 및 산업</Text>
-                                        </View>
-                                        {userType === 'business' && (
-                                            <View style={styles.inputGroup}>
-                                                <Text style={styles.label}>사업자 번호 (빠른 인증)</Text>
-                                                <View style={styles.inputWrapper}>
-                                                    <TouchableOpacity onPress={fetchBusinessInfoByNumber} style={styles.inputIcon}>
-                                                        {isAutoFilling ? <ActivityIndicator size="small" color="#7C3AED" /> : <Search size={18} color="#94A3B8" />}
-                                                    </TouchableOpacity>
-                                                    <TextInput
-                                                        style={styles.inputWithIcon}
-                                                        placeholder="사업자등록번호 입력"
-                                                        placeholderTextColor="#94A3B8"
-                                                        value={businessRegNo}
-                                                        onChangeText={setBusinessRegNo}
-                                                        onEndEditing={fetchBusinessInfoByNumber}
-                                                        keyboardType="numeric"
-                                                    />
-                                                </View>
+                            <Step>
+                                <View style={styles.stepContainer}>
+                                    {(userType === 'business' || userType === 'pre_entrepreneur' || userType === 'other') && (
+                                        <View style={styles.premiumCard}>
+                                            <View style={styles.cardHeader}>
+                                                <MapPin size={18} color="#7C3AED" />
+                                                <Text style={styles.cardHeaderTitle}>활동 거점 및 산업</Text>
                                             </View>
-                                        )}
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>활동 지역 <Text style={styles.required}>*</Text></Text>
-                                            <View style={styles.row}>
-                                                <TouchableOpacity
-                                                    style={[styles.dropdown, { flex: 1 }]}
-                                                    onPress={() => setPickerModal({ visible: true, type: 'sido' })}
-                                                >
-                                                    <Text style={[styles.dropdownText, !sido && styles.placeholderText]}>{sido || '시/도'}</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity
-                                                    style={[styles.dropdown, { flex: 1 }]}
-                                                    onPress={() => {
-                                                        if (!sido) {
-                                                            Alert.alert('알림', '시/도를 먼저 선택해주세요.');
-                                                            return;
-                                                        }
-                                                        setPickerModal({ visible: true, type: 'sigungu' })
-                                                    }}
-                                                >
-                                                    <Text style={[styles.dropdownText, !sigungu && styles.placeholderText]}>{sigungu || '구/군'}</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
-
-                                        {userType === 'business' && (
-                                            <>
+                                            {userType === 'business' && (
                                                 <View style={styles.inputGroup}>
-                                                    <Text style={styles.label}>사업 업력 <Text style={styles.required}>*</Text></Text>
-                                                    <View style={styles.row}>
-                                                        {['<3yr', '3-7yr', '>7yr'].map(y => (
-                                                            <TouchableOpacity
-                                                                key={y}
-                                                                style={[styles.chip, businessYears === y && styles.chipActive]}
-                                                                onPress={() => setBusinessYears(y)}
-                                                            >
-                                                                <Text style={[styles.chipText, businessYears === y && styles.chipTextActive]}>{y}</Text>
-                                                            </TouchableOpacity>
-                                                        ))}
+                                                    <Text style={styles.label}>사업자 번호 (빠른 인증)</Text>
+                                                    <View style={styles.inputWrapper}>
+                                                        <TouchableOpacity onPress={fetchBusinessInfoByNumber} style={styles.inputIcon}>
+                                                            {isAutoFilling ? <ActivityIndicator size="small" color="#7C3AED" /> : <Search size={18} color="#94A3B8" />}
+                                                        </TouchableOpacity>
+                                                        <TextInput
+                                                            style={styles.inputWithIcon}
+                                                            placeholder="사업자등록번호 입력"
+                                                            placeholderTextColor="#94A3B8"
+                                                            value={businessRegNo}
+                                                            onChangeText={setBusinessRegNo}
+                                                            onEndEditing={fetchBusinessInfoByNumber}
+                                                            keyboardType="numeric"
+                                                        />
                                                     </View>
                                                 </View>
-                                                <View style={styles.inputGroup}>
-                                                    <Text style={styles.label}>사업의 종류 <Text style={styles.required}>*</Text></Text>
-                                                    <TouchableOpacity
-                                                        style={styles.dropdown}
-                                                        onPress={() => setPickerModal({ visible: true, type: 'businessType' })}
-                                                    >
-                                                        <Text style={[styles.dropdownText, !industry && styles.placeholderText]}>
-                                                            {industry || '업종 선택 (예: 정보통신업)'}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </>
-                                        )}
-
-                                        {userType === 'pre_entrepreneur' && (
-                                            <>
-                                                <View style={styles.inputGroup}>
-                                                    <Text style={styles.label}>출생 연도</Text>
-                                                    <TextInput style={styles.input} placeholder="예: 1995" placeholderTextColor="#94A3B8" keyboardType="numeric" value={birthYear} onChangeText={setBirthYear} />
-                                                </View>
-                                                <View style={styles.inputGroup}>
-                                                    <Text style={styles.label}>창업 분야 <Text style={styles.required}>*</Text></Text>
-                                                    <TouchableOpacity
-                                                        style={styles.dropdown}
-                                                        onPress={() => setPickerModal({ visible: true, type: 'industryCategory' })}
-                                                    >
-                                                        <Text style={[styles.dropdownText, !industry && styles.placeholderText]}>
-                                                            {industry || '분야 선택'}
-                                                        </Text>
-                                                    </TouchableOpacity>
-                                                </View>
-                                            </>
-                                        )}
-                                    </View>
-                                )}
-
-                                {(userType === 'researcher') && (
-                                    <View style={styles.premiumCard}>
-                                        <View style={styles.cardHeader}>
-                                            <GraduationCap size={18} color="#7C3AED" />
-                                            <Text style={styles.cardHeaderTitle}>소속 및 연구 정보</Text>
-                                        </View>
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>연구원 구분 <Text style={styles.required}>*</Text></Text>
-                                            <TouchableOpacity
-                                                style={styles.dropdown}
-                                                onPress={() => setPickerModal({ visible: true, type: 'researcherType' })}
-                                            >
-                                                <Text style={[styles.dropdownText, !researcherType && styles.placeholderText]}>
-                                                    {researcherType || '구분 선택'}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>
-                                                {(researcherType === '대학생' || researcherType === '대학원생') ? '학교명' : '소속 기관'} <Text style={styles.required}>*</Text>
-                                            </Text>
-                                            <TextInput
-                                                style={styles.input}
-                                                placeholder={(researcherType === '대학생' || researcherType === '대학원생') ? "대학교 이름을 입력해주세요" : "소속 기관을 입력해주세요"}
-                                                placeholderTextColor="#94A3B8"
-                                                value={affiliation}
-                                                onChangeText={setAffiliation}
-                                            />
-                                        </View>
-
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>전공 / 연구 분야 <Text style={styles.required}>*</Text></Text>
-                                            <TouchableOpacity
-                                                style={styles.dropdown}
-                                                onPress={() => setPickerModal({ visible: true, type: 'majorCategory' })}
-                                            >
-                                                <Text style={[styles.dropdownText, !majorCategory && styles.placeholderText]}>
-                                                    {majorCategory || '분야 선택 (예: 과학기술)'}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        </View>
-
-                                        {majorCategory !== '' && (
+                                            )}
                                             <View style={styles.inputGroup}>
-                                                <Text style={styles.label}>상세 연구 분야 <Text style={styles.required}>*</Text></Text>
+                                                <Text style={styles.label}>활동 지역 <Text style={styles.required}>*</Text></Text>
+                                                <View style={styles.row}>
+                                                    <TouchableOpacity
+                                                        style={[styles.dropdown, { flex: 1 }]}
+                                                        onPress={() => setPickerModal({ visible: true, type: 'sido' })}
+                                                    >
+                                                        <Text style={[styles.dropdownText, !sido && styles.placeholderText]}>{sido || '시/도'}</Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={[styles.dropdown, { flex: 1 }]}
+                                                        onPress={() => {
+                                                            if (!sido) {
+                                                                Alert.alert('알림', '시/도를 먼저 선택해주세요.');
+                                                                return;
+                                                            }
+                                                            setPickerModal({ visible: true, type: 'sigungu' })
+                                                        }}
+                                                    >
+                                                        <Text style={[styles.dropdownText, !sigungu && styles.placeholderText]}>{sigungu || '구/군'}</Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            </View>
+
+                                            {userType === 'business' && (
+                                                <>
+                                                    <View style={styles.inputGroup}>
+                                                        <Text style={styles.label}>사업 업력 <Text style={styles.required}>*</Text></Text>
+                                                        <View style={styles.row}>
+                                                            {['<3yr', '3-7yr', '>7yr'].map(y => (
+                                                                <TouchableOpacity
+                                                                    key={y}
+                                                                    style={[styles.chip, businessYears === y && styles.chipActive]}
+                                                                    onPress={() => setBusinessYears(y)}
+                                                                >
+                                                                    <Text style={[styles.chipText, businessYears === y && styles.chipTextActive]}>{y}</Text>
+                                                                </TouchableOpacity>
+                                                            ))}
+                                                        </View>
+                                                    </View>
+                                                    <View style={styles.inputGroup}>
+                                                        <Text style={styles.label}>사업의 종류 <Text style={styles.required}>*</Text></Text>
+                                                        <TouchableOpacity
+                                                            style={styles.dropdown}
+                                                            onPress={() => setPickerModal({ visible: true, type: 'businessType' })}
+                                                        >
+                                                            <Text style={[styles.dropdownText, !industry && styles.placeholderText]}>
+                                                                {industry || '업종 선택 (예: 정보통신업)'}
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </>
+                                            )}
+
+                                            {userType === 'pre_entrepreneur' && (
+                                                <>
+                                                    <View style={styles.inputGroup}>
+                                                        <Text style={styles.label}>출생 연도</Text>
+                                                        <TextInput style={styles.input} placeholder="예: 1995" placeholderTextColor="#94A3B8" keyboardType="numeric" value={birthYear} onChangeText={setBirthYear} />
+                                                    </View>
+                                                    <View style={styles.inputGroup}>
+                                                        <Text style={styles.label}>창업 분야 <Text style={styles.required}>*</Text></Text>
+                                                        <TouchableOpacity
+                                                            style={styles.dropdown}
+                                                            onPress={() => setPickerModal({ visible: true, type: 'industryCategory' })}
+                                                        >
+                                                            <Text style={[styles.dropdownText, !industry && styles.placeholderText]}>
+                                                                {industry || '분야 선택'}
+                                                            </Text>
+                                                        </TouchableOpacity>
+                                                    </View>
+                                                </>
+                                            )}
+                                        </View>
+                                    )}
+
+                                    {userType === 'researcher' && (
+                                        <View style={styles.premiumCard}>
+                                            <View style={styles.cardHeader}>
+                                                <GraduationCap size={18} color="#7C3AED" />
+                                                <Text style={styles.cardHeaderTitle}>소속 및 연구 정보</Text>
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>연구원 구분 <Text style={styles.required}>*</Text></Text>
                                                 <TouchableOpacity
                                                     style={styles.dropdown}
-                                                    onPress={() => setPickerModal({ visible: true, type: 'expertise' })}
+                                                    onPress={() => setPickerModal({ visible: true, type: 'researcherType' })}
                                                 >
-                                                    <Text style={[styles.dropdownText, !expertise && styles.placeholderText]}>
-                                                        {expertise || '세부 분야 선택 (예: 바이오/의료)'}
+                                                    <Text style={[styles.dropdownText, !researcherType && styles.placeholderText]}>
+                                                        {researcherType || '구분 선택'}
                                                     </Text>
                                                 </TouchableOpacity>
                                             </View>
-                                        )}
-
-                                        {(researcherType === '대학생' || researcherType === '대학원생') && (
                                             <View style={styles.inputGroup}>
-                                                <Text style={styles.label}>학번 <Text style={styles.required}>*</Text></Text>
+                                                <Text style={styles.label}>
+                                                    {(researcherType === '대학생' || researcherType === '대학원생') ? '학교명' : '소속 기관'} <Text style={styles.required}>*</Text>
+                                                </Text>
                                                 <TextInput
                                                     style={styles.input}
-                                                    placeholder="학번을 입력해주세요"
+                                                    placeholder={(researcherType === '대학생' || researcherType === '대학원생') ? "대학교 이름을 입력해주세요" : "소속 기관을 입력해주세요"}
                                                     placeholderTextColor="#94A3B8"
-                                                    value={studentId}
-                                                    onChangeText={setStudentId}
+                                                    value={affiliation}
+                                                    onChangeText={setAffiliation}
                                                 />
                                             </View>
-                                        )}
 
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>연구자 번호 (NTIS 등)</Text>
-                                            <TextInput
-                                                style={styles.input}
-                                                placeholder="보유 시 입력 (신뢰도 향상)"
-                                                placeholderTextColor="#94A3B8"
-                                                value={researcherId}
-                                                onChangeText={setResearcherId}
-                                            />
-                                        </View>
-
-                                        <TouchableOpacity
-                                            style={styles.checkboxContainer}
-                                            onPress={() => setHasStartupIntent(!hasStartupIntent)}
-                                        >
-                                            <View style={[styles.checkbox, hasStartupIntent && styles.checkboxChecked]}>
-                                                {hasStartupIntent && <Check size={14} color="white" />}
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>전공 / 연구 분야 <Text style={styles.required}>*</Text></Text>
+                                                <TouchableOpacity
+                                                    style={styles.dropdown}
+                                                    onPress={() => setPickerModal({ visible: true, type: 'majorCategory' })}
+                                                >
+                                                    <Text style={[styles.dropdownText, !majorCategory && styles.placeholderText]}>
+                                                        {majorCategory || '분야 선택 (예: 과학기술)'}
+                                                    </Text>
+                                                </TouchableOpacity>
                                             </View>
-                                            <Text style={styles.checkboxLabel}>🚀 창업에 관심이 있습니다 (관련 공고 매칭)</Text>
-                                        </TouchableOpacity>
 
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>전문 분야 키워드 *</Text>
-                                            <TextInput style={styles.input} placeholder="쉼표로 구분 예: 인공지능, 빅데이터" placeholderTextColor="#475569" value={keywords} onChangeText={setKeywords} />
-                                        </View>
-                                    </View>
-                                )}
+                                            {majorCategory !== '' && (
+                                                <View style={styles.inputGroup}>
+                                                    <Text style={styles.label}>상세 연구 분야 <Text style={styles.required}>*</Text></Text>
+                                                    <TouchableOpacity
+                                                        style={styles.dropdown}
+                                                        onPress={() => setPickerModal({ visible: true, type: 'expertise' })}
+                                                    >
+                                                        <Text style={[styles.dropdownText, !expertise && styles.placeholderText]}>
+                                                            {expertise || '세부 분야 선택 (예: 바이오/의료)'}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                </View>
+                                            )}
 
-                                {userType === 'other' && (
-                                    <View style={styles.premiumCard}>
-                                        <View style={styles.cardHeader}>
-                                            <Info size={18} color="#7C3AED" />
-                                            <Text style={styles.cardHeaderTitle}>상세 정보</Text>
-                                        </View>
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>현재 소속 / 직함</Text>
-                                            <TextInput style={styles.input} placeholder="예: 프리랜서 디자이너" placeholderTextColor="#94A3B8" value={affiliation} onChangeText={setAffiliation} />
-                                        </View>
-                                        <View style={styles.inputGroup}>
-                                            <Text style={styles.label}>관심 키워드 <Text style={styles.required}>*</Text></Text>
-                                            <TextInput style={styles.input} placeholder="쉼표로 구분 예: 마케팅, 콘텐츠" placeholderTextColor="#94A3B8" value={keywords} onChangeText={setKeywords} />
-                                        </View>
-                                    </View>
-                                )}
+                                            {(researcherType === '대학생' || researcherType === '대학원생') && (
+                                                <View style={styles.inputGroup}>
+                                                    <Text style={styles.label}>학번 <Text style={styles.required}>*</Text></Text>
+                                                    <TextInput
+                                                        style={styles.input}
+                                                        placeholder="학번을 입력해주세요"
+                                                        placeholderTextColor="#94A3B8"
+                                                        value={studentId}
+                                                        onChangeText={setStudentId}
+                                                    />
+                                                </View>
+                                            )}
 
-                                <TouchableOpacity
-                                    style={[styles.secondaryBtn, { marginTop: 32 }]}
-                                    onPress={() => setStep(1)}
-                                >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <ChevronLeft size={20} color="#64748B" />
-                                        <Text style={styles.secondaryBtnText}>이전으로 (유형 변경)</Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                                {(userType === 'business' || userType === 'pre_entrepreneur') ? (
-                                    <TouchableOpacity
-                                        style={[styles.nextBtn, !isFormValid() && styles.btnDisabled]}
-                                        disabled={!isFormValid()}
-                                        onPress={() => setStep(3)}
-                                    >
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                            <Text style={styles.nextBtnText}>다음 — AI 프로필 설정</Text>
-                                            <ChevronRight size={18} color="white" />
-                                        </View>
-                                    </TouchableOpacity>
-                                ) : (
-                                    <TouchableOpacity
-                                        style={[styles.saveBtn, isSaving && styles.btnDisabled]}
-                                        disabled={isSaving}
-                                        onPress={handleSave}
-                                    >
-                                        <Text style={styles.saveBtnText}>{isSaving ? '처리 중...' : isEditing ? '저장 완료' : '✨ 설정 완료'}</Text>
-                                    </TouchableOpacity>
-                                )}
-                            </View>
-
-                        ) : step === 3 ? (
-                             <View style={styles.stepContainer}>
-                                {/* 안내 배너 — 프리미엄 AI 느낌 강조 */}
-                                <View style={styles.aiPremiumBanner}>
-                                    <View style={styles.bannerIconBox}>
-                                        <Lightbulb size={24} color="#FFFFFF" />
-                                    </View>
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.aiPremiumBannerTitle}>AI 사업계획서 자동 작성 프로필</Text>
-                                        <Text style={styles.aiPremiumBannerDesc}>
-                                            아래 정보는 AI가 귀사에 최적화된 사업계획서 초안을 작성할 때 {'\n'}
-                                            <Text style={{ fontWeight: '800', color: '#7C3AED' }}>가장 핵심적인 근거</Text>가 됩니다. (선택 입력)
-                                        </Text>
-                                    </View>
-                                </View>
-
-                                {/* 1. 기본 아이덴티티 카드 */}
-                                <View style={styles.premiumCard}>
-                                    <View style={styles.cardHeader}>
-                                        <Building size={18} color="#7C3AED" />
-                                        <Text style={styles.cardHeaderTitle}>아이템 기본 정보</Text>
-                                    </View>
-
-                                    <View style={styles.inputGroup}>
-                                        <Text style={styles.label}>
-                                            회사명 / 아이템명
-                                            {companyName ? <Text style={styles.autoFilledBadge}> ✓ 자동입력됨</Text> : null}
-                                        </Text>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="예: (주)퍼블리카, InsightFlow"
-                                            placeholderTextColor="#94A3B8"
-                                            value={companyName}
-                                            onChangeText={setCompanyName}
-                                        />
-                                    </View>
-
-                                    <View style={styles.inputGroup}>
-                                        <View style={styles.labelRow}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                                <Sparkles size={14} color="#F59E0B" />
-                                                <Text style={styles.label}>아이템 한 줄 정의</Text>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>연구자 번호 (NTIS 등)</Text>
+                                                <TextInput
+                                                    style={styles.input}
+                                                    placeholder="보유 시 입력 (신뢰도 향상)"
+                                                    placeholderTextColor="#94A3B8"
+                                                    value={researcherId}
+                                                    onChangeText={setResearcherId}
+                                                />
                                             </View>
-                                            <Text style={styles.labelHint}>⭐ 가장 중요</Text>
-                                        </View>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholder="예: 마케터를 위한 SaaS 통합 관리 플랫폼"
-                                            placeholderTextColor="#94A3B8"
-                                            value={itemOneLiner}
-                                            onChangeText={setItemOneLiner}
-                                        />
-                                    </View>
-                                </View>
 
-                                {/* 2. 상세 설명 및 기술 카드 */}
-                                <View style={styles.premiumCard}>
-                                    <View style={styles.cardHeader}>
-                                        <Cpu size={18} color="#7C3AED" />
-                                        <Text style={styles.cardHeaderTitle}>상세 설명 및 핵심 기술</Text>
-                                    </View>
+                                            <TouchableOpacity
+                                                style={styles.checkboxContainer}
+                                                onPress={() => setHasStartupIntent(!hasStartupIntent)}
+                                            >
+                                                <View style={[styles.checkbox, hasStartupIntent && styles.checkboxChecked]}>
+                                                    {hasStartupIntent && <Check size={14} color="white" />}
+                                                </View>
+                                                <Text style={styles.checkboxLabel}>🚀 창업에 관심이 있습니다 (관련 공고 매칭)</Text>
+                                            </TouchableOpacity>
 
-                                    <View style={styles.inputGroup}>
-                                        <Text style={styles.label}>아이템 상세 설명</Text>
-                                        <TextInput
-                                            style={[styles.input, styles.textArea]}
-                                            placeholder={`어떤 문제를 어떻게 해결하는지 설명해주세요.\n예: 마케터 1인이 평균 13개 도구를 관리하는 비효율 문제를 단일 플랫폼으로 해결합니다.`}
-                                            placeholderTextColor="#94A3B8"
-                                            value={itemDescription}
-                                            onChangeText={setItemDescription}
-                                            multiline
-                                            numberOfLines={3}
-                                        />
-                                    </View>
-
-                                    <View style={styles.inputGroup}>
-                                        <Text style={styles.label}>핵심 기술 / 차별점</Text>
-                                        <TextInput
-                                            style={[styles.input, styles.textArea]}
-                                            placeholder={`우리만의 강점, 보유 특허/기술을 입력하세요.\n예: 독자 AI 엔진 기반 자동 분류 알고리즘 (특허 출원 중)`}
-                                            placeholderTextColor="#94A3B8"
-                                            value={coreTechnology}
-                                            onChangeText={setCoreTechnology}
-                                            multiline
-                                            numberOfLines={3}
-                                        />
-                                    </View>
-                                </View>
-
-                                {/* 3. 역량 및 성과 카드 */}
-                                <View style={styles.premiumCard}>
-                                    <View style={styles.cardHeader}>
-                                        <TrendingUp size={18} color="#7C3AED" />
-                                        <Text style={styles.cardHeaderTitle}>팀 역량 및 현재 성과</Text>
-                                    </View>
-
-                                    <View style={styles.inputGroup}>
-                                        <View style={styles.labelRow}>
-                                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                                                <Users size={14} color="#7C3AED" />
-                                                <Text style={styles.label}>팀 핵심 역량</Text>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>전문 분야 키워드 *</Text>
+                                                <TextInput style={styles.input} placeholder="쉼표로 구분 예: 인공지능, 빅데이터" placeholderTextColor="#475569" value={keywords} onChangeText={setKeywords} />
                                             </View>
-                                        </View>
-                                        <TextInput
-                                            style={[styles.input, styles.textArea]}
-                                            placeholder={`대표자 경력, 핵심 멤버 배경\n예: 대표 전 카카오 개발 10년, CTO 서울대 AI 박사`}
-                                            placeholderTextColor="#94A3B8"
-                                            value={teamBackground}
-                                            onChangeText={setTeamBackground}
-                                            multiline
-                                            numberOfLines={2}
-                                        />
-                                    </View>
-
-                                    <View style={styles.inputGroup}>
-                                        <Text style={styles.label}>현재 성과 (매출, 수상이력 등)</Text>
-                                        <TextInput
-                                            style={[styles.input, styles.textArea]}
-                                            placeholder={`예: 누적 매출 12억, 유료 고객사 115개 등`}
-                                            placeholderTextColor="#94A3B8"
-                                            value={currentAchievements}
-                                            onChangeText={setCurrentAchievements}
-                                            multiline
-                                            numberOfLines={2}
-                                        />
-                                    </View>
-                                </View>
-
-                                {/* 4. 목표 시장 카드 */}
-                                <View style={styles.premiumCard}>
-                                    <View style={styles.cardHeader}>
-                                        <Target size={18} color="#7C3AED" />
-                                        <Text style={styles.cardHeaderTitle}>목표 시장 정보</Text>
-                                    </View>
-                                    <View style={styles.inputGroup}>
-                                        <Text style={styles.label}>타겟 고객 및 시장 규모</Text>
-                                        <TextInput
-                                            style={[styles.input, styles.textArea]}
-                                            placeholder={`예: 국내 중소기업 마케팀 (약 35만 곳), 글로벌 SaaS 시장 2,500억 달러`}
-                                            placeholderTextColor="#94A3B8"
-                                            value={targetMarket}
-                                            onChangeText={setTargetMarket}
-                                            multiline
-                                            numberOfLines={2}
-                                        />
-                                    </View>
-                                </View>
-
-                                <TouchableOpacity
-                                    style={[styles.secondaryBtn, { marginTop: 32, marginBottom: 12 }]}
-                                    onPress={() => setStep(2)}
-                                >
-                                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                                        <ChevronLeft size={20} color="#64748B" />
-                                        <Text style={styles.secondaryBtnText}>이전으로</Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={[styles.premiumSaveBtn, isSaving && styles.btnDisabled]}
-                                    disabled={isSaving}
-                                    onPress={handleSave}
-                                >
-                                    {isSaving ? (
-                                        <ActivityIndicator size="small" color="#FFF" />
-                                    ) : (
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                                            <Sparkles size={20} color="white" />
-                                            <Text style={styles.nextBtnText}>
-                                                {isEditing ? '변경 내용 저장' : '✨ 설정 완료 — AI 워크스페이스 시작'}
-                                            </Text>
                                         </View>
                                     )}
-                                </TouchableOpacity>
 
-                                <TouchableOpacity
-                                    style={{ alignItems: 'center', marginTop: 16, marginBottom: 20 }}
-                                    onPress={handleSave}
-                                    disabled={isSaving}
-                                >
-                                    <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600', textDecorationLine: 'underline' }}>나중에 입력하고 바로 시작하기</Text>
-                                </TouchableOpacity>
-                            </View>
-                        ) : null}
+                                    {userType === 'other' && (
+                                        <View style={styles.premiumCard}>
+                                            <View style={styles.cardHeader}>
+                                                <Info size={18} color="#7C3AED" />
+                                                <Text style={styles.cardHeaderTitle}>상세 정보</Text>
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>현재 소속 / 직함</Text>
+                                                <TextInput style={styles.input} placeholder="예: 프리랜서 디자이너" placeholderTextColor="#94A3B8" value={affiliation} onChangeText={setAffiliation} />
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>관심 분야 <Text style={styles.required}>*</Text></Text>
+                                                <TouchableOpacity
+                                                    style={styles.dropdown}
+                                                    onPress={() => setPickerModal({ visible: true, type: 'freelancerInterest' })}
+                                                >
+                                                    <Text style={[styles.dropdownText, !keywords && styles.placeholderText]}>
+                                                        {keywords === '기타' ? '기타 (직접 입력)' : keywords || '관심 분야 선택'}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                            {keywords === '기타' && (
+                                                <View style={styles.inputGroup}>
+                                                    <Text style={styles.label}>직접 입력 <Text style={styles.required}>*</Text></Text>
+                                                    <TextInput
+                                                        style={styles.input}
+                                                        placeholder="관심 분야를 직접 입력하세요"
+                                                        placeholderTextColor="#94A3B8"
+                                                        value={freelancerInterestCustom}
+                                                        onChangeText={setFreelancerInterestCustom}
+                                                    />
+                                                </View>
+                                            )}
+                                        </View>
+                                    )}
+                                </View>
+                            </Step>
+
+                            {(userType === 'business' || userType === 'pre_entrepreneur') && (
+                                <Step>
+                                    <View style={styles.stepContainer}>
+                                        <View style={styles.aiPremiumBanner}>
+                                            <View style={styles.bannerIconBox}>
+                                                <Lightbulb size={24} color="#FFFFFF" />
+                                            </View>
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.aiPremiumBannerTitle}>AI 사업계획서 자동 작성 프로필</Text>
+                                                <Text style={styles.aiPremiumBannerDesc}>
+                                                    아래 정보는 AI가 귀사에 최적화된 사업계획서 초안을 작성할 때 {'\n'}
+                                                    <Text style={{ fontWeight: '800', color: '#7C3AED' }}>가장 핵심적인 근거</Text>가 됩니다. (선택 입력)
+                                                </Text>
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.premiumCard}>
+                                            <View style={styles.cardHeader}>
+                                                <Building size={18} color="#7C3AED" />
+                                                <Text style={styles.cardHeaderTitle}>아이템 기본 정보</Text>
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>회사명 / 아이템명</Text>
+                                                <TextInput style={styles.input} placeholder="예: (주)퍼블리카, InsightFlow" value={companyName} onChangeText={setCompanyName} />
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <View style={styles.labelRow}>
+                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                                        <Sparkles size={14} color="#F59E0B" />
+                                                        <Text style={styles.label}>아이템 한 줄 정의</Text>
+                                                    </View>
+                                                    <Text style={styles.labelHint}>⭐ 가장 중요</Text>
+                                                </View>
+                                                <TextInput style={styles.input} placeholder="예: 마케터를 위한 SaaS 통합 관리 플랫폼" value={itemOneLiner} onChangeText={setItemOneLiner} />
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.premiumCard}>
+                                            <View style={styles.cardHeader}>
+                                                <Cpu size={18} color="#7C3AED" />
+                                                <Text style={styles.cardHeaderTitle}>상세 설명 및 핵심 기술</Text>
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>아이템 상세 설명</Text>
+                                                <TextInput style={[styles.input, styles.textArea]} placeholder="문제를 어떻게 해결하는지 설명해주세요." value={itemDescription} onChangeText={setItemDescription} multiline numberOfLines={3} />
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>핵심 기술 / 차별점</Text>
+                                                <TextInput style={[styles.input, styles.textArea]} placeholder="보유 기술 및 강점을 입력하세요." value={coreTechnology} onChangeText={setCoreTechnology} multiline numberOfLines={3} />
+                                            </View>
+                                        </View>
+
+                                        <View style={styles.premiumCard}>
+                                            <View style={styles.cardHeader}>
+                                                <TrendingUp size={18} color="#7C3AED" />
+                                                <Text style={styles.cardHeaderTitle}>팀 역량 및 현재 성과</Text>
+                                            </View>
+                                            <View style={styles.inputGroup}>
+                                                <Text style={styles.label}>팀 핵심 역량</Text>
+                                                <TextInput style={[styles.input, styles.textArea]} placeholder="대표자 및 멤버들의 배경을 입력하세요." value={teamBackground} onChangeText={setTeamBackground} multiline numberOfLines={2} />
+                                            </View>
+                                        </View>
+                                    </View>
+                                </Step>
+                            )}
+                        </Stepper>
                     </ScrollView>
                 </View>
             </View>
@@ -857,6 +727,8 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                         pickerModal.type === 'majorCategory' ? MAJOR_CATEGORIES :
                                             pickerModal.type === 'expertise' ? (JOB_CATEGORIES[majorCategory] || []) :
                                                 pickerModal.type === 'businessType' ? BUSINESS_TYPES :
+                                                pickerModal.type === 'industryCategory' ? STARTUP_INDUSTRY_CATEGORIES :
+                                                pickerModal.type === 'freelancerInterest' ? FREELANCER_INTEREST_OPTIONS :
                                                     INDUSTRY_CATEGORIES).map(item => (
                                                         <TouchableOpacity
                                                             key={item}
@@ -871,11 +743,14 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                                                     setResearcherType(item);
                                                                 } else if (pickerModal.type === 'majorCategory') {
                                                                     setMajorCategory(item);
-                                                                    setExpertise(''); // Reset expertise when category changes
+                                                                    setExpertise('');
                                                                 } else if (pickerModal.type === 'expertise') {
                                                                     setExpertise(item);
                                                                 } else if (pickerModal.type === 'industryCategory' || pickerModal.type === 'businessType') {
                                                                     setIndustry(item);
+                                                                } else if (pickerModal.type === 'freelancerInterest') {
+                                                                    setKeywords(item);
+                                                                    if (item !== '기타') setFreelancerInterestCustom('');
                                                                 }
                                                                 setPickerModal({ ...pickerModal, visible: false });
                                                             }}
@@ -886,8 +761,8 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                         </ScrollView>
                     </View>
                 </View>
-            </Modal >
-        </SafeAreaView >
+            </Modal>
+        </SafeAreaView>
     );
 };
 
@@ -898,7 +773,7 @@ const styles = StyleSheet.create({
         backgroundColor: 'white', 
         width: '100%', 
         maxWidth: 450, 
-        maxHeight: '90%', // Prevent clipping on smaller screens
+        maxHeight: '90%', 
         borderRadius: 32, 
         padding: 32, 
         shadowColor: '#000', 
@@ -1019,76 +894,6 @@ const styles = StyleSheet.create({
         fontSize: 14,
         fontWeight: '600'
     },
-    // Stepper Styles
-    stepperContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 32,
-        paddingHorizontal: 10
-    },
-    stepWrapper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    stepContent: {
-        alignItems: 'center',
-        gap: 6
-    },
-    stepIconBox: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: '#F1F5F9',
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderWidth: 1.5,
-        borderColor: '#E2E8F0'
-    },
-    stepIconBoxActive: {
-        backgroundColor: '#7C3AED',
-        borderColor: '#7C3AED',
-        shadowColor: '#7C3AED',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 6
-    },
-    stepLabel: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: '#94A3B8'
-    },
-    stepLabelActive: {
-        color: '#0F172A'
-    },
-    stepLine: {
-        width: 50,
-        height: 2,
-        backgroundColor: '#E2E8F0',
-        marginHorizontal: 10,
-        marginTop: -18
-    },
-    stepLineActive: {
-        backgroundColor: '#7C3AED'
-    },
-    secondaryBtn: {
-        backgroundColor: '#F8FAFC',
-        height: 56,
-        borderRadius: 18,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 24,
-        borderWidth: 1,
-        borderColor: '#E2E8F0'
-    },
-    secondaryBtnText: {
-        color: '#64748B',
-        fontSize: 15,
-        fontWeight: '700',
-        marginLeft: 8
-    },
-    // ── Premium UI Styles ──────────────────────────────────
     premiumCard: {
         backgroundColor: 'white',
         borderRadius: 24,
@@ -1096,12 +901,10 @@ const styles = StyleSheet.create({
         marginBottom: 20,
         borderWidth: 1,
         borderColor: '#F1F5F9',
-        // Subtle Drop Shadow (Web/iOS)
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 10 },
         shadowOpacity: 0.04,
         shadowRadius: 20,
-        // Android elevation
         elevation: 4,
     },
     cardHeader: {
@@ -1153,7 +956,7 @@ const styles = StyleSheet.create({
         lineHeight: 20,
     },
     premiumSaveBtn: {
-        backgroundColor: '#0F172A', // Deep navy/black for premium feel
+        backgroundColor: '#0F172A',
         height: 60,
         borderRadius: 20,
         alignItems: 'center',

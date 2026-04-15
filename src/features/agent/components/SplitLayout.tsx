@@ -14,7 +14,8 @@ export const SplitLayout = ({
     leftNode,
     rightNode,
     initialLeftWidth = Dimensions.get('window').width * 0.45,
-    minLeftWidth = 200,
+    // 440px = editor drawer min(220) + resizer(24) + inspector drawer min(200) — prevents any inner UI clipping
+    minLeftWidth = 440,
     maxLeftWidth = Dimensions.get('window').width * 0.75,
     isLeftMinimized = false
 }: SplitLayoutProps) => {
@@ -78,7 +79,7 @@ export const SplitLayout = ({
     return (
         <View ref={containerRef} style={styles.container}>
             {/* Left Panel */}
-            <View style={[styles.panel, { width: isLeftMinimized ? 56 : leftWidth }]}>
+            <View style={[styles.panel, { width: isLeftMinimized ? 56 : leftWidth, minWidth: isLeftMinimized ? 56 : minLeftWidth }]}>
                 {leftNode}
             </View>
 

@@ -11,6 +11,7 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Footer from './Footer';
+import { SoftAurora } from './ui/SoftAurora';
 
 interface LandingPageProps {
     onLoginPress: () => void;
@@ -234,20 +235,30 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                             지원사업 성공의 전 과정을 AI가 함께 합니다.
                         </Text>
                     </View>
-                    <View style={[styles.whyGrid, isDesktop && styles.whyGridRow]}>
-                        {WHY_ITEMS.map((item, i) => {
-                            const WhyIcon = item.icon;
-                            return (
-                                <View key={i} style={styles.whyCard}>
-                                    <View style={[styles.whyIconBox, { backgroundColor: item.color + '20' }]}>
-                                        <WhyIcon size={24} color={item.color} />
+                    <SoftAurora
+                        color1="#f7f7f7"
+                        color2="#e100ff"
+                        speed={1.3}
+                        brightness={0.7}
+                        mouseInfluence={0.1}
+                        octaveDecay={0.04}
+                        style={{ borderRadius: 32, padding: 4 }}
+                    >
+                        <View style={[styles.whyGrid, isDesktop && styles.whyGridRow]}>
+                            {WHY_ITEMS.map((item, i) => {
+                                const WhyIcon = item.icon;
+                                return (
+                                    <View key={i} style={styles.whyCard}>
+                                        <View style={[styles.whyIconBox, { backgroundColor: item.color + '20' }]}>
+                                            <WhyIcon size={24} color={item.color} />
+                                        </View>
+                                        <Text style={styles.whyTitle}>{item.title}</Text>
+                                        <Text style={styles.whyDesc}>{item.desc}</Text>
                                     </View>
-                                    <Text style={styles.whyTitle}>{item.title}</Text>
-                                    <Text style={styles.whyDesc}>{item.desc}</Text>
-                                </View>
-                            );
-                        })}
-                    </View>
+                                );
+                            })}
+                        </View>
+                    </SoftAurora>
                 </View>
             </View>
 

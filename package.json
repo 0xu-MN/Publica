@@ -33,6 +33,7 @@
     "expo-linear-gradient": "~15.0.8",
     "expo-status-bar": "~3.0.9",
     "file-saver": "^2.0.5",
+    "framer-motion": "^12.38.0",
     "langchain": "^1.2.18",
     "lucide-react-native": "^0.562.0",
     "luxon": "^3.7.2",

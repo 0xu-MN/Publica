@@ -158,7 +158,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
     // --- END RESTORED LOGIC ---
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#FDF8F3' }}>
+        <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
             {/* --- MAIN PAGE SCROLL (Controls whole screen) --- */}
             <ScrollView
                 className="flex-1"

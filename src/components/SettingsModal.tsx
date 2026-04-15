@@ -3,7 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Modal, Pr
 import { useAuth } from '../contexts/AuthContext';
 import { X, Bookmark, Bell, Moon, ChevronRight, User, Shield, LogOut } from 'lucide-react-native';
 
-const ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com'];
+const ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com', 'haloforge@haloforge.kr'];
 
 interface SettingsModalProps {
     visible: boolean;

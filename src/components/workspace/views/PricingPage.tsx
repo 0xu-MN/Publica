@@ -24,7 +24,7 @@ export const PricingPage: React.FC<PricingPageProps> = ({ onSelectPlan, currentP
 
     
     const theme = {
-        bg: '#FDF8F3',
+        bg: '#FFFFFF',
         card: '#FFFFFF',
         text: '#27272a',
         subtext: '#64748B',

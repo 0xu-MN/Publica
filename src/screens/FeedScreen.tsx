@@ -10,7 +10,6 @@ import { RotatingText } from '../components/RotatingText';
 import { DashboardView } from '../components/DashboardView';
 import { useAuth } from '../contexts/AuthContext';
 import { Icons } from '../utils/icons';
-import { FloatingLines } from '../components/FloatingLines';
 import { MainLayout } from '../components/MainLayout';
 import { ConnectHomeView } from '../components/ConnectHomeView';
 import { ConnectScreen } from './ConnectScreen';
@@ -365,7 +364,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                             try {
                                 const newProject = await createProject(user.id, selectedProgram?.id || 'manual', selectedProgram?.title || 'New Grant Project', initialSession);
                                 if (newProject) projectId = newProject.id;
-                            } catch (e) {}
+                            } catch (e) { }
                             setSelectedAnalysisResult(null);
                             setSelectedProgram(null);
                             setProjectStore(selectedProgram, { ...initialSession, id: projectId } as any);
@@ -452,10 +451,10 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-    workspaceWrapper: { flex: 1, backgroundColor: '#FDF8F3', width: '100%', height: '100%' },
+    workspaceWrapper: { flex: 1, backgroundColor: '#FFFFFF', width: '100%', height: '100%' },
     pricingWrapper: { flex: 1, width: '100%', backgroundColor: 'transparent' },
     overlay: { position: 'absolute', inset: 0, zIndex: 1000, backgroundColor: 'transparent' },
-    feedWrapper: { flex: 1, width: '100%', backgroundColor: '#FDF8F3' },
+    feedWrapper: { flex: 1, width: '100%', backgroundColor: '#FFFFFF' },
     listContent: { paddingBottom: 60 },
     feedHeaderWrapper: { width: '100%', alignItems: 'center' },
     feedSeparator: { marginVertical: 32, opacity: 0.1 },

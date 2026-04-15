@@ -12,6 +12,7 @@ import Footer from './Footer';
 import ElectricBorder from './ElectricBorder';
 import { VerticalStackCarousel } from './VerticalStackCarousel';
 import { GovernmentCard } from './GovernmentCard';
+import BorderGlow from './ui/BorderGlow';
 
 interface ConnectHomeViewProps {
     onNavigateToSupport?: () => void;
@@ -53,6 +54,27 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
         profile?.user_type === 'pre_entrepreneur' ? (profile?.industry || 'Pre-Ent') :
             profile?.user_type === 'researcher' ? (profile?.major_category || 'Researcher') :
                 (profile?.industry || 'AI Strategist');
+
+    // 직종별 호칭 계산
+    const getHonorific = (): string => {
+        const ut = (profile as any)?.user_type;
+        if (ut === 'business' || ut === 'pre_entrepreneur') return '대표님';
+        if (ut === 'researcher') {
+            const rt = (profile as any)?.researcher_type || '';
+            if (rt.includes('교수')) return '교수님';
+            if (rt.includes('박사')) return '박사님';
+            if (rt.includes('학생') || rt.includes('대학원')) return '님';
+            return '연구원님';
+        }
+        if (ut === 'other') {
+            const aff = (profile as any)?.affiliation || '';
+            if (aff.includes('강사') || aff.includes('선생')) return '선생님';
+            if (aff.includes('작가') || aff.includes('디자이너') || aff.includes('크리에이터')) return '님';
+            return '님';
+        }
+        return '님';
+    };
+    const honorific = getHonorific();
 
     const imageUrl = profile?.avatar_url || '';
     const isDesktop = width >= 1024;
@@ -151,7 +173,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                     <View style={styles.headerRow}>
                         <View>
                             <Text style={styles.headerTitle}>CONNECT HUB</Text>
-                            <Text style={styles.headerSubtitle}>{nickname || '방문자'} 연구원님의 아이템에 맞춘 최적의 기회입니다.</Text>
+                            <Text style={styles.headerSubtitle}>{nickname || '방문자'} {honorific}의 아이템에 맞춘 최적의 기회입니다.</Text>
                         </View>
                         <TouchableOpacity style={styles.filterBtn}>
                             <Filter size={18} color="#94A3B8" />
@@ -190,7 +212,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                     </View>
                                     <View>
                                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                                            <Text style={styles.profileTitle}>{nickname} 연구원님</Text>
+                                            <Text style={styles.profileTitle}>{nickname} {honorific}</Text>
                                             <View style={styles.roleBadge}><Text style={styles.roleText}>{role}</Text></View>
                                         </View>
                                         <Text style={styles.profileKeywords} numberOfLines={1}>
@@ -223,7 +245,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                 <View style={[styles.recCard, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
                                     <Search size={48} color="#94A3B8" style={{ opacity: 0.5, marginBottom: 20 }} />
                                     <Text style={{ color: '#18181b', fontSize: 24, fontWeight: '800', marginBottom: 8 }}>맞춤 지원사업 탐색 중</Text>
-                                    <Text style={{ color: '#64748B', textAlign: 'center' }}>AI가 연구원님께 최적화된 공고를 선별하고 있습니다.</Text>
+                                    <Text style={{ color: '#64748B', textAlign: 'center' }}>AI가 {nickname} {honorific}께 최적화된 공고를 선별하고 있습니다.</Text>
                                 </View>
                             ) : (
                                 topGrants.slice(0, 2).map((grant, idx) => (
@@ -245,10 +267,12 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                                                 <Text style={styles.recFieldLabel}>지원 분야</Text>
                                                 <Text style={styles.recFieldValue}>{grant.tech_field}</Text>
                                             </View>
-                                            <View style={styles.viewBtn}>
-                                                <Sparkles size={18} color="#FFF" />
-                                                <Text style={styles.viewBtnText}>상세 보기</Text>
-                                            </View>
+                                            <BorderGlow borderRadius={16} glowColor="hsl(262, 83%, 58%)" glowIntensity={0.8}>
+                                                <View style={styles.viewBtn}>
+                                                    <Sparkles size={18} color="#FFF" />
+                                                    <Text style={styles.viewBtnText}>상세 보기</Text>
+                                                </View>
+                                            </BorderGlow>
                                         </View>
                                     </TouchableOpacity>
                                 ))

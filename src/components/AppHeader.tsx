@@ -5,6 +5,7 @@ import { Icons } from '../utils/icons';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { useProjectStore } from '../store/useProjectStore';
+import BorderGlow from './ui/BorderGlow';
 
 const CATEGORIES = ['전체', '과학', '경제'];
 
@@ -152,20 +153,22 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
                 {/* Right: Actions */}
                 <View style={styles.rightActions}>
-                    <TouchableOpacity
-                        onPress={() => {
-                            if (user) {
-                                setViewMode('workspace');
-                                useProjectStore.getState().setGlobalTabRequest('pricing');
-                            } else {
-                                setViewMode('pricing');
-                            }
-                        }}
-                        style={styles.proBadge}
-                    >
-                        <Icons.Crown color="#F59E0B" size={14} />
-                        <Text style={styles.proBadgeText}>PRO</Text>
-                    </TouchableOpacity>
+                    <BorderGlow borderRadius={12} glowColor="hsl(35, 92%, 55%)" glowIntensity={0.8} edgeSensitivity={20}>
+                        <TouchableOpacity
+                            onPress={() => {
+                                if (user) {
+                                    setViewMode('workspace');
+                                    useProjectStore.getState().setGlobalTabRequest('pricing');
+                                } else {
+                                    setViewMode('pricing');
+                                }
+                            }}
+                            style={styles.proBadge}
+                        >
+                            <Icons.Crown color="#F59E0B" size={14} />
+                            <Text style={styles.proBadgeText}>PRO</Text>
+                        </TouchableOpacity>
+                    </BorderGlow>
 
                     {!user ? (
                         <View style={styles.authGroup}>

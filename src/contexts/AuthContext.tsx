@@ -111,7 +111,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     redirectTo: Platform.select({
                         web: window.location.origin,
                         default: 'publica://auth/callback' // Requires scheme setup in app.json
-                    })
+                    }),
+                    queryParams: {
+                        prompt: 'select_account'
+                    }
                 }
             });
             if (error) throw error;

@@ -99,6 +99,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
             setChatHistory(initialSession.chat_history || []);
             if (initialSession.pdf_url) setPdfUrl(initialSession.pdf_url);
             if (initialSession.brainstorm_content) setBrainstormContent(initialSession.brainstorm_content);
+            if (initialSession.id) setCurrentSessionId(initialSession.id); // 🌟 FIX: 현재 세션 ID 유지 (덮어쓰기 위해)
             if (initialSession.title) setProjectTitle(initialSession.title); // 🌟 FIX: 타이틀 복원
             setShowWelcome(false);
 
@@ -265,16 +266,27 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
   "chat_message": "분석 완료"
 }`;
 
-                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`, {
+                const geminiModel = process.env.EXPO_PUBLIC_GEMINI_MODEL || 'gemini-2.0-flash';
+                const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: fallbackPrompt }] }], generationConfig: { temperature: 0.7 } })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: fallbackPrompt }] }],
+                        generationConfig: {
+                            temperature: 0.7,
+                            responseMimeType: 'application/json',
+                        }
+                    })
                 });
 
+                if (!resp.ok) throw new Error(`Gemini HTTP ${resp.status}`);
                 const json = await resp.json();
                 const raw = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-                const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-                const parsed = JSON.parse(cleaned);
+                if (!raw) throw new Error('empty response');
+                // JSON 블록 추출 (마크다운 코드블록 있어도 처리)
+                const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                if (!jsonMatch) throw new Error('no JSON found');
+                const parsed = JSON.parse(jsonMatch[0]);
 
                 if (parsed?.workspace_data?.branches?.length > 0) {
                     setChatHistory(prev => [...prev, { text: "AI가 맞춤형 전략을 생성했습니다.", sender: 'ai' }]);
@@ -299,30 +311,31 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
                 sender: 'ai'
             }]);
 
+            const uid = Date.now();
             return {
                 workspace_data: {
                     root_node: `${grantName} — ${itemName} 맞춤 전략`,
                     branches: [
                         {
-                            id: 'lr-1', step_number: 1,
+                            id: `lr-${uid}-1`, step_number: 1,
                             label: '지원 자격 및 적합성 검토',
                             description: `${grantName}의 신청 자격 요건을 ${industry} 분야 기준으로 검토합니다. 사업자 유형, 업력, 지역 제한 등 필수 조건을 확인하고 가점 항목을 파악합니다.`,
                             type: 'research'
                         },
                         {
-                            id: 'lr-2', step_number: 2,
+                            id: `lr-${uid}-2`, step_number: 2,
                             label: '핵심 차별성 어필 전략',
                             description: `${tech}을 중심으로 기존 시장 대비 기술적 독창성을 부각합니다. 평가 위원이 주목하는 '문제 인식 → 솔루션 → 임팩트' 스토리라인을 구성합니다.`,
                             type: 'strategy'
                         },
                         {
-                            id: 'lr-3', step_number: 3,
+                            id: `lr-${uid}-3`, step_number: 3,
                             label: '시장성 및 사업화 계획',
                             description: `${market}을 대상으로 한 구체적인 매출 계획과 BM을 수립합니다. TAM/SAM/SOM 분석과 3년 성장 로드맵을 수치 기반으로 작성합니다.`,
                             type: 'strategy'
                         },
                         {
-                            id: 'lr-4', step_number: 4,
+                            id: `lr-${uid}-4`, step_number: 4,
                             label: '제출 서류 체크리스트',
                             description: `${grantName} 제출을 위한 필수 서류 목록을 점검합니다. 사업계획서, 재무제표, 팀원 이력서 등 누락 시 감점·탈락으로 이어지는 항목을 우선 확인합니다.`,
                             type: 'documentation'

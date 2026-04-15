@@ -21,7 +21,7 @@ const WidgetCard = ({ title, icon: Icon, children, color = '#7C3AED', className 
 
 export const HomeView = () => {
     return (
-        <ScrollView style={{ flex: 1, backgroundColor: '#FDF8F3' }}>
+        <ScrollView style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
             <View className="p-10 max-w-[1400px] w-full mx-auto">
                 {/* Welcome Header */}
                 <View className="mb-12">

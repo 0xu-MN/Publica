@@ -310,9 +310,9 @@ export const GuideView: React.FC = () => {
    STYLES
    ────────────────────────────────────────────── */
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
 
-    header: { paddingHorizontal: 48, paddingTop: 64, paddingBottom: 56, backgroundColor: '#FDF8F3' },
+    header: { paddingHorizontal: 48, paddingTop: 64, paddingBottom: 56, backgroundColor: '#FFFFFF' },
     headerBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F5F3FF', paddingHorizontal: 14, paddingVertical: 7, borderRadius: 99, alignSelf: 'flex-start', marginBottom: 24, borderWidth: 1, borderColor: '#DDD6FE' },
     headerBadgeText: { color: '#7C3AED', fontWeight: '800', fontSize: 12 },
     headerTitle: { color: '#18181B', fontSize: 40, fontWeight: '900', letterSpacing: -1, lineHeight: 52, marginBottom: 20 },

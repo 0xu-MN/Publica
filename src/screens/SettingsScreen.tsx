@@ -140,8 +140,8 @@ const styles = StyleSheet.create({
     sectionTitle: { color: '#18181b', fontSize: 18, fontWeight: '700', marginBottom: 16 },
     
     card: {
-        backgroundColor: '#FFFFFF', borderRadius: 24, paddingVertical: 8,
-        borderWidth: 1, borderColor: '#F1F5F9',
+        backgroundColor: '#FCF2E9', borderRadius: 24, paddingVertical: 8,
+        borderWidth: 1, borderColor: '#7C3AED10',
         shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05, shadowRadius: 10, elevation: 2,
     },

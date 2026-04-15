@@ -5,6 +5,7 @@ import { fetchGrants, Grant } from '../services/grants';
 import { useAuth } from '../contexts/AuthContext';
 import { calculateGrantScore, getTopRecommendedGrants } from '../utils/scoring';
 import { Icons } from '../utils/icons';
+import BorderGlow from '../components/ui/BorderGlow';
 
 interface GrantListProps {
     onBack: () => void;
@@ -447,6 +448,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
 
                             {/* Action Buttons */}
                             <View style={styles.detailActions}>
+                                <BorderGlow borderRadius={14} glowColor="hsl(262, 83%, 58%)" glowIntensity={1}>
                                 <TouchableOpacity
                                     style={styles.detailActionPrimary}
                                     onPress={() => {
@@ -457,6 +459,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
                                     <FileText size={16} color="#FFF" />
                                     <Text style={styles.detailActionPrimaryText}>이 공고로 사업계획서 작성</Text>
                                 </TouchableOpacity>
+                                </BorderGlow>
 
                                 {(selectedGrant.original_url || selectedGrant.link) && (
                                     <TouchableOpacity

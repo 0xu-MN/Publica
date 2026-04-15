@@ -9,7 +9,7 @@ import { PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Shield } from 'lucide-react
 // ─────────────────────────────────────────────────────────────────────────────
 // 🔐 Admin check via Supabase admin_users table (with hardcoded email fallback)
 // ─────────────────────────────────────────────────────────────────────────────
-const FALLBACK_ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com'];
+const FALLBACK_ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com', 'haloforge@haloforge.kr'];
 
 interface CardItem {
     id: string;

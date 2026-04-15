@@ -186,7 +186,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     const renderContent = () => {
         if (!isLoaded) {
             return (
-                <View className="flex-1 items-center justify-center bg-[#FDF8F3]">
+                <View className="flex-1 items-center justify-center bg-[#FFFFFF]">
                     <ActivityIndicator size="large" color="#7C3AED" />
                 </View>
             );
@@ -273,7 +273,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                 return <AgentView initialSession={agentSession} onNavigateToEdit={() => setActiveTab('nexus-edit')} />;
             case 'chat':
                 return (
-                    <View className="flex-1 flex-row bg-[#FDF8F3]">
+                    <View className="flex-1 flex-row bg-[#FFFFFF]">
                         <View className="w-80 border-r border-[#E2E8F0]">
                             <ChatListView
                                 activeChatId={selectedChatUser?.id}
@@ -294,7 +294,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                 );
             case 'scraps':
                 return (
-                    <ScrollView className="flex-1 bg-[#FDF8F3]">
+                    <ScrollView className="flex-1 bg-[#FFFFFF]">
                         <View className="p-8">
                             <View className="flex-row justify-between items-center mb-8">
                                 <View>
@@ -373,7 +373,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     };
 
     return (
-        <View className="flex-1 flex-row bg-[#FDF8F3]">
+        <View className="flex-1 flex-row bg-[#FFFFFF]">
             <Sidebar activeTab={showProfilePanel ? 'profile' : activeTab} onTabChange={setActiveTab} />
 
             {/* Animated Profile Panel */}

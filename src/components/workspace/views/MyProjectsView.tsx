@@ -225,7 +225,7 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
     loadingText: { color: '#64748B', fontSize: 13, fontWeight: '700' },
 

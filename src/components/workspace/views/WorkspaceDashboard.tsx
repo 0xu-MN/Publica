@@ -124,7 +124,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
 
     return (
         <ScrollView
-            style={{ flex: 1, backgroundColor: '#FDF8F3' }}
+            style={{ flex: 1, backgroundColor: '#FFFFFF' }}
             contentContainerStyle={{ padding: 24, paddingTop: 60 }}
         >
             <View className="max-w-[1400px] w-full mx-auto">

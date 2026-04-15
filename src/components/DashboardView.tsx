@@ -9,10 +9,9 @@ import { MarketCarouselWidget } from './MarketWidgets';
 import { CompactMarketTicker } from './CompactMarketTicker';
 
 import { DecryptedText } from './DecryptedText';
-import { FloatingLines } from './FloatingLines';
 import { VerticalStackCarousel } from './VerticalStackCarousel';
 import { TopNewsHeroCard } from './TopNewsHeroCard';
-import LightRays from './LightRays';
+import BorderGlow from './ui/BorderGlow';
 
 interface DashboardViewProps {
     newsData: NewsItem[];
@@ -77,24 +76,6 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                                 <Text style={styles.pillText}>실시간 AI 큐레이션</Text>
                             </View>
 
-                            {/* Light Rays Effect */}
-                            {/* @ts-ignore */}
-                            <div style={styles.lightRaysContainer}>
-                                <LightRays
-                                    raysOrigin="top-center"
-                                    raysColor="#7C3AED"
-                                    raysSpeed={1.0}
-                                    lightSpread={1.5}
-                                    rayLength={3.0}
-                                    fadeDistance={1.8}
-                                    saturation={1.5}
-                                    mouseInfluence={0.15}
-                                    noiseAmount={0}
-                                    distortion={0}
-                                    pulsating={true}
-                                    followMouse={false}
-                                />
-                            </div>
                         </View>
 
                         <View style={styles.titleWrapper}>
@@ -150,10 +131,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                     </View>
 
                     {/* Search Bar */}
-                    <TouchableOpacity style={styles.searchBar}>
-                        <Search size={18} color="#94A3B8" />
-                        <Text style={styles.searchText}>관심 있는 인사이트를 검색하세요</Text>
-                    </TouchableOpacity>
+                    <BorderGlow borderRadius={24} glowColor="hsl(262, 83%, 58%)" glowIntensity={0.6}>
+                        <TouchableOpacity style={styles.searchBar}>
+                            <Search size={18} color="#94A3B8" />
+                            <Text style={styles.searchText}>관심 있는 인사이트를 검색하세요</Text>
+                        </TouchableOpacity>
+                    </BorderGlow>
 
                     {/* 2. Hot Keywords & Trends Panel */}
                     <View style={[styles.panel, { flex: 1 }]}>
@@ -163,9 +146,11 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
                         </View>
                         <View style={styles.keywordGrid}>
                             {hotKeywords.slice(0, 8).map((keyword, i) => (
-                                <TouchableOpacity key={i} style={styles.keywordItem}>
-                                    <Text style={styles.keywordText}>#{keyword.replace('#', '')}</Text>
-                                </TouchableOpacity>
+                                <BorderGlow key={i} borderRadius={12} glowColor="hsl(262, 83%, 58%)" glowIntensity={0.7}>
+                                    <TouchableOpacity style={styles.keywordItem}>
+                                        <Text style={styles.keywordText}>#{keyword.replace('#', '')}</Text>
+                                    </TouchableOpacity>
+                                </BorderGlow>
                             ))}
                         </View>
 
@@ -219,7 +204,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({ newsData, hotKeywo
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, maxWidth: 1400, width: '100%', alignSelf: 'center', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, maxWidth: 1400, width: '100%', alignSelf: 'center', paddingHorizontal: 24, paddingTop: 16, paddingBottom: 24, backgroundColor: '#FFFFFF' },
     mainRow: { flex: 1, flexDirection: 'row', gap: 32, minHeight: 600 },
     
     // Left Column
@@ -229,20 +214,6 @@ const styles = StyleSheet.create({
     aiPill: { backgroundColor: '#7C3AED10', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, borderWidth: 1, borderColor: '#7C3AED30', flexDirection: 'row', alignItems: 'center' },
     pillDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#7C3AED', marginRight: 8 },
     pillText: { color: '#7C3AED', fontSize: 12, fontWeight: '800', letterSpacing: 0.5 },
-    lightRaysContainer: {
-        position: 'absolute',
-        top: 0,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        width: 1400,
-        height: 1100,
-        marginTop: -100,
-        pointerEvents: 'none',
-        zIndex: 1,
-        // @ts-ignore
-        WebkitMaskImage: 'radial-gradient(ellipse 50% 70% at 50% 35%, black 0%, black 15%, transparent 55%)',
-        maskImage: 'radial-gradient(ellipse 50% 70% at 50% 35%, black 0%, black 15%, transparent 55%)'
-    },
     titleWrapper: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
     titleText: { color: '#18181B', fontSize: 64, fontWeight: '900', letterSpacing: -2 },
     titleAccent: { color: '#7C3AED', fontSize: 64, fontWeight: '900', letterSpacing: -2 },
@@ -250,7 +221,7 @@ const styles = StyleSheet.create({
 
     // Right Column
     rightCol: { flex: 1, gap: 16 },
-    panel: { backgroundColor: '#FFFFFF', borderRadius: 32, padding: 28, borderWidth: 1, borderColor: '#7C3AED10', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.04, shadowRadius: 24, elevation: 4 },
+    panel: { backgroundColor: '#FCF2E9', borderRadius: 32, padding: 28, borderWidth: 1, borderColor: '#7C3AED10', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.04, shadowRadius: 24, elevation: 4 },
     panelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     panelLabel: { color: '#94A3B8', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 8 },
     dateTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -260,7 +231,7 @@ const styles = StyleSheet.create({
     premiumBadge: { backgroundColor: '#7C3AED', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
     premiumText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
 
-    searchBar: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 24, paddingHorizontal: 24, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
+    searchBar: { backgroundColor: '#FCF2E9', borderWidth: 1, borderColor: '#7C3AED10', borderRadius: 24, paddingHorizontal: 24, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', gap: 12 },
     searchText: { color: '#94A3B8', fontSize: 15, fontWeight: '500' },
 
     sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
