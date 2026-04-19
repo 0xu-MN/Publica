@@ -78,9 +78,14 @@ export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) =
                 if (stored) asyncProfile = JSON.parse(stored);
             } catch { /* 없으면 기본값 사용 */ }
 
+            // 닉네임: full_name > email 앞부분 > '익명'
+            const displayName = data.full_name
+                || data.email?.split('@')[0]
+                || data.username
+                || null;
             const mapped: UserProfile = {
-                nickname: data.full_name || data.id?.slice(0, 8) || '익명',
-                realName: data.full_name || '',
+                nickname: displayName || '익명',
+                realName: data.full_name || displayName || '',
                 bio: data.item_one_liner || data.item_description || asyncProfile.bio || '',
                 imageUrl: data.avatar_url || '',
                 job: data.industry || data.major_category || data.expertise || asyncProfile.job || '',

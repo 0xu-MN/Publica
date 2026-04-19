@@ -33,8 +33,10 @@ export interface Grant {
 }
 
 export const fetchGrants = async (): Promise<Grant[]> => {
-    // Filter out old grants: only fetch grants with deadline >= 2024-01-01 or NULL deadline
-    const cutoffDate = '2024-01-01';
+    // 오늘 날짜 기준으로 마감된 공고 제거 (KST 기준 어제까지 허용)
+    const today = new Date();
+    today.setDate(today.getDate() - 1); // 하루 여유 (당일 마감 포함)
+    const cutoffDate = today.toISOString().split('T')[0];
 
     // Try with is_active filter first (requires migration 20260304)
     let { data, error } = await supabase

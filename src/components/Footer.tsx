@@ -63,7 +63,7 @@ const Footer = () => {
 
                     <View className="gap-2 opacity-60">
                         <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-bold">상호명: 헤일로포지 | 대표자: 홍수민</Text>
-                        <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-medium">사업자등록번호: 846-04-03662 | 통신판매업신고: 2026-서울강남-00000</Text>
+                        <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-medium">사업자등록번호: 846-04-03662 | 통신판매업신고: </Text>
                         <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-medium">주소: 경기도 안산시 단원구 고잔로 57-11, 510</Text>
                         <Text className="text-slate-500 dark:text-slate-500 text-[11px] font-medium">TEL. 031-501-4523 | Email: publica@publica.ai.kr</Text>
                     </View>

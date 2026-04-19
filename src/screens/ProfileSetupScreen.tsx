@@ -172,6 +172,9 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
 
     const [isSaving, setIsSaving] = useState(false);
     const [isAutoFilling, setIsAutoFilling] = useState(false);
+    const [bizVerified, setBizVerified] = useState(false);
+    const [bizStatus, setBizStatus] = useState<{ text: string; taxType: string } | null>(null);
+    const [bizError, setBizError] = useState<string | null>(null);
     const [freelancerInterestCustom, setFreelancerInterestCustom] = useState('');
     const [pickerModal, setPickerModal] = useState<{ visible: boolean, type: 'sido' | 'sigungu' | 'researcherType' | 'majorCategory' | 'expertise' | 'industryCategory' | 'businessType' | 'freelancerInterest' }>({ visible: false, type: 'sido' });
 
@@ -228,11 +231,16 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                 if (data.data.companyName && !itemOneLiner) {
                     setItemOneLiner(`${data.data.companyName}의 ${data.data.industry || ''} 서비스/제품`);
                 }
-                Toast.show({
-                    type: 'success',
-                    text1: '사업자 정보 자동 입력 완료',
-                    text2: `${data.data.companyName ? `상호: ${data.data.companyName} · ` : ''}주소·업종 정보를 불러왔습니다.`,
+                setBizVerified(true);
+                setBizError(null);
+                setBizStatus({
+                    text: data.data.status || '계속사업자',
+                    taxType: data.data.taxType || '',
                 });
+            } else if (data && !data.success) {
+                setBizVerified(false);
+                setBizStatus(null);
+                setBizError(data.error || '사업자 정보를 확인할 수 없습니다.');
             }
         } catch (e: any) {
             console.error("AutoFill Error:", e);
@@ -243,8 +251,13 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     };
 
     const fetchBusinessInfoByNumber = () => {
-        if (!businessRegNo || businessRegNo.length < 10) return;
-        performAutoFill({ businessNumber: businessRegNo });
+        const raw = businessRegNo.replace(/[-\s]/g, '');
+        if (!raw || raw.length !== 10) {
+            Alert.alert('알림', '사업자등록번호 10자리를 입력해주세요.\n예: 1234567890 또는 123-45-67890');
+            return;
+        }
+        setBizVerified(false);
+        performAutoFill({ businessNumber: raw });
     };
 
     const isFormValid = () => {
@@ -405,21 +418,60 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
                                             </View>
                                             {userType === 'business' && (
                                                 <View style={styles.inputGroup}>
-                                                    <Text style={styles.label}>사업자 번호 (빠른 인증)</Text>
-                                                    <View style={styles.inputWrapper}>
-                                                        <TouchableOpacity onPress={fetchBusinessInfoByNumber} style={styles.inputIcon}>
-                                                            {isAutoFilling ? <ActivityIndicator size="small" color="#7C3AED" /> : <Search size={18} color="#94A3B8" />}
-                                                        </TouchableOpacity>
+                                                    <Text style={styles.label}>사업자 번호 인증</Text>
+                                                    <Text style={styles.inputHint}>하이픈(-) 없이 숫자 10자리만 입력하세요</Text>
+                                                    <View style={[
+                                                        styles.inputWrapper,
+                                                        bizVerified && { borderColor: '#16A34A', borderWidth: 1.5 },
+                                                        bizError && { borderColor: '#DC2626', borderWidth: 1.5 },
+                                                    ]}>
+                                                        <Search size={18} color={bizVerified ? '#16A34A' : bizError ? '#DC2626' : '#94A3B8'} style={styles.inputIcon} />
                                                         <TextInput
                                                             style={styles.inputWithIcon}
-                                                            placeholder="사업자등록번호 입력"
+                                                            placeholder="예: 1234567890"
                                                             placeholderTextColor="#94A3B8"
                                                             value={businessRegNo}
-                                                            onChangeText={setBusinessRegNo}
-                                                            onEndEditing={fetchBusinessInfoByNumber}
+                                                            onChangeText={(t) => {
+                                                                setBusinessRegNo(t);
+                                                                setBizVerified(false);
+                                                                setBizStatus(null);
+                                                                setBizError(null);
+                                                            }}
                                                             keyboardType="numeric"
+                                                            maxLength={12}
                                                         />
                                                     </View>
+                                                    <TouchableOpacity
+                                                        onPress={fetchBusinessInfoByNumber}
+                                                        disabled={isAutoFilling}
+                                                        style={[
+                                                            styles.verifyBtn,
+                                                            bizVerified && styles.verifyBtnDone,
+                                                            bizError ? styles.verifyBtnError : null,
+                                                        ]}
+                                                    >
+                                                        {isAutoFilling
+                                                            ? <><ActivityIndicator size="small" color="#fff" /><Text style={styles.verifyBtnText}>조회 중...</Text></>
+                                                            : bizVerified
+                                                                ? <><Check size={15} color="#fff" /><Text style={styles.verifyBtnText}>인증 완료</Text></>
+                                                                : <Text style={styles.verifyBtnText}>인증하기</Text>
+                                                        }
+                                                    </TouchableOpacity>
+                                                    {bizVerified && bizStatus && (
+                                                        <View style={styles.bizResultBox}>
+                                                            <Check size={15} color="#16A34A" />
+                                                            <View>
+                                                                <Text style={styles.bizResultOk}>사업자 인증 성공</Text>
+                                                                <Text style={styles.bizResultSub}>상태: {bizStatus.text}{bizStatus.taxType ? ` · ${bizStatus.taxType}` : ''}</Text>
+                                                                <Text style={styles.bizResultSub}>지역 및 업종은 아래에서 직접 선택해주세요</Text>
+                                                            </View>
+                                                        </View>
+                                                    )}
+                                                    {bizError && (
+                                                        <View style={styles.bizErrorBox}>
+                                                            <Text style={styles.bizErrorText}>✗ {bizError}</Text>
+                                                        </View>
+                                                    )}
                                                 </View>
                                             )}
                                             <View style={styles.inputGroup}>
@@ -992,5 +1044,74 @@ const styles = StyleSheet.create({
         minHeight: 100,
         textAlignVertical: 'top',
         paddingTop: 14,
+    },
+    verifyBtn: {
+        marginTop: 8,
+        backgroundColor: '#7C3AED',
+        borderRadius: 10,
+        paddingVertical: 11,
+        paddingHorizontal: 20,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+    },
+    verifyBtnDone: {
+        backgroundColor: '#16A34A',
+    },
+    verifyBtnText: {
+        color: '#fff',
+        fontSize: 14,
+        fontWeight: '700',
+    },
+    verifiedHint: {
+        marginTop: 6,
+        fontSize: 12,
+        color: '#16A34A',
+        fontWeight: '600',
+    },
+    inputHint: {
+        fontSize: 12,
+        color: '#94A3B8',
+        marginBottom: 6,
+        marginTop: 2,
+    },
+    verifyBtnError: {
+        backgroundColor: '#DC2626',
+    },
+    bizResultBox: {
+        marginTop: 10,
+        backgroundColor: '#F0FDF4',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#86EFAC',
+        padding: 12,
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 8,
+    },
+    bizResultOk: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#16A34A',
+        marginBottom: 2,
+    },
+    bizResultSub: {
+        fontSize: 12,
+        color: '#4B7A5A',
+        marginTop: 1,
+    },
+    bizErrorBox: {
+        marginTop: 10,
+        backgroundColor: '#FEF2F2',
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#FECACA',
+        padding: 12,
+    },
+    bizErrorText: {
+        fontSize: 13,
+        color: '#DC2626',
+        fontWeight: '600',
     },
 });

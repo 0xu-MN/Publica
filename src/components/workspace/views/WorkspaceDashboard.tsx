@@ -68,6 +68,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
             setRecommendedBusinesses(recommended);
 
             // 4. Fetch Saved Agent Sessions (workspace_sessions)
+            let fetchedSessions: any[] = [];
             if (user) {
                 const { data: sessions } = await supabase
                     .from('workspace_sessions')
@@ -75,8 +76,64 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                     .eq('user_id', user.id)
                     .order('updated_at', { ascending: false })
                     .limit(4);
-                if (sessions) setSavedSessions(sessions);
+                if (sessions) {
+                    setSavedSessions(sessions);
+                    fetchedSessions = sessions;
+                }
             }
+
+            // 5. AI Briefing — 실제 데이터 기반 동적 생성
+            const today = new Date();
+            const dynamicBriefings: any[] = [];
+
+            // 마감 7일 이내 추천 공고
+            const urgentGrants = recommended.filter(g => {
+                const dday = parseInt(g.dDay || '999');
+                return dday >= 0 && dday <= 7;
+            });
+            if (urgentGrants.length > 0) {
+                const g = urgentGrants[0];
+                dynamicBriefings.push({
+                    id: 'urgent-1',
+                    message: `⚡ [긴급] "${g.title}" 공고가 D-${g.dDay}입니다. 아직 작성 중인 서류가 있다면 빠른 완성이 필요합니다.`,
+                });
+            }
+
+            // 최근 작업한 세션 기반 브리핑
+            if (fetchedSessions.length > 0) {
+                const latest = fetchedSessions[0];
+                const hoursAgo = Math.floor((today.getTime() - new Date(latest.updated_at).getTime()) / 3600000);
+                const whenStr = hoursAgo < 1 ? '방금 전' : hoursAgo < 24 ? `${hoursAgo}시간 전` : `${Math.floor(hoursAgo/24)}일 전`;
+                const hasEditor = latest.editor_content && latest.editor_content.length > 100;
+                dynamicBriefings.push({
+                    id: 'session-1',
+                    message: `📝 "${latest.title}" 프로젝트를 ${whenStr} 마지막으로 수정했습니다. ${hasEditor ? '작성 중인 서류가 있습니다. 계속 작성하시겠어요?' : 'Flow 분석이 진행 중입니다. Edit에서 초안을 작성해보세요.'}`,
+                });
+            }
+
+            // 추천 공고 있을 때 기본 브리핑
+            if (dynamicBriefings.length === 0 && recommended.length > 0) {
+                dynamicBriefings.push({
+                    id: 'rec-1',
+                    message: `🎯 ${profile?.full_name || ''}님의 프로필에 맞는 공고 ${recommended.length}건이 발견되었습니다. 매칭률 ${recommended[0]?.matchingRate || 0}%의 "${recommended[0]?.title}"를 가장 먼저 확인해보세요.`,
+                });
+            }
+            setBriefings(dynamicBriefings);
+
+            // 6. 마감 임박 스케줄 — 추천 공고 D-30 이내
+            const upcomingDeadlines = recommended
+                .filter(g => {
+                    const dday = parseInt(g.dDay || '999');
+                    return dday >= 0 && dday <= 30;
+                })
+                .slice(0, 3)
+                .map((g, i) => ({
+                    id: `deadline-${i}`,
+                    text: `"${g.title?.slice(0, 22)}..." 마감 (D-${g.dDay})`,
+                    checked: false,
+                    dueDate: `D-${g.dDay}`,
+                }));
+            setScheduleItems(upcomingDeadlines);
 
         } catch (e) {
             console.error("Failed to load workspace data", e);
@@ -85,20 +142,8 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
         }
     };
 
-    // Mock Data - Today's Schedule (Keep for now)
-    const [scheduleItems, setScheduleItems] = useState([
-        { id: '1', text: '정부지원사업 서류 마감 (D-2)', checked: false, dueDate: 'D-2' },
-        { id: '2', text: '네이처 논문 리뷰 작성', checked: false },
-        { id: '3', text: '개발팀 주간 회의', checked: true },
-    ]);
-
-    // Mock Data - AI Briefings (Keep for now)
-    const [briefings, setBriefings] = useState([
-        {
-            id: '1',
-            message: '오늘의 브리핑: 2026 예비창업패키지 서류가 거의 완성되었습니다. 에이전트가 검토를 기다리고 있어요.',
-        },
-    ]);
+    const [scheduleItems, setScheduleItems] = useState<any[]>([]);
+    const [briefings, setBriefings] = useState<any[]>([]);
 
     // Derived Active Projects from Pipeline (or keep mock)
     // Let's use the fetched pipeline projects for the bottom section too if possible, 

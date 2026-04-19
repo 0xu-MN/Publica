@@ -12,6 +12,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import Footer from './Footer';
 import { SoftAurora } from './ui/SoftAurora';
+import BorderGlow from './ui/BorderGlow';
 
 interface LandingPageProps {
     onLoginPress: () => void;
@@ -168,10 +169,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                         전국 30,000개 공고에서 지금 내 회사에 맞는 기회를 찾아보세요.
                     </Text>
                     <View style={styles.heroActions}>
+                        <BorderGlow glowColor="#a855f7" borderRadius={14} glowRadius={28}>
                         <TouchableOpacity onPress={onStartFree} style={styles.heroCta}>
                             <Text style={styles.heroCtaText}>지금 바로 사업계획서 초안 만들기</Text>
                             <ArrowRight size={18} color="#FFF" />
                         </TouchableOpacity>
+                        </BorderGlow>
                         <TouchableOpacity onPress={onLoginPress} style={styles.heroSecondary}>
                             <Text style={styles.heroSecondaryText}>로그인</Text>
                         </TouchableOpacity>
@@ -225,25 +228,25 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
             </View>
 
             {/* ════════════ WHY PUBLICA ════════════ */}
-            <View style={[styles.section, { backgroundColor: '#18181B' }]}>
-                <View style={styles.inner}>
-                    <View style={styles.sectionHeadCenter}>
-                        <Text style={[styles.sectionTag, { color: '#A78BFA' }]}>[ 우리의 해결책 ]</Text>
-                        <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF' }]}>왜 Publica여야 하는가</Text>
-                        <Text style={[styles.sectionSubCenter, { color: '#94A3B8' }]}>
-                            단순한 글쓰기 도구가 아닙니다. 전략부터 완성 문서까지,{'\n'}
-                            지원사업 성공의 전 과정을 AI가 함께 합니다.
-                        </Text>
-                    </View>
-                    <SoftAurora
-                        color1="#f7f7f7"
-                        color2="#e100ff"
-                        speed={1.3}
-                        brightness={0.7}
-                        mouseInfluence={0.1}
-                        octaveDecay={0.04}
-                        style={{ borderRadius: 32, padding: 4 }}
-                    >
+            <SoftAurora
+                color1="#f7f7f7"
+                color2="#e100ff"
+                brightness={0.8}
+                mouseInfluence={0.1}
+                noiseAmplitude={0.5}
+                bandHeight={0.73}
+                style={{ backgroundColor: '#18181B', width: '100%' }}
+            >
+                <View style={[styles.section, { backgroundColor: 'transparent' }]}>
+                    <View style={styles.inner}>
+                        <View style={styles.sectionHeadCenter}>
+                            <Text style={[styles.sectionTag, { color: '#A78BFA' }]}>[ 우리의 해결책 ]</Text>
+                            <Text style={[styles.sectionTitleCenter, { color: '#FFFFFF' }]}>왜 Publica여야 하는가</Text>
+                            <Text style={[styles.sectionSubCenter, { color: '#94A3B8' }]}>
+                                단순한 글쓰기 도구가 아닙니다. 전략부터 완성 문서까지,{'\n'}
+                                지원사업 성공의 전 과정을 AI가 함께 합니다.
+                            </Text>
+                        </View>
                         <View style={[styles.whyGrid, isDesktop && styles.whyGridRow]}>
                             {WHY_ITEMS.map((item, i) => {
                                 const WhyIcon = item.icon;
@@ -258,9 +261,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                                 );
                             })}
                         </View>
-                    </SoftAurora>
+                    </View>
                 </View>
-            </View>
+            </SoftAurora>
 
             {/* ════════════ AGENT SHOWCASE ════════════ */}
             <View style={styles.section}>
@@ -302,10 +305,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                             <Text style={styles.agentDetailName}>{agent.name}</Text>
                             <Text style={[styles.agentDetailTagline, { color: agent.color }]}>{agent.tagline}</Text>
                             <Text style={styles.agentDetailDesc}>{agent.desc}</Text>
+                            <BorderGlow glowColor="#a855f7" borderRadius={12} glowRadius={24}>
                             <TouchableOpacity onPress={onStartFree} style={[styles.agentCta, { backgroundColor: agent.color }]}>
                                 <Text style={styles.agentCtaText}>지금 바로 사업계획서 초안 만들기</Text>
                                 <ChevronRight size={16} color="#FFF" />
                             </TouchableOpacity>
+                            </BorderGlow>
                         </View>
                         <View style={[styles.agentDetailRight, isDesktop && { borderLeftWidth: 1, borderLeftColor: '#F1F5F9', paddingLeft: 40 }]}>
                             <Text style={styles.agentDetailBulletsTitle}>핵심 기능</Text>
