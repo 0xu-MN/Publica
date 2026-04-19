@@ -129,11 +129,6 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                     return;
                 }
                 setNotifications(MOCK_NOTIFICATIONS);
-                if (user && !profileComplete) {
-                    setIsProfileModalOpen(true);
-                } else if (profileComplete) {
-                    setIsProfileModalOpen(false);
-                }
                 const savedViewMode = await AsyncStorage.getItem('viewMode');
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
                 if (savedViewMode) {
@@ -162,6 +157,14 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
     useEffect(() => {
         AsyncStorage.setItem('activeCategory', activeCategory).catch(err => console.log('Failed to save category:', err));
     }, [activeCategory]);
+
+    useEffect(() => {
+        if (user && !profileComplete && viewMode !== 'landing' && viewMode !== 'pricing') {
+            setIsProfileModalOpen(true);
+        } else {
+            setIsProfileModalOpen(false);
+        }
+    }, [user, profileComplete, viewMode]);
 
     const [hotKeywords, setHotKeywords] = useState<string[]>([]);
     const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
