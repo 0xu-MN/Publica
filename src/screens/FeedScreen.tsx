@@ -131,20 +131,24 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 setNotifications(MOCK_NOTIFICATIONS);
                 const savedViewMode = await AsyncStorage.getItem('viewMode');
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
+                const ADMIN_EMAILS = ['haloforge@haloforge.kr', 'contact@publica.ai', 'hong56800@gmail.com', 'toss_test@publica.ai'];
+                const isAdmin = ADMIN_EMAILS.includes(user.email ?? '');
+
                 if (savedViewMode) {
                     if (savedViewMode === 'feed') {
-                        // 피드는 더 이상 없으므로 워크스페이스로
                         setViewMode('workspace');
                     } else if (savedViewMode === 'landing') {
-                        // 랜딩에서 머물렀던 경우 → 다시 랜딩 (로그인했어도 서비스 소개 먼저)
-                        setViewMode('landing');
+                        // 관리자는 랜딩 저장돼 있어도 바로 워크스페이스로
+                        setViewMode(isAdmin ? 'workspace' : 'landing');
                     } else if ((savedViewMode === 'workspace' || savedViewMode === 'connect') && !user) {
                         setViewMode('landing');
                     } else {
                         setViewMode(savedViewMode as any);
                     }
+                } else {
+                    // 처음 로그인한 관리자 → 바로 워크스페이스
+                    if (isAdmin) setViewMode('workspace');
                 }
-                // savedViewMode 없으면 → 로그인 상태라도 landing 유지 (초기 방문)
                 if (savedCategory) {
                     setActiveCategory(savedCategory);
                 }
