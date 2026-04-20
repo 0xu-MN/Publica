@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
     detailMatchBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#7C3AED08', padding: 20, borderRadius: 24, borderWidth: 1, borderColor: '#7C3AED15', marginTop: 24 },
     detailMatchText: { color: '#7C3AED', fontSize: 15, fontWeight: '900' },
     detailActions: { gap: 12, marginTop: 40, paddingBottom: 60 },
-    detailActionPrimary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 60, borderRadius: 20, backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 15, elevation: 8 },
+    detailActionPrimary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 60, width: '100%', borderRadius: 20, backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.25, shadowRadius: 15, elevation: 8 },
     detailActionPrimaryText: { color: '#FFF', fontSize: 15, fontWeight: '900' },
     detailActionSecondary: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, height: 56, borderRadius: 18, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E2E8F0' },
     detailActionSecondaryText: { color: '#64748B', fontSize: 14, fontWeight: '800' },

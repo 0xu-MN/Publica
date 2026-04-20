@@ -49,7 +49,7 @@ export default function BorderGlow({
   const r = glowRadius;
 
   const wrapStyle: React.CSSProperties = {
-    display: 'flex', // flex를 사용하여 부모의 flex 레이아웃과 자연스럽게 어울리며 가로 늘어남 방지
+    display: 'flex',
     borderRadius,
     boxShadow: hovered
       ? `0 0 0 1.5px ${getAlphaColor(col, 1)}, 0 0 ${r * 0.5}px 3px ${getAlphaColor(col, 0.7)}, 0 0 ${r}px 6px ${getAlphaColor(col, 0.4)}, 0 0 ${r * 2}px 12px ${getAlphaColor(col, 0.15)}`
