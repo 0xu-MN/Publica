@@ -132,14 +132,19 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 const savedViewMode = await AsyncStorage.getItem('viewMode');
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
                 if (savedViewMode) {
-                    if (savedViewMode === 'feed' || savedViewMode === 'landing') {
+                    if (savedViewMode === 'feed') {
+                        // 피드는 더 이상 없으므로 워크스페이스로
                         setViewMode('workspace');
+                    } else if (savedViewMode === 'landing') {
+                        // 랜딩에서 머물렀던 경우 → 다시 랜딩 (로그인했어도 서비스 소개 먼저)
+                        setViewMode('landing');
                     } else if ((savedViewMode === 'workspace' || savedViewMode === 'connect') && !user) {
                         setViewMode('landing');
                     } else {
                         setViewMode(savedViewMode as any);
                     }
                 }
+                // savedViewMode 없으면 → 로그인 상태라도 landing 유지 (초기 방문)
                 if (savedCategory) {
                     setActiveCategory(savedCategory);
                 }
