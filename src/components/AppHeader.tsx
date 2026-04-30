@@ -102,13 +102,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     <NavItem label="Connect Hub" active={viewMode === 'connect' || viewMode === 'grants'} onPress={() => setViewMode('connect')} />
                                     <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
                                     <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} />
-                                    <TouchableOpacity
-                                        style={[styles.workspaceBtn, viewMode === 'workspace' && styles.workspaceBtnActive, { marginLeft: 16 }]}
-                                        onPress={() => setViewMode('workspace')}
-                                    >
-                                        <Icons.Zap size={14} color="#FFF" />
-                                        <Text style={styles.workspaceBtnText}>My Workspace</Text>
-                                    </TouchableOpacity>
                                 </>
                             )}
                         </View>
@@ -133,7 +126,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 <TouchableOpacity onPress={() => setIsNotificationOpen(v => !v)}>
                                     <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
                                         <Icons.Bell
-                                            color={hasNotification ? '#F59E0B' : 'rgba(255,255,255,0.7)'}
+                                            color={hasNotification ? '#F59E0B' : '#475569'}
                                             size={22}
                                             fill={hasNotification ? '#F59E0B' : 'none'}
                                         />
@@ -171,9 +164,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 )}
                             </View>
 
+                            <TouchableOpacity
+                                style={[styles.workspaceBtn, viewMode === 'workspace' && styles.workspaceBtnActive]}
+                                onPress={() => setViewMode('workspace')}
+                            >
+                                <Icons.Zap size={14} color="#FFF" />
+                                <Text style={styles.workspaceBtnText}>My Workspace</Text>
+                            </TouchableOpacity>
+
                             {/* 로그아웃 버튼만 유지 */}
                             <TouchableOpacity onPress={onSignOut} style={styles.logoutBtn}>
-                                <Icons.LogOut size={18} color="rgba(255,255,255,0.7)" />
+                                <Icons.LogOut size={18} color="#475569" />
                             </TouchableOpacity>
                         </View>
                     )}

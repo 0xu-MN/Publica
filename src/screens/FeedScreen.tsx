@@ -136,19 +136,14 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 const isAdmin = ADMIN_EMAILS.includes(user.email ?? '');
 
                 if (savedViewMode) {
-                    if (savedViewMode === 'feed') {
+                    if (savedViewMode === 'landing' || savedViewMode === 'connect') {
+                        // 로그인 된 상태라면 무조건 워크스페이스로 초기 설정
                         setViewMode('workspace');
-                    } else if (savedViewMode === 'landing') {
-                        // 관리자는 랜딩 저장돼 있어도 바로 워크스페이스로
-                        setViewMode(isAdmin ? 'workspace' : 'landing');
-                    } else if ((savedViewMode === 'workspace' || savedViewMode === 'connect') && !user) {
-                        setViewMode('landing');
                     } else {
                         setViewMode(savedViewMode as any);
                     }
                 } else {
-                    // 처음 로그인한 관리자 → 바로 워크스페이스
-                    if (isAdmin) setViewMode('workspace');
+                    setViewMode('workspace');
                 }
                 if (savedCategory) {
                     setActiveCategory(savedCategory);

@@ -212,6 +212,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                         setActiveTab('agent');
                     }}
                     onNavigateToGrants={() => setActiveTab('grants')}
+                    onNavigateToGuide={() => setActiveTab('guide')}
                 />;
             case 'grants':
                 return (

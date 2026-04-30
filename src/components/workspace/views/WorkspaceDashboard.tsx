@@ -10,13 +10,14 @@ import { ActiveProjectCard } from '../components/ActiveProjectCard';
 import { TodayScheduleWidget } from '../components/TodayScheduleWidget';
 import { StatsCard } from '../components/StatsCard';
 import { RecommendedBusinessCard } from '../components/RecommendedBusinessCard';
-import Footer from '../../Footer';
+import { WelcomeGuideModal } from './WelcomeGuideModal';
 
 interface WorkspaceDashboardProps {
     onOpenCalendar: () => void;
     onLoadSession?: (session: any) => void;
     onNavigateToPortfolio?: () => void;
     onNavigateToGrants?: () => void;
+    onNavigateToGuide?: () => void;
 }
 
 import { fetchProjects, Project } from '../../../services/projects';
@@ -26,7 +27,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 
 // ... (imports)
 
-export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateToPortfolio, onNavigateToGrants }: WorkspaceDashboardProps) => {
+export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateToPortfolio, onNavigateToGrants, onNavigateToGuide }: WorkspaceDashboardProps) => {
     const { user, profile } = useAuth();
     const [nickname, setNickname] = useState('연구원');
 
@@ -168,11 +169,13 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
     const handleViewReport = (projectId: string) => { console.log('View report:', projectId); };
 
     return (
-        <ScrollView
-            style={{ flex: 1, backgroundColor: '#FFFFFF' }}
-            contentContainerStyle={{ padding: 24, paddingTop: 60 }}
-        >
-            <View className="max-w-[1400px] w-full mx-auto">
+        <>
+            <WelcomeGuideModal onNavigateToGuide={() => onNavigateToGuide?.()} />
+            <ScrollView
+                style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+                contentContainerStyle={{ padding: 24, paddingTop: 60 }}
+            >
+                <View className="max-w-[1400px] w-full mx-auto">
                 {/* Greeting Header */}
                 <View className="mb-10">
                     <Text className="text-[#27272a] text-4xl font-black mb-3 tracking-tighter leading-tight">
@@ -386,7 +389,8 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                         )}
                     </View>
                 </View>
-            </View>
-        </ScrollView>
+                </View>
+            </ScrollView>
+        </>
     );
 };
