@@ -167,7 +167,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                 showsVerticalScrollIndicator={false}
             >
                 {/* --- TITLE AREA (Scrolls with content) --- */}
-                <View className="px-6 max-w-[1400px] w-full mx-auto pt-10 pb-6">
+                <View className="px-6 max-w-[1400px] w-full mx-auto pt-[100px] pb-6">
                     <View className="flex-row items-center justify-between mb-3">
                         <View className="flex-row items-center">
                             <View className="w-10 h-10 bg-[#7C3AED]/10 rounded-xl items-center justify-center">

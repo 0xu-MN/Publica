@@ -1,12 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
     View, Text, TouchableOpacity, useWindowDimensions,
-    Animated, ScrollView, Modal, Image, StyleSheet, Platform
+    Animated, ScrollView, Image, StyleSheet
 } from 'react-native';
 import { Icons } from '../utils/icons';
-import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
-import { useAuth } from '../contexts/AuthContext';
-import { useProjectStore } from '../store/useProjectStore';
 
 interface FeedNotification {
     id: string;
@@ -41,33 +38,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     user,
     onAuthModalOpen,
     onSignOut,
-    searchQuery,
-    setSearchQuery,
-    isSearchVisible,
-    setIsSearchVisible,
     notifications,
-    setNotifications
+    setNotifications,
 }) => {
-    const { profile } = useAuth();
     const { width } = useWindowDimensions();
     const isDesktop = width >= 900;
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-    const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-    const [scrolled, setScrolled] = useState(false);
 
     const hasNotification = notifications.some(n => !n.isRead);
     const rotateAnim = useRef(new Animated.Value(0)).current;
-
-    // Scroll listener for glass effect intensity
-    useEffect(() => {
-        if (Platform.OS === 'web') {
-            const handleScroll = () => setScrolled(window.scrollY > 20);
-            window.addEventListener('scroll', handleScroll);
-            return () => window.removeEventListener('scroll', handleScroll);
-        }
-    }, []);
 
     useEffect(() => {
         if (hasNotification) {
@@ -90,14 +70,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         outputRange: ['-15deg', '15deg']
     });
 
-    // 항상 동일한 light glass 헤더
-    const headerStyle = [
-        styles.headerContainer,
-        scrolled && (styles.headerScrolled as any),
-    ];
-
     return (
-        <View style={headerStyle}>
+        <View style={styles.headerContainer}>
             <View style={styles.headerInner}>
 
                 {/* ── Left: Logo ── */}
@@ -118,20 +92,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     <View style={styles.navCentered}>
                         <View style={styles.navRow}>
                             {!user ? (
-                                /* ── GUEST NAV ── */
                                 <>
                                     <NavItem label="서비스 소개" active={viewMode === 'landing'} onPress={() => setViewMode('landing')} />
                                     <NavItem label="요금안내" active={viewMode === 'pricing'} onPress={() => setViewMode('pricing')} />
                                     <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
                                 </>
                             ) : (
-                                /* ── USER NAV ── */
                                 <>
                                     <NavItem label="Connect Hub" active={viewMode === 'connect' || viewMode === 'grants'} onPress={() => setViewMode('connect')} />
                                     <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
                                     <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} />
                                     <TouchableOpacity
-                                        style={[styles.workspaceBtn, { marginLeft: 16 }]}
+                                        style={[styles.workspaceBtn, viewMode === 'workspace' && styles.workspaceBtnActive, { marginLeft: 16 }]}
                                         onPress={() => setViewMode('workspace')}
                                     >
                                         <Icons.Zap size={14} color="#FFF" />
@@ -146,7 +118,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 {/* ── Right: Actions ── */}
                 <View style={styles.rightActions}>
                     {!user ? (
-                        /* Guest: login + register button */
                         <View style={styles.authGroup}>
                             <TouchableOpacity onPress={onAuthModalOpen} style={styles.loginBtn}>
                                 <Text style={styles.loginBtnText}>로그인</Text>
@@ -156,13 +127,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        /* Logged in: notification + profile */
                         <View style={styles.utilityGroup}>
-                            {/* Notification */}
+                            {/* 알림 */}
                             <View style={styles.notificationWrapper}>
-                                <TouchableOpacity onPress={() => { setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false); }}>
+                                <TouchableOpacity onPress={() => setIsNotificationOpen(v => !v)}>
                                     <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                                        <Icons.Bell color={hasNotification ? '#F59E0B' : '#64748B'} size={22} fill={hasNotification ? '#F59E0B' : 'none'} />
+                                        <Icons.Bell
+                                            color={hasNotification ? '#F59E0B' : 'rgba(255,255,255,0.7)'}
+                                            size={22}
+                                            fill={hasNotification ? '#F59E0B' : 'none'}
+                                        />
                                     </Animated.View>
                                     {hasNotification && <View style={styles.notificationDot} />}
                                 </TouchableOpacity>
@@ -178,7 +152,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                             {notifications.map((item) => (
                                                 <TouchableOpacity key={item.id} style={[styles.dropdownItem, !item.isRead && { backgroundColor: '#7C3AED05' }]}>
                                                     <View style={[styles.notifIcon, item.type === 'like' ? { backgroundColor: '#FEE2E2' } : { backgroundColor: '#F5F3FF' }]}>
-                                                        {item.type === 'like' ? <Icons.Heart size={13} color="#EF4444" fill="#EF4444" /> : <Icons.MessageCircle size={13} color="#7C3AED" />}
+                                                        {item.type === 'like'
+                                                            ? <Icons.Heart size={13} color="#EF4444" fill="#EF4444" />
+                                                            : <Icons.MessageCircle size={13} color="#7C3AED" />
+                                                        }
                                                     </View>
                                                     <View style={{ flex: 1 }}>
                                                         <View style={styles.notifMeta}>
@@ -194,46 +171,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                 )}
                             </View>
 
-                            {/* Profile */}
-                            <View style={styles.userMenuWrapper}>
-                                <TouchableOpacity style={styles.userAvatar} onPress={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false); }}>
-                                    <Icons.User color="#64748B" size={20} />
-                                </TouchableOpacity>
-                                {isUserMenuOpen && (
-                                    <View style={[styles.dropdownMenu, { right: 0, width: 180 }]}>
-                                        <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
-                                            <Text style={{ color: '#18181B', fontSize: 13, fontWeight: '800' }}>{user?.email?.split('@')[0]}</Text>
-                                            <Text style={{ color: '#94A3B8', fontSize: 11 }}>{profile?.industry || 'Researcher'}</Text>
-                                        </View>
-                                        <TouchableOpacity style={styles.menuItem} onPress={() => { setViewMode('workspace'); setIsUserMenuOpen(false); }}>
-                                            <Icons.LayoutDashboard size={15} color="#94A3B8" style={{ marginRight: 10 }} />
-                                            <Text style={styles.menuItemText}>워크스페이스</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={styles.menuItem} onPress={() => { setIsProfileModalOpen(true); setIsUserMenuOpen(false); }}>
-                                            <Icons.Settings size={15} color="#94A3B8" style={{ marginRight: 10 }} />
-                                            <Text style={styles.menuItemText}>계정 설정</Text>
-                                        </TouchableOpacity>
-                                        <View style={styles.menuDivider} />
-                                        <TouchableOpacity style={styles.menuItem} onPress={() => { onSignOut(); setIsUserMenuOpen(false); }}>
-                                            <Icons.LogOut size={15} color="#EF4444" style={{ marginRight: 10 }} />
-                                            <Text style={[styles.menuItemText, { color: '#EF4444' }]}>로그아웃</Text>
-                                        </TouchableOpacity>
-                                    </View>
-                                )}
-                            </View>
+                            {/* 로그아웃 버튼만 유지 */}
+                            <TouchableOpacity onPress={onSignOut} style={styles.logoutBtn}>
+                                <Icons.LogOut size={18} color="rgba(255,255,255,0.7)" />
+                            </TouchableOpacity>
                         </View>
                     )}
                 </View>
             </View>
-
-            <Modal visible={isProfileModalOpen} animationType="fade" transparent={true} onRequestClose={() => setIsProfileModalOpen(false)}>
-                <ProfileSetupScreen isEditing={true} onClose={() => setIsProfileModalOpen(false)} />
-            </Modal>
         </View>
     );
 };
 
-/* ── Small NavItem sub-component ── */
 const NavItem: React.FC<{ label: string; active: boolean; onPress: () => void }> = ({ label, active, onPress }) => (
     <TouchableOpacity onPress={onPress} style={styles.navItem}>
         <Text style={[styles.navItemText, active && styles.navItemActive]}>{label}</Text>
@@ -250,13 +199,7 @@ const styles = StyleSheet.create({
         right: 0,
         zIndex: 1000,
         backgroundColor: 'transparent',
-        borderBottomWidth: 1,
-        borderBottomColor: 'transparent',
-    } as any,
-
-    headerScrolled: {
-        backgroundColor: 'rgba(255,255,255,0.95)',
-        borderBottomColor: 'rgba(0,0,0,0.08)',
+        borderBottomWidth: 0,
     } as any,
 
     headerInner: {
@@ -273,7 +216,6 @@ const styles = StyleSheet.create({
     logoWrapper: { flexDirection: 'row', alignItems: 'center' },
     headerLogo: { height: 36, width: 140 },
 
-    /* Center nav */
     navCentered: {
         position: 'absolute' as any,
         left: 0,
@@ -302,7 +244,6 @@ const styles = StyleSheet.create({
         backgroundColor: '#7C3AED',
     },
 
-    /* Right */
     rightActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
 
     authGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
@@ -311,10 +252,9 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         borderRadius: 99,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
-        backgroundColor: '#FFFFFF',
+        borderColor: 'rgba(255,255,255,0.3)',
     },
-    loginBtnText: { color: '#475569', fontSize: 13, fontWeight: '700' },
+    loginBtnText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700' },
     registerBtn: {
         paddingHorizontal: 18,
         paddingVertical: 9,
@@ -327,7 +267,6 @@ const styles = StyleSheet.create({
     },
     registerBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 
-    /* Logged-in utility */
     utilityGroup: { flexDirection: 'row', alignItems: 'center', gap: 20 },
 
     workspaceBtn: {
@@ -343,14 +282,8 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.25,
         shadowRadius: 10,
     },
-    workspaceBtnActive: {
-        backgroundColor: '#6D28D9',
-    },
-    workspaceBtnText: {
-        color: '#FFFFFF',
-        fontSize: 13,
-        fontWeight: '800',
-    },
+    workspaceBtnActive: { backgroundColor: '#6D28D9' },
+    workspaceBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 
     notificationWrapper: { position: 'relative' },
     notificationDot: {
@@ -365,19 +298,17 @@ const styles = StyleSheet.create({
         borderColor: 'transparent',
     },
 
-    userAvatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#F8FAFC',
-        borderWidth: 1,
-        borderColor: '#E2E8F0',
+    logoutBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
         alignItems: 'center',
         justifyContent: 'center',
+        backgroundColor: 'rgba(255,255,255,0.08)',
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.15)',
     },
-    userMenuWrapper: { position: 'relative' },
 
-    /* Dropdowns */
     dropdownMenu: {
         position: 'absolute' as any,
         top: 44,
@@ -403,8 +334,4 @@ const styles = StyleSheet.create({
     notifSender: { fontSize: 12, fontWeight: '700', color: '#18181B' },
     notifTime: { fontSize: 10, color: '#94A3B8' },
     notifContent: { fontSize: 11, color: '#64748B', lineHeight: 16 },
-
-    menuItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, margin: 4 },
-    menuItemText: { fontSize: 13, fontWeight: '600', color: '#475569' },
-    menuDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 2 },
 });

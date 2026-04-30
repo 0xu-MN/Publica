@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Modal, Pressable } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 import { X, Bookmark, Bell, Moon, ChevronRight, User, Shield, LogOut } from 'lucide-react-native';
+import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 
 const ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com', 'haloforge@haloforge.kr'];
 

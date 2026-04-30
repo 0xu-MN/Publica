@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Switch, TextInput, Alert, StyleSheet, StatusBar } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Switch, Alert, Modal, StyleSheet, StatusBar } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../contexts/AuthContext';
-import { Bell, Moon, LogOut, Save, ShieldCheck } from 'lucide-react-native';
+import { Bell, LogOut, Save, ShieldCheck, UserCog } from 'lucide-react-native';
+import { ProfileSetupScreen } from './ProfileSetupScreen';
 
 interface SettingsScreenProps {
     onBack: () => void;
@@ -11,8 +12,8 @@ interface SettingsScreenProps {
 export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
     const { user, signOut } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
-    // Preferences
     const [notifications, setNotifications] = useState(true);
     const [marketingEmails, setMarketingEmails] = useState(false);
 
@@ -52,93 +53,115 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
     };
 
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-            <StatusBar barStyle="dark-content" />
-            <View style={styles.content}>
-                
-                <View style={styles.header}>
-                    <Text style={styles.title}>설정</Text>
-                    <Text style={styles.subtitle}>앱 기본 설정 및 계정 관리를 여기서 하실 수 있습니다.</Text>
-                </View>
+        <View style={{ flex: 1 }}>
+            <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+                <StatusBar barStyle="dark-content" />
+                <View style={styles.content}>
 
-                {/* Preferences */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>앱 알림 설정</Text>
-                    <View style={styles.card}>
-                        <View style={styles.row}>
-                            <View style={styles.rowLeft}>
-                                <View style={[styles.iconBox, { backgroundColor: '#F5F3FF' }]}>
-                                    <Bell size={20} color="#7C3AED" />
+                    <View style={styles.header}>
+                        <Text style={styles.title}>설정</Text>
+                        <Text style={styles.subtitle}>앱 기본 설정 및 계정 관리를 여기서 하실 수 있습니다.</Text>
+                    </View>
+
+                    {/* 계정 관리 — 프로필 수정 */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>계정 관리</Text>
+                        <View style={styles.card}>
+                            <TouchableOpacity style={styles.row} onPress={() => setIsProfileModalOpen(true)}>
+                                <View style={styles.rowLeft}>
+                                    <View style={[styles.iconBox, { backgroundColor: '#F5F3FF' }]}>
+                                        <UserCog size={20} color="#7C3AED" />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.rowTitle}>프로필 수정</Text>
+                                        <Text style={styles.rowSubtitle}>이름, 직업, 관심분야 등 정보 변경</Text>
+                                    </View>
                                 </View>
-                                <View>
-                                    <Text style={styles.rowTitle}>푸시 알림</Text>
-                                    <Text style={styles.rowSubtitle}>실시간 인사이트 알림 받기</Text>
-                                </View>
-                            </View>
-                            <Switch
-                                value={notifications}
-                                onValueChange={setNotifications}
-                                trackColor={{ false: '#E2E8F0', true: '#7C3AED' }}
-                                thumbColor="#FFF"
-                            />
-                        </View>
-                        <View style={styles.divider} />
-                        <View style={styles.row}>
-                            <View style={styles.rowLeft}>
-                                <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
-                                    <ShieldCheck size={20} color="#3B82F6" />
-                                </View>
-                                <View>
-                                    <Text style={styles.rowTitle}>마케팅 정보 수신</Text>
-                                    <Text style={styles.rowSubtitle}>이벤트 및 혜택 정보 안내</Text>
-                                </View>
-                            </View>
-                            <Switch
-                                value={marketingEmails}
-                                onValueChange={setMarketingEmails}
-                                trackColor={{ false: '#E2E8F0', true: '#7C3AED' }}
-                                thumbColor="#FFF"
-                            />
+                                <Text style={{ color: '#94A3B8', fontSize: 20 }}>›</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
+
+                    {/* 앱 알림 설정 */}
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>앱 알림 설정</Text>
+                        <View style={styles.card}>
+                            <View style={styles.row}>
+                                <View style={styles.rowLeft}>
+                                    <View style={[styles.iconBox, { backgroundColor: '#F5F3FF' }]}>
+                                        <Bell size={20} color="#7C3AED" />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.rowTitle}>푸시 알림</Text>
+                                        <Text style={styles.rowSubtitle}>실시간 인사이트 알림 받기</Text>
+                                    </View>
+                                </View>
+                                <Switch
+                                    value={notifications}
+                                    onValueChange={setNotifications}
+                                    trackColor={{ false: '#E2E8F0', true: '#7C3AED' }}
+                                    thumbColor="#FFF"
+                                />
+                            </View>
+                            <View style={styles.divider} />
+                            <View style={styles.row}>
+                                <View style={styles.rowLeft}>
+                                    <View style={[styles.iconBox, { backgroundColor: '#EFF6FF' }]}>
+                                        <ShieldCheck size={20} color="#3B82F6" />
+                                    </View>
+                                    <View>
+                                        <Text style={styles.rowTitle}>마케팅 정보 수신</Text>
+                                        <Text style={styles.rowSubtitle}>이벤트 및 혜택 정보 안내</Text>
+                                    </View>
+                                </View>
+                                <Switch
+                                    value={marketingEmails}
+                                    onValueChange={setMarketingEmails}
+                                    trackColor={{ false: '#E2E8F0', true: '#7C3AED' }}
+                                    thumbColor="#FFF"
+                                />
+                            </View>
+                        </View>
+                    </View>
+
+                    {/* 저장 / 로그아웃 */}
+                    <View style={styles.actionSection}>
+                        <TouchableOpacity
+                            onPress={saveSettings}
+                            disabled={loading}
+                            style={[styles.saveBtn, loading && { opacity: 0.7 }]}
+                        >
+                            <Save size={18} color="#FFF" style={{ marginRight: 8 }} />
+                            <Text style={styles.saveBtnText}>{loading ? '저장 중...' : '설정 저장하기'}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity onPress={signOut} style={styles.logoutBtn}>
+                            <LogOut size={18} color="#EF4444" style={{ marginRight: 8 }} />
+                            <Text style={styles.logoutBtnText}>로그아웃</Text>
+                        </TouchableOpacity>
+                    </View>
+
                 </View>
+            </ScrollView>
 
-                {/* Actions */}
-                <View style={styles.actionSection}>
-                    <TouchableOpacity
-                        onPress={saveSettings}
-                        disabled={loading}
-                        style={[styles.saveBtn, loading && { opacity: 0.7 }]}
-                    >
-                        <Save size={18} color="#FFF" style={{ marginRight: 8 }} />
-                        <Text style={styles.saveBtnText}>{loading ? '저장 중...' : '설정 저장하기'}</Text>
-                    </TouchableOpacity>
-
-                    <TouchableOpacity
-                        onPress={signOut}
-                        style={styles.logoutBtn}
-                    >
-                        <LogOut size={18} color="#EF4444" style={{ marginRight: 8 }} />
-                        <Text style={styles.logoutBtnText}>로그아웃</Text>
-                    </TouchableOpacity>
-                </View>
-
-            </View>
-        </ScrollView>
+            <Modal visible={isProfileModalOpen} animationType="fade" transparent onRequestClose={() => setIsProfileModalOpen(false)}>
+                <ProfileSetupScreen isEditing={true} onClose={() => setIsProfileModalOpen(false)} />
+            </Modal>
+        </View>
     );
 };
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FDF8F3' },
     content: { maxWidth: 600, width: '100%', marginHorizontal: 'auto', padding: 24, paddingBottom: 60 },
-    
+
     header: { marginBottom: 32, alignItems: 'center' },
     title: { color: '#18181b', fontSize: 28, fontWeight: '800', marginBottom: 8 },
     subtitle: { color: '#64748B', fontSize: 14, textAlign: 'center' },
 
     section: { marginBottom: 32 },
     sectionTitle: { color: '#18181b', fontSize: 18, fontWeight: '700', marginBottom: 16 },
-    
+
     card: {
         backgroundColor: '#FCF2E9', borderRadius: 24, paddingVertical: 8,
         borderWidth: 1, borderColor: '#7C3AED10',
@@ -150,10 +173,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 20, paddingVertical: 16,
     },
     rowLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-    iconBox: {
-        width: 40, height: 40, borderRadius: 12, 
-        alignItems: 'center', justifyContent: 'center'
-    },
+    iconBox: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     rowTitle: { color: '#18181b', fontWeight: '700', fontSize: 16 },
     rowSubtitle: { color: '#94A3B8', fontSize: 13, marginTop: 2 },
     divider: { height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 20 },
@@ -170,7 +190,7 @@ const styles = StyleSheet.create({
     logoutBtn: {
         flexDirection: 'row', paddingVertical: 16, borderRadius: 16,
         alignItems: 'center', justifyContent: 'center',
-        borderWidth: 1, borderColor: '#FED7D7', backgroundColor: '#FFF5F5'
+        borderWidth: 1, borderColor: '#FED7D7', backgroundColor: '#FFF5F5',
     },
     logoutBtnText: { color: '#EF4444', fontWeight: '700', fontSize: 15 },
 });

@@ -335,7 +335,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
 };
 
 const styles = StyleSheet.create({
-    root: { maxWidth: 1300, width: '100%', alignSelf: 'center', paddingHorizontal: 24, paddingTop: 32, paddingBottom: 48 },
+    root: { maxWidth: 1300, width: '100%', alignSelf: 'center', paddingHorizontal: 24, paddingTop: 100, paddingBottom: 48 },
 
     /* Header */
     pageHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 28, flexWrap: 'wrap', gap: 16 },

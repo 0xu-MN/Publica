@@ -94,7 +94,8 @@ export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev
 
     return (
         <View
-            className="absolute top-0 right-0 bottom-0 w-full sm:w-[600px] z-[100] justify-center"
+            className="absolute top-0 right-0 bottom-0 w-full sm:w-[600px] justify-center"
+            style={{ zIndex: 1010 }}
             // @ts-ignore - React Native Web supports these props
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
@@ -127,50 +128,70 @@ export const PostDetailPanel = ({ post, visible, onClose, onProfilePress, onPrev
                     >
                         <ScrollView className="flex-1 px-8 pt-8">
                             {/* Post Content */}
-                            <View className="mb-10">
-                                <TouchableOpacity
-                                    className="flex-row items-center mb-6"
-                                    onPress={() => !post.isAnonymous && post.authorId && onProfilePress && onProfilePress(post.authorId)}
-                                    disabled={post.isAnonymous}
-                                >
-                                    <View className={`w-12 h-12 rounded-full items-center justify-center mr-4 shadow-sm ${post.isAnonymous ? 'bg-[#F1F5F9]' : 'bg-[#7C3AED]'}`}>
-                                        {post.isAnonymous ? <User size={20} color="#7C3AED" /> : <Text className="text-white font-bold text-lg">{post.author[0]}</Text>}
-                                    </View>
-                                    <View>
-                                        <Text className="text-[#27272a] font-bold text-base">{post.isAnonymous ? '익명 사용자' : post.author}</Text>
-                                        <Text className="text-[#94A3B8] text-xs font-medium">{post.timestamp} · {post.category}</Text>
-                                    </View>
-                                </TouchableOpacity>
-
-                                <Text className="text-[#27272a] text-2xl font-bold mb-4 leading-tight">{post.title}</Text>
-                                <Text className="text-[#475569] text-[15px] leading-7 mb-6 whitespace-pre-wrap font-medium">{post.content}</Text>
-
-                                {post.imageUrl && (
-                                    <Image
-                                        source={{ uri: post.imageUrl }}
-                                        className="w-full h-72 rounded-2xl bg-slate-100 mb-6"
-                                        resizeMode="cover"
-                                    />
-                                )}
-
-                                <View className="flex-row gap-6 py-4 border-t border-[#F1F5F9] border-b border-[#F1F5F9]">
+                                {/* Author and Bubble Container */}
+                                <View className="flex-row items-start mb-10 w-full relative">
+                                    {/* Avatar */}
                                     <TouchableOpacity
-                                        className="flex-row items-center gap-2"
-                                        onPress={() => onLike && onLike(post.id)}
+                                        className={`w-10 h-10 rounded-full items-center justify-center border-2 border-white shadow-sm ${post.isAnonymous ? 'bg-[#F1F5F9]' : 'bg-[#7C3AED]'} mr-3 z-10`}
+                                        onPress={() => !post.isAnonymous && post.authorId && onProfilePress && onProfilePress(post.authorId)}
+                                        disabled={post.isAnonymous}
                                     >
-                                        <Heart
-                                            size={20}
-                                            color={post.likedBy?.includes(user?.id || '') ? "#F87171" : "#94A3B8"}
-                                            fill={post.likedBy?.includes(user?.id || '') ? "#F87171" : "none"}
-                                        />
-                                        <Text className={`font-bold ${post.likedBy?.includes(user?.id || '') ? 'text-red-500' : 'text-[#64748B]'}`}>{post.likes}</Text>
+                                        {post.isAnonymous ? <User size={16} color="#7C3AED" /> : <Text className="text-white font-bold text-sm">{post.author[0]}</Text>}
                                     </TouchableOpacity>
-                                    <View className="flex-row items-center gap-2">
-                                        <MessageCircle size={20} color="#7C3AED" />
-                                        <Text className="text-[#7C3AED] font-bold">{post.comments}</Text>
+
+                                    {/* Right Content */}
+                                    <View className="flex-1 pt-1">
+                                        {/* Header: Name, Category, Timestamp */}
+                                        <View className="flex-row items-center mb-1 flex-wrap">
+                                            <TouchableOpacity
+                                                onPress={() => !post.isAnonymous && post.authorId && onProfilePress && onProfilePress(post.authorId)}
+                                                disabled={post.isAnonymous}
+                                            >
+                                                <Text className="text-[#27272a] font-bold text-sm mr-2 hover:underline">
+                                                    {post.isAnonymous ? '익명 사용자' : post.author}
+                                                </Text>
+                                            </TouchableOpacity>
+
+                                            <View className="bg-[#7C3AED]/10 px-2 py-0.5 rounded-lg mr-2 border border-[#7C3AED]/10">
+                                                <Text className="text-[#7C3AED] text-[10px] font-bold tracking-tight">{post.category}</Text>
+                                            </View>
+                                            <Text className="text-[#94A3B8] text-[11px] font-medium">{post.timestamp}</Text>
+                                        </View>
+
+                                        {/* Main Bubble Box */}
+                                        <View className="bg-white rounded-[24px] rounded-tl-none p-5 border border-[#E2E8F0] shadow-sm shadow-black/5 relative self-start w-full mt-1.5">
+                                            <Text className="text-[#27272a] font-bold text-xl mb-3 leading-tight">{post.title}</Text>
+                                            <Text className="text-[#475569] text-[15px] leading-7 mb-4 whitespace-pre-wrap font-medium">{post.content}</Text>
+
+                                            {post.imageUrl && (
+                                                <Image
+                                                    source={{ uri: post.imageUrl }}
+                                                    className="w-full h-72 rounded-2xl bg-slate-100 mb-4"
+                                                    resizeMode="cover"
+                                                />
+                                            )}
+
+                                            {/* Interactions inside bubble */}
+                                            <View className="flex-row items-center gap-5 mt-2 pt-4 border-t border-[#F1F5F9]">
+                                                <TouchableOpacity
+                                                    className="flex-row items-center gap-1.5"
+                                                    onPress={() => onLike && onLike(post.id)}
+                                                >
+                                                    <Heart
+                                                        size={16}
+                                                        color={post.likedBy?.includes(user?.id || '') ? "#F87171" : "#94A3B8"}
+                                                        fill={post.likedBy?.includes(user?.id || '') ? "#F87171" : "none"}
+                                                    />
+                                                    <Text className={`font-bold ${post.likedBy?.includes(user?.id || '') ? 'text-red-500' : 'text-[#64748B]'}`}>{post.likes}</Text>
+                                                </TouchableOpacity>
+                                                <View className="flex-row items-center gap-1.5">
+                                                    <MessageCircle size={16} color="#7C3AED" />
+                                                    <Text className="text-[#7C3AED] font-bold">{post.comments}</Text>
+                                                </View>
+                                            </View>
+                                        </View>
                                     </View>
                                 </View>
-                            </View>
 
                             {/* Comments Section */}
                             <View className="mb-24">

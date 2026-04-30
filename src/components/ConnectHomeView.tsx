@@ -505,7 +505,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FDF8F3' },
-    content: { maxWidth: 1400, alignSelf: 'center', width: '100%', padding: 24 },
+    content: { maxWidth: 1400, alignSelf: 'center', width: '100%', paddingHorizontal: 24, paddingBottom: 24, paddingTop: 100 },
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, marginBottom: 16 },
     welcomeText: { color: '#18181B', fontSize: 28, fontWeight: '700', letterSpacing: -0.5, marginBottom: 4 },
     welcomeName: { color: '#7C3AED', fontWeight: '900' },

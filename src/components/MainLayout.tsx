@@ -45,7 +45,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setNotifications,
 }) => {
     return (
-        <SafeAreaView style={[styles.safeArea, viewMode === 'landing' && { backgroundColor: 'transparent' }]}>
+        <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
             <AppHeader
@@ -66,7 +66,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
             <View style={[
                 styles.mainContainer,
-                viewMode === 'landing' && { paddingTop: 0, backgroundColor: 'transparent' }
+                { paddingTop: 0 }
             ]}>
                 {children}
             </View>
@@ -77,11 +77,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#FDF8F3', // Default for connect, insight, etc.
+        backgroundColor: 'transparent',
     },
     mainContainer: {
         flex: 1,
-        backgroundColor: '#FDF8F3',
-        paddingTop: 72,
+        backgroundColor: 'transparent',
+        paddingTop: 0,
     },
 });
