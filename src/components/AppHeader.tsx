@@ -132,9 +132,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} />
                                     <TouchableOpacity
                                         style={[styles.headerWorkspaceBtn, { marginLeft: 16 }]}
-                                        onPress={onNavigateToWorkspace}
+                                        onPress={() => setViewMode('workspace')}
                                     >
-                                        <Sparkles size={14} color="#FFF" />
+                                        <Icons.Zap size={14} color="#FFF" />
                                         <Text style={styles.headerWorkspaceText}>My Workspace</Text>
                                     </TouchableOpacity>
                                 </>
