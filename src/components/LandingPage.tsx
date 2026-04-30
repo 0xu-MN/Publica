@@ -140,10 +140,11 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
 
     return (
         <ScrollView
-            style={styles.container}
+            style={Platform.OS === 'web'
+                ? [styles.container, { overflow: 'visible' as any, height: 'auto' as any }]
+                : styles.container
+            }
             showsVerticalScrollIndicator={false}
-            // 웹에서 window 스크롤을 사용해야 브라우저 전체 페이지 캡처가 가능
-            {...(Platform.OS === 'web' ? { style: [styles.container, { overflow: 'visible' as any, height: 'auto' as any }] } : {})}
         >
 
             {/* ════════════ HERO ════════════ */}

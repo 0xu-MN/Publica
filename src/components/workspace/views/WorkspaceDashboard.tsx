@@ -207,7 +207,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                         </View>
                         <View className="gap-3">
                             {briefings.map((briefing, index) => (
-                                <View key={briefing.id} className="flex-row items-center p-4 rounded-2xl border" style={{ backgroundColor: '#FDF8F3', borderColor: 'rgba(124, 58, 237, 0.1)' }}>
+                                <View key={briefing.id} className="flex-row items-center p-4 rounded-2xl border" style={{ backgroundColor: '#FFFFFF', borderColor: 'rgba(124, 58, 237, 0.1)' }}>
                                     <View className="w-2 h-2 rounded-full mr-4" style={{ backgroundColor: '#7C3AED', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.5, shadowRadius: 2 }} />
                                     <Text className="flex-1 text-[#475569] text-[14px] font-bold leading-relaxed">
                                         {briefing.message}
@@ -387,7 +387,6 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                     </View>
                 </View>
             </View>
-            <Footer />
         </ScrollView>
     );
 };

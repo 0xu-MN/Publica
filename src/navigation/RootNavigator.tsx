@@ -19,7 +19,7 @@ const MyTheme = {
     ...DefaultTheme,
     colors: {
         ...DefaultTheme.colors,
-        background: '#FDF8F3',
+        background: '#FFFFFF',
     },
 };
 
@@ -28,7 +28,7 @@ export const RootNavigator = () => {
 
     if (loading) {
         return (
-            <View style={{ flex: 1, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' }}>
                 <ActivityIndicator size="large" color="#7C3AED" />
             </View>
         );

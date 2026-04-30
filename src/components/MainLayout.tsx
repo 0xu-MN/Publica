@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, SafeAreaView, StatusBar, useColorScheme, StyleSheet } from 'react-native';
+import { View, SafeAreaView, StatusBar, StyleSheet, Platform } from 'react-native';
 import { AppHeader } from './AppHeader';
 
 interface FeedNotification {
@@ -45,7 +45,12 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setNotifications,
 }) => {
     return (
-        <SafeAreaView style={[styles.safeArea, { backgroundColor: 'transparent' }]}>
+        <SafeAreaView style={[
+            styles.safeArea,
+            { backgroundColor: 'transparent' },
+            // 웹 랜딩: flex 고정 해제 → window가 전체 높이 인식 → 브라우저 전체 캡처 가능
+            Platform.OS === 'web' && viewMode === 'landing' && { flex: undefined, height: 'auto' as any } as any,
+        ]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
             <AppHeader
@@ -66,7 +71,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
             <View style={[
                 styles.mainContainer,
-                { paddingTop: 0 }
+                { paddingTop: viewMode === 'landing' ? 0 : 72 },
+                Platform.OS === 'web' && viewMode === 'landing' && { flex: undefined, height: 'auto' as any } as any,
             ]}>
                 {children}
             </View>

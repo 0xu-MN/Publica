@@ -217,7 +217,6 @@ export const MyProjectsView = ({ onNavigateToFlow, onNavigateToEdit }: MyProject
                         })}
                     </View>
                 )}
-                <Footer />
                 <View className="h-20" />
             </ScrollView>
         </View>
@@ -233,7 +232,7 @@ const styles = StyleSheet.create({
     header: {
         height: 100, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingHorizontal: 32, borderBottomWidth: 1, borderColor: '#E2E8F0',
-        backgroundColor: '#FDF8F3', paddingTop: 20,
+        backgroundColor: '#FFFFFF', paddingTop: 20,
     },
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
     headerTitle: { color: '#27272a', fontSize: 24, fontWeight: '900', letterSpacing: -1 },
