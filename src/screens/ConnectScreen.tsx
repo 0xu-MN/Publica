@@ -11,6 +11,7 @@ import { usePosts } from '../hooks/usePosts';
 import { useNotifications } from '../hooks/useNotifications';
 import { NotificationModal } from '../components/NotificationModal';
 import { PublicProfileView } from '../components/PublicProfileView';
+import { ChatModal } from '../components/ChatModal';
 import Footer from '../components/Footer';
 
 interface ConnectScreenProps {
@@ -114,6 +115,7 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
 
     // Profile viewing state
     const [selectedProfileUserId, setSelectedProfileUserId] = useState<string | null>(null);
+    const [chatTarget, setChatTarget] = useState<{ id: string; name: string } | null>(null);
     const profilePanelTranslateX = useRef(new Animated.Value(-900)).current;
     const backdropOpacity = useRef(new Animated.Value(0)).current;
 
@@ -326,6 +328,10 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                         <PublicProfileView
                             userId={selectedProfileUserId}
                             onClose={() => setSelectedProfileUserId(null)}
+                            onOpenChat={(target) => {
+                                setSelectedProfileUserId(null);
+                                setChatTarget(target);
+                            }}
                         />
                     </View>
                 )}
@@ -370,6 +376,12 @@ export const ConnectScreen: React.FC<ConnectScreenProps> = ({ onLoginRequired, o
                 onClose={() => setIsNotiModalVisible(false)}
                 notifications={notifications}
                 onMarkAsRead={markAsRead}
+            />
+
+            <ChatModal
+                visible={!!chatTarget}
+                onClose={() => setChatTarget(null)}
+                targetUser={chatTarget ?? undefined}
             />
         </View>
     );

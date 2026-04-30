@@ -1,124 +1,81 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, Modal, KeyboardAvoidingView, Platform, Alert, ScrollView } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TouchableOpacity, TextInput, Modal, KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator } from 'react-native';
 import { X, Send, Paperclip, MoreVertical } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface ChatModalProps {
     visible: boolean;
     onClose: () => void;
-    targetUser?: { id: string; name: string };
+    targetUser?: { id: string; name: string; imageUrl?: string };
 }
 
 interface Message {
     id: string;
     text: string;
-    isMe: boolean; // Relative to the viewer? No, strictly "senderId == currentUserId"
+    isMe: boolean;
     senderId: string;
     timestamp: string;
 }
+
+const toMsg = (row: any, currentUserId: string): Message => ({
+    id: row.id,
+    text: row.content,
+    isMe: row.sender_id === currentUserId,
+    senderId: row.sender_id,
+    timestamp: new Date(row.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+});
 
 export const ChatModal = ({ visible, onClose, targetUser }: ChatModalProps) => {
     const { user } = useAuth();
     const otherName = targetUser?.name || 'User';
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
-
-    // Generate a unique key for this conversation (Simulates Server Room)
-    const getChatKey = () => {
-        if (!user?.id || !targetUser?.id) return null;
-        const ids = [user.id, targetUser.id].sort();
-        return `chat_room_${ids[0]}_${ids[1]}`;
-    };
-
-    // Load Messages
-    useEffect(() => {
-        if (visible && user?.id && targetUser?.id) {
-            loadMessages();
-        } else {
-            setMessages([]);
-        }
-    }, [visible, user, targetUser]);
-
-    const loadMessages = async () => {
-        const key = getChatKey();
-        if (!key) return;
-        try {
-            const stored = await AsyncStorage.getItem(key);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                // Map stored messages to UI format (re-evaluating isMe based on current user)
-                setMessages(parsed.map((m: any) => ({
-                    ...m,
-                    isMe: m.senderId === user?.id
-                })));
-            } else {
-                setMessages([]);
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
 
-    const updateThread = async (userId: string, otherUser: { id: string, name: string }, lastMsg: string) => {
-        const threadKey = `chat_threads_${userId}`;
+    useEffect(() => {
+        if (!visible || !user?.id || !targetUser?.id) {
+            setMessages([]);
+            return;
+        }
+        loadMessages();
+
+        const channel = supabase
+            .channel(`chatmodal_${[user.id, targetUser.id].sort().join('_')}`)
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` },
+                (payload) => {
+                    const row = payload.new as any;
+                    if (row.sender_id === targetUser.id) {
+                        setMessages(prev => [...prev, toMsg(row, user.id)]);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [visible, user?.id, targetUser?.id]);
+
+    const loadMessages = async () => {
+        if (!user?.id || !targetUser?.id) return;
+        setLoading(true);
         try {
-            const stored = await AsyncStorage.getItem(threadKey);
-            let threads = stored ? JSON.parse(stored) : [];
+            const { data } = await supabase
+                .from('messages')
+                .select('*')
+                .or(
+                    `and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),` +
+                    `and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`
+                )
+                .order('created_at', { ascending: true });
 
-            // Remove existing thread with this user to push to top
-            threads = threads.filter((t: any) => t.id !== otherUser.id);
-
-            const newThread = {
-                id: otherUser.id,
-                name: otherUser.name,
-                lastMessage: lastMsg,
-                timestamp: '방금 전',
-                unread: userId === user?.id ? 0 : 1 // Read if it's me, Unread if it's them
-            };
-
-            threads.unshift(newThread);
-            await AsyncStorage.setItem(threadKey, JSON.stringify(threads));
-        } catch (e) {
-            console.error(e);
+            if (data) setMessages(data.map(r => toMsg(r, user.id)));
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const handleSend = async () => {
-        if (!message.trim() || !user || !targetUser) return;
-
-        const timestamp = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            text: message,
-            isMe: true,
-            senderId: user.id,
-            timestamp: timestamp
-        };
-
-        const updatedMessages = [...messages, newMessage];
-        setMessages(updatedMessages);
-        setMessage('');
-
-        // Persist Message
-        const key = getChatKey();
-        if (key) {
-            // We store the 'isMe' as boolean relative to 'user' at time of sending? 
-            // Better to store 'senderId' and derive 'isMe' on load.
-            // But for simple local array update, we used isMe=true.
-            await AsyncStorage.setItem(key, JSON.stringify(updatedMessages));
-        }
-
-        // Update Threads for BOTH users
-        // 1. My Thread List (Target is otherUser)
-        await updateThread(user.id, targetUser, message);
-
-        // 2. Their Thread List (Target is ME)
-        // Need my name. Since we don't have it easily, using 'User' or email.
-        const myName = user.email ? user.email.split('@')[0] : 'User';
-        await updateThread(targetUser.id, { id: user.id, name: myName }, message);
     };
 
     useEffect(() => {
@@ -126,6 +83,26 @@ export const ChatModal = ({ visible, onClose, targetUser }: ChatModalProps) => {
             setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
         }
     }, [messages, visible]);
+
+    const handleSend = async () => {
+        if (!message.trim() || !user || !targetUser || sending) return;
+        setSending(true);
+        const text = message.trim();
+        setMessage('');
+        try {
+            const { data, error } = await supabase
+                .from('messages')
+                .insert({ sender_id: user.id, receiver_id: targetUser.id, content: text })
+                .select()
+                .single();
+
+            if (!error && data) {
+                setMessages(prev => [...prev, toMsg(data, user.id)]);
+            }
+        } finally {
+            setSending(false);
+        }
+    };
 
     return (
         <Modal
@@ -143,7 +120,7 @@ export const ChatModal = ({ visible, onClose, targetUser }: ChatModalProps) => {
                     <View className="px-5 py-4 bg-[#0F172A] border-b border-white/5 flex-row items-center justify-between">
                         <View className="flex-row items-center">
                             <View className="w-10 h-10 rounded-full bg-blue-500 items-center justify-center mr-3 relative">
-                                <Text className="text-white font-bold">{otherName[0]}</Text>
+                                <Text className="text-white font-bold text-base">{otherName[0]?.toUpperCase()}</Text>
                                 <View className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0F172A]" />
                             </View>
                             <View>
@@ -155,7 +132,7 @@ export const ChatModal = ({ visible, onClose, targetUser }: ChatModalProps) => {
                             <TouchableOpacity className="p-2">
                                 <MoreVertical size={20} color="#94A3B8" />
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
+                            <TouchableOpacity onPress={onClose} className="p-2 bg-white/5 rounded-full">
                                 <X size={20} color="#fff" />
                             </TouchableOpacity>
                         </View>
@@ -167,12 +144,26 @@ export const ChatModal = ({ visible, onClose, targetUser }: ChatModalProps) => {
                         ref={scrollViewRef}
                         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
                     >
+                        {loading && (
+                            <View className="items-center py-6">
+                                <ActivityIndicator size="small" color="#3B82F6" />
+                            </View>
+                        )}
+
+                        {!loading && messages.length === 0 && (
+                            <View className="items-center py-10">
+                                <Text className="text-slate-500 text-sm text-center">
+                                    {`${otherName}님에게 첫 메시지를 보내보세요 👋`}
+                                </Text>
+                            </View>
+                        )}
+
                         {messages.map((msg) => (
                             <View key={msg.id} className={`items-${msg.isMe ? 'end' : 'start'} mb-4`}>
                                 <View className={`flex-row items-end ${msg.isMe ? 'justify-end' : ''}`}>
                                     {!msg.isMe && (
                                         <View className="w-8 h-8 rounded-full bg-blue-500 items-center justify-center mr-2 mb-4">
-                                            <Text className="text-white text-xs font-bold">H</Text>
+                                            <Text className="text-white text-xs font-bold">{otherName[0]?.toUpperCase()}</Text>
                                         </View>
                                     )}
                                     <View>
@@ -208,11 +199,14 @@ export const ChatModal = ({ visible, onClose, targetUser }: ChatModalProps) => {
                                 onChangeText={setMessage}
                             />
                             <TouchableOpacity
-                                className={`ml-3 p-2 rounded-full ${message.trim() ? 'bg-blue-600' : 'bg-slate-700'}`}
+                                className={`ml-3 p-2 rounded-full ${message.trim() && !sending ? 'bg-blue-600' : 'bg-slate-700'}`}
                                 onPress={handleSend}
-                                disabled={!message.trim()}
+                                disabled={!message.trim() || sending}
                             >
-                                <Send size={16} color={message.trim() ? "#fff" : "#94A3B8"} />
+                                {sending
+                                    ? <ActivityIndicator size="small" color="#3B82F6" />
+                                    : <Send size={16} color={message.trim() ? "#fff" : "#94A3B8"} />
+                                }
                             </TouchableOpacity>
                         </View>
                         <Text className="text-center text-slate-600 text-[10px] mt-3">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { X, Briefcase, Award, Activity, Users, MessageCircle, UserCheck, UserPlus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { supabase } from '../lib/supabase';
@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 interface PublicProfileViewProps {
     userId: string;
     onClose: () => void;
+    onOpenChat?: (targetUser: { id: string; name: string }) => void;
 }
 
 interface CareerEntry {
@@ -37,7 +38,7 @@ interface UserProfile {
     qualifications: QualificationEntry[];
 }
 
-export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) => {
+export const PublicProfileView = ({ userId, onClose, onOpenChat }: PublicProfileViewProps) => {
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [followers, setFollowers] = useState(0);
@@ -156,37 +157,31 @@ export const PublicProfileView = ({ userId, onClose }: PublicProfileViewProps) =
 
         try {
             if (!next) {
-                // 언팔로우
                 await supabase.from('follows').delete()
                     .eq('follower_id', currentUserId)
                     .eq('following_id', userId);
-                await supabase.from('profiles')
-                    .update({ followers_count: Math.max(0, followers - 1) })
-                    .eq('id', userId);
+                // DB에서 현재 카운트 직접 감소 (stale closure 방지)
+                await supabase.rpc('decrement_followers', { target_user_id: userId });
             } else {
-                // 팔로우
-                await supabase.from('follows').insert({
+                await supabase.from('follows').upsert({
                     follower_id: currentUserId,
                     following_id: userId,
                     created_at: new Date().toISOString(),
-                });
-                await supabase.from('profiles')
-                    .update({ followers_count: followers + 1 })
-                    .eq('id', userId);
+                }, { onConflict: 'follower_id,following_id' });
+                await supabase.rpc('increment_followers', { target_user_id: userId });
             }
         } catch {
-            // DB 실패해도 UI/AsyncStorage 상태는 이미 반영됨 → 무시
+            // DB 실패해도 UI/AsyncStorage 상태는 이미 반영됨
         } finally {
             setFollowLoading(false);
         }
     };
 
     const handleMessage = () => {
-        Alert.alert(
-            '메시지 기능',
-            '메시지 기능은 곧 출시될 예정입니다.\n팔로우하고 업데이트를 기다려주세요!',
-            [{ text: '확인' }]
-        );
+        if (onOpenChat && profile) {
+            onOpenChat({ id: userId, name: profile.realName || profile.nickname });
+            onClose();
+        }
     };
 
     if (loading) {

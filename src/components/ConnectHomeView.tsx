@@ -6,6 +6,7 @@ import { useSharedValue, useAnimatedStyle, withRepeat, withTiming, Easing, cance
 import Animated from 'react-native-reanimated';
 import { fetchGrants } from '../services/grants';
 import { getTopRecommendedGrants } from '../utils/scoring';
+import { fetchAICards, AICardNews } from '../services/newsService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../contexts/AuthContext';
 import Footer from './Footer';
@@ -19,6 +20,7 @@ interface ConnectHomeViewProps {
     onNavigateToLounge?: () => void;
     onNavigateToWorkspace?: () => void;
     onNavigateToGrantList?: () => void;
+    onNavigateToInsight?: () => void;
     onProgramSelect?: (program: any) => void;
     onLoginPress?: () => void;
 }
@@ -28,6 +30,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
     onNavigateToLounge,
     onNavigateToWorkspace,
     onNavigateToGrantList,
+    onNavigateToInsight,
     onProgramSelect,
     onLoginPress
 }) => {
@@ -84,7 +87,8 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
     const [govPrograms, setGovPrograms] = React.useState<any[]>([]);
     const [fundingPrograms, setFundingPrograms] = React.useState<any[]>([]);
     const [communityPosts, setCommunityPosts] = React.useState<any[]>([]);
-    const [topGrants, setTopGrants] = React.useState<any[]>([]); // New state for top cards
+    const [topGrants, setTopGrants] = React.useState<any[]>([]);
+    const [insightNews, setInsightNews] = React.useState<any[]>([]);
     const [loading, setLoading] = React.useState(true);
 
     const loadData = async () => {
@@ -94,19 +98,43 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
             const allGrants = await fetchGrants();
             const recommended = getTopRecommendedGrants(allGrants, profile, 10);
 
-            // Set Top 2 for the Main Cards
             setTopGrants(recommended.slice(0, 2));
 
-            // Set Carousel items (Projects)
             const rndApps = recommended.filter(g => g.grant_type === 'project' || !g.grant_type).slice(0, 5);
             setGovPrograms(rndApps);
 
-            // Set Funding items (Strictly Subsidies)
             const fundApps = recommended.filter(g => g.grant_type === 'subsidy').slice(0, 5);
             setFundingPrograms(fundApps);
 
+            // 2. Fetch Insight News for Publica Insight section
+            try {
+                const aiCards: AICardNews[] = await fetchAICards('전체');
+                const mappedCards = aiCards
+                    .map((card) => {
+                        try {
+                            if (!card.content || card.content === 'undefined') return null;
+                            const cardData = JSON.parse(card.content);
+                            return {
+                                id: card.id,
+                                title: cardData.headline || cardData.title,
+                                summary: cardData.body,
+                                imageUrl: cardData.imageUrl || 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&auto=format&fit=crop',
+                                category: cardData.category === 'Science' ? 'Science' : 'Economy',
+                                source: 'AI Insight',
+                                timestamp: new Date(card.created_at).toLocaleDateString('ko-KR'),
+                                readTime: '3 min 읽기',
+                                tags: cardData.bullets || [],
+                            };
+                        } catch (e) { return null; }
+                    })
+                    .filter(Boolean)
+                    .slice(0, 6);
+                setInsightNews(mappedCards);
+            } catch (e) {
+                console.error('Failed to fetch insight news', e);
+            }
 
-            // Mock Community Data (Keep for now)
+            // Mock Community Data
             setCommunityPosts([
                 { title: '예비창업패키지 3번 문항 작성 팁 있을까요?', author: '박연구원', time: '54분 전', category: 'Q&A', content: '이번에 예비창업패키지 준비 중인데 3번 BM 구성이 어렵네요...', likes: 4, comments: 12 },
                 { title: '이번 R&D 예산 증액안, 실제로 체감되시나요?', author: '김대표', time: '1시간 전', category: '자유게시판', content: '뉴스에서는 증액이라는데 실제로는 잘 모르겠네요.', likes: 21, comments: 45 },
@@ -339,36 +367,60 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
 
                     <View style={styles.divider}><View style={styles.dividerAccent} /></View>
 
-                    {/* Workspace Summary Section */}
+
+                    {/* Publica Insight Section */}
                     <View style={{ marginBottom: 56 }}>
                         <View style={styles.sectionTitleRow}>
                             <View style={styles.sectionLabelWrap}>
-                                <Home size={22} color="#7C3AED" />
-                                <Text style={styles.sectionLabel}>My Workspace</Text>
+                                <Sparkles size={22} color="#7C3AED" />
+                                <Text style={styles.sectionLabel}>Publica Insight</Text>
                             </View>
-                            <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToWorkspace?.()} >
-                                <Text style={styles.moreBtn}>상세보기 {'>'}</Text>
+                            <TouchableOpacity onPress={onNavigateToInsight}>
+                                <Text style={styles.moreBtn}>전체보기 {'>'}</Text>
                             </TouchableOpacity>
                         </View>
-                        <View style={{ flexDirection: 'row', gap: 16, position: 'relative' }}>
-                            {[1, 2, 3].map(i => (
-                                <View key={i} style={[styles.recCard, { minHeight: 180, padding: 24 }]}>
-                                    <Text style={{ color: '#7C3AED', fontSize: 10, fontWeight: '800', marginBottom: 8 }}>PROJECT 0{i}</Text>
-                                    <Text style={{ color: '#18181b', fontSize: 15, fontWeight: '700', marginBottom: 12 }}>전략 에이전트 기반 사업 아이템 고도화 리포트</Text>
-                                    <View style={{ marginTop: 'auto', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <Text style={{ color: '#94A3B8', fontSize: 10 }}>2시간 전 업데이트</Text>
-                                        <View style={styles.postCategory}><Text style={styles.postCategoryText}>분석 완료</Text></View>
+
+                        {insightNews.length === 0 ? (
+                            // Skeleton placeholder while loading
+                            <View style={{ flexDirection: 'row', gap: 16 }}>
+                                {[1, 2, 3].map(i => (
+                                    <View key={i} style={[styles.insightCard, { backgroundColor: '#F8FAFC' }]}>
+                                        <View style={{ height: 140, backgroundColor: '#F1F5F9', borderRadius: 16, marginBottom: 14 }} />
+                                        <View style={{ height: 14, backgroundColor: '#F1F5F9', borderRadius: 6, marginBottom: 8, width: '80%' }} />
+                                        <View style={{ height: 12, backgroundColor: '#F1F5F9', borderRadius: 6, width: '60%' }} />
                                     </View>
-                                </View>
-                            ))}
-                            {!user && (
-                                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.6)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 10, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
-                                    <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
-                                        <Text style={styles.viewBtnText}>워크스페이스 시작하기</Text>
+                                ))}
+                            </View>
+                        ) : (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{ gap: 16, paddingHorizontal: 2 }}
+                            >
+                                {insightNews.map((item: any, i: number) => (
+                                    <TouchableOpacity key={item.id ?? i} style={styles.insightCard} activeOpacity={0.85}>
+                                        <View style={styles.insightImgWrap}>
+                                            <Image
+                                                source={{ uri: item.imageUrl }}
+                                                style={styles.insightImg}
+                                                resizeMode="cover"
+                                            />
+                                            <View style={[
+                                                styles.insightCatBadge,
+                                                { backgroundColor: item.category === 'Science' ? '#F5F3FF' : '#ECFDF5' }
+                                            ]}>
+                                                <Text style={[styles.insightCatText, { color: item.category === 'Science' ? '#7C3AED' : '#10B981' }]}>
+                                                    {item.category === 'Science' ? '과학·기술' : '경제·산업'}
+                                                </Text>
+                                            </View>
+                                        </View>
+                                        <Text style={styles.insightCardTitle} numberOfLines={2}>{item.title}</Text>
+                                        <View style={styles.insightCardMeta}>
+                                            <Text style={styles.insightCardSource}>{item.source}</Text>
+                                            <Text style={styles.insightCardTime}>{item.timestamp}</Text>
+                                        </View>
                                     </TouchableOpacity>
-                                </View>
-                            )}
-                        </View>
+                                ))}
+                            </ScrollView>
+                        )}
                     </View>
 
                     {/* Lounge Section */}
@@ -495,5 +547,17 @@ const styles = StyleSheet.create({
     postStats: { flexDirection: 'row', alignItems: 'center', gap: 16, borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 16 },
     postStatText: { color: '#64748B', fontSize: 11 },
     postCategory: { backgroundColor: '#F5F3FF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginLeft: 'auto' },
-    postCategoryText: { color: '#7C3AED', fontSize: 10, fontWeight: '800' }
+    postCategoryText: { color: '#7C3AED', fontSize: 10, fontWeight: '800' },
+
+    // Insight cards
+    insightCard: { width: 260, backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#F1F5F9', overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12 },
+    insightImgWrap: { width: '100%', height: 150, position: 'relative' },
+    insightImg: { width: '100%', height: '100%' },
+    insightCatBadge: { position: 'absolute', top: 10, left: 10, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+    insightCatText: { fontSize: 9, fontWeight: '800' },
+    insightCardTitle: { color: '#18181B', fontSize: 14, fontWeight: '700', lineHeight: 20, padding: 14, paddingBottom: 8 },
+    insightCardMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingBottom: 14 },
+    insightCardSource: { color: '#94A3B8', fontSize: 11, fontWeight: '600' },
+    insightCardTime: { color: '#CBD5E1', fontSize: 10 },
 });
+

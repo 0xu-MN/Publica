@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, Image } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TouchableOpacity, TextInput, KeyboardAvoidingView, Platform, ScrollView, Image, ActivityIndicator } from 'react-native';
 import { Send, Paperclip, MoreVertical } from 'lucide-react-native';
 import { useAuth } from '../contexts/AuthContext';
+import { supabase } from '../lib/supabase';
 
 interface ChatRoomProps {
     targetUser?: { id: string; name: string; imageUrl?: string };
@@ -16,101 +16,89 @@ interface Message {
     timestamp: string;
 }
 
+const toMsg = (row: any, currentUserId: string): Message => ({
+    id: row.id,
+    text: row.content,
+    isMe: row.sender_id === currentUserId,
+    senderId: row.sender_id,
+    timestamp: new Date(row.created_at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }),
+});
+
 export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
     const { user } = useAuth();
     const otherName = targetUser?.name || 'User';
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState<Message[]>([]);
-
-    // Generate a unique key for this conversation
-    const getChatKey = () => {
-        if (!user?.id || !targetUser?.id) return null;
-        const ids = [user.id, targetUser.id].sort();
-        return `chat_room_${ids[0]}_${ids[1]}`;
-    };
-
-    // Load Messages
-    useEffect(() => {
-        if (user?.id && targetUser?.id) {
-            loadMessages();
-        } else {
-            setMessages([]);
-        }
-    }, [user, targetUser]);
-
-    const loadMessages = async () => {
-        const key = getChatKey();
-        if (!key) return;
-        try {
-            const stored = await AsyncStorage.getItem(key);
-            if (stored) {
-                const parsed = JSON.parse(stored);
-                setMessages(parsed.map((m: any) => ({
-                    ...m,
-                    isMe: m.senderId === user?.id
-                })));
-            } else {
-                setMessages([]);
-            }
-        } catch (e) {
-            console.error(e);
-        }
-    };
-
+    const [loading, setLoading] = useState(false);
+    const [sending, setSending] = useState(false);
     const scrollViewRef = useRef<ScrollView>(null);
 
-    const updateThread = async (userId: string, otherUser: { id: string, name: string }, lastMsg: string) => {
-        const threadKey = `chat_threads_${userId}`;
+    useEffect(() => {
+        if (!user?.id || !targetUser?.id) {
+            setMessages([]);
+            return;
+        }
+        loadMessages();
+
+        const channel = supabase
+            .channel(`chat_${[user.id, targetUser.id].sort().join('_')}`)
+            .on(
+                'postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'messages', filter: `receiver_id=eq.${user.id}` },
+                (payload) => {
+                    const row = payload.new as any;
+                    if (row.sender_id === targetUser.id) {
+                        setMessages(prev => [...prev, toMsg(row, user.id)]);
+                    }
+                }
+            )
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, [user?.id, targetUser?.id]);
+
+    const loadMessages = async () => {
+        if (!user?.id || !targetUser?.id) return;
+        setLoading(true);
         try {
-            const stored = await AsyncStorage.getItem(threadKey);
-            let threads = stored ? JSON.parse(stored) : [];
+            const { data } = await supabase
+                .from('messages')
+                .select('*')
+                .or(
+                    `and(sender_id.eq.${user.id},receiver_id.eq.${targetUser.id}),` +
+                    `and(sender_id.eq.${targetUser.id},receiver_id.eq.${user.id})`
+                )
+                .order('created_at', { ascending: true });
 
-            threads = threads.filter((t: any) => t.id !== otherUser.id);
-
-            const newThread = {
-                id: otherUser.id,
-                name: otherUser.name,
-                lastMessage: lastMsg,
-                timestamp: '방금 전',
-                unread: userId === user?.id ? 0 : 1
-            };
-
-            threads.unshift(newThread);
-            await AsyncStorage.setItem(threadKey, JSON.stringify(threads));
-        } catch (e) {
-            console.error(e);
+            if (data) setMessages(data.map(r => toMsg(r, user.id)));
+        } finally {
+            setLoading(false);
         }
-    };
-
-    const handleSend = async () => {
-        if (!message.trim() || !user || !targetUser) return;
-
-        const timestamp = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        const newMessage: Message = {
-            id: Date.now().toString(),
-            text: message,
-            isMe: true,
-            senderId: user.id,
-            timestamp: timestamp
-        };
-
-        const updatedMessages = [...messages, newMessage];
-        setMessages(updatedMessages);
-        setMessage('');
-
-        const key = getChatKey();
-        if (key) {
-            await AsyncStorage.setItem(key, JSON.stringify(updatedMessages));
-        }
-
-        await updateThread(user.id, targetUser, message);
-        const myName = user.email ? user.email.split('@')[0] : 'User';
-        await updateThread(targetUser.id, { id: user.id, name: myName }, message);
     };
 
     useEffect(() => {
         setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
-    }, [messages, targetUser]); // Scroll on new message or user change
+    }, [messages, targetUser]);
+
+    const handleSend = async () => {
+        if (!message.trim() || !user || !targetUser || sending) return;
+        setSending(true);
+        const text = message.trim();
+        setMessage('');
+        try {
+            const { data, error } = await supabase
+                .from('messages')
+                .insert({ sender_id: user.id, receiver_id: targetUser.id, content: text })
+                .select()
+                .single();
+
+            if (!error && data) {
+                setMessages(prev => [...prev, toMsg(data, user.id)]);
+            }
+        } finally {
+            setSending(false);
+        }
+    };
 
     if (!targetUser) {
         return (
@@ -152,8 +140,13 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
                 ref={scrollViewRef}
                 onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             >
-                {/* Simulated Welcome Message if Empty */}
-                {messages.length === 0 && (
+                {loading && (
+                    <View className="items-center py-6">
+                        <ActivityIndicator size="small" color="#9333EA" />
+                    </View>
+                )}
+
+                {!loading && messages.length === 0 && (
                     <View className="items-start mb-4">
                         <View className="flex-row items-end">
                             <View className="w-8 h-8 rounded-full bg-purple-500/10 items-center justify-center mr-2 mb-4">
@@ -165,9 +158,7 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
                                         {`안녕하세요, ${otherName}입니다. 👋\n협업 제안이나 문의사항이 있으시면 언제든 메시지 남겨주세요.`}
                                     </Text>
                                 </View>
-                                <Text className="text-slate-400 text-[10px] mt-1 ml-1 font-medium">
-                                    자동 메시지
-                                </Text>
+                                <Text className="text-slate-400 text-[10px] mt-1 ml-1 font-medium">자동 메시지</Text>
                             </View>
                         </View>
                     </View>
@@ -216,14 +207,18 @@ export const ChatRoom = ({ targetUser }: ChatRoomProps) => {
                         multiline
                         value={message}
                         onChangeText={setMessage}
+                        onSubmitEditing={handleSend}
                         style={{ outlineWidth: 0 } as any}
                     />
                     <TouchableOpacity
-                        className={`ml-3 p-2 rounded-full ${message.trim() ? 'bg-purple-600' : 'bg-slate-200'}`}
+                        className={`ml-3 p-2 rounded-full ${message.trim() && !sending ? 'bg-purple-600' : 'bg-slate-200'}`}
                         onPress={handleSend}
-                        disabled={!message.trim()}
+                        disabled={!message.trim() || sending}
                     >
-                        <Send size={16} color={message.trim() ? "#fff" : "#94A3B8"} />
+                        {sending
+                            ? <ActivityIndicator size="small" color="#9333EA" />
+                            : <Send size={16} color={message.trim() ? "#fff" : "#94A3B8"} />
+                        }
                     </TouchableOpacity>
                 </View>
             </View>

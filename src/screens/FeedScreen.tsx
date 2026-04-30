@@ -27,6 +27,7 @@ import { createProject } from '../services/projects';
 import { useProjectStore } from '../store/useProjectStore';
 import { PricingPage } from '../components/workspace/views/PricingPage';
 import { LandingPage } from '../components/LandingPage';
+import { InsightPageView } from '../components/InsightPageView';
 
 const CATEGORIES = ['전체'];
 
@@ -325,6 +326,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                     onNavigateToLounge={() => setViewMode('lounge')}
                     onNavigateToWorkspace={() => setViewMode('workspace')}
                     onNavigateToGrantList={() => setViewMode('grants')}
+                    onNavigateToInsight={() => setViewMode('feed')}
                     onProgramSelect={(program) => setSelectedProgram(program)}
                     onLoginPress={() => setAuthModalVisible(true)}
                 />
@@ -387,64 +389,20 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
             )}
 
             {viewMode === 'feed' && (
-                <View style={styles.feedWrapper}>
-                    <FlatList
-                        data={finalNewsData}
-                        keyExtractor={(item) => item.id}
-                        contentContainerStyle={styles.listContent}
-                        ListHeaderComponent={
-                            <View style={styles.feedHeaderWrapper}>
-                                <DashboardView
-                                    newsData={finalNewsData}
-                                    hotKeywords={hotKeywords}
-                                    user={user}
-                                    onLoginPress={() => setAuthModalVisible(true)}
-                                    onInsightClick={setSelectedItem}
-                                />
-                                <Separator style={styles.feedSeparator} />
-                                <View style={styles.sectionHeader}>
-                                    <Text style={styles.sectionTitle}>최신 인사이트</Text>
-                                    <View style={styles.refreshBadge}>
-                                        <View style={styles.refreshMeta}>
-                                            <Icons.Sparkles size={14} color="#7C3AED" />
-                                            <Text style={styles.refreshText}>
-                                                업데이트: {Math.floor((Date.now() - lastUpdateTime.getTime()) / 60000) === 0 ? '방금 전' : `${Math.floor((Date.now() - lastUpdateTime.getTime()) / 60000)}분 전`}
-                                            </Text>
-                                        </View>
-                                        <View style={styles.badgeDivider} />
-                                        <View style={styles.statRow}>
-                                            <View style={styles.statItem}>
-                                                <View style={[styles.statDot, { backgroundColor: '#94A3B8' }]} />
-                                                <Text style={styles.statText}>전체 {finalNewsData.length}</Text>
-                                            </View>
-                                            <View style={styles.statItem}>
-                                                <View style={[styles.statDot, { backgroundColor: '#818CF8' }]} />
-                                                <Text style={styles.statText}>과학 {finalNewsData.filter(i => i.category === 'Science').length}</Text>
-                                            </View>
-                                            <View style={styles.statItem}>
-                                                <View style={[styles.statDot, { backgroundColor: '#10B981' }]} />
-                                                <Text style={styles.statText}>경제 {finalNewsData.filter(i => i.category === 'Economy').length}</Text>
-                                            </View>
-                                        </View>
-                                    </View>
-                                </View>
-                            </View>
-                        }
-                        renderItem={({ item }) => (
-                            <View style={styles.listItemWrapper}>
-                                <InsightListItem
-                                    item={item}
-                                    onPress={() => setSelectedItem(item)}
-                                    isScrapped={scrappedIds.has(item.title)}
-                                    onBookmarkPress={() => handleScrap(item)}
-                                />
-                            </View>
-                        )}
-                        ListFooterComponent={<Footer />}
-                        refreshing={loading}
-                        onRefresh={loadNews}
+                <ScrollView style={styles.feedWrapper} showsVerticalScrollIndicator={false}>
+                    <InsightPageView
+                        newsData={newsData}
+                        hotKeywords={hotKeywords}
+                        user={user}
+                        onLoginPress={() => setAuthModalVisible(true)}
+                        onInsightClick={setSelectedItem}
+                        searchQuery={searchQuery}
+                        onSearchChange={setSearchQuery}
+                        scrappedIds={scrappedIds}
+                        onBookmarkPress={handleScrap}
                     />
-                </View>
+                    <Footer />
+                </ScrollView>
             )}
 
             <InsightDetailModal
