@@ -131,11 +131,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
                                     <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} />
                                     <TouchableOpacity
-                                        style={[styles.headerWorkspaceBtn, { marginLeft: 16 }]}
+                                        style={[styles.workspaceBtn, { marginLeft: 16 }]}
                                         onPress={() => setViewMode('workspace')}
                                     >
                                         <Icons.Zap size={14} color="#FFF" />
-                                        <Text style={styles.headerWorkspaceText}>My Workspace</Text>
+                                        <Text style={styles.workspaceBtnText}>My Workspace</Text>
                                     </TouchableOpacity>
                                 </>
                             )}
@@ -249,13 +249,9 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1000,
-        backgroundColor: 'rgba(255,255,255,0.7)',
+        backgroundColor: 'transparent',
         borderBottomWidth: 1,
-        borderBottomColor: 'rgba(0,0,0,0.05)',
-        ...(Platform.OS === 'web' ? {
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-        } : {}),
+        borderBottomColor: 'transparent',
     } as any,
 
     headerScrolled: {

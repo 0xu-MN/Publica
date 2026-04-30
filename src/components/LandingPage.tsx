@@ -150,9 +150,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                     resizeMode="cover"
                 />
                 <LinearGradient
-                    colors={['rgba(253,248,243,0.3)', 'rgba(253,248,243,0.85)', '#FDF8F3']}
+                    colors={['rgba(253,248,243,0)', 'rgba(253,248,243,0.85)', '#FDF8F3']}
                     start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
                     style={StyleSheet.absoluteFill}
+                    pointerEvents="none"
                 />
                 <Animated.View style={[styles.heroContent, { opacity: heroFade, transform: [{ translateY: heroSlide }] }]}>
                     <View style={styles.heroBadge}>
