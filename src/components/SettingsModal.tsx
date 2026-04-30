@@ -16,6 +16,7 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
     const { user, signOut } = useAuth();
     const [notifications, setNotifications] = useState(true);
     const [darkMode, setDarkMode] = useState(false);
+    const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
 
     const email = user?.email?.toLowerCase() || '';
     const name = user?.user_metadata?.name || user?.user_metadata?.full_name || '';
@@ -33,6 +34,7 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
     if (!visible) return null;
 
     return (
+        <>
         <Modal
             transparent
             visible={visible}
@@ -55,16 +57,16 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
                     <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
                         {/* Profile Info */}
                         <View style={styles.profileSection}>
-                            <View style={styles.profileCard}>
+                            <TouchableOpacity style={styles.profileCard} onPress={() => setIsProfileEditOpen(true)}>
                                 <View style={styles.profileIconBox}>
                                     <User size={22} color="#7C3AED" />
                                 </View>
                                 <View style={styles.profileInfo}>
                                     <Text style={styles.profileName}>프로필 수정</Text>
-                                    <Text style={styles.profileGuide}>Workspace → 프로필 버튼에서 수정하세요</Text>
+                                    <Text style={styles.profileGuide}>이름, 직업, 관심분야 등 정보 변경</Text>
                                 </View>
                                 <ChevronRight size={16} color="#7C3AED" />
-                            </View>
+                            </TouchableOpacity>
                         </View>
 
                         {/* Settings Items */}
@@ -110,6 +112,10 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
                     </ScrollView>
                 </Pressable>
             </Pressable>
+        </Modal>
+
+        <Modal visible={isProfileEditOpen} animationType="fade" transparent onRequestClose={() => setIsProfileEditOpen(false)}>
+            <ProfileSetupScreen isEditing={true} onClose={() => setIsProfileEditOpen(false)} />
         </Modal>
     );
 };
