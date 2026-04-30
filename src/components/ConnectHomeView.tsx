@@ -200,119 +200,144 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                     {/* Header Section */}
                     <View style={styles.headerRow}>
                         <View>
-                            <Text style={styles.headerTitle}>CONNECT HUB</Text>
-                            <Text style={styles.headerSubtitle}>{nickname || '방문자'} {honorific}의 아이템에 맞춘 최적의 기회입니다.</Text>
+                            {user ? (
+                                <Text style={styles.welcomeText}>Welcome back, <Text style={styles.welcomeName}>{nickname}</Text> {honorific}!</Text>
+                            ) : (
+                                <Text style={styles.welcomeText}>안녕하세요, <Text style={styles.welcomeName}>방문자</Text>님!</Text>
+                            )}
+                            <Text style={styles.headerSubtitle}>맞춤 지원사업 기회를 확인하세요</Text>
                         </View>
-                        <TouchableOpacity style={styles.filterBtn}>
-                            <Filter size={18} color="#94A3B8" />
-                            <Text style={styles.filterText}>필터링</Text>
-                        </TouchableOpacity>
+                        <View style={styles.dateBox}>
+                            <Text style={styles.dateYear}>{new Date().getFullYear()}</Text>
+                            <Text style={styles.dateMain}>
+                                {new Date().toLocaleDateString('ko-KR', { month: 'long', day: 'numeric' })}
+                            </Text>
+                            <Text style={styles.dateDay}>
+                                {new Date().toLocaleDateString('ko-KR', { weekday: 'long' })}
+                            </Text>
+                        </View>
                     </View>
 
-                    {/* Profile Card Section */}
-                    <View style={styles.profileCard}>
-                        {!user ? (
-                            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
-                                    <View style={styles.avatar}><UserIcon size={40} color="#94A3B8" /></View>
-                                    <View>
-                                        <Text style={styles.profileTitle}>안녕하세요 방문자님!</Text>
-                                        <Text style={styles.profileKeywords}>로그인 후 더 많은 기능을 만나보세요.</Text>
-                                    </View>
+                    {/* Profile Summary Bar */}
+                    {user ? (
+                        <View style={styles.profileSummaryBar}>
+                            <View style={styles.profileSummaryLeft}>
+                                <View style={styles.profileInitialAvatar}>
+                                    <Text style={styles.profileInitialText}>
+                                        {(nickname || 'U')[0].toUpperCase()}
+                                    </Text>
                                 </View>
-                                <View style={{ flexDirection: 'row', gap: 12 }}>
-                                    <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
-                                        <Text style={styles.viewBtnText}>로그인</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#7C3AED30' }]}>
-                                        <Text style={[styles.viewBtnText, { color: '#7C3AED' }]}>회원가입</Text>
-                                    </TouchableOpacity>
+                                <View>
+                                    <View style={styles.profileNameRow}>
+                                        <Text style={styles.profileSummaryName}>{nickname} {honorific}</Text>
+                                        <View style={styles.roleBadge}><Text style={styles.roleText}>{role}</Text></View>
+                                    </View>
+                                    <Text style={styles.profileSummaryKeywords} numberOfLines={1}>
+                                        {keywords.slice(0, 3).map((k: string) => `#${k}`).join('  ')} · {field}
+                                    </Text>
                                 </View>
                             </View>
-                        ) : (
-                            <>
-                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 24 }}>
-                                    <View style={styles.avatarWrapper}>
-                                        <View style={styles.avatar}>
-                                            {imageUrl ? <Image source={{ uri: imageUrl }} style={{ width: '100%', height: '100%' }} /> : <UserIcon size={32} color="#94A3B8" />}
-                                        </View>
-                                        <View style={styles.onlineDot} />
-                                    </View>
-                                    <View>
-                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                                            <Text style={styles.profileTitle}>{nickname} {honorific}</Text>
-                                            <View style={styles.roleBadge}><Text style={styles.roleText}>{role}</Text></View>
-                                        </View>
-                                        <Text style={styles.profileKeywords} numberOfLines={1}>
-                                            보유 기술: <Text style={{ color: '#7C3AED', fontWeight: '700' }}>{keywords.map((k: string) => `#${k}`).join(', ')}</Text> • 선호 분야: <Text style={{ color: '#10B981', fontWeight: '700' }}>{field}</Text>
-                                        </Text>
-                                    </View>
+                            <View style={styles.profileSummaryRight}>
+                                <View style={styles.profileStatChip}>
+                                    <Text style={styles.profileStatLabel}>Match Score</Text>
+                                    <Text style={styles.profileStatValue}>98%</Text>
                                 </View>
-                                <View style={styles.statsRow}>
-                                    <View style={styles.statItem}>
-                                        <Text style={styles.statLabel}>Match Score</Text>
-                                        <Text style={[styles.statValue, { color: '#7C3AED' }]}>98<Text style={styles.scoreUnit}>%</Text></Text>
-                                    </View>
-                                    <View style={styles.statItem}>
-                                        <Text style={styles.statLabel}>Projects</Text>
-                                        <Text style={styles.statValue}>3<Text style={styles.scoreUnit}>건</Text></Text>
-                                    </View>
-                                    <TouchableOpacity onPress={onNavigateToWorkspace} style={styles.workspaceBtn}>
-                                        <LayoutGrid size={20} color="#7C3AED" />
-                                        <Text style={styles.workspaceText}>Workspace</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </>
-                        )}
-                    </View>
-
-                    {/* Top Recommendations */}
-                    <View style={styles.recommendSection}>
-                        <View style={styles.recCardsRow}>
-                            {topGrants.length === 0 ? (
-                                <View style={[styles.recCard, { flex: 1, alignItems: 'center', justifyContent: 'center' }]}>
-                                    <Search size={48} color="#94A3B8" style={{ opacity: 0.5, marginBottom: 20 }} />
-                                    <Text style={{ color: '#18181b', fontSize: 24, fontWeight: '800', marginBottom: 8 }}>맞춤 지원사업 탐색 중</Text>
-                                    <Text style={{ color: '#64748B', textAlign: 'center' }}>AI가 {nickname} {honorific}께 최적화된 공고를 선별하고 있습니다.</Text>
-                                </View>
-                            ) : (
-                                topGrants.slice(0, 2).map((grant, idx) => (
-                                    <TouchableOpacity key={idx} style={styles.recCard} onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(grant)}>
-                                        <View style={styles.scoreContainer}>
-                                            <Text style={styles.scoreLabel}>Match Score</Text>
-                                            <Text style={styles.scoreValue}>{!user ? '??' : grant.score}<Text style={styles.scoreUnit}>%</Text></Text>
-                                        </View>
-                                        <View style={{ width: '70%' }}>
-                                            <Text style={styles.recAgency}>{grant.agency}</Text>
-                                            <Text style={styles.recTitle} numberOfLines={3}>{grant.title}</Text>
-                                        </View>
-                                        <View style={styles.badgeRow}>
-                                            <View style={styles.badgePurple}><Text style={styles.badgeTextPurple}>{grant.category}</Text></View>
-                                            <View style={styles.badgeGray}><Text style={styles.badgeTextGray}>{grant.d_day}</Text></View>
-                                        </View>
-                                        <View style={styles.recFooter}>
-                                            <View>
-                                                <Text style={styles.recFieldLabel}>지원 분야</Text>
-                                                <Text style={styles.recFieldValue}>{grant.tech_field}</Text>
-                                            </View>
-                                            <BorderGlow borderRadius={16} glowColor="hsl(262, 83%, 58%)" glowIntensity={0.8}>
-                                                <View style={styles.viewBtn}>
-                                                    <Sparkles size={18} color="#FFF" />
-                                                    <Text style={styles.viewBtnText}>상세 보기</Text>
-                                                </View>
-                                            </BorderGlow>
-                                        </View>
-                                    </TouchableOpacity>
-                                ))
-                            )}
-                        </View>
-                        {!user && (
-                            <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.4)', borderRadius: 40, alignItems: 'center', justifyContent: 'center', zIndex: 20, ...({ backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' } as any) }]}>
-                                <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { paddingHorizontal: 32, paddingVertical: 20 }]}>
-                                    <Text style={[styles.viewBtnText, { fontSize: 18 }]}>로그인하고 맞춤 추천받기</Text>
+                                <TouchableOpacity onPress={onNavigateToWorkspace} style={styles.workspacePillBtn}>
+                                    <LayoutGrid size={14} color="#7C3AED" />
+                                    <Text style={styles.workspacePillText}>Workspace</Text>
                                 </TouchableOpacity>
                             </View>
-                        )}
+                        </View>
+                    ) : (
+                        <View style={styles.guestBar}>
+                            <Text style={styles.guestBarText}>로그인하고 맞춤 공고 추천을 받아보세요</Text>
+                            <View style={{ flexDirection: 'row', gap: 10 }}>
+                                <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
+                                    <Text style={styles.viewBtnText}>로그인</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity onPress={onLoginPress} style={[styles.viewBtn, { backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: '#7C3AED' }]}>
+                                    <Text style={[styles.viewBtnText, { color: '#7C3AED' }]}>회원가입</Text>
+                                </TouchableOpacity>
+                            </View>
+                        </View>
+                    )}
+
+                    {/* Top Recommendations - Notefolio Style */}
+                    <View style={styles.recommendSection}>
+                        <View style={styles.sectionTitleRow}>
+                            <View style={styles.sectionLabelWrap}>
+                                <Sparkles size={18} color="#7C3AED" />
+                                <Text style={styles.sectionLabel}>AI 맞춤 추천 공고</Text>
+                            </View>
+                            <TouchableOpacity onPress={() => !user ? onLoginPress?.() : onNavigateToGrantList?.()}>
+                                <Text style={styles.moreBtn}>전체보기 {'>'}</Text>
+                            </TouchableOpacity>
+                        </View>
+                        <View style={{ position: 'relative' }}>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={{ gap: 20, paddingHorizontal: 2, paddingBottom: 8 }}
+                            >
+                                {topGrants.length === 0 ? (
+                                    [1, 2].map(i => (
+                                        <View key={i} style={styles.grantHeroCard}>
+                                            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                                                <Search size={32} color="#E2E8F0" />
+                                                <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 12 }}>공고 탐색 중...</Text>
+                                            </View>
+                                        </View>
+                                    ))
+                                ) : (
+                                    topGrants.slice(0, 2).map((grant, idx) => (
+                                        <TouchableOpacity
+                                            key={idx}
+                                            style={styles.grantHeroCard}
+                                            onPress={() => !user ? onLoginPress?.() : onProgramSelect?.(grant)}
+                                            activeOpacity={0.9}
+                                        >
+                                            {/* Background gradient accent */}
+                                            <LinearGradient
+                                                colors={idx === 0 ? ['#4C1D95', '#7C3AED'] : ['#064E3B', '#10B981']}
+                                                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                                                style={StyleSheet.absoluteFill}
+                                            />
+                                            {/* Score chip */}
+                                            <View style={styles.grantScoreChip}>
+                                                <Text style={styles.grantScoreLabel}>MATCH</Text>
+                                                <Text style={styles.grantScoreValue}>{!user ? '??' : grant.score}<Text style={{ fontSize: 14 }}>%</Text></Text>
+                                            </View>
+                                            {/* Content */}
+                                            <View style={styles.grantHeroContent}>
+                                                <View style={styles.grantHeroBadges}>
+                                                    <View style={styles.grantHeroBadge}>
+                                                        <Text style={styles.grantHeroBadgeText}>{grant.category}</Text>
+                                                    </View>
+                                                    <View style={[styles.grantHeroBadge, { backgroundColor: 'rgba(255,255,255,0.15)' }]}>
+                                                        <Text style={styles.grantHeroBadgeText}>{grant.d_day}</Text>
+                                                    </View>
+                                                </View>
+                                                <Text style={styles.grantHeroAgency}>{grant.agency}</Text>
+                                                <Text style={styles.grantHeroTitle} numberOfLines={3}>{grant.title}</Text>
+                                                <View style={styles.grantHeroFooter}>
+                                                    <Text style={styles.grantHeroField}>{grant.tech_field}</Text>
+                                                    <View style={styles.grantHeroBtn}>
+                                                        <Sparkles size={14} color="#FFF" />
+                                                        <Text style={styles.grantHeroBtnText}>분석 시작</Text>
+                                                        <ArrowRight size={14} color="#FFF" />
+                                                    </View>
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))
+                                )}
+                            </ScrollView>
+                            {!user && (
+                                <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.45)', borderRadius: 28, alignItems: 'center', justifyContent: 'center', zIndex: 20, ...({ backdropFilter: 'blur(10px)', WebkitBackdropFilter: 'blur(10px)' } as any) }]}>
+                                    <TouchableOpacity onPress={onLoginPress} style={styles.viewBtn}>
+                                        <Text style={styles.viewBtnText}>로그인하고 맞춤 추천받기</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            )}
+                        </View>
                     </View>
 
                     {/* Sub Sections Grid */}
@@ -423,6 +448,9 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
                         )}
                     </View>
 
+                    {/* ── Separator ── */}
+                    <View style={styles.divider}><View style={styles.dividerAccent} /></View>
+
                     {/* Lounge Section */}
                     <View style={styles.loungeWrap}>
                         <View style={styles.sectionTitleRow}>
@@ -478,18 +506,33 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FDF8F3' },
     content: { maxWidth: 1400, alignSelf: 'center', width: '100%', padding: 24 },
-    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, marginBottom: 32 },
-    headerTitle: { color: '#18181b', fontSize: 48, fontWeight: '900', letterSpacing: -2 },
-    headerSubtitle: { color: '#64748B', fontSize: 18, fontWeight: '500' },
-    filterBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FDF8F3', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 14, borderWidth: 1, borderColor: '#E2E8F0' },
-    filterText: { color: '#475569', marginLeft: 8, fontWeight: '600' },
+    headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, marginBottom: 16 },
+    welcomeText: { color: '#18181B', fontSize: 28, fontWeight: '700', letterSpacing: -0.5, marginBottom: 4 },
+    welcomeName: { color: '#7C3AED', fontWeight: '900' },
+    headerSubtitle: { color: '#94A3B8', fontSize: 14, fontWeight: '500' },
+    dateBox: { alignItems: 'flex-end', backgroundColor: '#F8FAFC', paddingHorizontal: 20, paddingVertical: 14, borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0' },
+    dateYear: { color: '#CBD5E1', fontSize: 11, fontWeight: '700', letterSpacing: 1 },
+    dateMain: { color: '#18181B', fontSize: 18, fontWeight: '800', letterSpacing: -0.5 },
+    dateDay: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
 
-    profileCard: { backgroundColor: '#FDF8F3', borderRadius: 32, padding: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 40, borderWidth: 1, borderColor: '#7C3AED15', shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 5 },
-    avatarWrapper: { position: 'relative', marginRight: 24 },
-    avatar: { width: 88, height: 88, borderRadius: 44, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#7C3AED30', justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
-    onlineDot: { position: 'absolute', bottom: 4, right: 4, width: 20, height: 20, borderRadius: 10, backgroundColor: '#10B981', borderColor: '#FDF8F3', borderWidth: 3 },
-    profileTitle: { color: '#18181b', fontSize: 28, fontWeight: '800', marginBottom: 4 },
-    roleBadge: { backgroundColor: '#7C3AED', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 99, marginLeft: 12 },
+    // Profile summary bar (replaces old profile card)
+    profileSummaryBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FAFAFA', borderRadius: 20, paddingHorizontal: 24, paddingVertical: 16, marginBottom: 28, borderWidth: 1, borderColor: '#F1F5F9' },
+    profileSummaryLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+    profileInitialAvatar: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
+    profileInitialText: { color: '#FFF', fontSize: 18, fontWeight: '900' },
+    profileNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+    profileSummaryName: { color: '#18181B', fontSize: 15, fontWeight: '800' },
+    profileSummaryKeywords: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
+    profileSummaryRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    profileStatChip: { backgroundColor: '#F5F3FF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#DDD6FE', alignItems: 'center' },
+    profileStatLabel: { color: '#7C3AED', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+    profileStatValue: { color: '#7C3AED', fontSize: 16, fontWeight: '900' },
+    workspacePillBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5F3FF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#DDD6FE' },
+    workspacePillText: { color: '#7C3AED', fontSize: 12, fontWeight: '800' },
+    // Guest bar
+    guestBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', borderRadius: 16, paddingHorizontal: 24, paddingVertical: 14, marginBottom: 28, borderWidth: 1, borderColor: '#E2E8F0' },
+    guestBarText: { color: '#64748B', fontSize: 13, fontWeight: '600' },
+    roleBadge: { backgroundColor: '#7C3AED', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 99 },
     roleText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
     profileKeywords: { color: '#64748B', fontSize: 14, fontWeight: '500' },
     statsRow: { flexDirection: 'row', alignItems: 'center', gap: 32 },
@@ -559,5 +602,21 @@ const styles = StyleSheet.create({
     insightCardMeta: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 14, paddingBottom: 14 },
     insightCardSource: { color: '#94A3B8', fontSize: 11, fontWeight: '600' },
     insightCardTime: { color: '#CBD5E1', fontSize: 10 },
+
+    // Grant Hero Cards (notefolio style)
+    grantHeroCard: { width: 480, height: 260, borderRadius: 24, overflow: 'hidden', position: 'relative', flexDirection: 'column', justifyContent: 'space-between' },
+    grantScoreChip: { position: 'absolute', top: 20, right: 20, alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.15)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)' },
+    grantScoreLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 8, fontWeight: '800', letterSpacing: 1, marginBottom: 2 },
+    grantScoreValue: { color: '#FFFFFF', fontSize: 26, fontWeight: '900', letterSpacing: -1 },
+    grantHeroContent: { flex: 1, justifyContent: 'flex-end', padding: 24 },
+    grantHeroBadges: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+    grantHeroBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+    grantHeroBadgeText: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
+    grantHeroAgency: { color: 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: '700', marginBottom: 6 },
+    grantHeroTitle: { color: '#FFFFFF', fontSize: 18, fontWeight: '800', lineHeight: 26, marginBottom: 16 },
+    grantHeroFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+    grantHeroField: { color: 'rgba(255,255,255,0.6)', fontSize: 12, fontWeight: '600' },
+    grantHeroBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.3)' },
+    grantHeroBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 });
 

@@ -7,6 +7,7 @@ import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search, Bookmark, Clock, TrendingUp } from 'lucide-react-native';
 import { NewsItem } from '../services/newsService';
+import { InsightGalleryModal } from './InsightGalleryModal';
 
 interface InsightPageViewProps {
     newsData: NewsItem[];
@@ -49,6 +50,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
     const { width } = useWindowDimensions();
     const isDesktop = width >= 900;
     const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
+    const [selectedItem, setSelectedItem] = useState<any | null>(null);
 
     const filtered = useMemo(() => {
         let items = newsData;
@@ -74,11 +76,19 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
 
     return (
         <View style={styles.root}>
+            <InsightGalleryModal
+                item={selectedItem}
+                visible={!!selectedItem}
+                onClose={() => setSelectedItem(null)}
+                isScrapped={selectedItem ? scrappedIds.has(selectedItem.title) : false}
+                onToggleScrap={(item, newStatus) => onBookmarkPress(item)}
+            />
+
             {/* ── Page Header ── */}
             <View style={styles.pageHeader}>
                 <View>
                     <Text style={styles.pageTitle}>Publica Insight</Text>
-                    <Text style={styles.pageSubtitle}>AI가 큐레이션한 지원사업·R&D·시장 트렌드 뉴스</Text>
+                    <Text style={styles.pageSubtitle}>AI 활용법부터 산업 트렌드까지 — 실전에 바로 쓰는 인사이트</Text>
                 </View>
 
                 {/* Search Bar */}
@@ -135,7 +145,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
                         {/* Main Featured Card */}
                         <TouchableOpacity
                             style={styles.featuredMain}
-                            onPress={() => onInsightClick(featuredItem)}
+                            onPress={() => setSelectedItem(featuredItem)}
                             activeOpacity={0.92}
                         >
                             <View style={styles.featuredImgWrap}>
@@ -186,7 +196,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
                                     <TouchableOpacity
                                         key={item.id ?? i}
                                         style={styles.sidebarItem}
-                                        onPress={() => onInsightClick(item)}
+                                        onPress={() => setSelectedItem(item)}
                                         activeOpacity={0.8}
                                     >
                                         <ExpoImage
@@ -228,7 +238,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
                         <TouchableOpacity
                             key={item.id ?? i}
                             style={[styles.recentCard, isDesktop && { width: '31%' }]}
-                            onPress={() => onInsightClick(item)}
+                            onPress={() => setSelectedItem(item)}
                             activeOpacity={0.88}
                         >
                             <View style={styles.recentImgWrap}>
