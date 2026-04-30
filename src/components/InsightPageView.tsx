@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from 'react';
 import {
     View, Text, TouchableOpacity, TextInput, Image,
-    useWindowDimensions, StyleSheet, ScrollView
+    useWindowDimensions, StyleSheet, ScrollView, Animated
 } from 'react-native';
 import { Image as ExpoImage } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, Bookmark, Clock, TrendingUp } from 'lucide-react-native';
+import { Search, Bookmark, Clock, TrendingUp, Lock } from 'lucide-react-native';
 import { NewsItem } from '../services/newsService';
 import { InsightGalleryModal } from './InsightGalleryModal';
 
@@ -51,6 +51,26 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
     const isDesktop = width >= 900;
     const [activeKeyword, setActiveKeyword] = useState<string | null>(null);
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
+    const [toastVisible, setToastVisible] = useState(false);
+    const toastAnim = React.useRef(new Animated.Value(0)).current;
+
+    const showLoginToast = () => {
+        setToastVisible(true);
+        Animated.sequence([
+            Animated.timing(toastAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
+            Animated.delay(2200),
+            Animated.timing(toastAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ]).start(() => setToastVisible(false));
+    };
+
+    const handleCardPress = (item: any) => {
+        if (!user) {
+            showLoginToast();
+            onLoginPress();
+            return;
+        }
+        setSelectedItem(item);
+    };
 
     const filtered = useMemo(() => {
         let items = newsData;
@@ -145,7 +165,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
                         {/* Main Featured Card */}
                         <TouchableOpacity
                             style={styles.featuredMain}
-                            onPress={() => setSelectedItem(featuredItem)}
+                            onPress={() => handleCardPress(featuredItem)}
                             activeOpacity={0.92}
                         >
                             <View style={styles.featuredImgWrap}>
@@ -196,7 +216,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
                                     <TouchableOpacity
                                         key={item.id ?? i}
                                         style={styles.sidebarItem}
-                                        onPress={() => setSelectedItem(item)}
+                                        onPress={() => handleCardPress(item)}
                                         activeOpacity={0.8}
                                     >
                                         <ExpoImage
@@ -238,7 +258,7 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
                         <TouchableOpacity
                             key={item.id ?? i}
                             style={[styles.recentCard, isDesktop && { width: '31%' }]}
-                            onPress={() => setSelectedItem(item)}
+                            onPress={() => handleCardPress(item)}
                             activeOpacity={0.88}
                         >
                             <View style={styles.recentImgWrap}>
@@ -291,6 +311,25 @@ export const InsightPageView: React.FC<InsightPageViewProps> = ({
                     ))}
                 </View>
             </View>
+
+            {/* ── Login Toast ── */}
+            {toastVisible && (
+                <Animated.View
+                    style={[
+                        styles.toast,
+                        {
+                            opacity: toastAnim,
+                            transform: [{ translateY: toastAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }],
+                        }
+                    ]}
+                >
+                    <Lock size={16} color="#7C3AED" />
+                    <Text style={styles.toastText}>로그인하고 더 자세히 보기</Text>
+                    <TouchableOpacity onPress={onLoginPress} style={styles.toastBtn}>
+                        <Text style={styles.toastBtnText}>로그인</Text>
+                    </TouchableOpacity>
+                </Animated.View>
+            )}
         </View>
     );
 };

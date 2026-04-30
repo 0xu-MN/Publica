@@ -46,7 +46,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 }) => {
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="dark-content" backgroundColor="#FDF8F3" />
+            <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
             <AppHeader
                 viewMode={viewMode}
@@ -74,10 +74,11 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 const styles = StyleSheet.create({
     safeArea: {
         flex: 1,
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#F8F7F4',
     },
     mainContainer: {
         flex: 1,
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#F8F7F4',
+        paddingTop: 72,
     },
 });

@@ -1,13 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, TouchableOpacity, useWindowDimensions, TextInput, Animated, ScrollView, Modal, Image, StyleSheet } from 'react-native';
-import { Svg, Path, Circle, G, Rect, Text as SvgText } from 'react-native-svg';
+import {
+    View, Text, TouchableOpacity, useWindowDimensions,
+    Animated, ScrollView, Modal, Image, StyleSheet, Platform
+} from 'react-native';
 import { Icons } from '../utils/icons';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
 import { useAuth } from '../contexts/AuthContext';
 import { useProjectStore } from '../store/useProjectStore';
-import BorderGlow from './ui/BorderGlow';
-
-const CATEGORIES = ['전체', '과학', '경제'];
 
 interface FeedNotification {
     id: string;
@@ -51,14 +50,24 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
     const { profile } = useAuth();
     const { width } = useWindowDimensions();
-    const isDesktop = width >= 1024;
+    const isDesktop = width >= 900;
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
     const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+    const [scrolled, setScrolled] = useState(false);
 
     const hasNotification = notifications.some(n => !n.isRead);
     const rotateAnim = useRef(new Animated.Value(0)).current;
+
+    // Scroll listener for glass effect intensity
+    useEffect(() => {
+        if (Platform.OS === 'web') {
+            const handleScroll = () => setScrolled(window.scrollY > 20);
+            window.addEventListener('scroll', handleScroll);
+            return () => window.removeEventListener('scroll', handleScroll);
+        }
+    }, []);
 
     useEffect(() => {
         if (hasNotification) {
@@ -81,12 +90,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         outputRange: ['-15deg', '15deg']
     });
 
+    const headerStyle = [
+        styles.headerContainer,
+        scrolled && (styles.headerScrolled as any),
+    ];
+
     return (
-        <View style={styles.headerContainer}>
+        <View style={headerStyle}>
             <View style={styles.headerInner}>
-                {/* Left: Logo */}
+
+                {/* ── Left: Logo ── */}
                 <TouchableOpacity
-                    activeOpacity={0.7}
+                    activeOpacity={0.8}
                     onPress={() => { setViewMode(user ? 'connect' : 'landing'); setActiveCategory('전체'); }}
                     style={styles.logoWrapper}
                 >
@@ -97,158 +112,119 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     />
                 </TouchableOpacity>
 
-                {/* Centered Navigation (Desktop) */}
+                {/* ── Center Nav (Desktop) ── */}
                 {isDesktop && (
                     <View style={styles.navCentered}>
                         <View style={styles.navRow}>
                             {!user ? (
-                                <View style={styles.guestNav}>
-                                    <TouchableOpacity onPress={() => setViewMode('landing')}>
-                                        <Text style={[styles.navItemText, viewMode === 'landing' && styles.navItemActive]}>서비스 소개</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setViewMode('pricing')}>
-                                        <Text style={[styles.navItemText, viewMode === 'pricing' && styles.navItemActive]}>요금안내</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity onPress={() => setViewMode('connect')}>
-                                        <Text style={[styles.navItemText, viewMode === 'connect' && styles.navItemActive]}>Connect Hub</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            ) : (
+                                /* ── GUEST NAV ── */
                                 <>
-                                    <TouchableOpacity
-                                        onPress={() => setViewMode('workspace')}
-                                        style={[styles.workspaceBtn, viewMode === 'workspace' && styles.workspaceBtnActive]}
-                                    >
-                                        <Icons.Zap size={16} color={viewMode === 'workspace' ? '#FFF' : '#7C3AED'} style={{ marginRight: 8 }} />
-                                        <Text style={[styles.workspaceBtnText, viewMode === 'workspace' && { color: '#FFF' }]}>My Workspace</Text>
-                                    </TouchableOpacity>
-
-                                    {viewMode !== 'workspace' ? (
-                                        <View style={styles.hubNav}>
-                                            <TouchableOpacity onPress={() => setViewMode('connect')} style={[styles.hubItem, viewMode === 'connect' && styles.hubItemActive]}>
-                                                <Text style={[styles.hubItemText, viewMode === 'connect' && { color: '#FFF' }]}>Connect Hub</Text>
-                                            </TouchableOpacity>
-                                            <View style={styles.hubDivider} />
-                                            <TouchableOpacity onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} style={[styles.hubItem, viewMode === 'feed' && styles.hubItemActive]}>
-                                                <Text style={[styles.hubItemText, viewMode === 'feed' && { color: '#FFF' }]}>Insight</Text>
-                                            </TouchableOpacity>
-                                            <View style={styles.hubDivider} />
-                                            <TouchableOpacity onPress={() => setViewMode('lounge')} style={[styles.hubItem, viewMode === 'lounge' && styles.hubItemActive]}>
-                                                <Text style={[styles.hubItemText, viewMode === 'lounge' && { color: '#FFF' }]}>Lounge</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    ) : (
-                                        <TouchableOpacity
-                                            onPress={() => { setViewMode('connect'); setActiveCategory('전체'); }}
-                                            style={styles.hubCollapsedBtn}
-                                        >
-                                            <Icons.Globe size={20} color="#7C3AED" />
-                                        </TouchableOpacity>
-                                    )}
+                                    <NavItem label="서비스 소개" active={viewMode === 'landing'} onPress={() => setViewMode('landing')} />
+                                    <NavItem label="요금안내" active={viewMode === 'pricing'} onPress={() => setViewMode('pricing')} />
+                                    <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
+                                </>
+                            ) : (
+                                /* ── USER NAV ── */
+                                <>
+                                    <NavItem label="Connect Hub" active={viewMode === 'connect' || viewMode === 'grants'} onPress={() => setViewMode('connect')} />
+                                    <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
+                                    <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} />
                                 </>
                             )}
                         </View>
                     </View>
                 )}
 
-                {/* Right: Actions */}
+                {/* ── Right: Actions ── */}
                 <View style={styles.rightActions}>
-                    <BorderGlow borderRadius={12} glowColor="hsl(35, 92%, 55%)" glowIntensity={0.8} edgeSensitivity={20}>
-                        <TouchableOpacity
-                            onPress={() => {
-                                if (user) {
-                                    setViewMode('workspace');
-                                    useProjectStore.getState().setGlobalTabRequest('pricing');
-                                } else {
-                                    setViewMode('pricing');
-                                }
-                            }}
-                            style={styles.proBadge}
-                        >
-                            <Icons.Crown color="#F59E0B" size={14} />
-                            <Text style={styles.proBadgeText}>PRO</Text>
-                        </TouchableOpacity>
-                    </BorderGlow>
-
                     {!user ? (
+                        /* Guest: login + register button */
                         <View style={styles.authGroup}>
                             <TouchableOpacity onPress={onAuthModalOpen} style={styles.loginBtn}>
                                 <Text style={styles.loginBtnText}>로그인</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.startBtn}>
-                                <Text style={styles.startBtnText}>프로젝트 시작</Text>
+                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.registerBtn}>
+                                <Text style={styles.registerBtnText}>회원가입</Text>
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        <>
-                            <View style={styles.utilityGroup}>
-                                <View style={styles.notificationWrapper}>
-                                    <TouchableOpacity onPress={() => { setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false); }}>
-                                        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                                            <Icons.Bell color={hasNotification ? "#F59E0B" : "#94A3B8"} size={22} fill={hasNotification ? "#F59E0B" : "none"} />
-                                        </Animated.View>
-                                        {hasNotification && <View style={styles.notificationDot} />}
-                                    </TouchableOpacity>
+                        /* Logged in: workspace CTA + notification + profile */
+                        <View style={styles.utilityGroup}>
+                            {/* My Workspace purple CTA */}
+                            <TouchableOpacity
+                                onPress={() => setViewMode('workspace')}
+                                style={[styles.workspaceBtn, viewMode === 'workspace' && styles.workspaceBtnActive]}
+                            >
+                                <Icons.Zap size={14} color={viewMode === 'workspace' ? '#FFF' : '#7C3AED'} />
+                                <Text style={[styles.workspaceBtnText, viewMode === 'workspace' && { color: '#FFF' }]}>
+                                    My Workspace
+                                </Text>
+                            </TouchableOpacity>
 
-                                    {isNotificationOpen && (
-                                        <View style={styles.dropdownMenu}>
-                                            <View style={styles.dropdownHeader}>
-                                                <Text style={styles.dropdownHeaderText}>알림</Text>
-                                                <TouchableOpacity onPress={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}>
-                                                    <Text style={styles.markReadText}>모두 읽음</Text>
+                            {/* Notification */}
+                            <View style={styles.notificationWrapper}>
+                                <TouchableOpacity onPress={() => { setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false); }}>
+                                    <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+                                        <Icons.Bell color={hasNotification ? '#F59E0B' : '#64748B'} size={22} fill={hasNotification ? '#F59E0B' : 'none'} />
+                                    </Animated.View>
+                                    {hasNotification && <View style={styles.notificationDot} />}
+                                </TouchableOpacity>
+                                {isNotificationOpen && (
+                                    <View style={styles.dropdownMenu}>
+                                        <View style={styles.dropdownHeader}>
+                                            <Text style={styles.dropdownHeaderText}>알림</Text>
+                                            <TouchableOpacity onPress={() => setNotifications(prev => prev.map(n => ({ ...n, isRead: true })))}>
+                                                <Text style={styles.markReadText}>모두 읽음</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                        <ScrollView style={{ maxHeight: 280 }}>
+                                            {notifications.map((item) => (
+                                                <TouchableOpacity key={item.id} style={[styles.dropdownItem, !item.isRead && { backgroundColor: '#7C3AED05' }]}>
+                                                    <View style={[styles.notifIcon, item.type === 'like' ? { backgroundColor: '#FEE2E2' } : { backgroundColor: '#F5F3FF' }]}>
+                                                        {item.type === 'like' ? <Icons.Heart size={13} color="#EF4444" fill="#EF4444" /> : <Icons.MessageCircle size={13} color="#7C3AED" />}
+                                                    </View>
+                                                    <View style={{ flex: 1 }}>
+                                                        <View style={styles.notifMeta}>
+                                                            <Text style={styles.notifSender}>{item.sender}</Text>
+                                                            <Text style={styles.notifTime}>{item.time}</Text>
+                                                        </View>
+                                                        <Text style={styles.notifContent} numberOfLines={2}>{item.content}</Text>
+                                                    </View>
                                                 </TouchableOpacity>
-                                            </View>
-                                            <ScrollView style={{ maxHeight: 300 }}>
-                                                {notifications.map((item) => (
-                                                    <TouchableOpacity key={item.id} style={[styles.dropdownItem, !item.isRead && { backgroundColor: '#7C3AED05' }]}>
-                                                        <View style={[styles.notifIcon, item.type === 'like' ? { backgroundColor: '#FEE2E2' } : { backgroundColor: '#F5F3FF' }]}>
-                                                            {item.type === 'like' ? <Icons.Heart size={14} color="#EF4444" fill="#EF4444" /> : <Icons.MessageCircle size={14} color="#7C3AED" />}
-                                                        </View>
-                                                        <View style={{ flex: 1 }}>
-                                                            <View style={styles.notifMeta}>
-                                                                <Text style={styles.notifSender}>{item.sender}</Text>
-                                                                <Text style={styles.notifTime}>{item.time}</Text>
-                                                            </View>
-                                                            <Text style={styles.notifContent} numberOfLines={2}>{item.content}</Text>
-                                                        </View>
-                                                    </TouchableOpacity>
-                                                ))}
-                                            </ScrollView>
-                                        </View>
-                                    )}
-                                </View>
-
-                                <View style={styles.userMenuWrapper}>
-                                    <TouchableOpacity style={styles.profileSummary} onPress={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false); }}>
-                                        <View style={styles.userInfo}>
-                                            <Text style={styles.userName}>{user?.email?.split('@')[0]}</Text>
-                                            <Text style={styles.userRole}>{profile?.industry || 'Researcher'}</Text>
-                                        </View>
-                                        <View style={styles.userAvatar}>
-                                            <Icons.User color="#7C3AED" size={20} />
-                                        </View>
-                                    </TouchableOpacity>
-
-                                    {isUserMenuOpen && (
-                                        <View style={[styles.dropdownMenu, { right: 0, width: 180 }]}>
-                                            <TouchableOpacity style={styles.menuItem} onPress={() => { setViewMode('workspace'); setIsUserMenuOpen(false); }}>
-                                                <Icons.LayoutDashboard size={16} color="#94A3B8" style={{ marginRight: 12 }} />
-                                                <Text style={styles.menuItemText}>워크스페이스</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity style={styles.menuItem} onPress={() => { setIsProfileModalOpen(true); setIsUserMenuOpen(false); }}>
-                                                <Icons.Settings size={16} color="#94A3B8" style={{ marginRight: 12 }} />
-                                                <Text style={styles.menuItemText}>계정 설정</Text>
-                                            </TouchableOpacity>
-                                            <View style={styles.menuDivider} />
-                                            <TouchableOpacity style={styles.menuItem} onPress={() => { onSignOut(); setIsUserMenuOpen(false); }}>
-                                                <Icons.LogOut size={16} color="#EF4444" style={{ marginRight: 12 }} />
-                                                <Text style={[styles.menuItemText, { color: '#EF4444' }]}>로그아웃</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    )}
-                                </View>
+                                            ))}
+                                        </ScrollView>
+                                    </View>
+                                )}
                             </View>
-                        </>
+
+                            {/* Profile */}
+                            <View style={styles.userMenuWrapper}>
+                                <TouchableOpacity style={styles.userAvatar} onPress={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false); }}>
+                                    <Icons.User color="#64748B" size={20} />
+                                </TouchableOpacity>
+                                {isUserMenuOpen && (
+                                    <View style={[styles.dropdownMenu, { right: 0, width: 180 }]}>
+                                        <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                                            <Text style={{ color: '#18181B', fontSize: 13, fontWeight: '800' }}>{user?.email?.split('@')[0]}</Text>
+                                            <Text style={{ color: '#94A3B8', fontSize: 11 }}>{profile?.industry || 'Researcher'}</Text>
+                                        </View>
+                                        <TouchableOpacity style={styles.menuItem} onPress={() => { setViewMode('workspace'); setIsUserMenuOpen(false); }}>
+                                            <Icons.LayoutDashboard size={15} color="#94A3B8" style={{ marginRight: 10 }} />
+                                            <Text style={styles.menuItemText}>워크스페이스</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={styles.menuItem} onPress={() => { setIsProfileModalOpen(true); setIsUserMenuOpen(false); }}>
+                                            <Icons.Settings size={15} color="#94A3B8" style={{ marginRight: 10 }} />
+                                            <Text style={styles.menuItemText}>계정 설정</Text>
+                                        </TouchableOpacity>
+                                        <View style={styles.menuDivider} />
+                                        <TouchableOpacity style={styles.menuItem} onPress={() => { onSignOut(); setIsUserMenuOpen(false); }}>
+                                            <Icons.LogOut size={15} color="#EF4444" style={{ marginRight: 10 }} />
+                                            <Text style={[styles.menuItemText, { color: '#EF4444' }]}>로그아웃</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        </View>
                     )}
                 </View>
             </View>
@@ -260,64 +236,182 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     );
 };
 
+/* ── Small NavItem sub-component ── */
+const NavItem: React.FC<{ label: string; active: boolean; onPress: () => void }> = ({ label, active, onPress }) => (
+    <TouchableOpacity onPress={onPress} style={styles.navItem}>
+        <Text style={[styles.navItemText, active && styles.navItemActive]}>{label}</Text>
+        {active && <View style={styles.navItemDot} />}
+    </TouchableOpacity>
+);
+
 const styles = StyleSheet.create({
-    headerContainer: { width: '100%', backgroundColor: '#FDF8F3', borderBottomWidth: 1, borderBottomColor: '#F1F5F9', zIndex: 1000 },
-    headerInner: { maxWidth: 1400, width: '100%', alignSelf: 'center', height: 88, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24 },
+    headerContainer: {
+        width: '100%',
+        position: 'absolute' as any,
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
+        backgroundColor: 'transparent',
+        borderBottomWidth: 1,
+        borderBottomColor: 'transparent',
+    } as any,
 
-    logoWrapper: { height: '100%', flexDirection: 'row', alignItems: 'center' },
-    headerLogo: { height: 110, width: 110, marginRight: 0 },
+    headerScrolled: {
+        backgroundColor: 'rgba(255,255,255,0.85)',
+        borderBottomColor: 'rgba(0,0,0,0.05)',
+        ...(Platform.OS === 'web' ? {
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+        } : {}),
+    } as any,
 
-    navCentered: { position: 'absolute', left: 0, right: 0, alignItems: 'center', pointerEvents: 'none' },
-    navRow: { flexDirection: 'row', alignItems: 'center', gap: 12, pointerEvents: 'auto' },
+    headerInner: {
+        maxWidth: 1400,
+        width: '100%',
+        alignSelf: 'center',
+        height: 72,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 32,
+    },
 
-    guestNav: { flexDirection: 'row', alignItems: 'center', gap: 32 },
-    navItemText: { fontSize: 14, fontWeight: '700', color: '#94A3B8' },
-    navItemActive: { color: '#18181B', fontWeight: '900' },
+    logoWrapper: { flexDirection: 'row', alignItems: 'center' },
+    headerLogo: { height: 36, width: 140 },
 
-    workspaceBtn: { height: 48, paddingHorizontal: 20, borderRadius: 24, backgroundColor: '#FDF8F3', borderWidth: 1, borderColor: '#7C3AED20', alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
-    workspaceBtnActive: { backgroundColor: '#7C3AED', borderColor: '#7C3AED' },
-    workspaceBtnText: { color: '#7C3AED', fontSize: 13, fontWeight: '800' },
+    /* Center nav */
+    navCentered: {
+        position: 'absolute' as any,
+        left: 0,
+        right: 0,
+        alignItems: 'center',
+        pointerEvents: 'none' as any,
+    },
+    navRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 36,
+        pointerEvents: 'auto' as any,
+    },
+    navItem: { alignItems: 'center', gap: 4 },
+    navItemText: {
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#64748B',
+        letterSpacing: 0.2,
+    },
+    navItemActive: { color: '#18181B', fontWeight: '800' },
+    navItemDot: {
+        width: 4,
+        height: 4,
+        borderRadius: 2,
+        backgroundColor: '#7C3AED',
+    },
 
-    hubNav: { height: 48, paddingHorizontal: 6, borderRadius: 24, backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center' },
-    hubItem: { height: 36, paddingHorizontal: 16, borderRadius: 18, justifyContent: 'center' },
-    hubItemActive: { backgroundColor: '#7C3AED' },
-    hubItemText: { color: '#64748B', fontSize: 12, fontWeight: '700' },
-    hubDivider: { width: 1, height: 16, backgroundColor: '#E2E8F0', marginHorizontal: 4 },
-    hubCollapsedBtn: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#FDF8F3', borderWidth: 1, borderColor: '#7C3AED20', alignItems: 'center', justifyContent: 'center' },
+    /* Right */
+    rightActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
 
-    rightActions: { flexDirection: 'row', alignItems: 'center', gap: 20 },
-    proBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF7ED', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, borderWidth: 1, borderColor: '#FED7AA', gap: 6 },
-    proBadgeText: { color: '#F59E0B', fontSize: 11, fontWeight: '900' },
+    authGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    loginBtn: {
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 99,
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        backgroundColor: '#FFFFFF',
+    },
+    loginBtnText: { color: '#475569', fontSize: 13, fontWeight: '700' },
+    registerBtn: {
+        paddingHorizontal: 18,
+        paddingVertical: 9,
+        borderRadius: 99,
+        backgroundColor: '#7C3AED',
+        shadowColor: '#7C3AED',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 12,
+    },
+    registerBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 
-    authGroup: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    loginBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 99, borderWidth: 1, borderColor: '#E2E8F0' },
-    loginBtnText: { color: '#444', fontSize: 13, fontWeight: '700' },
-    startBtn: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 99, backgroundColor: '#7C3AED' },
-    startBtnText: { color: '#FFF', fontSize: 13, fontWeight: '800' },
+    /* Logged-in utility */
+    utilityGroup: { flexDirection: 'row', alignItems: 'center', gap: 20 },
 
-    utilityGroup: { flexDirection: 'row', alignItems: 'center', gap: 24 },
+    workspaceBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        borderRadius: 99,
+        backgroundColor: '#7C3AED',
+        shadowColor: '#7C3AED',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 10,
+    },
+    workspaceBtnActive: {
+        backgroundColor: '#6D28D9',
+    },
+    workspaceBtnText: {
+        color: '#FFFFFF',
+        fontSize: 13,
+        fontWeight: '800',
+    },
+
     notificationWrapper: { position: 'relative' },
-    notificationDot: { position: 'absolute', top: -2, right: -2, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', borderWidth: 2, borderColor: '#FFF' },
+    notificationDot: {
+        position: 'absolute',
+        top: -2,
+        right: -2,
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
+        backgroundColor: '#EF4444',
+        borderWidth: 1.5,
+        borderColor: 'transparent',
+    },
 
-    dropdownMenu: { position: 'absolute', top: 40, right: -40, width: 320, backgroundColor: '#FFFFFF', borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10, overflow: 'hidden', padding: 8 },
-    dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-    dropdownHeaderText: { fontSize: 14, fontWeight: '800', color: '#18181B' },
-    markReadText: { fontSize: 11, color: '#7C3AED', fontWeight: '700' },
-    dropdownItem: { flexDirection: 'row', padding: 16, gap: 12, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
-    notifIcon: { width: 36, height: 36, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
-    notifMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-    notifSender: { fontSize: 13, fontWeight: '700', color: '#18181B' },
-    notifTime: { fontSize: 10, color: '#94A3B8' },
-    notifContent: { fontSize: 12, color: '#64748B', lineHeight: 18 },
-
+    userAvatar: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: '#F8FAFC',
+        borderWidth: 1,
+        borderColor: '#E2E8F0',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     userMenuWrapper: { position: 'relative' },
-    profileSummary: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    userInfo: { alignItems: 'flex-end', display: 'none' /* Toggleable if needed */ },
-    userName: { color: '#18181B', fontSize: 13, fontWeight: '800' },
-    userRole: { color: '#94A3B8', fontSize: 10, fontWeight: '600' },
-    userAvatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#7C3AED15' },
 
-    menuItem: { flexDirection: 'row', alignItems: 'center', padding: 14, borderRadius: 12 },
-    menuItemText: { fontSize: 14, fontWeight: '700', color: '#475569' },
-    menuDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 4 },
+    /* Dropdowns */
+    dropdownMenu: {
+        position: 'absolute' as any,
+        top: 44,
+        right: -20,
+        width: 300,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#F1F5F9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.12,
+        shadowRadius: 24,
+        elevation: 12,
+        overflow: 'hidden',
+    },
+    dropdownHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 14, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+    dropdownHeaderText: { fontSize: 13, fontWeight: '800', color: '#18181B' },
+    markReadText: { fontSize: 11, color: '#7C3AED', fontWeight: '700' },
+    dropdownItem: { flexDirection: 'row', padding: 14, gap: 10, borderBottomWidth: 1, borderBottomColor: '#F8FAFC' },
+    notifIcon: { width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+    notifMeta: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 3 },
+    notifSender: { fontSize: 12, fontWeight: '700', color: '#18181B' },
+    notifTime: { fontSize: 10, color: '#94A3B8' },
+    notifContent: { fontSize: 11, color: '#64748B', lineHeight: 16 },
+
+    menuItem: { flexDirection: 'row', alignItems: 'center', padding: 12, borderRadius: 10, margin: 4 },
+    menuItemText: { fontSize: 13, fontWeight: '600', color: '#475569' },
+    menuDivider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 2 },
 });
