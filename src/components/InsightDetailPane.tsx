@@ -106,7 +106,7 @@ export const InsightDetailPane: React.FC<InsightDetailPaneProps> = ({ item, onCl
                     </View>
 
                     {/* AI Highlight (Premium Box) */}
-                    <View style={{ backgroundColor: '#FDF8F3', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#7C3AED10', marginBottom: 24 }}>
+                    <View style={{ backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: '#7C3AED10', marginBottom: 24 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
                             <Sparkles size={18} color="#7C3AED" />
                             <Text style={{ color: '#7C3AED', fontWeight: '900', fontSize: 15, marginLeft: 8 }}>핵심 요약</Text>

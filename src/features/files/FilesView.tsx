@@ -158,7 +158,7 @@ export const FilesView = ({ onOpenProject }: FilesViewProps) => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#FFFFFF',
     },
     header: {
         flexDirection: 'row',

@@ -378,7 +378,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#FFFFFF',
     },
     chatContext: { color: '#7C3AED', fontSize: 12, fontWeight: '800' },
-    chatHistory: { flex: 1, padding: 16, backgroundColor: '#FDF8F3' },
+    chatHistory: { flex: 1, padding: 16, backgroundColor: '#FFFFFF' },
     msgBubble: { padding: 14, borderRadius: 16, marginBottom: 10, maxWidth: '85%', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 5 },
     msgMe: { backgroundColor: '#7C3AED', alignSelf: 'flex-end', borderTopRightRadius: 4 },
     msgAi: { backgroundColor: '#FFFFFF', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#E2E8F0', borderTopLeftRadius: 4 },

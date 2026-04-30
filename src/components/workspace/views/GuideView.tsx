@@ -141,7 +141,7 @@ export const GuideView: React.FC = () => {
             </View>
 
             {/* ─── QUICK TIPS ─── */}
-            <View style={[styles.section, { backgroundColor: '#FDF8F3' }]}>
+            <View style={[styles.section, { backgroundColor: '#FFFFFF' }]}>
                 <View style={styles.inner}>
                     <Text style={styles.sectionTag}>[ 알아두면 좋은 것 ]</Text>
                     <Text style={styles.sectionTitle}>시작 전에 꼭 읽어보세요</Text>
@@ -223,7 +223,7 @@ export const GuideView: React.FC = () => {
             </View>
 
             {/* ─── WORKFLOW OVERVIEW ─── */}
-            <View style={[styles.section, { backgroundColor: '#FDF8F3' }]}>
+            <View style={[styles.section, { backgroundColor: '#FFFFFF' }]}>
                 <View style={styles.inner}>
                     <Text style={styles.sectionTag}>[ 전체 워크플로우 ]</Text>
                     <Text style={styles.sectionTitle}>공고 발견부터 제출까지, 한 흐름으로</Text>

@@ -107,7 +107,7 @@ const MenuItem = ({ icon, label }: { icon: React.ReactNode, label: string }) => 
 );
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     scrollView: { flex: 1 },
     header: { paddingHorizontal: 24, paddingVertical: 16, alignItems: 'center' },
     avatarWrapper: { position: 'relative', marginBottom: 16 },

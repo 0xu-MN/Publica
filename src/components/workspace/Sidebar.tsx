@@ -111,7 +111,7 @@ export const Sidebar = ({ activeTab, onTabChange }: SidebarProps) => {
 
     return (
         <View className="h-full p-3" style={{ position: 'relative', zIndex: 100 }}>
-            <View className="w-[68px] h-full shadow-2xl shadow-black/5 rounded-[28px] flex-col items-center py-6 border border-[#E2E8F0]" style={{ backgroundColor: '#FDF8F3' }}>
+            <View className="w-[68px] h-full shadow-2xl shadow-black/5 rounded-[28px] flex-col items-center py-6 border border-[#E2E8F0]" style={{ backgroundColor: '#FFFFFF' }}>
                 {/* Logo / Guide Button */}
                 <TouchableOpacity
                     onPress={() => onTabChange('guide')}

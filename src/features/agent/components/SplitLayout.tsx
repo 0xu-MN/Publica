@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         flexDirection: 'row',
-        backgroundColor: '#FDF8F3'
+        backgroundColor: '#FFFFFF'
     },
     panel: {
         height: '100%',

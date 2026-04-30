@@ -48,7 +48,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ visible, onClose }) => {
 
                 <Animated.View
                     entering={SlideInDown.springify()}
-                    className={`w-full max-w-[400px] bg-[#FDF8F3] rounded-3xl border border-[#E2E8F0] p-10 items-center ${Platform.OS === 'web' ? 'shadow-xl shadow-black/5' : ''}`}
+                    className={`w-full max-w-[400px] bg-[#FFFFFF] rounded-3xl border border-[#E2E8F0] p-10 items-center ${Platform.OS === 'web' ? 'shadow-xl shadow-black/5' : ''}`}
                     style={[
                         Platform.OS !== 'web' ? { elevation: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.1, shadowRadius: 24 } : {}
                     ]}

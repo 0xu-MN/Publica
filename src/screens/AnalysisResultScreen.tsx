@@ -139,11 +139,11 @@ export const AnalysisResultScreen: React.FC<AnalysisResultScreenProps> = ({ resu
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     header: {
         paddingHorizontal: 24, paddingVertical: 16, flexDirection: 'row',
         alignItems: 'center', justifyContent: 'space-between',
-        borderBottomWidth: 1, borderBottomColor: '#F1F5F9', backgroundColor: '#FDF8F3'
+        borderBottomWidth: 1, borderBottomColor: '#F1F5F9', backgroundColor: '#FFFFFF'
     },
     backBtn: {
         width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
 
     bottomBar: {
         paddingBottom: 32, paddingTop: 16,
-        borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: '#FDF8F3'
+        borderTopWidth: 1, borderTopColor: '#F1F5F9', backgroundColor: '#FFFFFF'
     },
     bottomRow: { flexDirection: 'row', gap: 12, paddingHorizontal: 24 },
     shareBtn: {

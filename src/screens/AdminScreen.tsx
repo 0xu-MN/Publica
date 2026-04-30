@@ -361,8 +361,8 @@ export const AdminScreen = () => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
-    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FDF8F3', gap: 12 },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF', gap: 12 },
     accessDenied: { color: '#18181b', fontSize: 18, fontWeight: '700', marginTop: 16 },
     accessSub: { color: '#64748B', fontSize: 13 },
 

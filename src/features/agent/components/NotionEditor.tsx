@@ -637,7 +637,7 @@ export const NotionEditor: React.FC<NotionEditorProps> = ({
                     border-bottom: none;
                 }
                 .notion-editor tr:hover td {
-                    background-color: #FDF8F3;
+                    background-color: #FFFFFF;
                 }
 
                 /* ─── Body ─── */

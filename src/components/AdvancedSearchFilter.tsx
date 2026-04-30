@@ -121,7 +121,7 @@ export const AdvancedSearchFilter: React.FC<AdvancedSearchFilterProps> = ({ onSe
 
                 {/* Expanded Filters */}
                 {isExpanded && (
-                    <View className="px-6 pb-6 border-t border-[#F1F5F9] pt-6 bg-[#FDF8F3]/30">
+                    <View className="px-6 pb-6 border-t border-[#F1F5F9] pt-6 bg-[#FFFFFF]/30">
                         {/* 1. Established Year */}
                         <View className="mb-6">
                             <Text className="text-[#64748B] text-[13px] font-bold mb-4 ml-1 uppercase tracking-wider">업력 비즈니스 스테이지</Text>

@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     panelLabel: { color: '#94A3B8', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 8 },
     dateTimeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     dateText: { color: '#18181B', fontSize: 20, fontWeight: '800' },
-    timeBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FDF8F3', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, gap: 6 },
+    timeBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, gap: 6 },
     timeText: { color: '#7C3AED', fontSize: 14, fontWeight: '700' },
     premiumBadge: { backgroundColor: '#7C3AED', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, flexDirection: 'row', alignItems: 'center', gap: 4 },
     premiumText: { color: '#FFFFFF', fontSize: 10, fontWeight: '900' },
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
     sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
     sectionTitle: { color: '#18181B', fontSize: 13, fontWeight: '800', letterSpacing: 0.5 },
     keywordGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-    keywordItem: { backgroundColor: '#FDF8F3', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#7C3AED15' },
+    keywordItem: { backgroundColor: '#FFFFFF', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, borderColor: '#7C3AED15' },
     keywordText: { color: '#7C3AED', fontSize: 12, fontWeight: '700' },
     
     divider: { height: 1, backgroundColor: '#F1F5F9', marginVertical: 24 },

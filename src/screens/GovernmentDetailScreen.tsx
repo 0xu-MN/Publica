@@ -335,7 +335,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
     header: { 
         height: 64, 
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#FFFFFF',
         borderBottomWidth: 1,
         borderColor: '#F1F5F9'
     },
@@ -401,7 +401,7 @@ const styles = StyleSheet.create({
     summaryLabel: { color: '#94A3B8', fontSize: 11, fontWeight: '800', marginBottom: 4 },
     summaryValue: { color: '#27272a', fontSize: 13, fontWeight: '800' },
 
-    eligibilityBox: { backgroundColor: '#FDF8F3', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#7C3AED10' },
+    eligibilityBox: { backgroundColor: '#FFFFFF', borderRadius: 20, padding: 20, borderWidth: 1, borderColor: '#7C3AED10' },
     eligibilitySubTitle: { color: '#7C3AED', fontSize: 12, fontWeight: '900', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 0.5 },
     bulletRow: { flexDirection: 'row', gap: 12, marginBottom: 12 },
     bulletDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#94A3B8', marginTop: 8 },
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
         bottom: 0, 
         left: 0, 
         right: 0, 
-        backgroundColor: '#FDF8F3', 
+        backgroundColor: '#FFFFFF', 
         paddingHorizontal: 24, 
         paddingTop: 16, 
         borderTopWidth: 1, 

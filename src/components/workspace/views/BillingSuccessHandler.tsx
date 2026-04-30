@@ -68,7 +68,7 @@ export const BillingSuccessHandler = () => {
     }, [session]);
 
     return (
-        <View style={{ flex: 1, backgroundColor: '#FDF8F3', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <View style={{ flex: 1, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
             <View style={{ backgroundColor: '#FFF', padding: 40, borderRadius: 24, alignItems: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 20 }}>
                 {status === 'loading' && <ActivityIndicator size="large" color="#7C3AED" style={{ marginBottom: 20 }} />}
                 {status === 'success' && <CheckCircle2 size={48} color="#10B981" style={{ marginBottom: 20 }} />}

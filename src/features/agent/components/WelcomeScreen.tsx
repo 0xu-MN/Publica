@@ -22,7 +22,7 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ onStartChat, onUpl
     }, []);
 
     return (
-        <View className="flex-1 items-center justify-center bg-[#FDF8F3] px-8">
+        <View className="flex-1 items-center justify-center bg-[#FFFFFF] px-8">
             <Animated.View
                 style={{
                     opacity: fadeAnim,

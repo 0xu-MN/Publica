@@ -152,7 +152,7 @@ export const SettingsScreen = ({ onBack }: SettingsScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     content: { maxWidth: 600, width: '100%', marginHorizontal: 'auto', padding: 24, paddingBottom: 60 },
 
     header: { marginBottom: 32, alignItems: 'center' },

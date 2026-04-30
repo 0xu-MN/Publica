@@ -173,7 +173,7 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
             <WelcomeGuideModal onNavigateToGuide={() => onNavigateToGuide?.()} />
             <ScrollView
                 style={{ flex: 1, backgroundColor: '#FFFFFF' }}
-                contentContainerStyle={{ padding: 24, paddingTop: 32 }}
+                contentContainerStyle={{ padding: 24, paddingTop: 24 }}
             >
                 <View className="max-w-[1400px] w-full mx-auto">
                 {/* Greeting Header */}

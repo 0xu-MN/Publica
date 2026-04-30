@@ -228,7 +228,7 @@ export const ProfileEditPage = ({ onClose, onSave }: ProfileEditPageProps) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3', flexDirection: 'row' },
+    container: { flex: 1, backgroundColor: '#FFFFFF', flexDirection: 'row' },
     leftCol: { width: 450, borderRightWidth: 1, borderRightColor: '#E2E8F0', padding: 24, backgroundColor: '#FFFFFF' },
     rightCol: { flex: 1, padding: 32 },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },

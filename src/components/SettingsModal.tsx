@@ -139,7 +139,7 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.15, shadowRadius: 20, elevation: 10,
     },
     header: {
-        paddingHorizontal: 24, paddingVertical: 24, backgroundColor: '#FDF8F3',
+        paddingHorizontal: 24, paddingVertical: 24, backgroundColor: '#FFFFFF',
         borderBottomWidth: 1, borderBottomColor: '#F1F5F9',
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     },

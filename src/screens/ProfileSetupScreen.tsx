@@ -819,7 +819,7 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     overlay: { flex: 1, backgroundColor: 'rgba(253, 248, 243, 0.9)', justifyContent: 'center', alignItems: 'center', padding: 20 },
     modalCard: { 
         backgroundColor: 'white', 

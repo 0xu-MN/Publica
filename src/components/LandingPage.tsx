@@ -156,7 +156,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                     resizeMode="cover"
                 />
                 <LinearGradient
-                    colors={['rgba(253,248,243,0)', 'rgba(253,248,243,0.85)', '#FDF8F3']}
+                    colors={['rgba(253,248,243,0)', 'rgba(253,248,243,0.85)', '#FFFFFF']}
                     start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
                     style={StyleSheet.absoluteFill}
                     pointerEvents="none"
@@ -333,7 +333,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
             </View>
 
             {/* ════════════ PROCESS ════════════ */}
-            <View style={[styles.section, { backgroundColor: '#FDF8F3' }]}>
+            <View style={[styles.section, { backgroundColor: '#FFFFFF' }]}>
                 <View style={styles.inner}>
                     <View style={styles.sectionHeadCenter}>
                         <Text style={styles.sectionTag}>[ 사용 방법 ]</Text>
@@ -421,7 +421,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
 
     /* HERO */
     heroSection: { minHeight: 700, alignItems: 'center', justifyContent: 'center', paddingTop: 160, paddingBottom: 100, paddingHorizontal: 32, position: 'relative', overflow: 'hidden' },

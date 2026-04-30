@@ -93,7 +93,7 @@ export const SupportScreen: React.FC<Partial<SupportScreenProps>> = ({
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     flex1: { flex: 1 },
     content: { padding: 24, maxWidth: 1000, width: '100%', marginHorizontal: 'auto' },
     header: { marginBottom: 24, paddingTop: 16 },
@@ -107,6 +107,6 @@ const styles = StyleSheet.create({
     
     detailOverlay: {
         position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-        zIndex: 50, backgroundColor: '#FDF8F3'
+        zIndex: 50, backgroundColor: '#FFFFFF'
     },
 });
