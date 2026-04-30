@@ -139,7 +139,12 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
     const AgentIcon = agent.icon;
 
     return (
-        <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+        <ScrollView
+            style={styles.container}
+            showsVerticalScrollIndicator={false}
+            // 웹에서 window 스크롤을 사용해야 브라우저 전체 페이지 캡처가 가능
+            {...(Platform.OS === 'web' ? { style: [styles.container, { overflow: 'visible' as any, height: 'auto' as any }] } : {})}
+        >
 
             {/* ════════════ HERO ════════════ */}
             <View style={styles.heroSection}>
@@ -418,7 +423,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FDF8F3' },
 
     /* HERO */
-    heroSection: { minHeight: 700, alignItems: 'center', justifyContent: 'center', paddingVertical: 100, paddingHorizontal: 32, position: 'relative', overflow: 'hidden' },
+    heroSection: { minHeight: 700, alignItems: 'center', justifyContent: 'center', paddingTop: 160, paddingBottom: 100, paddingHorizontal: 32, position: 'relative', overflow: 'hidden' },
     heroContent: { maxWidth: 900, width: '100%', alignItems: 'center' },
     heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F5F3FF', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, marginBottom: 32, borderWidth: 1, borderColor: '#DDD6FE' },
     heroBadgeText: { color: '#7C3AED', fontWeight: '800', fontSize: 13 },

@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     },
 
     logoWrapper: { flexDirection: 'row', alignItems: 'center' },
-    headerLogo: { height: 36, width: 140 },
+    headerLogo: { height: 44, width: 171 },
 
     navCentered: {
         position: 'absolute' as any,
@@ -231,12 +231,12 @@ const styles = StyleSheet.create({
     },
     navItem: { alignItems: 'center', gap: 4 },
     navItemText: {
-        fontSize: 15,
-        fontWeight: '600',
-        color: '#64748B',
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#475569',
         letterSpacing: 0.2,
     },
-    navItemActive: { color: '#18181B', fontWeight: '800' },
+    navItemActive: { color: '#0F172A', fontWeight: '900' },
     navItemDot: {
         width: 4,
         height: 4,
