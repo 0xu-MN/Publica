@@ -57,6 +57,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [scrolled, setScrolled] = useState(false);
 
+    // Landing mode has a dark hero background, so text must be white
+    const isDarkTheme = viewMode === 'landing';
+    const textColor = isDarkTheme ? '#FFFFFF' : '#18181B';
+    const inactiveTextColor = isDarkTheme ? 'rgba(255,255,255,0.7)' : '#64748B';
+    const iconColor = isDarkTheme ? 'rgba(255,255,255,0.85)' : '#64748B';
+
     const hasNotification = notifications.some(n => !n.isRead);
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -119,16 +125,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             {!user ? (
                                 /* ── GUEST NAV ── */
                                 <>
-                                    <NavItem label="서비스 소개" active={viewMode === 'landing'} onPress={() => setViewMode('landing')} />
-                                    <NavItem label="요금안내" active={viewMode === 'pricing'} onPress={() => setViewMode('pricing')} />
-                                    <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
+                                    <NavItem label="서비스 소개" active={viewMode === 'landing'} onPress={() => setViewMode('landing')} isDarkTheme={isDarkTheme} inactiveColor={inactiveTextColor} activeColor={textColor} />
+                                    <NavItem label="요금안내" active={viewMode === 'pricing'} onPress={() => setViewMode('pricing')} isDarkTheme={isDarkTheme} inactiveColor={inactiveTextColor} activeColor={textColor} />
+                                    <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} isDarkTheme={isDarkTheme} inactiveColor={inactiveTextColor} activeColor={textColor} />
                                 </>
                             ) : (
                                 /* ── USER NAV ── */
                                 <>
-                                    <NavItem label="Connect Hub" active={viewMode === 'connect' || viewMode === 'grants'} onPress={() => setViewMode('connect')} />
-                                    <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
-                                    <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} />
+                                    <NavItem label="Connect Hub" active={viewMode === 'connect' || viewMode === 'grants'} onPress={() => setViewMode('connect')} isDarkTheme={isDarkTheme} inactiveColor={inactiveTextColor} activeColor={textColor} />
+                                    <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} isDarkTheme={isDarkTheme} inactiveColor={inactiveTextColor} activeColor={textColor} />
+                                    <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} isDarkTheme={isDarkTheme} inactiveColor={inactiveTextColor} activeColor={textColor} />
                                 </>
                             )}
                         </View>
@@ -140,8 +146,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                     {!user ? (
                         /* Guest: login + register button */
                         <View style={styles.authGroup}>
-                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.loginBtn}>
-                                <Text style={styles.loginBtnText}>로그인</Text>
+                            <TouchableOpacity onPress={onAuthModalOpen} style={[styles.loginBtn, isDarkTheme && { backgroundColor: 'rgba(255,255,255,0.1)', borderColor: 'rgba(255,255,255,0.2)' }]}>
+                                <Text style={[styles.loginBtnText, isDarkTheme && { color: '#FFF' }]}>로그인</Text>
                             </TouchableOpacity>
                             <TouchableOpacity onPress={onAuthModalOpen} style={styles.registerBtn}>
                                 <Text style={styles.registerBtnText}>회원가입</Text>
@@ -165,7 +171,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             <View style={styles.notificationWrapper}>
                                 <TouchableOpacity onPress={() => { setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false); }}>
                                     <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-                                        <Icons.Bell color={hasNotification ? '#F59E0B' : '#64748B'} size={22} fill={hasNotification ? '#F59E0B' : 'none'} />
+                                        <Icons.Bell color={hasNotification ? '#F59E0B' : iconColor} size={22} fill={hasNotification ? '#F59E0B' : 'none'} />
                                     </Animated.View>
                                     {hasNotification && <View style={styles.notificationDot} />}
                                 </TouchableOpacity>
@@ -199,8 +205,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
                             {/* Profile */}
                             <View style={styles.userMenuWrapper}>
-                                <TouchableOpacity style={styles.userAvatar} onPress={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false); }}>
-                                    <Icons.User color="#64748B" size={20} />
+                                <TouchableOpacity style={[styles.userAvatar, isDarkTheme && { backgroundColor: 'rgba(255,255,255,0.15)', borderColor: 'rgba(255,255,255,0.3)' }]} onPress={() => { setIsUserMenuOpen(!isUserMenuOpen); setIsNotificationOpen(false); }}>
+                                    <Icons.User color={iconColor} size={20} />
                                 </TouchableOpacity>
                                 {isUserMenuOpen && (
                                     <View style={[styles.dropdownMenu, { right: 0, width: 180 }]}>
@@ -237,9 +243,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 };
 
 /* ── Small NavItem sub-component ── */
-const NavItem: React.FC<{ label: string; active: boolean; onPress: () => void }> = ({ label, active, onPress }) => (
+const NavItem: React.FC<{ label: string; active: boolean; onPress: () => void; isDarkTheme?: boolean; inactiveColor?: string; activeColor?: string }> = ({ label, active, onPress, inactiveColor = '#64748B', activeColor = '#18181B' }) => (
     <TouchableOpacity onPress={onPress} style={styles.navItem}>
-        <Text style={[styles.navItemText, active && styles.navItemActive]}>{label}</Text>
+        <Text style={[styles.navItemText, { color: inactiveColor }, active && { color: activeColor, fontWeight: '800' }]}>{label}</Text>
         {active && <View style={styles.navItemDot} />}
     </TouchableOpacity>
 );

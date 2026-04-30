@@ -150,8 +150,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                     resizeMode="cover"
                 />
                 <LinearGradient
-                    colors={['rgba(253,248,243,1)', 'rgba(253,248,243,0.8)', 'rgba(253,248,243,1)']}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                    colors={['rgba(15,23,42,0.85)', 'rgba(15,23,42,0.95)', '#FDF8F3']}
+                    start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }}
+                    locations={[0, 0.6, 1]}
                     style={StyleSheet.absoluteFill}
                 />
                 <Animated.View style={[styles.heroContent, { opacity: heroFade, transform: [{ translateY: heroSlide }] }]}>
@@ -419,21 +420,21 @@ const styles = StyleSheet.create({
     /* HERO */
     heroSection: { minHeight: 700, alignItems: 'center', justifyContent: 'center', paddingVertical: 100, paddingHorizontal: 32, position: 'relative', overflow: 'hidden' },
     heroContent: { maxWidth: 900, width: '100%', alignItems: 'center' },
-    heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F5F3FF', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, marginBottom: 32, borderWidth: 1, borderColor: '#DDD6FE' },
-    heroBadgeText: { color: '#7C3AED', fontWeight: '800', fontSize: 13 },
-    heroTitle: { color: '#18181B', fontWeight: '900', letterSpacing: -2, textAlign: 'center', lineHeight: 80 },
-    heroAccent: { color: '#7C3AED' },
-    heroSub: { color: '#475569', fontSize: 18, textAlign: 'center', lineHeight: 32, marginTop: 24, fontWeight: '500', maxWidth: 700 },
+    heroBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(124,58,237,0.15)', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 99, marginBottom: 32, borderWidth: 1, borderColor: 'rgba(124,58,237,0.3)' },
+    heroBadgeText: { color: '#C4B5FD', fontWeight: '800', fontSize: 13 },
+    heroTitle: { color: '#FFFFFF', fontWeight: '900', letterSpacing: -2, textAlign: 'center', lineHeight: 80 },
+    heroAccent: { color: '#A78BFA' },
+    heroSub: { color: 'rgba(255,255,255,0.7)', fontSize: 18, textAlign: 'center', lineHeight: 32, marginTop: 24, fontWeight: '500', maxWidth: 700 },
     heroActions: { flexDirection: 'row', gap: 16, marginTop: 48, flexWrap: 'wrap', justifyContent: 'center' },
     heroCta: { backgroundColor: '#7C3AED', paddingHorizontal: 32, paddingVertical: 18, borderRadius: 18, flexDirection: 'row', alignItems: 'center', gap: 10, shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20 },
     heroCtaText: { color: '#FFF', fontSize: 17, fontWeight: '800' },
-    heroSecondary: { paddingHorizontal: 32, paddingVertical: 18, borderRadius: 18, borderWidth: 2, borderColor: '#E2E8F0' },
-    heroSecondaryText: { color: '#475569', fontSize: 17, fontWeight: '700' },
+    heroSecondary: { paddingHorizontal: 32, paddingVertical: 18, borderRadius: 18, borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)' },
+    heroSecondaryText: { color: 'rgba(255,255,255,0.8)', fontSize: 17, fontWeight: '700' },
     heroStats: { marginTop: 64, gap: 48 },
     heroStatsRow: { flexDirection: 'row' },
     heroStat: { alignItems: 'center' },
-    heroStatVal: { color: '#18181B', fontSize: 36, fontWeight: '900', letterSpacing: -1 },
-    heroStatLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '700', marginTop: 4 },
+    heroStatVal: { color: '#FFFFFF', fontSize: 36, fontWeight: '900', letterSpacing: -1 },
+    heroStatLabel: { color: 'rgba(255,255,255,0.6)', fontSize: 13, fontWeight: '700', marginTop: 4 },
 
     /* SECTION */
     section: { paddingVertical: 100, alignItems: 'center' },
