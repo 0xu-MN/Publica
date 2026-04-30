@@ -416,7 +416,7 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-    workspaceWrapper: { flex: 1, backgroundColor: '#FFFFFF', width: '100%', height: '100%', paddingTop: 100 },
+    workspaceWrapper: { flex: 1, backgroundColor: '#FFFFFF', width: '100%', height: '100%', paddingTop: 72 },
     pricingWrapper: { flex: 1, width: '100%', backgroundColor: 'transparent' },
     overlay: { position: 'absolute', inset: 0, zIndex: 1000, backgroundColor: 'transparent' },
     feedWrapper: { flex: 1, width: '100%', backgroundColor: '#FFFFFF' },

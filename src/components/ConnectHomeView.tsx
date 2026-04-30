@@ -505,7 +505,7 @@ export const ConnectHomeView: React.FC<ConnectHomeViewProps> = ({
 
 const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFFFFF' },
-    content: { maxWidth: 1400, alignSelf: 'center', width: '100%', paddingHorizontal: 24, paddingBottom: 24, paddingTop: 100 },
+    content: { maxWidth: 1400, alignSelf: 'center', width: '100%', paddingHorizontal: 24, paddingBottom: 24, paddingTop: 32 },
     headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, marginBottom: 16 },
     welcomeText: { color: '#18181B', fontSize: 28, fontWeight: '700', letterSpacing: -0.5, marginBottom: 4 },
     welcomeName: { color: '#7C3AED', fontWeight: '900' },
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     dualGridRow: { flexDirection: 'row', gap: 24, marginBottom: 48 },
     carouselCol: { flex: 1.1 },
     gridCol: { flex: 1 },
-    oppsCard: { backgroundColor: '#FDF8F3', padding: 32, borderRadius: 40, height: 570, borderWidth: 1, borderColor: '#7C3AED10' },
+    oppsCard: { backgroundColor: '#FFFFFF', padding: 32, borderRadius: 40, height: 570, borderWidth: 1, borderColor: '#7C3AED10' },
     oppsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
     oppItem: { width: '48%', backgroundColor: '#FFFFFF', padding: 16, borderRadius: 20, height: 160, justifyContent: 'space-between', borderWidth: 1, borderColor: '#E2E8F0' },
     oppAgency: { color: '#64748B', fontSize: 9, fontWeight: '700' },

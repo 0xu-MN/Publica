@@ -1040,7 +1040,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
     // 🌟 Workspace Render Helper (Extract for Split View Reuse)
     const renderWorkspace = () => (
         <View
-            style={{ flex: 1, backgroundColor: '#FDF8F3' }}
+            style={{ flex: 1, backgroundColor: '#FFFFFF' }}
             {...(Platform.OS === 'web' ? {
                 onDragOver: (e: any) => { e.preventDefault(); },
                 onDragEnter: () => setIsDragging(true),
@@ -1714,11 +1714,11 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
-    header: { height: 60, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, zIndex: 100, borderBottomWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
+    header: { height: 60, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, zIndex: 100, borderBottomWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#FFFFFF' },
     logo: { color: '#27272a', fontWeight: '900', fontSize: 20, letterSpacing: -0.5 },
-    contextBar: { backgroundColor: '#FDF8F3', borderBottomWidth: 1, borderColor: '#E2E8F0', paddingVertical: 12, paddingHorizontal: 24, zIndex: 90 },
-    canvasViewport: { flex: 1, overflow: 'hidden', backgroundColor: '#FDF8F3' },
+    contextBar: { backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderColor: '#E2E8F0', paddingVertical: 12, paddingHorizontal: 24, zIndex: 90 },
+    canvasViewport: { flex: 1, overflow: 'hidden', backgroundColor: '#FFFFFF' },
     canvasWorld: { padding: 100, flexDirection: 'row', alignItems: 'flex-start' },
     zoomContainer: { position: 'absolute', bottom: 30, left: 30, flexDirection: 'row', backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 8, alignItems: 'center', zIndex: 40, gap: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10 },
     zoomText: { color: '#64748B', fontSize: 12, fontWeight: '700', width: 45, textAlign: 'center' },
@@ -1755,7 +1755,7 @@ const styles = StyleSheet.create({
     },
 
     // Sidebar Styles
-    historySidebar: { position: 'absolute', top: 0, left: 0, bottom: 0, width: 320, backgroundColor: '#FDF8F3', zIndex: 200, borderRightWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 10, height: 0 }, shadowOpacity: 0.05, shadowRadius: 20 },
+    historySidebar: { position: 'absolute', top: 0, left: 0, bottom: 0, width: 320, backgroundColor: '#FFFFFF', zIndex: 200, borderRightWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 10, height: 0 }, shadowOpacity: 0.05, shadowRadius: 20 },
     sidebarHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
     sidebarTitle: { color: '#27272a', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
     sessionItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 16, paddingHorizontal: 4, borderBottomWidth: 1, borderColor: '#F1F5F9' },
@@ -1768,7 +1768,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center', alignItems: 'center',
         zIndex: 1, // On top
         pointerEvents: 'none', // Allow drops through
-        backgroundColor: '#FDF8F3'
+        backgroundColor: '#FFFFFF'
     },
     emptyTitle: { color: '#27272a', fontSize: 20, fontWeight: '900', marginTop: 20, letterSpacing: -0.5 },
     emptySub: { color: '#64748B', fontSize: 14, marginTop: 8, fontWeight: '500' },

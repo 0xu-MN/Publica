@@ -1429,7 +1429,7 @@ const styles = StyleSheet.create({
     },
     container: {
         flex: 1,
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#FFFFFF',
     },
 
     // Header
@@ -1510,7 +1510,7 @@ const styles = StyleSheet.create({
     leftPanel: {
         borderRightWidth: 1,
         borderColor: '#E2E8F0',
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#FFFFFF',
         overflow: 'hidden',
     },
 
@@ -1752,7 +1752,7 @@ const styles = StyleSheet.create({
     // Right Panel
     rightPanel: {
         flex: 1,
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#FFFFFF',
     },
     draftLoadingOverlay: {
         ...StyleSheet.absoluteFillObject,
@@ -1837,7 +1837,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderLeftWidth: 1,
         borderColor: '#E2E8F0',
-        backgroundColor: '#FDF8F3',
+        backgroundColor: '#FFFFFF',
     },
     progressStripTitle: {
         color: '#94A3B8',

@@ -487,7 +487,7 @@ export const GrantList = ({ onBack, onSelectGrant }: GrantListProps) => {
 };
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#FDF8F3' },
+    container: { flex: 1, backgroundColor: '#FFFFFF' },
     header: { 
         height: 70, 
         flexDirection: 'row', 
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 24, 
         borderBottomWidth: 1, 
         borderColor: '#E2E8F0', 
-        backgroundColor: '#FDF8F3', 
+        backgroundColor: '#FFFFFF', 
         width: '100%',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
@@ -632,7 +632,7 @@ const styles = StyleSheet.create({
     detailBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#E2E8F0', backgroundColor: '#F8FAFC' },
     detailBadgeText: { color: '#64748B', fontSize: 12, fontWeight: '800' },
     detailTitle: { color: '#27272a', fontSize: 24, fontWeight: '900', lineHeight: 34, marginBottom: 28, letterSpacing: -1 },
-    detailMeta: { gap: 16, backgroundColor: '#FDF8F3', padding: 24, borderRadius: 28, borderWidth: 1, borderColor: '#E2E8F0' },
+    detailMeta: { gap: 16, backgroundColor: '#FFFFFF', padding: 24, borderRadius: 28, borderWidth: 1, borderColor: '#E2E8F0' },
     detailMetaItem: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     detailMetaLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '800', width: 80 },
     detailMetaValue: { color: '#27272a', fontSize: 14, fontWeight: '800', flex: 1, textAlign: 'right', letterSpacing: -0.2 },
