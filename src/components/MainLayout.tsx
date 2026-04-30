@@ -45,7 +45,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
     setNotifications,
 }) => {
     return (
-        <SafeAreaView style={[styles.safeArea, viewMode === 'landing' && { backgroundColor: '#FDF8F3' }]}>
+        <SafeAreaView style={[styles.safeArea, viewMode === 'landing' && { backgroundColor: 'transparent' }]}>
             <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
 
             <AppHeader

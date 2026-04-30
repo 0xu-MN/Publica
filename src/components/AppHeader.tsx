@@ -90,6 +90,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         outputRange: ['-15deg', '15deg']
     });
 
+    // 항상 동일한 light glass 헤더
     const headerStyle = [
         styles.headerContainer,
         scrolled && (styles.headerScrolled as any),
@@ -129,6 +130,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                                     <NavItem label="Connect Hub" active={viewMode === 'connect' || viewMode === 'grants'} onPress={() => setViewMode('connect')} />
                                     <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
                                     <NavItem label="Lounge" active={viewMode === 'lounge'} onPress={() => setViewMode('lounge')} />
+                                    <TouchableOpacity
+                                        style={[styles.headerWorkspaceBtn, { marginLeft: 16 }]}
+                                        onPress={onNavigateToWorkspace}
+                                    >
+                                        <Sparkles size={14} color="#FFF" />
+                                        <Text style={styles.headerWorkspaceText}>My Workspace</Text>
+                                    </TouchableOpacity>
                                 </>
                             )}
                         </View>
@@ -148,19 +156,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             </TouchableOpacity>
                         </View>
                     ) : (
-                        /* Logged in: workspace CTA + notification + profile */
+                        /* Logged in: notification + profile */
                         <View style={styles.utilityGroup}>
-                            {/* My Workspace purple CTA */}
-                            <TouchableOpacity
-                                onPress={() => setViewMode('workspace')}
-                                style={[styles.workspaceBtn, viewMode === 'workspace' && styles.workspaceBtnActive]}
-                            >
-                                <Icons.Zap size={14} color={viewMode === 'workspace' ? '#FFF' : '#7C3AED'} />
-                                <Text style={[styles.workspaceBtnText, viewMode === 'workspace' && { color: '#FFF' }]}>
-                                    My Workspace
-                                </Text>
-                            </TouchableOpacity>
-
                             {/* Notification */}
                             <View style={styles.notificationWrapper}>
                                 <TouchableOpacity onPress={() => { setIsNotificationOpen(!isNotificationOpen); setIsUserMenuOpen(false); }}>
@@ -252,7 +249,7 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1000,
-        backgroundColor: 'rgba(255,255,255,0.3)',
+        backgroundColor: 'rgba(255,255,255,0.7)',
         borderBottomWidth: 1,
         borderBottomColor: 'rgba(0,0,0,0.05)',
         ...(Platform.OS === 'web' ? {
@@ -262,7 +259,7 @@ const styles = StyleSheet.create({
     } as any,
 
     headerScrolled: {
-        backgroundColor: 'rgba(255,255,255,0.85)',
+        backgroundColor: 'rgba(255,255,255,0.95)',
         borderBottomColor: 'rgba(0,0,0,0.08)',
     } as any,
 
