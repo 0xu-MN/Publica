@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { supabase } from '../../../lib/supabase';
 import Toast from 'react-native-toast-message';
 import { useProjectStore } from '../../../store/useProjectStore';
-import { Briefcase, AlertCircle, CheckCircle, Zap, Layers, ChevronRight } from 'lucide-react-native';
-import { ProjectPipelineCard } from '../components/ProjectPipelineCard';
+import { Briefcase, AlertCircle, CheckCircle, Zap } from 'lucide-react-native';
 import { ActiveProjectCard } from '../components/ActiveProjectCard';
 import { TodayScheduleWidget } from '../components/TodayScheduleWidget';
 import { StatsCard } from '../components/StatsCard';
@@ -20,7 +19,7 @@ interface WorkspaceDashboardProps {
     onNavigateToGuide?: () => void;
 }
 
-import { fetchProjects, Project } from '../../../services/projects';
+import { fetchProjects } from '../../../services/projects';
 import { fetchGrants } from '../../../services/grants';
 import { getTopRecommendedGrants } from '../../../utils/scoring';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -28,11 +27,11 @@ import { useAuth } from '../../../contexts/AuthContext';
 // ... (imports)
 
 export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateToPortfolio, onNavigateToGrants, onNavigateToGuide }: WorkspaceDashboardProps) => {
+    const { height: windowHeight } = useWindowDimensions();
     const { user, profile } = useAuth();
     const [nickname, setNickname] = useState('연구원');
 
     // Real Data State
-    const [pipelineProjects, setPipelineProjects] = useState<Project[]>([]);
     const [recommendedBusinesses, setRecommendedBusinesses] = useState<any[]>([]);
     const [savedSessions, setSavedSessions] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,9 +54,8 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                 }
             }
 
-            // 2. Fetch Projects
-            const userProjects = await fetchProjects();
-            setPipelineProjects(userProjects);
+            // 2. Fetch Projects (pipeline 제거 후 미사용, 향후 참조용 유지)
+            await fetchProjects();
 
             // 3. Fetch & Score Grants for Recommendations
             const allGrants = await fetchGrants();
@@ -166,14 +164,14 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
     const handleDismissBriefing = (id: string) => { setBriefings(prev => prev.filter(b => b.id !== id)); };
     const handleContinueProject = (projectId: string) => { console.log('Continue project:', projectId); };
     const handleViewFiles = (projectId: string) => { console.log('View files:', projectId); };
-    const handleViewReport = (projectId: string) => { console.log('View report:', projectId); };
 
     return (
         <>
             <WelcomeGuideModal onNavigateToGuide={() => onNavigateToGuide?.()} />
             <ScrollView
-                style={{ flex: 1, backgroundColor: '#FFFFFF' }}
+                style={{ height: windowHeight - 72, backgroundColor: '#FFFFFF' }}
                 contentContainerStyle={{ padding: 24, paddingTop: 24 }}
+                showsVerticalScrollIndicator={true}
             >
                 <View className="max-w-[1400px] w-full mx-auto">
                 {/* Greeting Header */}
@@ -223,47 +221,54 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
 
                 {/* Main Content Grid - Middle Section with 3 Columns */}
                 <View className="flex-row gap-6 mb-10">
-                    {/* Column 1 - Pipeline */}
+                    {/* Column 1 - 진행 중인 프로젝트 */}
                     <View className="w-[400px] bg-white rounded-[40px] p-8 border border-[#E2E8F0] shadow-2xl shadow-black/[0.04]">
-                        {/* Header */}
-                        <TouchableOpacity className="flex-row items-center justify-between mb-8">
+                        <View className="flex-row items-center justify-between mb-8">
                             <View className="flex-row items-center gap-3">
                                 <View className="w-8 h-8 rounded-xl items-center justify-center" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)' }}>
-                                    <Layers size={18} color="#7C3AED" strokeWidth={2.5} />
+                                    <CheckCircle size={18} color="#7C3AED" strokeWidth={2.5} />
                                 </View>
-                                <Text className="text-[#27272a] font-black text-base uppercase tracking-wider">Active Strategy Pipeline</Text>
+                                <Text className="text-[#27272a] font-black text-base tracking-tighter">진행 중인 프로젝트</Text>
                             </View>
-                            <ChevronRight size={18} color="#CBD5E1" />
-                        </TouchableOpacity>
+                            <TouchableOpacity onPress={() => onNavigateToPortfolio?.()}>
+                                <Text className="text-[#7C3AED] text-sm font-bold">전체보기</Text>
+                            </TouchableOpacity>
+                        </View>
 
-                        <View className="gap-5 mb-6">
-                            {pipelineProjects.length > 0 ? (
-                                pipelineProjects.map(project => (
-                                    <ProjectPipelineCard
-                                        key={project.id}
-                                        title={project.grant_title} // Map grant_title to title
-                                        subtitle={project.currentStage}
-                                        progress={project.progress || 0}
-                                        currentStage={project.currentStage || 'Unknown'}
-                                        stages={project.stages || []}
-                                        onViewReport={() => handleViewReport(project.id)}
-                                    />
-                                ))
+                        <View className="gap-4">
+                            {savedSessions.length > 0 ? (
+                                savedSessions.slice(0, 3).map(session => {
+                                    const branchCount = session.workspace_data?.reduce((acc: number, col: any) => acc + (col.branches?.length || 0), 0) || 0;
+                                    const hasEditor = !!session.editor_content && session.editor_content.length > 50;
+                                    const hasChat = (session.chat_history?.length || 0) > 2;
+                                    let progress = 10;
+                                    let progressColor = '#94A3B8';
+                                    let stage = '분석 대기';
+                                    if (hasEditor && branchCount > 0) { progress = 85; progressColor = '#7C3AED'; stage = '최종 초안 작성 중'; }
+                                    else if (branchCount > 0 && hasChat) { progress = 60; progressColor = '#7C3AED'; stage = '아이디어 수립 완료'; }
+                                    else if (branchCount > 0) { progress = 35; progressColor = '#7C3AED'; stage = '기초 기획 단계'; }
+
+                                    return (
+                                        <ActiveProjectCard
+                                            key={session.id}
+                                            id={session.id}
+                                            name={session.title || 'Untitled'}
+                                            description={`${stage} · ${new Date(session.updated_at).toLocaleDateString('ko-KR')}`}
+                                            progress={progress}
+                                            icon={'folder' as const}
+                                            progressColor={progressColor}
+                                            onContinue={() => onLoadSession?.(session)}
+                                            onViewFiles={() => onLoadSession?.(session)}
+                                        />
+                                    );
+                                })
                             ) : (
                                 <View className="py-12 items-center justify-center rounded-3xl border border-dashed border-[#CBD5E1]" style={{ backgroundColor: '#F8FAFC' }}>
-                                    <Layers size={32} color="#CBD5E1" strokeWidth={1.5} className="mb-3" />
-                                    <Text className="text-[#94A3B8] text-sm font-medium">진행 중인 프로젝트가 없습니다</Text>
+                                    <Briefcase size={32} color="#CBD5E1" strokeWidth={1.5} />
+                                    <Text className="text-[#94A3B8] text-sm font-medium mt-3">저장된 AI 세션이 없습니다</Text>
                                 </View>
                             )}
                         </View>
-
-                        {/* Footer Button */}
-                        <TouchableOpacity
-                            className="py-4 rounded-[20px] border border-[#E2E8F0] items-center justify-center mt-auto active:bg-slate-50 transition-all"
-                            style={{ backgroundColor: '#F8FAFC' }}
-                        >
-                            <Text className="text-[#64748B] text-xs font-black uppercase tracking-widest">전체 파이프라인 상세보기</Text>
-                        </TouchableOpacity>
                     </View>
 
                     {/* Column 2 - Custom Recommendations */}
@@ -334,61 +339,6 @@ export const WorkspaceDashboard = ({ onOpenCalendar, onLoadSession, onNavigateTo
                     </View>
                 </View>
 
-                {/* Bottom Section: Ongoing Projects */}
-                <View className="mb-10">
-                    <View className="flex-row items-center justify-between mb-8">
-                        <View className="flex-row items-center gap-3">
-                            <View className="w-8 h-8 rounded-xl items-center justify-center" style={{ backgroundColor: 'rgba(124, 58, 237, 0.1)' }}>
-                                <CheckCircle size={18} color="#7C3AED" strokeWidth={2.5} />
-                            </View>
-                            <Text className="text-[#27272a] font-black text-2xl tracking-tighter">
-                                진행 중인 프로젝트
-                            </Text>
-                        </View>
-                        <TouchableOpacity onPress={() => onNavigateToPortfolio?.()} className="bg-white px-4 py-2 rounded-full border border-[#E2E8F0] shadow-sm">
-                            <Text className="text-[#7C3AED] text-sm font-bold">
-                                전체보기
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Horizontal Layout for Saved Sessions */}
-                    <View className="flex-row gap-6">
-                        {savedSessions.length > 0 ? (
-                            savedSessions.slice(0, 3).map(session => {
-                                const branchCount = session.workspace_data?.reduce((acc: number, col: any) => acc + (col.branches?.length || 0), 0) || 0;
-                                const hasEditor = !!session.editor_content && session.editor_content.length > 50;
-                                const hasChat = (session.chat_history?.length || 0) > 2;
-                                let progress = 10;
-                                let progressColor = '#94A3B8';
-                                let stage = '분석 대기';
-                                if (hasEditor && branchCount > 0) { progress = 85; progressColor = '#7C3AED'; stage = '최종 초안 작성 중'; }
-                                else if (branchCount > 0 && hasChat) { progress = 60; progressColor = '#7C3AED'; stage = '아이디어 수립 완료'; }
-                                else if (branchCount > 0) { progress = 35; progressColor = '#7C3AED'; stage = '기초 기획 단계'; }
-
-                                return (
-                                    <View key={session.id} className="flex-1">
-                                        <ActiveProjectCard
-                                            id={session.id}
-                                            name={session.title || 'Untitled'}
-                                            description={`${stage} · ${new Date(session.updated_at).toLocaleDateString('ko-KR')}`}
-                                            progress={progress}
-                                            icon={'folder' as const}
-                                            progressColor={progressColor}
-                                            onContinue={() => onLoadSession?.(session)}
-                                            onViewFiles={() => onLoadSession?.(session)}
-                                        />
-                                    </View>
-                                );
-                            })
-                        ) : (
-                            <View className="flex-1 py-16 items-center bg-white rounded-[40px] border border-dashed border-[#CBD5E1]">
-                                <Briefcase size={40} color="#CBD5E1" strokeWidth={1} className="mb-4" />
-                                <Text className="text-[#94A3B8] text-base font-medium">저장된 AI 세션이 없습니다</Text>
-                            </View>
-                        )}
-                    </View>
-                </View>
                 </View>
             </ScrollView>
         </>

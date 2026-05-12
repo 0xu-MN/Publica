@@ -467,7 +467,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
             </Animated.View>
 
             {/* Main Content - No longer affected by panels */}
-            <View className="flex-1 flex-col">
+            <View style={{ flex: 1, flexDirection: 'column', overflow: 'hidden' }}>
                 {renderContent()}
             </View>
 

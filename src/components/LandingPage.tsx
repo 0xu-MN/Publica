@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
     View, Text, ScrollView, TouchableOpacity, useWindowDimensions,
-    Animated, StyleSheet, Platform, Image
+    Animated, StyleSheet, Image
 } from 'react-native';
 import {
     ArrowRight, Sparkles, FileEdit, Download, CheckCircle2,
@@ -140,10 +140,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
 
     return (
         <ScrollView
-            style={Platform.OS === 'web'
-                ? [styles.container, { overflow: 'visible' as any, height: 'auto' as any }]
-                : styles.container
-            }
+            style={styles.container}
             showsVerticalScrollIndicator={false}
         >
 
