@@ -10,69 +10,66 @@ import { TableOfContents } from './TableOfContents';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js`;
 
-// ✅ FIX: 하이브리드 아키텍처 (Vercel Serverless -> AWS EC2 Fallback)
-// 내부 함수에서 두 곳을 순차적으로 찌릅니다.
+// PDF 파싱: Supabase Edge Function (pdf-parser) → 로컬 Python 서버(개발용) 순으로 시도
+// EC2/로컬 서버 없이 Supabase+Gemini로 영구 작동
+
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 async function fetchPythonTOC(url: string) {
     try {
-        console.log("🚀 [Hybrid] 파싱 요청 시작...");
+        console.log("🚀 [PDF Parser] 파싱 요청 시작...");
         const pdfRes = await fetch(url);
         const pdfBlob = await pdfRes.blob();
 
         const formData = new FormData();
         formData.append('file', pdfBlob, 'document.pdf');
 
-        // Primary: Vercel proxy (HTTPS) or localhost (dev)
-        const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
-        const envBackendUrl = process.env.EXPO_PUBLIC_PYTHON_BACKEND_URL || '';
-        const primaryUrl = isHttps ? '/api/parse-pdf' : `${envBackendUrl || 'http://localhost:8001'}/api/parse-pdf`;
-        // Fallback: env-variable-defined backend (no more dead Cloudflare tunnels)
-        const fallbackUrl = envBackendUrl ? `${envBackendUrl}/api/parse-pdf` : null;
+        // 1차: Supabase Edge Function (영구 작동, EC2 불필요)
+        const edgeFunctionUrl = `${SUPABASE_URL}/functions/v1/pdf-parser`;
 
         try {
-            console.log(`⚡ [Hybrid] 1차 시도: ${primaryUrl}`);
+            console.log(`⚡ [PDF Parser] Supabase Edge Function 시도: ${edgeFunctionUrl}`);
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 15000);
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-            const parseRes = await fetch(primaryUrl, {
+            const parseRes = await fetch(edgeFunctionUrl, {
                 method: 'POST',
                 body: formData,
-                headers: { 'Bypass-Tunnel-Reminder': 'true' },
+                headers: { 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
                 signal: controller.signal
             });
             clearTimeout(timeoutId);
 
             if (!parseRes.ok) {
-                throw new Error(`1차 시도 실패 상태코드: ${parseRes.status}`);
+                throw new Error(`Edge Function 실패: ${parseRes.status}`);
             }
 
             const data = await parseRes.json();
-            console.log(`✅ [Hybrid] 1차 성공: ${data.toc?.length}개 항목`);
+            console.log(`✅ [PDF Parser] Edge Function 성공: ${data.toc?.length}개 항목`);
             return data;
 
         } catch (error) {
-            console.warn(`⚠️ [Hybrid] 1차 시도 실패. Fallback 시도 중...`, error);
+            console.warn(`⚠️ [PDF Parser] Edge Function 실패. 로컬 서버 시도 중...`, error);
 
-            if (fallbackUrl) {
-                console.log(`🚒 [Hybrid] 2차 시도 (Fallback): ${fallbackUrl}`);
-                const fallbackRes = await fetch(fallbackUrl, {
-                    method: 'POST',
-                    headers: { 'Bypass-Tunnel-Reminder': 'true' },
-                    body: formData,
-                });
+            // 2차: 로컬 Python 서버 (개발 환경 폴백)
+            const localUrl = 'http://localhost:8001/api/parse-pdf';
+            console.log(`🚒 [PDF Parser] 로컬 서버 시도: ${localUrl}`);
+            const fallbackRes = await fetch(localUrl, {
+                method: 'POST',
+                body: formData,
+            });
 
-                if (!fallbackRes.ok) {
-                    throw new Error(`2차 시도까지 모두 실패 상태코드: ${fallbackRes.status}`);
-                }
-
-                const data = await fallbackRes.json();
-                console.log(`🏆 [Hybrid] 2차 Fallback 성공: ${data.toc?.length}개 항목`);
-                return data;
+            if (!fallbackRes.ok) {
+                throw new Error(`로컬 서버도 실패: ${fallbackRes.status}`);
             }
-            throw error;
+
+            const data = await fallbackRes.json();
+            console.log(`🏆 [PDF Parser] 로컬 서버 성공: ${data.toc?.length}개 항목`);
+            return data;
         }
     } catch (error) {
-        console.error('❌ [Hybrid] 모든 파이썬 서버 파싱 완전 실패:', error);
+        console.error('❌ [PDF Parser] 모든 파싱 시도 실패:', error);
         return null;
     }
 }

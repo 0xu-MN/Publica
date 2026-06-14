@@ -138,20 +138,24 @@ export const NexusEditView = () => {
         try {
             const geminiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY;
 
-            // ── Step 1: 공고 평가기준 심층 분석 (백엔드 API 호출) ──────────────
+            // ── Step 1: 공고 평가기준 심층 분석 (Supabase Edge Function) ────────
             let analysisResult: AnnouncementAnalysis | null = null;
             try {
-                const envBackendUrl = process.env.EXPO_PUBLIC_PYTHON_BACKEND_URL || '';
-                const baseUrl = envBackendUrl || 'http://localhost:8001';
-                const analysisResponse = await fetch(`${baseUrl}/api/analyze-announcement`, {
+                const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+                const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
+                const edgeUrl = `${supabaseUrl}/functions/v1/analyze-announcement`;
+                const analysisResponse = await fetch(edgeUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Bypass-Tunnel-Reminder': 'true' },
-                    body: JSON.stringify({ announcement_text: rfpText, gemini_api_key: geminiKey })
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${supabaseAnonKey}`,
+                    },
+                    body: JSON.stringify({ announcement_text: rfpText })
                 });
                 if (analysisResponse.ok) {
                     analysisResult = await analysisResponse.json();
                     setAnnouncementAnalysis(analysisResult);
-                    console.log('✅ 공고 분석 완료:', analysisResult?.form_info?.title);
+                    console.log('✅ 공고 분석 완료 (Edge Function)');
                 }
             } catch (analysisErr) {
                 console.warn('⚠️ 공고 분석 API 실패 (계속 진행):', analysisErr);
