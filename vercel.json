@@ -2,10 +2,6 @@
     "cleanUrls": true,
     "rewrites": [
         {
-            "source": "/api/parse-pdf",
-            "destination": "http://localhost:8001/api/parse-pdf"
-        },
-        {
             "source": "/(.*)",
             "destination": "/index.html"
         }
