@@ -304,23 +304,26 @@ async function upsertGrants(grants: any[]): Promise<{ inserted: number; updated:
         }
     }
 
-    // Deactivate grants that have passed their deadline
-    const deactivateRes = await fetch(
-        `${supabaseUrl}/rest/v1/grants?deadline_date=lt.${new Date().toISOString().split('T')[0]}&is_active=eq.true`,
+    // Delete grants that have passed their deadline.
+    // (Storage hygiene: expired postings are removed outright so the table
+    //  does not accumulate dead rows and hit the Supabase quota.)
+    const deleteRes = await fetch(
+        `${supabaseUrl}/rest/v1/grants?deadline_date=lt.${new Date().toISOString().split('T')[0]}`,
         {
-            method: 'PATCH',
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
                 'apikey': supabaseKey,
                 'Authorization': `Bearer ${supabaseKey}`,
                 'Prefer': 'return=representation',
             },
-            body: JSON.stringify({ is_active: false }),
         }
     );
 
-    const deactivatedData = deactivateRes.ok ? await deactivateRes.json() : [];
-    const deactivated = Array.isArray(deactivatedData) ? deactivatedData.length : 0;
+    const deletedData = deleteRes.ok ? await deleteRes.json() : [];
+    // kept the field name `deactivated` so the caller/response shape is unchanged;
+    // it now reports how many expired grants were deleted.
+    const deactivated = Array.isArray(deletedData) ? deletedData.length : 0;
 
     return { inserted, updated, deactivated };
 }

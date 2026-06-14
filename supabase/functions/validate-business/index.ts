@@ -22,10 +22,10 @@ serve(async (req) => {
         const body = await req.json();
         const { businessNumber, imageUrl, imageBase64, pdfText } = body;
 
-        // ── 1. 이미지/PDF OCR 처리 (OpenAI GPT-4o) ─────────────────────────
+        // ── 1. 이미지/PDF OCR 처리 (Google Gemini) ─────────────────────────
         if (imageUrl || imageBase64 || pdfText) {
-            const openAiKey = Deno.env.get('OPENAI_API_KEY');
-            if (!openAiKey) throw new Error('OPENAI_API_KEY가 설정되지 않았습니다.');
+            const geminiKey = Deno.env.get('GEMINI_API_KEY');
+            if (!geminiKey) throw new Error('GEMINI_API_KEY가 설정되지 않았습니다.');
 
             const prompt = `이 한국 사업자등록증에서 정보를 추출해주세요.
 다음 키를 포함한 JSON 객체만 반환하세요 (마크다운 없이):
@@ -34,26 +34,40 @@ serve(async (req) => {
 "sigungu" (예: "강남구"),
 "industry" (예: "정보통신업")`;
 
-            const messages = pdfText
-                ? [{ role: 'user', content: `${prompt}\n\n문서 텍스트:\n${pdfText}` }]
-                : [{ role: 'user', content: [
-                    { type: 'text', text: prompt },
-                    { type: 'image_url', image_url: { url: imageBase64 ? `data:image/jpeg;base64,${imageBase64}` : imageUrl } }
-                ]}];
+            // Gemini 요청 parts 구성: 텍스트 + (선택) 인라인 이미지
+            const parts: any[] = [{ text: pdfText ? `${prompt}\n\n문서 텍스트:\n${pdfText}` : prompt }];
+            if (!pdfText) {
+                let base64 = imageBase64;
+                if (!base64 && imageUrl) {
+                    // Gemini는 URL을 직접 못 읽으므로 받아서 base64로 변환
+                    const imgRes = await fetch(imageUrl);
+                    const buf = new Uint8Array(await imgRes.arrayBuffer());
+                    let binary = '';
+                    for (let i = 0; i < buf.length; i++) binary += String.fromCharCode(buf[i]);
+                    base64 = btoa(binary);
+                }
+                if (base64) {
+                    parts.push({ inline_data: { mime_type: 'image/jpeg', data: base64 } });
+                }
+            }
 
-            const res = await fetch('https://api.openai.com/v1/chat/completions', {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${openAiKey}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ model: 'gpt-4o', messages, max_tokens: 300 }),
-            });
+            const res = await fetch(
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+                {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts }] }),
+                }
+            );
 
             const data = await res.json();
             if (data.error) throw new Error(data.error.message);
 
             let result = { businessNumber: '', sido: '', sigungu: '', industry: '' };
             try {
-                const clean = data.choices[0].message.content.trim().replace(/```json\n?/g, '').replace(/```/g, '');
-                result = JSON.parse(clean);
+                const text = (data.candidates?.[0]?.content?.parts?.[0]?.text || '')
+                    .trim().replace(/```json\n?/g, '').replace(/```/g, '');
+                result = JSON.parse(text);
             } catch { /* 파싱 실패 시 빈 결과 반환 */ }
 
             return new Response(JSON.stringify({ success: true, data: result, method: 'ocr' }), {
