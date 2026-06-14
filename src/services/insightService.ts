@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 
-const INSIGHT_AGENT_URL = process.env.EXPO_PUBLIC_INSIGHT_AGENT_URL || 'https://ltoqdapmhyxwosxbpaip.supabase.co/functions/v1/insight-agent-gateway';
+const INSIGHT_AGENT_URL = process.env.EXPO_PUBLIC_INSIGHT_AGENT_URL || '';
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // --------------------------------------------------------------------------
