@@ -57,3 +57,6 @@ venv/
 **/venv/
 __pycache__/
 *.pyc
+
+# Supabase CLI local state (do not track - causes link to flip on reset)
+supabase/.temp/
