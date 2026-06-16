@@ -195,7 +195,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             user: session?.user ?? null,
             profile,
             loading,
-            profileComplete: !!profile?.user_type || isAdmin,
+            // 프로필 완료 여부는 '실제 프로필 작성(user_type)'으로만 판정합니다.
+            // 관리자라도 프로필을 설정하지 않았으면 설정 화면이 떠야 합니다.
+            // (관리자 여부는 결제/권한에만 영향을 주고, 프로필 작성과는 무관)
+            profileComplete: !!profile?.user_type,
             authEvent,
             subscription,
             isAdmin,
