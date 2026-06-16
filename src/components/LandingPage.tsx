@@ -322,69 +322,82 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
         <ScrollView style={{ flex: 1, backgroundColor: '#FFFFFF' }} showsVerticalScrollIndicator={false}>
 
             {/* ══════════ HERO ══════════ */}
-            <View style={[styles.heroSection, { paddingHorizontal: contentPad }]}>
-                {/* background photo right side */}
-                <Image
-                    source={{ uri: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2564&auto=format&fit=crop' }}
-                    style={[StyleSheet.absoluteFill, { left: isDesktop ? '45%' : 0 }] as any}
-                    resizeMode="cover"
-                />
-                {/* gradient fade from left white to transparent */}
-                <LinearGradient
-                    colors={['#FFFFFF', '#FFFFFF', 'rgba(255,255,255,0.9)', 'rgba(255,255,255,0)']}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                    style={[StyleSheet.absoluteFill, { width: isDesktop ? '70%' : '100%' }] as any}
-                    pointerEvents="none"
-                />
-                <LinearGradient
-                    colors={['rgba(255,255,255,0)', '#FFFFFF']}
-                    start={{ x: 0, y: 0.7 }} end={{ x: 0, y: 1 }}
-                    style={StyleSheet.absoluteFill}
-                    pointerEvents="none"
-                />
+            <View style={[styles.heroOuter, { paddingHorizontal: contentPad }]}>
+                <Animated.View style={[styles.heroCard, { opacity: heroFade, transform: [{ translateY: heroSlide }] }]}>
+                    {/* background photo */}
+                    <Image
+                        source={{ uri: 'https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=2564&auto=format&fit=crop' }}
+                        style={StyleSheet.absoluteFill}
+                        resizeMode="cover"
+                    />
+                    {/* light wash so left text is readable */}
+                    <LinearGradient
+                        colors={['rgba(244,243,255,0.96)', 'rgba(244,243,255,0.7)', 'rgba(244,243,255,0.15)']}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                        style={StyleSheet.absoluteFill}
+                        pointerEvents="none"
+                    />
 
-                <Animated.View style={[
-                    styles.heroContent,
-                    isDesktop ? { alignItems: 'flex-start', maxWidth: '55%' } : { alignItems: 'center' },
-                    { opacity: heroFade, transform: [{ translateY: heroSlide }] }
-                ]}>
-                    {/* badge */}
-                    <View style={[styles.heroBadge, !isDesktop && { alignSelf: 'center' }]}>
-                        <Sparkles size={12} color="#7C3AED" />
-                        <Text style={styles.heroBadgeText}>맞춤형 지원사업 AI 솔루션</Text>
-                    </View>
-
-                    {/* title */}
-                    <Text style={[styles.heroTitle, { fontSize: isDesktop ? 56 : 36, textAlign: isDesktop ? 'left' : 'center' }]}>
-                        공고는 찾았는데,{'\n'}아직 한 줄도 <Text style={{ color: '#7C3AED' }}>못 썼나요?</Text>
-                    </Text>
-
-                    {/* subtitle */}
-                    <Text style={[styles.heroSub, { textAlign: isDesktop ? 'left' : 'center' }]}>
-                        AI가 대신 씁니다. 당신은 아이디어만 확인 하세요 !
-                    </Text>
-
-                    {/* stats */}
-                    <View style={[styles.heroStats, { alignSelf: isDesktop ? 'flex-start' : 'center' }]}>
-                        {[
-                            { val: '3만+', label: '수집 공고' },
-                            { val: '10분', label: '초안 완성' },
-                            { val: '무료', label: '체험 가능' },
-                        ].map((s, i) => (
-                            <View key={i} style={[styles.heroStat, i > 0 && { borderLeftWidth: 1, borderLeftColor: '#E2E8F0', paddingLeft: 28 }]}>
-                                <Text style={styles.heroStatVal}>{s.val}</Text>
-                                <Text style={styles.heroStatLabel}>{s.label}</Text>
+                    <View style={[styles.heroRow, !isDesktop && { flexDirection: 'column' }]}>
+                        {/* LEFT: copy */}
+                        <View style={[styles.heroLeft, isDesktop ? { flex: 1 } : { width: '100%' }]}>
+                            <View style={styles.heroBadge}>
+                                <Sparkles size={12} color="#7C3AED" />
+                                <Text style={styles.heroBadgeText}>맞춤형 지원사업 AI 솔루션</Text>
                             </View>
-                        ))}
-                    </View>
 
-                    {/* CTA */}
-                    <BorderGlow glowColor="#a855f7" borderRadius={12} glowRadius={24}>
-                        <TouchableOpacity onPress={onStartFree} style={[styles.heroCta, !isDesktop && { alignSelf: 'center' }]}>
-                            <Text style={styles.heroCtaText}>지금 바로 작성하기</Text>
-                            <ArrowRight size={16} color="#FFF" />
-                        </TouchableOpacity>
-                    </BorderGlow>
+                            <Text style={[styles.heroTitle, { fontSize: isDesktop ? 48 : 32 }]}>
+                                공고는 찾았는데,{'\n'}아직 한 줄도 <Text style={{ color: '#7C3AED' }}>못 썼나요?</Text>
+                            </Text>
+
+                            <Text style={styles.heroSub}>
+                                AI가 대신 씁니다. 당신은 아이디어만 확인 하세요 !
+                            </Text>
+
+                            <View style={styles.heroStats}>
+                                {[
+                                    { val: '3만+', label: '수집 공고' },
+                                    { val: '10분', label: '초안 완성' },
+                                    { val: '무료', label: '체험 가능' },
+                                ].map((s, i) => (
+                                    <View key={i} style={[styles.heroStat, i > 0 && { borderLeftWidth: 1, borderLeftColor: '#CBD5E1', paddingLeft: 24 }]}>
+                                        <Text style={styles.heroStatVal}>{s.val}</Text>
+                                        <Text style={styles.heroStatLabel}>{s.label}</Text>
+                                    </View>
+                                ))}
+                            </View>
+
+                            <BorderGlow glowColor="#a855f7" borderRadius={12} glowRadius={24}>
+                                <TouchableOpacity onPress={onStartFree} style={styles.heroCta}>
+                                    <Text style={styles.heroCtaText}>지금 바로 작성하기</Text>
+                                    <ArrowRight size={16} color="#FFF" />
+                                </TouchableOpacity>
+                            </BorderGlow>
+                        </View>
+
+                        {/* RIGHT: report mockup (laptop screen) */}
+                        {isDesktop && (
+                            <View style={styles.heroRight}>
+                                <View style={styles.reportCard}>
+                                    <View style={styles.reportHeader}>
+                                        <Text style={styles.reportTitle}>AI가 분석하고 정리한{'\n'}국가지원사업 보고서</Text>
+                                        <View style={styles.reportPlus}>
+                                            <Sparkles size={16} color="#FFF" />
+                                        </View>
+                                    </View>
+                                    {['핵심 요건 요약', '지원 요건 분석', '사업계획서 자동 매핑', '보고서 구조화'].map((t, i) => (
+                                        <View key={i} style={styles.reportRow}>
+                                            <CheckCircle size={14} color="#7C3AED" />
+                                            <Text style={styles.reportRowText}>{t}</Text>
+                                        </View>
+                                    ))}
+                                    <View style={styles.reportBtn}>
+                                        <Text style={styles.reportBtnText}>지금 바로 시작하기</Text>
+                                    </View>
+                                </View>
+                            </View>
+                        )}
+                    </View>
                 </Animated.View>
             </View>
 
@@ -627,23 +640,32 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
 
 const styles = StyleSheet.create({
     /* HERO */
-    heroSection: {
-        minHeight: 680,
-        justifyContent: 'center',
-        paddingTop: 120,
-        paddingBottom: 80,
-        position: 'relative',
+    heroOuter: {
+        paddingTop: 96,
+        paddingBottom: 60,
+    },
+    heroCard: {
+        width: '100%',
+        borderRadius: 28,
         overflow: 'hidden',
+        minHeight: 460,
+        justifyContent: 'center',
+        backgroundColor: '#F4F3FF',
     },
-    heroContent: {
-        zIndex: 2,
-        gap: 24,
+    heroRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 48,
+        paddingHorizontal: 48,
+        gap: 32,
     },
+    heroLeft: { gap: 22, zIndex: 2 },
+    heroRight: { width: 380, alignItems: 'flex-end', zIndex: 2 },
     heroBadge: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: '#F5F3FF',
+        backgroundColor: '#FFFFFF',
         paddingHorizontal: 14,
         paddingVertical: 7,
         borderRadius: 99,
@@ -656,13 +678,13 @@ const styles = StyleSheet.create({
         color: '#0F172A',
         fontWeight: '900',
         letterSpacing: -1.5,
-        lineHeight: Platform.OS === 'web' ? 1.2 as any : undefined,
+        lineHeight: Platform.OS === 'web' ? 1.25 as any : undefined,
     },
     heroSub: { color: '#475569', fontSize: 16, lineHeight: 26, fontWeight: '500' },
-    heroStats: { flexDirection: 'row', gap: 28, alignItems: 'center' },
+    heroStats: { flexDirection: 'row', gap: 24, alignItems: 'center' },
     heroStat: { alignItems: 'flex-start' },
     heroStatVal: { color: '#0F172A', fontSize: 28, fontWeight: '900', letterSpacing: -1 },
-    heroStatLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '600', marginTop: 2 },
+    heroStatLabel: { color: '#64748B', fontSize: 12, fontWeight: '600', marginTop: 2 },
     heroCta: {
         backgroundColor: '#7C3AED',
         paddingHorizontal: 28,
@@ -674,6 +696,27 @@ const styles = StyleSheet.create({
         alignSelf: 'flex-start',
     },
     heroCtaText: { color: '#FFF', fontSize: 15, fontWeight: '800' },
+
+    /* HERO report mockup */
+    reportCard: {
+        width: 320,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 18,
+        padding: 22,
+        gap: 12,
+        shadowColor: '#1E1B4B',
+        shadowOffset: { width: 0, height: 20 },
+        shadowOpacity: 0.18,
+        shadowRadius: 30,
+        elevation: 10,
+    },
+    reportHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 4 },
+    reportTitle: { color: '#0F172A', fontSize: 15, fontWeight: '900', lineHeight: 21, flex: 1 },
+    reportPlus: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#7C3AED', alignItems: 'center', justifyContent: 'center' },
+    reportRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    reportRowText: { color: '#334155', fontSize: 13, fontWeight: '600' },
+    reportBtn: { backgroundColor: '#7C3AED', borderRadius: 10, paddingVertical: 11, alignItems: 'center', marginTop: 6 },
+    reportBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 
     /* SECTION */
     section: { paddingVertical: 100 },

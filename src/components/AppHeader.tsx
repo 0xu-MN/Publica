@@ -43,6 +43,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
     const { width } = useWindowDimensions();
     const isDesktop = width >= 900;
+    const isLanding = viewMode === 'landing';
+
+    // 랜딩 헤더 여백: 1920 기준 로고 좌 160 / 로그인 우 78 (작은 화면에서는 비례 축소)
+    const landingPadLeft = width >= 1920 ? 160 : Math.max(20, width * (160 / 1920));
+    const landingPadRight = width >= 1920 ? 78 : Math.max(16, width * (78 / 1920));
 
     const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
@@ -72,7 +77,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
     return (
         <View style={styles.headerContainer}>
-            <View style={styles.headerInner}>
+            <View style={[
+                styles.headerInner,
+                isLanding && {
+                    maxWidth: undefined,
+                    paddingLeft: landingPadLeft,
+                    paddingRight: landingPadRight,
+                },
+            ]}>
 
                 {/* ── Left: Logo ── */}
                 <TouchableOpacity
@@ -94,8 +106,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                             {!user ? (
                                 <>
                                     <NavItem label="서비스 소개" active={viewMode === 'landing'} onPress={() => setViewMode('landing')} />
-                                    <NavItem label="요금안내" active={viewMode === 'pricing'} onPress={() => setViewMode('pricing')} />
-                                    <NavItem label="Insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
+                                    <NavItem label="요금 안내" active={viewMode === 'pricing'} onPress={() => setViewMode('pricing')} />
+                                    <NavItem label="publica insight" active={viewMode === 'feed'} onPress={() => { setViewMode('feed'); setActiveCategory('전체'); }} />
                                 </>
                             ) : (
                                 <>
@@ -112,11 +124,12 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 <View style={styles.rightActions}>
                     {!user ? (
                         <View style={styles.authGroup}>
-                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.loginBtn}>
-                                <Text style={styles.loginBtnText}>로그인</Text>
+                            {/* Figma: 회원가입(텍스트 링크) + 로그인(보라 알약 버튼) 순서 */}
+                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.registerLink}>
+                                <Text style={styles.registerLinkText}>회원가입</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.registerBtn}>
-                                <Text style={styles.registerBtnText}>회원가입</Text>
+                            <TouchableOpacity onPress={onAuthModalOpen} style={styles.loginPill}>
+                                <Text style={styles.loginPillText}>로그인</Text>
                             </TouchableOpacity>
                         </View>
                     ) : (
@@ -247,26 +260,20 @@ const styles = StyleSheet.create({
 
     rightActions: { flexDirection: 'row', alignItems: 'center', gap: 16 },
 
-    authGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    loginBtn: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 99,
-        borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.3)',
-    },
-    loginBtnText: { color: 'rgba(255,255,255,0.85)', fontSize: 13, fontWeight: '700' },
-    registerBtn: {
-        paddingHorizontal: 18,
-        paddingVertical: 9,
+    authGroup: { flexDirection: 'row', alignItems: 'center', gap: 18 },
+    registerLink: { paddingVertical: 8 },
+    registerLinkText: { color: '#475569', fontSize: 15, fontWeight: '700' },
+    loginPill: {
+        paddingHorizontal: 22,
+        paddingVertical: 10,
         borderRadius: 99,
         backgroundColor: '#7C3AED',
         shadowColor: '#7C3AED',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.35,
+        shadowOpacity: 0.3,
         shadowRadius: 12,
     },
-    registerBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
+    loginPillText: { color: '#FFFFFF', fontSize: 15, fontWeight: '800' },
 
     utilityGroup: { flexDirection: 'row', alignItems: 'center', gap: 20 },
 
