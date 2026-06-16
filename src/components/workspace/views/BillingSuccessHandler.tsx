@@ -17,7 +17,8 @@ export const BillingSuccessHandler = () => {
                 const urlParams = new URLSearchParams(window.location.search);
                 const authKey = urlParams.get('authKey');
                 const customerKey = urlParams.get('customerKey');
-                const plan = urlParams.get('plan') || 'pro'; // default to pro
+                const plan = urlParams.get('plan') || 'pro';                  // 구독 등급 (pro/pro_plus)
+                const billingCycle = urlParams.get('cycle') || 'monthly';     // 결제 주기 (monthly/yearly)
                 const price = urlParams.get('price');
 
                 if (!authKey || !customerKey) {
@@ -35,6 +36,7 @@ export const BillingSuccessHandler = () => {
                         authKey,
                         customerKey,
                         plan,
+                        billingCycle,
                         price: parseInt(price || '0', 10)
                     }),
                 });

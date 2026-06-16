@@ -48,12 +48,21 @@ Deno.serve(async (req) => {
             throw new Error("인증되지 않은 요청입니다.");
         }
 
-        // 2. 바디 파싱 { authKey, customerKey, plan, price }
-        const { authKey, customerKey, plan, price } = await req.json();
+        // 2. 바디 파싱 { authKey, customerKey, plan, billingCycle, price }
+        const { authKey, customerKey, plan, billingCycle, price } = await req.json();
 
         if (!authKey || !customerKey) {
             throw new Error("토스 인증 정보(authKey/customerKey)가 부족합니다.");
         }
+
+        // DB CHECK 제약에 맞게 값 정규화 (plan: free/pro/pro_plus, cycle: monthly/yearly)
+        const planValue = ["pro", "pro_plus"].includes(String(plan).toLowerCase())
+            ? String(plan).toLowerCase()
+            : "pro";
+        const cycleValue = String(billingCycle).toLowerCase() === "yearly" ? "yearly" : "monthly";
+        const periodMs = cycleValue === "yearly"
+            ? 365 * 24 * 60 * 60 * 1000
+            : 30 * 24 * 60 * 60 * 1000;
 
         console.log(`[Billing Auth] Start for user ${user.id} (${customerKey})`);
 
@@ -101,7 +110,7 @@ Deno.serve(async (req) => {
                     customerKey,
                     amount: amount,
                     orderId: orderId,
-                    orderName: `Publica ${plan.toUpperCase()} 구독`,
+                    orderName: `Publica ${planValue.toUpperCase()} 구독`,
                     customerEmail: user.email,
                     taxFreeAmount: 0
                 }),
@@ -122,17 +131,17 @@ Deno.serve(async (req) => {
             .from("subscriptions")
             .upsert({
                 user_id: user.id,
-                plan: plan.toLowerCase(),
+                plan: planValue,
                 status: "active",
-                billing_cycle: "monthly",
+                billing_cycle: cycleValue,
                 toss_billing_key: billingKey,
                 toss_customer_key: customerKey,
                 amount: amount,
                 current_period_start: new Date().toISOString(),
-                // 한달 후 만료일 설정 (30일 단위)
-                current_period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                // 결제 주기에 따른 만료일 (월간 30일 / 연간 365일)
+                current_period_end: new Date(Date.now() + periodMs).toISOString(),
                 updated_at: new Date().toISOString()
-            });
+            }, { onConflict: "user_id" });
 
         if (dbError) {
             console.error("DB Upsert Error:", dbError);

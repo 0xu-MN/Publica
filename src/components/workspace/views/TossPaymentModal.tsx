@@ -32,7 +32,8 @@ export const TossPaymentModal: React.FC<TossPaymentModalProps> = ({ visible, onC
 
             await payment.requestBillingAuth({
                 method: 'CARD',
-                successUrl: window.location.origin + `/payment/billing-success?plan=${planType}&price=${price}`,
+                // plan=구독등급(pro), cycle=결제주기(monthly/yearly) — 분리해서 전달
+                successUrl: window.location.origin + `/payment/billing-success?plan=pro&cycle=${planType}&price=${price}`,
                 failUrl: window.location.origin + '/payment/fail',
                 customerEmail: userEmail,
                 customerName: userName,

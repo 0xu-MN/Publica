@@ -24,6 +24,7 @@ import { MyProjectsView } from './views/MyProjectsView';
 import { PricingPage } from './views/PricingPage';
 import { AdminScreen } from '../../screens/AdminScreen';
 import { GuideView } from './views/GuideView';
+import { ProUpgradePrompt } from '../ProUpgradePrompt';
 
 interface WorkspaceLayoutProps {
     onClose?: () => void;
@@ -33,7 +34,7 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
     // Default to 'home'
     const [activeTab, setActiveTabState] = useState<WorkspaceTab>('home');
     const [isLoaded, setIsLoaded] = useState(false);
-    const { user } = useAuth();
+    const { user, hasProAccess, plan } = useAuth();
 
     // Project Store Sync
     const agentSession = useProjectStore(state => state.agentSession);
@@ -234,6 +235,14 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                     />
                 );
             case 'nexus-edit':
+                if (!hasProAccess) {
+                    return (
+                        <ProUpgradePrompt
+                            featureName="Publica Nexus Edit"
+                            onUpgrade={() => setActiveTab('pricing')}
+                        />
+                    );
+                }
                 return <NexusEditView />;
             case 'projects':
                 return (
@@ -359,12 +368,12 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
             case 'pricing':
                 return (
                     <PricingPage
-                        currentPlan="free"
-                        onSelectPlan={(plan) => {
-                            if (plan === 'pro') {
-                                // TODO: Open Toss Payments checkout
-                                console.log('Pro plan selected — Toss Payments flow');
+                        currentPlan={plan}
+                        onSelectPlan={(selected) => {
+                            if (selected === 'free') {
+                                setActiveTab('home');
                             }
+                            // 'pro' 선택 시에는 PricingPage 내부의 TossPaymentModal이 결제 플로우를 처리
                         }}
                     />
                 );

@@ -5,11 +5,11 @@ import {
 } from 'react-native';
 import { supabase } from '../lib/supabase';
 import { PlusCircle, Trash2, Eye, EyeOff, RefreshCw, Shield } from 'lucide-react-native';
+import { isAdminEmail } from '../lib/entitlements';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 🔐 Admin check via Supabase admin_users table (with hardcoded email fallback)
 // ─────────────────────────────────────────────────────────────────────────────
-const FALLBACK_ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com', 'haloforge@haloforge.kr'];
 
 interface CardItem {
     id: string;
@@ -69,14 +69,14 @@ export const AdminScreen = () => {
                 
                 if (error) {
                     console.log('🔒 admin_users table error (using fallback):', error.message);
-                    setIsAdmin(FALLBACK_ADMIN_EMAILS.includes(email));
+                    setIsAdmin(isAdminEmail(email));
                 } else {
-                    setIsAdmin(!!data);
+                    // admin_users 테이블에 있거나, 중앙 관리자 목록에 있으면 관리자
+                    setIsAdmin(!!data || isAdminEmail(email));
                 }
             } catch (e) {
                 console.log('🔒 Admin check error:', e);
-                const email = userEmail || '';
-                setIsAdmin(FALLBACK_ADMIN_EMAILS.includes(email));
+                setIsAdmin(isAdminEmail(userEmail));
             } finally {
                 setLoading(false);
             }

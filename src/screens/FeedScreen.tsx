@@ -132,8 +132,6 @@ export const FeedScreen = ({ initialCategory = '전체' }: FeedScreenProps) => {
                 setNotifications(MOCK_NOTIFICATIONS);
                 const savedViewMode = await AsyncStorage.getItem('viewMode');
                 const savedCategory = await AsyncStorage.getItem('activeCategory');
-                const ADMIN_EMAILS = ['haloforge@haloforge.kr', 'contact@publica.ai', 'hong56800@gmail.com', 'toss_test@publica.ai'];
-                const isAdmin = ADMIN_EMAILS.includes(user.email ?? '');
 
                 if (savedViewMode) {
                     if (savedViewMode === 'landing' || savedViewMode === 'connect') {

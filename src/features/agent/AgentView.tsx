@@ -40,7 +40,7 @@ export const AgentView = ({ initialSession, onNavigateToEdit }: { initialSession
         supabase.auth.getUser().then(({ data }) => setUser(data.user));
     }, []);
     // AI 프로필 — IdeaQuestionnaire 자동 채움 + AI 프롬프트 주입에 사용
-    const { profile: userProfile } = useAuth();
+    const { profile: userProfile, hasProAccess } = useAuth();
 
     // 세션 매니저 (저장/불러오기 담당)
     const { sessions, currentSessionId, setCurrentSessionId, saveSession, loadSession, fetchSessions, deleteSession } = useSessionManager(user?.id);
@@ -1317,6 +1317,15 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
                             disabled={isTransitioning}
                             onPress={async () => {
                                 if (isTransitioning) return;
+                                // 🔒 Pro 게이팅: AI 초안 작성은 유료 기능. 무료 유저는 비용 발생 전에 차단하고 결제 안내로 이동.
+                                if (!hasProAccess) {
+                                    Alert.alert(
+                                        'Premium Pro 전용 기능',
+                                        'AI 사업계획서 초안 작성은 Premium Pro 구독자만 사용할 수 있습니다. 요금제 페이지에서 업그레이드해주세요.',
+                                        [{ text: '확인', onPress: () => onNavigateToEdit && onNavigateToEdit() }]
+                                    );
+                                    return;
+                                }
                                 setIsTransitioning(true);
                                 setTransitionStep('브레인스톰 데이터를 수합하고 있습니다...');
 

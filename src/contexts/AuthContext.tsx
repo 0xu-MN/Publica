@@ -2,6 +2,9 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Platform } from 'react-native';
+import {
+    SubscriptionRow, isAdminEmail, computeProAccess, computeDisplayPlan,
+} from '../lib/entitlements';
 
 interface AuthContextType {
     session: Session | null;
@@ -10,10 +13,16 @@ interface AuthContextType {
     loading: boolean;
     profileComplete: boolean;
     authEvent: string | null;
+    // 결제/권한
+    subscription: SubscriptionRow;
+    isAdmin: boolean;
+    hasProAccess: boolean;       // 유료 기능 사용 가능 여부 (관리자/구독자)
+    plan: 'free' | 'pro' | 'trial';
     signInWithGoogle: () => Promise<void>;
     signInWithKakao: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshProfile: () => Promise<void>;
+    refreshSubscription: () => Promise<void>;
     setProfileState: (profile: any) => void;
 }
 
@@ -22,6 +31,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<any | null>(null);
+    const [subscription, setSubscription] = useState<SubscriptionRow>(null);
     const [loading, setLoading] = useState(true);
     const [authEvent, setAuthEvent] = useState<string | null>(null);
 
@@ -39,6 +49,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error("Error fetching profile:", e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSubscription = async (userId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('subscriptions')
+                .select('plan, status, current_period_end, trial_end')
+                .eq('user_id', userId)
+                .maybeSingle();
+            if (error && error.code !== 'PGRST116') throw error;
+            setSubscription(data ?? null);
+        } catch (e) {
+            console.error("Error fetching subscription:", e);
+            setSubscription(null);
         }
     };
 
@@ -76,6 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setSession(session);
             if (session?.user) {
                 fetchProfile(session.user.id);
+                fetchSubscription(session.user.id);
             } else if (!isTestMode) {
                 // 테스트 모드 자동 로그인이 진행 중이 아닐 때만 로딩 해제
                 setLoading(false);
@@ -83,23 +109,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
 
         // Listen for changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+        const { data: { subscription: authSub } } = supabase.auth.onAuthStateChange((event, session) => {
             setAuthEvent(event);
             setSession(session);
             if (session?.user) {
                 fetchProfile(session.user.id);
+                fetchSubscription(session.user.id);
             } else {
                 setProfile(null);
+                setSubscription(null);
                 setLoading(false);
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => authSub.unsubscribe();
     }, []);
 
     const refreshProfile = async () => {
         if (session?.user) {
             await fetchProfile(session.user.id);
+        }
+    };
+
+    const refreshSubscription = async () => {
+        if (session?.user) {
+            await fetchSubscription(session.user.id);
         }
     };
 
@@ -150,23 +184,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     };
 
+    const email = session?.user?.email ?? null;
+    const isAdmin = isAdminEmail(email);
+    const hasProAccess = computeProAccess(email, subscription);
+    const plan = computeDisplayPlan(email, subscription);
+
     return (
         <AuthContext.Provider value={{
             session,
             user: session?.user ?? null,
             profile,
             loading,
-            profileComplete: !!profile?.user_type || [
-                'toss_test@publica.ai',
-                'haloforge@haloforge.kr',
-                'contact@publica.ai',
-                'hong56800@gmail.com',
-            ].includes(session?.user?.email ?? ''),
+            profileComplete: !!profile?.user_type || isAdmin,
             authEvent,
+            subscription,
+            isAdmin,
+            hasProAccess,
+            plan,
             signInWithGoogle,
             signInWithKakao,
             signOut,
             refreshProfile,
+            refreshSubscription,
             setProfileState: (data: any) => setProfile(data)
         }}>
             {children}

@@ -3,8 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Switch, StyleSheet, Modal, Pr
 import { useAuth } from '../contexts/AuthContext';
 import { X, Bookmark, Bell, Moon, ChevronRight, User, Shield, LogOut } from 'lucide-react-native';
 import { ProfileSetupScreen } from '../screens/ProfileSetupScreen';
-
-const ADMIN_EMAILS = ['contact@publica.ai', 'hong56800@gmail.com', 'haloforge@haloforge.kr'];
+import { isAdminEmail } from '../lib/entitlements';
 
 interface SettingsModalProps {
     visible: boolean;
@@ -21,7 +20,7 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
     const email = user?.email?.toLowerCase() || '';
     const name = user?.user_metadata?.name || user?.user_metadata?.full_name || '';
 
-    const isAdmin = ADMIN_EMAILS.some(e => e.toLowerCase() === email)
+    const isAdmin = isAdminEmail(email)
         || email.includes('hong56800')
         || name.includes('hong56800');
 
