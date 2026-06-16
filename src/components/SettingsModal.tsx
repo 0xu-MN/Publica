@@ -18,11 +18,9 @@ export const SettingsModal = ({ visible, onClose, onNavigateAdmin }: SettingsMod
     const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
 
     const email = user?.email?.toLowerCase() || '';
-    const name = user?.user_metadata?.name || user?.user_metadata?.full_name || '';
 
-    const isAdmin = isAdminEmail(email)
-        || email.includes('hong56800')
-        || name.includes('hong56800');
+    // 관리자는 회사 계정(haloforge@haloforge.kr) 하나만 허용
+    const isAdmin = isAdminEmail(email);
 
     useEffect(() => {
         if (visible) {

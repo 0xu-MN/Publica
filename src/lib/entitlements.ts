@@ -6,14 +6,12 @@
 
 /**
  * 관리자 이메일 (회사 계정).
- * 여기에 있는 계정은 결제 여부와 상관없이 모든 기능을 사용하고 관리 화면에 접근합니다.
- * ⚠️ 한 곳에서만 관리합니다. AuthContext/AdminScreen/FeedScreen/SettingsModal 모두 이 목록을 import 합니다.
+ * 여기에 있는 계정만 결제 여부와 상관없이 모든 기능을 사용하고 관리 화면에 접근합니다.
+ * ⚠️ 한 곳에서만 관리합니다. AuthContext/AdminScreen/SettingsModal 모두 이 목록을 import 합니다.
+ * ⚠️ 회사 계정 1개만 관리자입니다. 다른 계정은 관리자로 들어올 수 없습니다.
  */
 export const ADMIN_EMAILS = [
-    'haloforge@haloforge.kr',  // 회사 대표 계정
-    'contact@publica.ai',
-    'hong56800@gmail.com',
-    'toss_test@publica.ai',    // 토스 심사용 테스트 계정
+    'haloforge@haloforge.kr',  // 회사 대표 계정 (유일한 관리자)
 ];
 
 export const isAdminEmail = (email?: string | null): boolean => {
