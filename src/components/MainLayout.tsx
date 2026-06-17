@@ -69,7 +69,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({
 
             <View style={[
                 styles.mainContainer,
-                { paddingTop: viewMode === 'landing' ? 0 : 72 },
+                { paddingTop: viewMode === 'landing' ? 0 : 80 },
             ]}>
                 {children}
             </View>

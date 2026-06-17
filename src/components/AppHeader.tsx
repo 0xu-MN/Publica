@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
         maxWidth: 1400,
         width: '100%',
         alignSelf: 'center',
-        height: 72,
+        height: 80,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',

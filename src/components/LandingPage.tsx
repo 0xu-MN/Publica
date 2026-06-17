@@ -50,7 +50,7 @@ const SOLUTION_SLIDES = [
     {
         tab: '공고 탐색',
         title: '공고 탐색',
-        subtitle: 'AI가 나의 사업 분야, 규모, 지역에 맞는 공고를 매칭 스코어로 자동 추천합니다.',
+        subtitle: 'AI가 나의 사업 규모, 분야, 지역에 맞는 공고를 매칭 스코어로 자동 추천합니다.',
     },
     {
         tab: '전략 수립',
@@ -63,9 +63,9 @@ const SOLUTION_SLIDES = [
         subtitle: '전략 결과를 이어받아 PSST 논리 구조의 사업계획서 초안을 자동으로 작성합니다.',
     },
     {
-        tab: '참여현황 & 피드백',
-        title: '참여현황 & 피드백',
-        subtitle: '지원 현황을 한눈에 관리하고 AI가 실시간으로 개선 포인트를 제안합니다.',
+        tab: '양식 매핑 & 다운로드',
+        title: '양식 매핑 & 다운로드',
+        subtitle: '완성된 초안은 정부 양식(HWPX·DOCX)에 자동 매핑되어 즉시 다운로드 가능합니다.',
     },
 ];
 
@@ -189,31 +189,37 @@ function DraftPreview() {
     );
 }
 
-function FeedbackPreview() {
-    const items = [
-        { name: '청년창업사관학교 14기', status: '검토 중', color: '#F59E0B', score: '1차 서류 통과' },
-        { name: '소상공인 스마트화 지원', status: '제출 완료', color: '#10B981', score: '최종 합격' },
-        { name: 'R&D 기술사업화 연계', status: '준비 중', color: '#7C3AED', score: '초안 작성 중' },
+function ExportPreview() {
+    const formats = [
+        { ext: 'HWPX', label: '한글 정부 양식', color: '#3CA5E9' },
+        { ext: 'DOCX', label: 'MS Word 양식', color: '#7C3AED' },
     ];
     return (
-        <View style={{ gap: 10 }}>
-            <Text style={{ color: '#A78BFA', fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 4 }}>참여 현황 대시보드</Text>
-            {items.map((item, i) => (
-                <View key={i} style={{ backgroundColor: '#1C1C22', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#2D2D38' }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700', flex: 1 }} numberOfLines={1}>{item.name}</Text>
-                        <View style={{ backgroundColor: item.color + '20', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                            <Text style={{ color: item.color, fontSize: 11, fontWeight: '800' }}>{item.status}</Text>
-                        </View>
+        <View style={{ gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                <View style={{ backgroundColor: '#7C3AED', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                    <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '800' }}>PUBLICA NEXUS EDIT</Text>
+                </View>
+                <Text style={{ color: '#71717A', fontSize: 11 }}>— 양식 매핑 & 다운로드</Text>
+            </View>
+            <Text style={{ color: '#D4D4D8', fontSize: 13, fontWeight: '600' }}>완성된 초안은 즉시 다운로드 가능합니다.</Text>
+            {formats.map((f, i) => (
+                <View key={i} style={{ backgroundColor: '#1C1C22', borderRadius: 12, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#2D2D38' }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: f.color + '20', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: f.color, fontSize: 11, fontWeight: '900' }}>{f.ext}</Text>
                     </View>
-                    <Text style={{ color: '#71717A', fontSize: 11, marginTop: 6 }}>{item.score}</Text>
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>{f.label}</Text>
+                        <Text style={{ color: '#71717A', fontSize: 11, marginTop: 2 }}>표 구조 · 폰트 · 서식 100% 유지</Text>
+                    </View>
+                    <CheckCircle size={16} color="#38B780" />
                 </View>
             ))}
         </View>
     );
 }
 
-const SLIDE_PREVIEWS = [GrantSearchPreview, StrategyPreview, DraftPreview, FeedbackPreview];
+const SLIDE_PREVIEWS = [GrantSearchPreview, StrategyPreview, DraftPreview, ExportPreview];
 
 /* ────────────────────────────── AGENT PREVIEW ────────────────────────────────── */
 
@@ -330,9 +336,9 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onLoginPress, onStartF
                         style={StyleSheet.absoluteFill}
                         resizeMode="cover"
                     />
-                    {/* light wash so left text is readable */}
+                    {/* light wash so left text is readable (background-alt #f2ecfe) */}
                     <LinearGradient
-                        colors={['rgba(244,243,255,0.96)', 'rgba(244,243,255,0.7)', 'rgba(244,243,255,0.15)']}
+                        colors={['rgba(242,236,254,0.97)', 'rgba(242,236,254,0.72)', 'rgba(242,236,254,0.12)']}
                         start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                         style={StyleSheet.absoluteFill}
                         pointerEvents="none"
@@ -650,7 +656,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         minHeight: 460,
         justifyContent: 'center',
-        backgroundColor: '#F4F3FF',
+        backgroundColor: '#F2ECFE',
     },
     heroRow: {
         flexDirection: 'row',
@@ -731,8 +737,8 @@ const styles = StyleSheet.create({
         borderColor: '#DDD6FE',
     },
     tagPillText: { color: '#7C3AED', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-    sectionTitle: { color: '#0F172A', fontSize: 38, fontWeight: '900', letterSpacing: -1 },
-    sectionSub: { color: '#64748B', fontSize: 16, lineHeight: 28 },
+    sectionTitle: { color: '#0F172A', fontSize: 38, fontWeight: '900', letterSpacing: -0.95, lineHeight: 53 },
+    sectionSub: { color: '#505050', fontSize: 16, lineHeight: 24, letterSpacing: -0.4 },
 
     /* PAIN POINTS */
     painCard: {
