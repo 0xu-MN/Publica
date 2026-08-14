@@ -64,8 +64,13 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 Animated.timing(rotateAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
                 Animated.delay(1000)
             ]);
-            Animated.loop(wiggle).start();
+            const loop = Animated.loop(wiggle);
+            loop.start();
+            // 🌟 loop 참조를 저장해뒀다가, 안읽은 알림이 없어지면 반드시 stop() 해야 한다.
+            // 예전엔 참조를 안 갖고 있어서 "모두 읽기"를 눌러도 이미 도는 loop를 멈출 방법이 없었다.
+            return () => loop.stop();
         } else {
+            rotateAnim.stopAnimation();
             rotateAnim.setValue(0);
         }
     }, [hasNotification]);
@@ -212,12 +217,14 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         zIndex: 1000,
-        backgroundColor: 'transparent',
+        // 페이지 배경(#F8F8F8)과 동일한 고정 색상 — SOLUTION 같은 검은 섹션 위로 스크롤돼도
+        // 어두운 텍스트가 묻히지 않도록 항상 불투명하게 깔아둔다.
+        backgroundColor: '#F8F8F8',
         borderBottomWidth: 0,
     } as any,
 
     headerInner: {
-        maxWidth: 1400,
+        maxWidth: 1600,
         width: '100%',
         alignSelf: 'center',
         height: 80,

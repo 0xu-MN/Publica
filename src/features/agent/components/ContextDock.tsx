@@ -43,7 +43,6 @@ export const ContextDock: React.FC<ContextDockProps> = ({
     onSendToEdit,
 }) => {
     const getInitialTab = (): DockTab => {
-        if (grantUrl) return 'grant';
         if (pdfUrl) return 'pdf';
         return 'editor';
     };
@@ -75,7 +74,8 @@ export const ContextDock: React.FC<ContextDockProps> = ({
     };
 
     const tabs: { key: DockTab; label: string; emoji: string; available: boolean }[] = [
-        { key: 'grant', label: '원문', emoji: '📄', available: !!grantUrl },
+        // '원문' 탭 제거됨 — GrantContentPanel은 항상 error='direct_fail'을 강제로 세팅해서
+        // 실제로 원문을 보여준 적이 없는 죽은 스텁이었다 (K-Startup iframe 차단으로 원천 불가).
         { key: 'editor', label: '메모', emoji: '📝', available: true },
         { key: 'pdf', label: 'PDF', emoji: '📎', available: !!pdfUrl },
     ];

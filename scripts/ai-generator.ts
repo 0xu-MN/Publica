@@ -15,7 +15,7 @@ if (!GEMINI_API_KEY) {
 
 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash-exp',
+    model: 'gemini-2.5-flash',
     generationConfig: {
         temperature: 0.9,
         topP: 0.95,
@@ -153,6 +153,7 @@ async function test() {
         description: 'SK텔레콤이 AI 국가대표로 선정될 것이라는 기대감에 주가가 급등했다. 앤트로픽 투자 성공도 긍정적 영향.',
         link: 'https://example.com',
         pubDate: new Date().toISOString(),
+        source: 'mk',
         category: 'economy'
     };
 

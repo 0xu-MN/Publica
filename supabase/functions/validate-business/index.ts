@@ -52,7 +52,7 @@ serve(async (req) => {
             }
 
             const res = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+                `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -128,11 +128,21 @@ serve(async (req) => {
                 }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 });
             }
 
-            // b_stt_cd: '01'=계속사업자, '02'=휴업, '03'=폐업
+            // b_stt_cd: '01'=계속사업자, '02'=휴업, '03'=폐업, ''(빈값)=등록되지 않은 번호
             const statusCode = bizInfo.b_stt_cd;
             const statusText = bizInfo.b_stt || '확인됨';
             const taxType = bizInfo.tax_type || '';
             const formatted = `${rawNumber.slice(0,3)}-${rawNumber.slice(3,5)}-${rawNumber.slice(5)}`;
+
+            // 국세청 API는 미등록 번호도 HTTP 200 + 빈 상태코드로 응답한다.
+            // b_stt_cd가 없거나 taxType에 "등록되지 않은"이 포함되면 실패로 처리해야 한다.
+            if (!statusCode || taxType.includes('등록되지 않은')) {
+                return new Response(JSON.stringify({
+                    success: false,
+                    error: '국세청에 등록되지 않은 사업자등록번호입니다. 번호를 다시 확인해주세요.',
+                    status: 'not_registered'
+                }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 });
+            }
 
             if (statusCode === '03') {
                 return new Response(JSON.stringify({

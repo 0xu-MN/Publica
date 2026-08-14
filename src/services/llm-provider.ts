@@ -36,7 +36,7 @@ const TIER_CONFIG: Record<LLMTier, ProviderConfig> = {
     // 속도 최우선, 비용 최저
     light: {
         provider: 'gemini',
-        model: 'gemini-2.0-flash',
+        model: 'gemini-2.5-flash',
         temperature: 0.3,
         description: '요약, 태깅, 시각화 등 단순 작업',
     },

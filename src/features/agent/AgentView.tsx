@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, LayoutAnimation, Dimensions, Platform, PanResponder, UIManager, Alert, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ActivityIndicator, TouchableOpacity, Animated, LayoutAnimation, Dimensions, Platform, PanResponder, UIManager, ScrollView, TextInput } from 'react-native';
 import { supabase } from '../../lib/supabase';
 // 아이콘 필수!
 import { RefreshCw, ZoomIn, ZoomOut, Folder, Save, X, Trash2, UploadCloud, ExternalLink, FileEdit, Zap } from 'lucide-react-native';
@@ -24,6 +24,7 @@ import { LAYOUT } from './AgentLayout';
 import { useSessionManager } from './hooks/useSessionManager';
 import { useProjectStore } from '../../store/useProjectStore';
 import { useAuth } from '../../contexts/AuthContext';
+import { crossAlert } from '../../utils/crossAlert';
 import { ErrorBoundary } from '../../components/ErrorBoundary';
 
 
@@ -268,7 +269,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
   "chat_message": "분석 완료"
 }`;
 
-                const geminiModel = process.env.EXPO_PUBLIC_GEMINI_MODEL || 'gemini-2.0-flash';
+                const geminiModel = process.env.EXPO_PUBLIC_GEMINI_MODEL || 'gemini-2.5-flash';
                 const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${geminiKey}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -394,8 +395,41 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
     };
 
     // 🌟 [Real AI] 시작 함수
+    // 🔒 Free 플랜 "AI 전략 분석(Flow) 3회/월" 한도 체크.
+    // Pro/관리자는 hasProAccess=true라 이 함수를 아예 안 부르고 통과한다(무제한).
+    const ensureFlowUsageAllowed = async (): Promise<boolean> => {
+        if (hasProAccess) return true;
+        if (!user?.id) return true; // 로그인 전이면 다른 가드에서 처리됨
+
+        const { data, error } = await supabase.rpc('check_and_increment_flow_usage', {
+            p_user_id: user.id,
+            p_limit: 3,
+        });
+
+        if (error) {
+            console.error('Flow usage check failed:', error);
+            return true; // 한도 체크 자체가 실패하면 사용자 경험을 막지 않음 (fail-open)
+        }
+
+        const result = Array.isArray(data) ? data[0] : data;
+        if (!result?.allowed) {
+            // 차단 시 열려있던 모달(질문지/공고 확인창)도 같이 닫아서
+            // 화면이 멈춘 것처럼 보이지 않도록 한다.
+            setShowQuestionnaire(false);
+            setShowGrantConfirm(false);
+            crossAlert(
+                '무료 플랜 한도 도달',
+                `이번 달 AI 전략 분석(Flow)을 ${result?.usage_limit ?? 3}회 모두 사용하셨습니다.\n다음 달 초기화되거나, Pro로 업그레이드하면 무제한 이용 가능합니다.`,
+                [{ text: '확인' }]
+            );
+            return false;
+        }
+        return true;
+    };
+
     const handleStart = async (text: string) => {
         if (!text.trim()) return;
+        if (!(await ensureFlowUsageAllowed())) return;
         setLoading(true); setColumns([]); setActiveNode(null); setSuggestions([]);
 
         // Call Real AI
@@ -419,6 +453,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
 
     // 🌟 [Grant AI] 사업 아이디어 포함 분석 시작
     const handleStartWithIdea = async (grantQuery: string, businessIdea: any) => {
+        if (!(await ensureFlowUsageAllowed())) return;
         setShowQuestionnaire(false);
         setLoading(true); setColumns([]); setActiveNode(null); setSuggestions([]);
 
@@ -691,8 +726,8 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
 
     // 💾 저장 버튼 로직 (DB에 저장 -> 파일 관리자에 뜸)
     const handleSave = async () => {
-        if (!user) { Alert.alert("오류", "로그인이 필요합니다."); return; }
-        if (columns.length === 0) { Alert.alert("알림", "빈 화면은 저장할 수 없습니다."); return; }
+        if (!user) { crossAlert("오류", "로그인이 필요합니다."); return; }
+        if (columns.length === 0) { crossAlert("알림", "빈 화면은 저장할 수 없습니다."); return; }
 
         const defaultTitle = pendingGrantTitle || columns[0]?.root_node || "Untitled Project";
         const finalTitle = projectTitle.trim() || defaultTitle;
@@ -708,14 +743,14 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
             setToastMessage("성공적으로 저장되었습니다.");
             setTimeout(() => setToastMessage(null), 3000);
         } else {
-            Alert.alert("오류", "저장에 실패했습니다.");
+            crossAlert("오류", "저장에 실패했습니다.");
         }
     };
 
     // 🌟 사업계획서 자동 생성 로직 (Phase 6)
     const handleGenerateBusinessPlan = async (): Promise<string | null> => {
         if (!columns || columns.length === 0) {
-            Alert.alert("오류", "먼저 AI 브랜칭 분석을 진행해주세요.");
+            crossAlert("오류", "먼저 AI 브랜칭 분석을 진행해주세요.");
             return null;
         }
 
@@ -732,7 +767,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
             });
 
             if (fullTreeContext.length === 0 || fullTreeContext[0].nodes.length === 0) {
-                Alert.alert("알림", "마인드맵 데이터가 없습니다. 먼저 AI 분석을 진행해주세요.");
+                crossAlert("알림", "마인드맵 데이터가 없습니다. 먼저 AI 분석을 진행해주세요.");
                 return null;
             }
 
@@ -756,7 +791,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
 
         } catch (error: any) {
             console.error("문서 생성 오류:", error);
-            Alert.alert("생성 실패", "사업계획서 초안을 작성하는 데 실패했습니다.");
+            crossAlert("생성 실패", "사업계획서 초안을 작성하는 데 실패했습니다.");
             return null;
         }
     };
@@ -1055,7 +1090,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
                         if (fileUploaderRef.current) {
                             fileUploaderRef.current.uploadFile(file);
                         } else {
-                            Alert.alert("오류", "파일 업로더가 준비되지 않았습니다.");
+                            crossAlert("오류", "파일 업로더가 준비되지 않았습니다.");
                         }
                     }
                 }
@@ -1079,7 +1114,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
                     onUploadFile={() => {
                         setAgentMode('Literature Review');
                         // Don't auto-expand chat here, let user drag & drop or use pill
-                        Alert.alert("Tip", "파일을 화면에 드래그하거나, 채팅창의 첨부 버튼을 이용하세요.");
+                        crossAlert("Tip", "파일을 화면에 드래그하거나, 채팅창의 첨부 버튼을 이용하세요.");
                         setTimeout(() => fileUploaderRef.current?.pickDocument(), 500); // Trigger after slight delay
                     }}
                     onResumeWorks={handleOpenHistory}
@@ -1319,7 +1354,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
                                 if (isTransitioning) return;
                                 // 🔒 Pro 게이팅: AI 초안 작성은 유료 기능. 무료 유저는 비용 발생 전에 차단하고 결제 안내로 이동.
                                 if (!hasProAccess) {
-                                    Alert.alert(
+                                    crossAlert(
                                         'Premium Pro 전용 기능',
                                         'AI 사업계획서 초안 작성은 Premium Pro 구독자만 사용할 수 있습니다. 요금제 페이지에서 업그레이드해주세요.',
                                         [{ text: '확인', onPress: () => onNavigateToEdit && onNavigateToEdit() }]
@@ -1420,7 +1455,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
                                     onNavigateToEdit();
                                 } catch (err) {
                                     console.error('Transition failed:', err);
-                                    Alert.alert("알림", "AI 초안 생성 중 오류가 발생했습니다. 기본 양식으로 이동합니다.");
+                                    crossAlert("알림", "AI 초안 생성 중 오류가 발생했습니다. 기본 양식으로 이동합니다.");
                                     onNavigateToEdit();
                                 } finally {
                                     setIsTransitioning(false);
@@ -1454,7 +1489,7 @@ ${profileSnippet ? `\n[사용자 정보]\n${profileSnippet}\n` : ''}
                     }
 
                     if (!markdown || markdown.length === 0) {
-                        // Alert.alert("오류", "문서 파싱 결과가 비어있습니다.");
+                        // crossAlert("오류", "문서 파싱 결과가 비어있습니다.");
                         // Force mock process if real parsing fails or takes time, but here we assume success
                         processWithBrain("Analyze the uploaded document.");
                     } else {

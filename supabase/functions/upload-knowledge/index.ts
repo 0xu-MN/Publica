@@ -27,12 +27,12 @@ Deno.serve(async (req: Request) => {
     try {
         const { text_content, filename } = await req.json();
 
-        // Step 1: Classify Document using Gemini 1.5 Pro
+        // Step 1: Classify Document using Gemini 2.5 Pro (gemini-1.5-pro was retired)
         const apiKey = Deno.env.get('GEMINI_API_KEY');
         if (!apiKey) throw new Error("GEMINI_API_KEY is not set");
 
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -81,7 +81,7 @@ Deno.serve(async (req: Request) => {
                 detected_type: docType,
                 total_chunks: chunks.length,
                 processed_at: new Date().toISOString(),
-                model: "gemini-1.5-pro"
+                model: "gemini-2.5-pro"
             },
             sample_chunk: chunks[0] // Preview
         };

@@ -82,7 +82,7 @@ Deno.serve(async (req) => {
 - 반드시 유효한 JSON만 반환 (마크다운 코드블록 없이)`;
 
         const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

@@ -249,7 +249,7 @@ async function fetchFromBizinfo(crtfcKey: string): Promise<any[]> {
 }
 
 // ─── Upsert grants into Supabase ───
-async function upsertGrants(grants: any[]): Promise<{ inserted: number; updated: number; deactivated: number }> {
+async function upsertGrants(grants: any[]): Promise<{ inserted: number; updated: number; deactivated: number; sampleErrors: string[] }> {
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
@@ -259,6 +259,7 @@ async function upsertGrants(grants: any[]): Promise<{ inserted: number; updated:
 
     let inserted = 0;
     let updated = 0;
+    const sampleErrors: string[] = [];
 
     // Upsert each grant
     for (const grant of grants) {
@@ -298,8 +299,10 @@ async function upsertGrants(grants: any[]): Promise<{ inserted: number; updated:
                     }
                 );
                 if (updateRes.ok) updated++;
+                else if (sampleErrors.length < 3) sampleErrors.push(`UPDATE "${grant.title}": ${await updateRes.text()}`);
             } else {
                 console.error(`❌ Upsert failed for "${grant.title}":`, errorText);
+                if (sampleErrors.length < 3) sampleErrors.push(`INSERT "${grant.title}": ${errorText}`);
             }
         }
     }
@@ -325,7 +328,7 @@ async function upsertGrants(grants: any[]): Promise<{ inserted: number; updated:
     // it now reports how many expired grants were deleted.
     const deactivated = Array.isArray(deletedData) ? deletedData.length : 0;
 
-    return { inserted, updated, deactivated };
+    return { inserted, updated, deactivated, sampleErrors };
 }
 
 Deno.serve(async (req: any) => {
@@ -387,6 +390,7 @@ Deno.serve(async (req: any) => {
             inserted: result.inserted,
             updated: result.updated,
             deactivated: result.deactivated,
+            sample_errors: result.sampleErrors,
             timestamp: new Date().toISOString(),
         }), {
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },

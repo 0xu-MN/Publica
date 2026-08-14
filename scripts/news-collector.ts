@@ -39,6 +39,7 @@ export interface NewsArticle {
     description: string;
     source: 'sciencetimes' | 'mk_tech' | 'mk' | 'hankyung';
     category: 'science' | 'economy';
+    image_url?: string;
 }
 
 /**

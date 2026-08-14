@@ -217,9 +217,17 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
     const performAutoFill = async (payload: any) => {
         try {
             setIsAutoFilling(true);
-            const { data, error } = await supabase.functions.invoke('validate-business', {
-                body: payload
-            });
+
+            // 국세청 공공 API가 느리거나 무응답일 때 무한 대기하지 않도록 타임아웃 적용
+            const TIMEOUT_MS = 15000;
+            const timeoutPromise = new Promise<never>((_, reject) =>
+                setTimeout(() => reject(new Error('TIMEOUT')), TIMEOUT_MS)
+            );
+
+            const { data, error } = await Promise.race([
+                supabase.functions.invoke('validate-business', { body: payload }),
+                timeoutPromise,
+            ]);
 
             if (error) throw new Error(error.message);
             if (data?.success && data?.data) {
@@ -244,7 +252,15 @@ export const ProfileSetupScreen = ({ isEditing = false, onClose }: ProfileSetupP
             }
         } catch (e: any) {
             console.error("AutoFill Error:", e);
-            Alert.alert('알림', '정보를 자동으로 불러오는 데 실패했습니다. 직접 입력해주세요.');
+            setBizVerified(false);
+            setBizStatus(null);
+            if (e?.message === 'TIMEOUT') {
+                setBizError('국세청 서버 응답이 지연되고 있습니다. 잠시 후 다시 시도해주세요.');
+                Alert.alert('알림', '국세청 서버 응답이 지연되고 있습니다 (15초 초과).\n잠시 후 다시 시도해주세요.');
+            } else {
+                setBizError('정보를 자동으로 불러오는 데 실패했습니다.');
+                Alert.alert('알림', '정보를 자동으로 불러오는 데 실패했습니다. 직접 입력해주세요.');
+            }
         } finally {
             setIsAutoFilling(false);
         }

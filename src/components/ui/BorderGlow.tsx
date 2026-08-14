@@ -49,7 +49,12 @@ export default function BorderGlow({
   const r = glowRadius;
 
   const wrapStyle: React.CSSProperties = {
-    display: 'flex',
+    // 🌟 'inline-flex'만으로는 부족했다 — 부모가 RN 기본 column flex(align-items:stretch)면
+    // 자식이 inline-flex여도 부모가 cross-axis(가로폭)를 강제로 늘려버린다. 그 늘어난 폭 전체에
+    // hover 글로우(box-shadow)가 퍼져서 버튼 옆에 길쭉한 빈 박스가 나타났던 것.
+    // alignSelf:'flex-start'로 부모의 stretch를 무시하고 자기 콘텐츠 크기만 차지하게 고정.
+    display: 'inline-flex',
+    alignSelf: 'flex-start',
     borderRadius,
     boxShadow: hovered
       ? `0 0 0 1.5px ${getAlphaColor(col, 1)}, 0 0 ${r * 0.5}px 3px ${getAlphaColor(col, 0.7)}, 0 0 ${r}px 6px ${getAlphaColor(col, 0.4)}, 0 0 ${r * 2}px 12px ${getAlphaColor(col, 0.15)}`

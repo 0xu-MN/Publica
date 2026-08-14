@@ -134,7 +134,7 @@ export const fetchAICards = async (category: string = '전체'): Promise<AICardN
         if (error) throw error;
         if (!data) return [];
 
-        let cards = data.map((item: any) => {
+        let cards = data.map((item: any): AICardNews | null => {
             try {
                 const content = typeof item.content === 'string' ? JSON.parse(item.content) : item.content;
                 return {
@@ -152,7 +152,7 @@ export const fetchAICards = async (category: string = '전체'): Promise<AICardN
                 console.error("JSON parsing error for card:", item.id, e);
                 return null;
             }
-        }).filter((i: any): i is AICardNews => i !== null);
+        }).filter((i): i is AICardNews => i !== null);
 
         // 카테고리 필터 적용 (클라이언트에서 필터링)
         if (category !== '전체') {

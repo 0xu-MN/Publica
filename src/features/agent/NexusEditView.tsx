@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, TextInput, ActivityIndicator, Platform, Animated } from 'react-native';
-import { FileText, ChevronRight, Save, FolderOpen, Sparkles, Send, Bot, ArrowLeft, Zap, X, PanelLeftClose, PanelLeftOpen, Upload } from 'lucide-react-native';
+import { FileText, ChevronRight, Save, FolderOpen, Sparkles, Send, Bot, ArrowLeft, Zap, X, PanelLeftClose, PanelLeftOpen, Upload, CheckCircle } from 'lucide-react-native';
 import { supabase } from '../../lib/supabase';
 import { useSessionManager } from './hooks/useSessionManager';
 import { useAuth } from '../../contexts/AuthContext';
@@ -23,7 +23,7 @@ export const NexusEditView = () => {
     }, []);
     const { profile } = useAuth();
 
-    const { sessions, saveEditorContent, loadSession, saveSession } = useSessionManager(user?.id);
+    const { sessions, saveEditorContent, loadSession, saveSession, setCurrentSessionId } = useSessionManager(user?.id);
 
     // --- State ---
     const [selectedSession, setSelectedSession] = useState<any>(null);
@@ -996,7 +996,7 @@ ${userMsg}`;
                             <View style={styles.premiumInputGroup}>
                                 <Text style={styles.premiumLabel}>공고문 내용 (합격 기준 및 모집요강)</Text>
                                 <textarea
-                                    style={styles.premiumTextArea as any}
+                                    style={premiumTextAreaStyle}
                                     placeholder="공고의 평가 항목, 핵심 우대사항, 필수 요건 등의 텍스트를 붙여넣으세요. 많이 입력할수록 더 정확하게 분석됩니다."
                                     value={rfpText}
                                     onChange={(e: any) => setRfpText(e.target.value)}
@@ -1380,57 +1380,22 @@ ${userMsg}`;
 // ═══════════════════════════════════════════════════
 // Styles
 // ═══════════════════════════════════════════════════
+// Web-only textarea style (resize/outline aren't valid RN StyleSheet props)
+const premiumTextAreaStyle = {
+    borderWidth: 1.5,
+    borderColor: '#F1F5F9',
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: '#F8FAFC',
+    fontSize: 14,
+    color: '#1E1B4B',
+    minHeight: 220,
+    lineHeight: 22,
+    resize: 'none',
+    outline: 'none',
+} as any;
+
 const styles = StyleSheet.create({
-    // Writing Phases Loading
-    premiumLoadingBox: {
-        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-        padding: 32,
-        borderRadius: 24,
-        alignItems: 'center',
-        shadowColor: '#7C3AED',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 30,
-        elevation: 10,
-        borderWidth: 1,
-        borderColor: 'rgba(124, 58, 237, 0.1)',
-    },
-    writingStages: {
-        flexDirection: 'row',
-        gap: 6,
-        marginVertical: 16,
-    },
-    writingStageDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
-        backgroundColor: '#E2E8F0',
-    },
-    writingStageDotDone: {
-        backgroundColor: '#7C3AED',
-        width: 12,
-        borderRadius: 6,
-    },
-    draftLoadingOverlay: {
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: 'rgba(253, 248, 243, 0.8)',
-        zIndex: 100,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    draftLoadingText: {
-        color: '#1E1B4B',
-        fontSize: 18,
-        fontWeight: '900',
-        marginTop: 16,
-    },
-    draftLoadingSubtext: {
-        color: '#64748B',
-        fontSize: 13,
-        fontWeight: '600',
-        marginTop: 8,
-        textAlign: 'center',
-    },
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
@@ -1975,19 +1940,6 @@ const styles = StyleSheet.create({
         fontSize: 15,
         color: '#1E1B4B',
         fontWeight: '600',
-    },
-    premiumTextArea: {
-        borderWidth: 1.5,
-        borderColor: '#F1F5F9',
-        borderRadius: 16,
-        padding: 16,
-        backgroundColor: '#F8FAFC',
-        fontSize: 14,
-        color: '#1E1B4B',
-        minHeight: 220,
-        lineHeight: 22,
-        resize: 'none',
-        outline: 'none',
     },
     analysisFeatureBanner: {
         backgroundColor: '#F0FDF4',

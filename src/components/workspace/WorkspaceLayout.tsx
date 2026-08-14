@@ -205,10 +205,18 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                             mode: session.mode || 'Grant Strategist',
                             workspace_data: session.workspace_data || [],
                             chat_history: session.chat_history || [],
-                            auto_run_query: session.auto_run_query || '',
+                            // 🌟 기존 세션 재개 시 auto_run_query를 넘기지 않는다.
+                            // 이게 있으면 AgentView가 "공고 분석 시작"을 다시 띄우고
+                            // handleStart/handleStartWithIdea가 setColumns([])로 캔버스를 초기화해버린다.
+                            auto_run_query: '',
                             grant_url: session.grant_url || session.original_url || '',
                             grant_title: session.title || '',
                             pdf_url: session.pdf_url || '',
+                            brainstorm_content: session.brainstorm_content || '',
+                            editor_content: session.editor_content || '',
+                            editor_markdown: session.editor_markdown || '',
+                            announcement_analysis: session.announcement_analysis || undefined,
+                            announcement_text: session.announcement_text || '',
                         });
                         setActiveTab('agent');
                     }}
@@ -254,10 +262,16 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                                 mode: session.mode || 'Grant Strategist',
                                 workspace_data: session.workspace_data || [],
                                 chat_history: session.chat_history || [],
-                                auto_run_query: session.auto_run_query || '',
+                                // 🌟 기존 세션 재개 시 auto_run_query를 넘기지 않는다 (캔버스 초기화 방지)
+                                auto_run_query: '',
                                 grant_url: session.grant_url || session.original_url || '',
                                 grant_title: session.title || '',
                                 pdf_url: session.pdf_url || '',
+                                brainstorm_content: session.brainstorm_content || '',
+                                editor_content: session.editor_content || '',
+                                editor_markdown: session.editor_markdown || '',
+                                announcement_analysis: session.announcement_analysis || undefined,
+                                announcement_text: session.announcement_text || '',
                             });
                             setActiveTab('agent');
                         }}
@@ -268,10 +282,15 @@ export const WorkspaceLayout = ({ onClose }: WorkspaceLayoutProps) => {
                                 mode: session.mode || 'Grant Strategist',
                                 workspace_data: session.workspace_data || [],
                                 chat_history: session.chat_history || [],
-                                auto_run_query: session.auto_run_query || '',
+                                auto_run_query: '',
                                 grant_url: session.grant_url || session.original_url || '',
                                 grant_title: session.title || '',
                                 pdf_url: session.pdf_url || '',
+                                brainstorm_content: session.brainstorm_content || '',
+                                editor_content: session.editor_content || '',
+                                editor_markdown: session.editor_markdown || '',
+                                announcement_analysis: session.announcement_analysis || undefined,
+                                announcement_text: session.announcement_text || '',
                             });
                             setActiveTab('nexus-edit');
                         }}

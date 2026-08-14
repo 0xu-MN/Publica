@@ -42,7 +42,7 @@ export async function strategistNode(state: AgentState): Promise<Partial<AgentSt
     }
 
     const model = new ChatGoogleGenerativeAI({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.5-flash", // gemini-1.5-flash was retired
         temperature: 0.7,
         apiKey: apiKey,
     });

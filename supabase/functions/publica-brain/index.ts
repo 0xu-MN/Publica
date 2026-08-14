@@ -20,12 +20,12 @@ serve(async (req) => {
 
         // 안정성을 위해 15,000자 제한
         const truncatedMarkdown = markdown ? markdown.substring(0, 15000) : "";
-        console.log(`🧠 [Brain] Processing ${truncatedMarkdown.length} chars using gemini-2.0-flash...`);
+        console.log(`🧠 [Brain] Processing ${truncatedMarkdown.length} chars using gemini-2.5-flash...`);
 
         const genAI = new GoogleGenerativeAI(apiKey);
 
-        // gemini-2.0-flash (안정적, 구 gemini-pro 대체)
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        // gemini-2.5-flash (gemini-2.0-flash was retired)
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = `
     You are an expert startup strategist specializing in Korean government grants.

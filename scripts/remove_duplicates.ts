@@ -32,10 +32,12 @@ async function removeDuplicates() {
             const headline = content.headline || content.title;
 
             if (headline) {
-                if (!headlineMap.has(headline)) {
-                    headlineMap.set(headline, []);
+                const group = headlineMap.get(headline);
+                if (group) {
+                    group.push(card);
+                } else {
+                    headlineMap.set(headline, [card]);
                 }
-                headlineMap.get(headline).push(card);
             }
         } catch (e) {
             // Ignore parse errors

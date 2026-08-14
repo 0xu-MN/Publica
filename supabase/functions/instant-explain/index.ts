@@ -64,9 +64,9 @@ Deno.serve(async (req: Request) => {
         surrounding_context: "${JSON.stringify(context)}"
         `;
 
-        // Call Gemini 1.5 Pro
+        // Call Gemini 2.5 Flash (gemini-1.5-pro was retired)
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${apiKey}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
             {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
